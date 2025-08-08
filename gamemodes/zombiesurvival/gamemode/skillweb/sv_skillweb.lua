@@ -14,34 +14,38 @@ net.Receive("zs_skills_desired", function(length, pl)
 		end
 	end
 	pl:SetDesiredActiveSkills(desired)
+	pl:ApplySkills(desired) -- 添加此行
 end)
 
 net.Receive("zs_skills_all_desired", function(length, pl)
-	if net.ReadBool() then
-		pl:SetDesiredActiveSkills(table.Copy(pl:GetUnlockedSkills()))
-	else
-		local desired = {}
-		for _, id in pairs(pl:GetUnlockedSkills()) do
-			if GAMEMODE.Skills[id] and GAMEMODE.Skills[id].AlwaysActive then
-				desired[#desired + 1] = id
-			end
-		end
-
-		pl:SetDesiredActiveSkills(desired)
-	end
+    local desired = {}
+    if net.ReadBool() then
+        desired = table.Copy(pl:GetUnlockedSkills())
+        pl:SetDesiredActiveSkills(desired)
+    else
+        for _, id in pairs(pl:GetUnlockedSkills()) do
+            if GAMEMODE.Skills[id] and GAMEMODE.Skills[id].AlwaysActive then
+                desired[#desired + 1] = id
+            end
+        end
+        pl:SetDesiredActiveSkills(desired)
+    end
+    
+    pl:ApplySkills(desired) -- 添加此行
 end)
 
 net.Receive("zs_skill_set_desired", function(length, pl)
-	local skillset = net.ReadTable()
-	local assoc = table.ToAssoc(skillset)
+    local skillset = net.ReadTable()
+    local assoc = table.ToAssoc(skillset)
 
-	local desired = {}
-	for _, id in pairs(pl:GetUnlockedSkills()) do
-		if GAMEMODE.Skills[id] and (GAMEMODE.Skills[id].AlwaysActive or assoc[id]) then
-			desired[#desired + 1] = id
-		end
-	end
-	pl:SetDesiredActiveSkills(desired)
+    local desired = {}
+    for _, id in pairs(pl:GetUnlockedSkills()) do
+        if GAMEMODE.Skills[id] and (GAMEMODE.Skills[id].AlwaysActive or assoc[id]) then
+            desired[#desired + 1] = id
+        end
+    end
+    pl:SetDesiredActiveSkills(desired)
+    pl:ApplySkills(desired) -- 添加此行
 end)
 
 net.Receive("zs_skill_is_unlocked", function(length, pl)
@@ -117,23 +121,23 @@ function meta:SkillNotify(message, green)
 end
 
 function meta:SetSkillDesired(skillid, desired)
-	local desiredskills = self:GetDesiredActiveSkills()
+    local desiredskills = self:GetDesiredActiveSkills()
 
-	if desired then
-		if self:IsSkillUnlocked(skillid) then
-			if not self:IsSkillDesired(skillid) then
-				table.insert(desiredskills, skillid)
-			end
+    if desired then
+        if self:IsSkillUnlocked(skillid) then
+            if not self:IsSkillDesired(skillid) then
+                table.insert(desiredskills, skillid)
+            end
 
-			self:SendSkillDesired(skillid, true)
-		end
-	else
-		table.RemoveByValue(desiredskills, skillid)
+            self:SendSkillDesired(skillid, true)
+        end
+    else
+        table.RemoveByValue(desiredskills, skillid)
+        self:SendSkillDesired(skillid, false)
+    end
 
-		self:SendSkillDesired(skillid, false)
-	end
-
-	self:SetDesiredActiveSkills(desiredskills)
+    self:SetDesiredActiveSkills(desiredskills)
+    self:ApplySkills(desiredskills) -- 添加此行
 end
 
 function meta:SetSkillUnlocked(skillid, unlocked)
