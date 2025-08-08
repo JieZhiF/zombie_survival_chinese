@@ -848,7 +848,16 @@ function GM:DrawSigilTeleportBar(x, y, fraction, target, screenscale)
 	draw_SimpleText(translate.Get("press_shift_to_cancel"), "ZSHUDFontSmaller", x, y + draw_GetFontHeight("ZSHUDFontSmaller") - 16, colSigilTeleport, TEXT_ALIGN_CENTER)
 	draw_SimpleText(translate.Get("point_at_a_sigil_to_choose_destination"), "ZSHUDFontSmaller", x, y + draw_GetFontHeight("ZSHUDFontSmaller") * 2 - 16, colSigilTeleport, TEXT_ALIGN_CENTER)
 end
-
+-- 将接收到的补给箱缓存数量存储在本地玩家对象上
+net.Receive("zs_stowagecaches", function()
+    local caches = net.ReadInt(8)
+    if MySelf and MySelf:IsValid() then
+        MySelf.StowageCaches = caches
+    end
+end)
+net.Receive("zs_nextresupplyuse", function(length)
+	MySelf.NextUse = net.ReadFloat()
+end)
 function GM:HumanHUD(screenscale)
 	local curtime = CurTime()
 	local w, h = ScrW(), ScrH()
@@ -897,10 +906,18 @@ function GM:HumanHUD(screenscale)
 			surface_SetDrawColor(30, 30, 230, 180)
 			surface_DrawOutlinedRect(w * 0.4, h * 0.35, w * 0.2, 12)
 			surface_DrawRect(w * 0.4, h * 0.35, w * 0.2 * (1 - drown:GetDrown()), 12)
-			draw_SimpleTextBlurry(translate.Get("breath").." ", "ZSHUDFontSmall", w * 0.4, h * 0.35 + 6, COLOR_LBLUE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+			draw_SimpleTextBlurry(translate.Get("breath").." ", "ZSHUDFontSmall", w * 0.4, h * 0.35 + 6, COLOR_LBLUE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)//好像是溺水
 		end
 	end
-
+	local stowage = MySelf:IsSkillActive(SKILL_STOWAGE)
+	-- 当拥有技能时，从本地玩家对象获取缓存值
+	if stowage then
+        -- 如果MySelf.StowageCaches还没有被网络消息设置，默认显示0
+		local caches = MySelf.StowageCaches or 0
+		local txth = draw_GetFontHeight("ZSHUDFontSmall")
+		draw_SimpleText(translate.Format("resupply_box_left",caches), "ZSHUDFontSmaller", w * 0.05, h * 0.11 + txth, COLOR_GRAY, TEXT_ALIGN_CENTER)
+		--draw_SimpleText(translate.Format("resupply_box_left",caches), "ZSHUDFontSmall", w * 0.02, h * 0.2, COLOR_GRAY, TEXT_ALIGN_CENTER)
+	end
 	local lockon = self.HumanMenuLockOn
 	if lockon and self:ValidMenuLockOnTarget(MySelf, lockon) then
 		local txth = draw_GetFontHeight("ZSHUDFontSmall")
