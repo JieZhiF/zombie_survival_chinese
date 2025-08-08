@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "botavatar/b_4ce6b54388ac37809700074e1dfa04da"
+	"$vertexalpha" "1"
+    "$vertexcolor" "1"
+    "$translucent"  "1"
+    "$ignorez"      "1" 
+}
