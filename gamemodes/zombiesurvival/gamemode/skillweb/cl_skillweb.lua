@@ -803,7 +803,7 @@ function PANEL:Think()
 	end
 end
 	
-function PANEL:GenerateParticles()
+function PANEL:GenerateParticles()//生成粒子效果
 	local particles = {}
 	local particle
 		

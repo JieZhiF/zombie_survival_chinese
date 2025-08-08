@@ -79,7 +79,7 @@ function ENT:AttachToPlayer(vHitPos, eHitEntity)
 	self:SetOwner(eHitEntity)
 end
 
-function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)
+function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)//命中目标
 	if self:GetHitTime() ~= 0 then return end
 
 	self:SetHitTime(CurTime())
@@ -94,20 +94,20 @@ function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)
 
 	self:SetSolid(SOLID_NONE)
 	self:SetMoveType(MOVETYPE_NONE)
-
+ 
 	self:SetPos(vHitPos + vHitNormal)
 
 	if eHitEntity:IsValid() then
 		self:AttachToPlayer(vHitPos, eHitEntity)
 
-		if eHitEntity:IsPlayer() and eHitEntity:Team() ~= TEAM_UNDEAD then
+		if eHitEntity:IsPlayer() and eHitEntity:Team() ~= TEAM_UNDEAD then //命中人类。
 			local ehithp, ehitmaxhp = eHitEntity:Health(), eHitEntity:GetMaxHealth()
-
+ 
 			if eHitEntity:IsSkillActive(SKILL_D_FRAIL) and ehithp >= ehitmaxhp * 0.25 then
 				owner:CenterNotify(COLOR_RED, translate.Format("frail_healdart_warning", eHitEntity:GetName()))
 				self:EmitSound("buttons/button8.wav", 70, math.random(115,128))
 				self:DoRefund(owner)
-			elseif not (owner:IsSkillActive(SKILL_RECLAIMSOL) and ehithp >= ehitmaxhp) then
+			elseif not (owner:IsSkillActive(SKILL_RECLAIMSOL) and ehithp >= ehitmaxhp) then //回收弹药是否启用
 				eHitEntity:GiveStatus("healdartboost", self.BuffDuration or 10)
 				owner:HealPlayer(eHitEntity, self.Heal)
 			else

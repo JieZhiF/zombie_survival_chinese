@@ -2,7 +2,7 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_medicgun")
 SWEP.Description = ""..translate.Get("weapon_zs_medicgun_description")
 SWEP.Slot = 4
 SWEP.SlotPos = 0
-
+ 
 SWEP.Base = "weapon_zs_baseproj"
 DEFINE_BASECLASS("weapon_zs_baseproj")
 
@@ -69,11 +69,15 @@ function SWEP:SecondaryAttack()
 
 	local targetent = owner:CompensatedMeleeTrace(2048, 2, nil, nil, true).Entity
 	local locked = targetent and targetent:IsValidLivingHuman() and gamemode.Call("PlayerCanBeHealed", targetent)
-
 	if CLIENT then
 		self:EmitSound(locked and "npc/scanner/combat_scan4.wav" or "npc/scanner/scanner_scan5.wav", 65, locked and 75 or 200)
 	end
-	self:SetSeekedPlayer(locked and targetent)
+		-- Corrected line:
+	if locked then
+		self:SetSeekedPlayer(targetent)
+	else
+		self:SetSeekedPlayer(nil) -- or self:SetDTEntity(6, nil) directly
+	end
 end
 
 function SWEP:SetSeekedPlayer(ent)

@@ -275,6 +275,7 @@ net.Receive("zs_endround", function(length)
 end)
 
 net.Receive("zs_healother", function(length)
+	print("Receive zs_healother")
 	if net.ReadBool() then
 		gamemode.Call("HealedOtherPlayer", net.ReadEntity(), net.ReadFloat())
 	else
