@@ -171,6 +171,7 @@ if CLIENT then
 				ang:RotateAroundAxis(ang:Forward(), v.angle.r)
 
 				cam.Start3D2D(drawpos, ang, v.size)
+					v.info = {pos=drawpos,angle=ang}
 					v.draw_func( self )
 				cam.End3D2D()
 

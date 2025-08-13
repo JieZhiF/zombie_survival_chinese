@@ -144,9 +144,6 @@ SWEP.IronSightsHoldType = "ar2" --机瞄的持枪动画
 
 function SWEP:Initialize()
     self:SetHoldType(self.HoldType)
-	inconemax = self.ConeMax --这个是用来记录使用镭射瞄准前的武器扩散数据
-	inconemin = self.ConeMin --同上
-    
 	self:SetWeaponHoldType(self.HoldType) --设置武器持枪
     if CLIENT then
 
@@ -277,7 +274,7 @@ function SWEP:SecondaryAttack()
 	self:ShootEffects()
 	local ang = Angle( math.Rand(-0.2,-0.2) * (1), math.Rand(-0.1,0.1), math.Rand(-0.5,0.5) )
 	local muzzlepos = self.Owner:GetShootPos() + (self.Owner:GetForward()*50)
-	self:EmitSound(Sound("weapons/carbine_long/fire"..math.random(1,5)..".wav"),88,math.Rand(110,120))
+	self:EmitSound(Sound("weapons/teshu_fire1.wav"),88,math.Rand(110,120))
 	--[[
 	if SERVER then
 		local plasma = ents.Create("bolt2")

@@ -263,6 +263,12 @@ function GM:AddResources()
 	for _, filename in pairs(file.Find("sound/weapons/*.wav", "GAME")) do
 		resource.AddFile("sound/weapons/"..filename)
 	end
+	for _, filename in pairs(file.Find("sound/weapons/plasma/*.wav", "GAME")) do
+		resource.AddFile("sound/weapons/plasma/"..filename)
+	end
+	for _, filename in pairs(file.Find("sound/weapons/laserrifle/*.wav", "GAME")) do
+		resource.AddFile("sound/weapons/laserrifle/"..filename)
+	end
 	for _, filename in pairs(file.Find("sound/weapons/*.ogg", "GAME")) do
 		resource.AddFile("sound/weapons/"..filename)
 	end

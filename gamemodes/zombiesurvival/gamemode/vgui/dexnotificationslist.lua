@@ -1,4 +1,4 @@
-//这个似乎是用于显示击杀信息的面板，不确定
+//这个是用于创建提示的面板
 //注释状态：已完成，
 GM.NotifyFadeTime = 8 //通知淡出时间
 local DefaultFont = "ZSHUDFontSmallest"//默认字体

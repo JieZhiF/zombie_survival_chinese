@@ -39,14 +39,13 @@ SWEP.HoldType               = "shotgun"
 SWEP.ShowWorldModel         = false
 
 
-SWEP.Primary.Damage			= 26
+SWEP.Primary.Damage			= 21.7
 SWEP.Primary.NumShots		= 6
 SWEP.Primary.Sound			= Sound("weapons/epsilon.wav")
-SWEP.Primary.Cone			= 0.025
 SWEP.Primary.ClipSize		= 12
 SWEP.Primary.DefaultClip	= 48
 SWEP.Primary.Delay			= 0.25
-SWEP.ReloadSpeed = 1.3
+SWEP.ReloadSpeed = 1.2
 SWEP.Primary.Ammo			= "buckshot"
 SWEP.Primary.Automatic 		= true
 SWEP.HUD3DBone = "v_weapon.xm1014_Bolt"
