@@ -9,7 +9,7 @@ SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 
 SWEP.Slot = 2
-SWEP.Base = "weapon_sbase"
+SWEP.Base = "weapon_zs_base"
 SWEP.VElements = {
 
 	["b1"] = { type = "Model", model = "models/combine_turrets/ground_turret.mdl", bone = "ValveBiped.base", rel = "base", pos = Vector(0, -2.52, -5.335), angle = Angle(90, -90, 0), size = Vector(0.5, 0.107, 0.131), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -101,10 +101,10 @@ SWEP.FN = 0
 SWEP.VO = 0
 SWEP.VX = 0
 SWEP.REC = 0
-SWEP.Breathmult = 1
+SWEP.Breathmult = 1.5
 SWEP.InspectSpeed = 0.8
 SWEP.IronEnable = true
-SWEP.IronSpeed = 9.5
+SWEP.IronSpeed = 8.5
 
 SWEP.Inspect = {
 	{pos = Vector(0,0,0),ang = Angle(0,0,0),time = -1},
@@ -141,39 +141,6 @@ SWEP.WalkSpeed = SPEED_NORMAL --手持武器时的移动速度
 
 SWEP.HoldType = "ar2" --武器第三人称的持枪动画
 SWEP.IronSightsHoldType = "ar2" --机瞄的持枪动画
-
-function SWEP:Initialize()
-    self:SetHoldType(self.HoldType)
-	self:SetWeaponHoldType(self.HoldType) --设置武器持枪
-    if CLIENT then
-
-        // Create a new table for every weapon instance
-        self.VElements = table.FullCopy( self.VElements )
-        self.WElements = table.FullCopy( self.WElements )
-        self.ViewModelBoneMods = table.FullCopy( self.ViewModelBoneMods )
-        self:CreateModels(self.VElements) // create viewmodels
-        self:CreateModels(self.WElements) // create worldmodels
-         if IsValid(self.Owner) then
-            local vm = self.Owner:GetViewModel()
-            if IsValid(vm) then
-                self:ResetBonePositions(vm)
-            end
-        end
-    end
-	GAMEMODE:DoChangeDeploySpeed(self)
-	-- 高阶枪自动交换为优先级高于低等级的枪。
-	
-	if self.Weight and self.Tier then
-		self.Weight = self.Weight + self.Tier
-	end
-
-	-- 也许我们不想将武器转换为新系统...
-	if self.Cone then
-		self.ConeMin = self.ConeIronCrouching
-		self.ConeMax = self.ConeMoving
-		self.ConeRamp = 2
-	end
-end
 
 
 function SWEP:Reload()
@@ -275,23 +242,7 @@ function SWEP:SecondaryAttack()
 	local ang = Angle( math.Rand(-0.2,-0.2) * (1), math.Rand(-0.1,0.1), math.Rand(-0.5,0.5) )
 	local muzzlepos = self.Owner:GetShootPos() + (self.Owner:GetForward()*50)
 	self:EmitSound(Sound("weapons/teshu_fire1.wav"),88,math.Rand(110,120))
-	--[[
-	if SERVER then
-		local plasma = ents.Create("bolt2")
-		plasma:SetPos(muzzlepos)
-		plasma:SetOwner(self:GetOwner())
 
-		plasma:Spawn()
-		local phys = plasma:GetPhysicsObject()
-		if self.Owner:IsOnGround() then 
-            phys:ApplyForceCenter((self.Owner:GetAimVector()+Vector(math.Rand(0.05,-0.05),math.Rand(0.05,-0.05),0.07+(self.Owner:GetViewPunchAngles().pitch*-1)/50)) * 7900 ) 
-        end
-		if not self.Owner:IsOnGround() then 
-            phys:ApplyForceCenter((self.Owner:GetAimVector()+Vector(math.Rand(0.15,-0.15),math.Rand(0.15,-0.15),(math.Rand(0.1,-0.1)+0.07)+(self.Owner:GetViewPunchAngles().pitch*-1)/50)) * 7900 ) 
-        end
-
-	end
-	]]
 	self:ShootBullets(self.Primary.Damage * 9, self.Primary.NumShots, self:GetCone()) --射出子弹，里面的参数为伤害，子弹数量，瞄准的位置
 	self.Owner:ViewPunch(ang * 6.65)
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
@@ -309,6 +260,7 @@ function SWEP:SecondaryAttack()
 	self.VO = 7
 	self.VX = 9
 	self.punch = 30
+
 end
 
 function SWEP:EmitFireSound()
@@ -323,6 +275,7 @@ function SWEP:PrimaryAttack()
 	
 
 	self:EmitFireSound() --播放武器开火声音
+	
 	self:ShootBullets(self.Primary.Damage, self.Primary.NumShots, self:GetCone()) --射出子弹，里面的参数为伤害，子弹数量，瞄准的位置
 
 	if self.Owner:KeyDown(IN_ATTACK2)==false then
@@ -374,6 +327,23 @@ function SWEP:PrimaryAttack()
 	self.punch = 1 + self.REC * 2
 end
 
+function SWEP:ShootBullets(dmg, numbul, cone)
+	local owner = self:GetOwner()
+	owner:DoAttackEvent()
+
+	if self.PointsMultiplier then
+		POINTSMULTIPLIER = self.PointsMultiplier
+	end
+
+	owner:LagCompensation(true)
+	owner:FireBulletsLua(owner:GetShootPos(), owner:GetAimVector(), cone, numbul, dmg, nil, self.Primary.KnockbackScale, self.TracerName, self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
+	owner:LagCompensation(false)
+
+	if self.PointsMultiplier then
+		POINTSMULTIPLIER = nil
+	end
+end
+
 function SWEP:FireAnimationEvent( pos, ang, event, options )
 
 	-- Disables animation based muzzle event
@@ -389,9 +359,9 @@ function SWEP:FireAnimationEvent( pos, ang, event, options )
 	if ( event == 6001 ) then return true end
 
 end
-
-
-function SWEP:DoDrawCrosshair( x, y )
+function SWEP:DrawHUD()
+	self.BaseClass.DrawHUD(self)
+	--surface.SetDrawColor( 0, 250, 255, 255 )
 	if self.Sighting == false and self.Owner:KeyDown(IN_ATTACK2) then
 		self.Sighting = true
 
@@ -405,7 +375,7 @@ function SWEP:DoDrawCrosshair( x, y )
 		timer.Simple(0.256,function() self.SightOffset=0 end)
 		timer.Simple(0.1,function() self.SightOffset2=0 end)
 	end
-	--surface.SetDrawColor( 0, 250, 255, 255 )
+
 	self.reloadoffset = Lerp(RealFrameTime()*15,self.reloadoffset,self.targetoffset)
 	self.reloadoffset2 = Lerp(RealFrameTime()*15,self.reloadoffset2,self.targetoffset2)
 	self.RSO1 = Lerp(RealFrameTime()*20,self.RSO1,self.SightOffset)
@@ -419,7 +389,7 @@ function SWEP:DoDrawCrosshair( x, y )
 	self.VElements["reflexfront"].draw_func = function(weapon)
 		local accusight = util.IntersectRayWithPlane(EyePos(),EyeAngles():Forward(),self.VElements["reflexfront"].info.pos,EyeAngles():Forward()*-1)
 		accusight = WorldToLocal(accusight,Angle(0,0,0),self.VElements["reflexfront"].info.pos,EyeAngles())
-		--draw.DrawText(util.TypeToString(accusight),"DermaDefault",0,0,Color(255,255,255,255))
+		draw.DrawText(util.TypeToString(accusight),"DermaDefault",0,0,Color(255,255,255,255))
 		draw.RoundedBox(0,math.Clamp(accusight.y*-400,0,90)-140,math.Clamp(accusight.z*-400,0,180)-90,280,180,Color(10,10,10,70))
 		draw.RoundedBox(0,math.Clamp(accusight.y*-400,0,90)-140,math.Clamp(accusight.z*-400,0,180)-90,80,35,Color(10,10,10,140))
 		draw.DrawText("弹容: "..self:Clip1(),"DermaDefault",math.Clamp(accusight.y*-400,0,90)-130,math.Clamp(accusight.z*-400,0,180)-80,Color(200,200,200,220))
@@ -445,24 +415,16 @@ function SWEP:DoDrawCrosshair( x, y )
 	self.ConeMod = Lerp(RealFrameTime()*3,self.ConeMod,self.Primary.Cone+(self.Owner:GetVelocity():Length()/7000)*400)
 	local xoff = self.crosshairang.y
 	local yoff = self.crosshairang.p
-	--[[
-    if not self.Sighting then
-		draw.RoundedBox(0,(x+xoff)-((11+(self.ConeMod+1))+self.punch),(y+yoff)-2,7,4,Color(0,0,0,255))
-		draw.RoundedBox(0,(x+xoff)+((3+(self.ConeMod+1))+self.punch),(y+yoff)-2,7,4,Color(0,0,0,255))
-		draw.RoundedBox(0,(x+xoff)-2,(y+yoff)-((11+(self.ConeMod+1))+self.punch),4,7,Color(0,0,0,255))
-		draw.RoundedBox(0,(x+xoff)-2,(y+yoff)+((3+(self.ConeMod+1))+self.punch),4,7,Color(0,0,0,255))
-		draw.RoundedBox(0,(x+xoff)-((10+(self.ConeMod+1))+self.punch),(y+yoff)-1,5,2,Color(0,220,255,255))
-		draw.RoundedBox(0,(x+xoff)+((4+(self.ConeMod+1))+self.punch),(y+yoff)-1,5,2,Color(0,220,255,255))
-		draw.RoundedBox(0,(x+xoff)-1,(y+yoff)-((10+(self.ConeMod+1))+self.punch),2,5,Color(0,220,255,255))
-		draw.RoundedBox(0,(x+xoff)-1,(y+yoff)+((4+(self.ConeMod+1))+self.punch),2,5,Color(0,220,255,255))
-		draw.DrawText("CLIP: "..self:Clip1(),"DermaDefault",(x+xoff+20),y+yoff+20,Color(255,255,255,255))
-	end
-    ]]
+
 	self:DoAnims()
 	self.offset = Lerp(RealFrameTime()*10,self.offset,0)
+	--[[
     if not self.Sighting then
         self:DrawWeaponCrosshair()
     end
-	--self.Owner:GetViewModel(0):SetMaterial("models/weapons/v_smg1/texture5")
-	return true
+	]]
+end
+function SWEP:GetIronsightsDeltaMultiplier()
+end
+function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang) //这个覆盖了sbase的机瞄
 end

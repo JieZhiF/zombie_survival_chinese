@@ -59,6 +59,8 @@ SWEP.Recoil_Recovery_Time   = 0.15 -- 停火后多久开始恢复
 SWEP.Recoil_Recovery_Speed  = 8    -- 自动恢复的速度
 SWEP.Recoil_Recovery_Percentage = 0.15 
 SWEP.Weight = 5
+SWEP.WElements = {}
+SWEP.VElements = {}
 
 function SWEP:Initialize()
 	if not self:IsValid() then return end --???
@@ -77,7 +79,7 @@ function SWEP:Initialize()
 		self.ConeMax = self.ConeMoving
 		self.ConeRamp = 2
 	end
-
+	
 	if CLIENT then
 		self:CheckCustomIronSights()
 		self:Anim_Initialize()
@@ -124,6 +126,10 @@ function SWEP:Reload()
 
 	-- Custom reload function to change reload speed.
 	if self:CanReload() then
+		-- Store whether there's a round chambered before reloading
+		self.HasChamberedRound = self:Clip1() > 0
+		self.HasChamberedRoundSecondary = self:Clip2() > 0
+		
 		self.IdleAnimation = CurTime() + self:SequenceDuration()
 		self:SetNextReload(self.IdleAnimation)
 		self:SetReloadStart(CurTime())
@@ -144,46 +150,65 @@ function SWEP:GetPrimaryClipSize()
 	return math.floor(self:GetMaxClip1() * multi)
 end
 
+-- Add this new function to handle the chambered round logic
 function SWEP:FinishReload()
-	self:SendWeaponAnim(ACT_VM_IDLE)
-	self:SetNextReload(0)
-	self:SetReloadStart(0)
 	self:SetReloadFinish(0)
-	self:EmitReloadFinishSound()
-
+	
 	local owner = self:GetOwner()
-	if not owner:IsValid() then return end
-
-	local max1 = self:GetPrimaryClipSize()
-	local max2 = self:GetMaxClip2()
-
-	if max1 > 0 then
-		local ammotype = self:GetPrimaryAmmoType()
-		local spare = owner:GetAmmoCount(ammotype)
-		local current = self:Clip1()
-		local needed = max1 - current
-
-		needed = math.min(spare, needed)
-
-		self:SetClip1(current + needed)
-		if SERVER then
-			owner:RemoveAmmo(needed, ammotype)
+	
+	-- Handle primary ammo reload
+	if self:GetMaxClip1() > 0 and self:Clip1() < self:GetPrimaryClipSize() and self:ValidPrimaryAmmo() and owner:GetAmmoCount(self:GetPrimaryAmmoType()) > 0 then
+		local primaryAmmo = owner:GetAmmoCount(self:GetPrimaryAmmoType())
+		local currentClip = self:Clip1()
+		local maxClip = self:GetPrimaryClipSize()
+		
+		-- Calculate how much ammo we need
+		local ammoNeeded = maxClip - currentClip
+		
+		-- If we had a chambered round, we can load one extra bullet
+		if self.HasChamberedRound then
+			ammoNeeded = ammoNeeded + 1
+			maxClip = maxClip + 1
 		end
+		
+		-- Don't take more ammo than the player has
+		local ammoToTake = math.min(ammoNeeded, primaryAmmo)
+		
+		-- Set the new clip size
+		self:SetClip1(currentClip + ammoToTake)
+		
+		-- Remove ammo from player's reserves
+		owner:RemoveAmmo(ammoToTake, self:GetPrimaryAmmoType())
 	end
-
-	if max2 > 0 then
-		local ammotype = self:GetSecondaryAmmoType()
-		local spare = owner:GetAmmoCount(ammotype)
-		local current = self:Clip2()
-		local needed = max2 - current
-
-		needed = math.min(spare, needed)
-
-		self:SetClip2(current + needed)
-		if SERVER then
-			owner:RemoveAmmo(needed, ammotype)
+	
+	-- Handle secondary ammo reload
+	if self:GetMaxClip2() > 0 and self:Clip2() < self:GetMaxClip2() and self:ValidSecondaryAmmo() and owner:GetAmmoCount(self:GetSecondaryAmmoType()) > 0 then
+		local secondaryAmmo = owner:GetAmmoCount(self:GetSecondaryAmmoType())
+		local currentClip2 = self:Clip2()
+		local maxClip2 = self:GetMaxClip2()
+		
+		-- Calculate how much ammo we need
+		local ammoNeeded2 = maxClip2 - currentClip2
+		
+		-- If we had a chambered round in secondary, we can load one extra bullet
+		if self.HasChamberedRoundSecondary then
+			ammoNeeded2 = ammoNeeded2 + 1
+			maxClip2 = maxClip2 + 1
 		end
+		
+		-- Don't take more ammo than the player has
+		local ammoToTake2 = math.min(ammoNeeded2, secondaryAmmo)
+		
+		-- Set the new clip size
+		self:SetClip2(currentClip2 + ammoToTake2)
+		
+		-- Remove ammo from player's reserves
+		owner:RemoveAmmo(ammoToTake2, self:GetSecondaryAmmoType())
 	end
+	
+	-- Reset the chambered round flags
+	self.HasChamberedRound = false
+	self.HasChamberedRoundSecondary = false
 end
 
 function SWEP:GetCone()

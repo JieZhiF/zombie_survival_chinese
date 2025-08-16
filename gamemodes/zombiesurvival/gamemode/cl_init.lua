@@ -400,75 +400,35 @@ function GM:ShouldDraw2DWeaponHUD()
 	return GAMEMODE.WeaponHUDMode >= 1 or self:UseOverTheShoulder()
 end
 
---[[
-  Creates a "gel shell" effect around the player.
-  The shell is larger than the player and has a translucent, colored appearance.
-]]
-
-local MedicalAuraDistance = 800 ^ 2
-local SHELL_SCALE = 1.03 -- How much bigger the shell is. Adjust this value for a thicker or thinner shell.
-
--- This is the flag that prevents the game from crashing.
-local bIsDrawingShell = false
-
--- Create a reusable material for the gel effect.
-local matGel = CreateMaterial("gel_shell_material", "VertexLitGeneric", {
-    ["$basetexture"] = "color/white",
-    ["$translucent"] = 1,
-    ["$additive"] = 0,
-    ["$nocull"] = 1,
-    ["$phong"] = "1",
-    ["$phongboost"] = "2",
-    ["$phongexponent"] = "15",
-    ["$phongalbedotint"] = "1",
-    ["$phongfresnelranges"] = "[0.1 0.4 1]",
-})
-
+local MedicalAuraDistance = 1200 ^ 2
+local matAura = Material("models/debug/debugwhite")
+local skip = false
 function GM.PostPlayerDrawMedical(pl)
-    -- CRITICAL FIX: If this hook is running because we are already drawing the shell,
-    -- exit immediately to prevent an infinite loop and a game crash.
-    if bIsDrawingShell then return end
+	if not skip and P_Team(pl) == TEAM_HUMAN and pl ~= MySelf then
+		local eyepos = EyePos()
+		local dist = pl:NearestPoint(eyepos):DistToSqr(eyepos)
+		if dist < MedicalAuraDistance then
+			local green = pl:Health() / pl:GetMaxHealth()
 
-    if not IsValid(pl) or not pl:IsPlayer() or not pl:Alive() or pl == MySelf then return end
-    if P_Team(pl) ~= TEAM_HUMAN then return end
+			pl.SkipDrawHooks = true
+			skip = true
 
-    local eyepos = EyePos()
-    local distSqr = pl:GetPos():DistToSqr(eyepos)
+			render_SuppressEngineLighting(true)
+			render_ModelMaterialOverride(matAura)
+			render_SetBlend((1 - dist / MedicalAuraDistance) * 0.1 * (1 + math.abs(math.sin((CurTime() + pl:EntIndex()) * 4)) * 0.05))
+			render_SetColorModulation(1 - green, green, pl:GetDTBool(DT_PLAYER_BOOL_FRAIL) and 1 or 0)
+				pl:DrawModel()
+			render_SetColorModulation(1, 1, 1)
+			render_SetBlend(1)
+			render_ModelMaterialOverride()
+			render_SuppressEngineLighting(false)
 
-    if distSqr < MedicalAuraDistance then
-        local entityMatrix = cam.GetModelMatrix()
-        if not entityMatrix then return end
-
-        local scaleMatrix = Matrix()
-        scaleMatrix:Scale(Vector(SHELL_SCALE, SHELL_SCALE, SHELL_SCALE))
-
-        cam.PushModelMatrix(entityMatrix * scaleMatrix)
-
-        render.SuppressEngineLighting(true)
-        render.ModelMaterialOverride(matGel)
-
-        local green = pl:Health() / pl:GetMaxHealth()
-        local alpha = (1 - distSqr / MedicalAuraDistance) * 0.7
-        render.SetColorModulation(1 - green, green, pl:GetDTBool(DT_PLAYER_BOOL_FRAIL) and 1 or 0)
-        render.SetBlend(alpha)
-
-        -- Set the flag to true right before we draw.
-        bIsDrawingShell = true
-
-        -- This call will trigger PostPlayerDrawMedical again, but the check at the top will stop it.
-        pl:DrawModel()
-
-        -- Set the flag back to false so the hook works for the next player.
-        bIsDrawingShell = false
-
-        -- Restore all rendering states
-        render.SetBlend(1)
-        render.SetColorModulation(1, 1, 1)
-        render.ModelMaterialOverride()
-        render.SuppressEngineLighting(false)
-        cam.PopModelMatrix()
-    end
+			skip = false
+			pl.SkipDrawHooks = false
+		end
+	end
 end
+
 function GM:OnReloaded()
 	self.BaseClass.OnReloaded(self)
 

@@ -103,8 +103,8 @@ function PANEL:PopulateOptionsData()
             { type = "slider", label = "Option_InterfaceHUDScale", convar = "zs_interfacesize", min = 0.7, max = 1.6, decimals = 1 },
             { type = "slider", label = "Option_IronsightZoom", convar = "zs_ironsightzoom", min = 0, max = 1, decimals = 2 },
             { type = "slider", label = "Option_FilmGrain", convar = "zs_filmgrainopacity", min = 0, max = 255, decimals = 0 },
-            { type = "slider", label = "Option_TransparencyRadius", convar = "zs_transparencyradius", min = 0, max = 2048, decimals = 0 },
-            { type = "slider", label = "Option_ThirdPersonTransparencyRadius", convar = "zs_transparencyradius3p", min = 0, max = 2048, decimals = 0 },
+            { type = "slider", label = "Option_TransparencyRadius", convar = "zs_transparencyradius", min = 0, max = 8192, decimals = 0 },
+            { type = "slider", label = "Option_ThirdPersonTransparencyRadius", convar = "zs_transparencyradius3p", min = 0, max = 8192, decimals = 0 },
             { type = "combobox", label = "Option_WeaponHUDDisplay", choices = {
                 { text = translate.Get("Option_3DDisplay"), value = 0 },
                 { text = translate.Get("Option_2DDisplay"), value = 1 },
@@ -119,11 +119,65 @@ function PANEL:PopulateOptionsData()
             { type = "checkbox", label = "Option_EnableAmbientMusic", convar = "zs_beats" },
             { type = "checkbox", label = "Option_EnableLastManMusic", convar = "zs_playmusic" },
             { type = "slider", label = "Option_MusicVolume", convar = "zs_beatsvolume", min = 0, max = 100, decimals = 0 },
+            -- Human beat set
+            {
+                type = "combobox",
+                label = "Option_HumanAmbientMusic",
+                choices = (function()
+                    local t = {}
+                    for setname in pairs(GAMEMODE.Beats) do
+                        if setname ~= GAMEMODE.BeatSetHumanDefault then
+                            table.insert(t, { text = setname, value = setname })
+                        end
+                    end
+                    table.insert(t, { text = "none", value = "none" })
+                    table.insert(t, { text = "default", value = "default" })
+                    return t
+                end)(),
+                onselect = function(index, value)
+                    RunConsoleCommand("zs_beatset_human", value)
+                end,
+                getdefault = function()
+                    local current = GAMEMODE.BeatSetHuman
+                    return current == GAMEMODE.BeatSetHumanDefault and "default" or current
+                end
+            },
+
+            -- Zombie beat set
+            {
+                type = "combobox",
+                label = "Option_ZombieAmbientMusic",
+                choices = (function()
+                    local t = {}
+                    for setname in pairs(GAMEMODE.Beats) do
+                        if setname ~= GAMEMODE.BeatSetZombieDefault then
+                            table.insert(t, { text = setname, value = setname })
+                        end
+                    end
+                    table.insert(t, { text = "none", value = "none" })
+                    table.insert(t, { text = "default", value = "default" })
+                    return t
+                end)(),
+                onselect = function(index, value)
+                    RunConsoleCommand("zs_beatset_zombie", value)
+                end,
+                getdefault = function()
+                    local current = GAMEMODE.BeatSetZombie
+                    return current == GAMEMODE.BeatSetZombieDefault and "default" or current
+                end
+            },
+
         },
         Crosshair = {
             { type = "checkbox", label = "Option_DrawCrosshairOnAim", convar = "zs_ironsightscrosshair" },
             { type = "checkbox", label = "Option_DisableCrosshairRotate", convar = "zs_nocrosshairrotate" },
             { type = "checkbox", label = "Option_Usecirclecrosshair", convar = "zs_crosshair_cicrle" },
+
+            { type = "checkbox", label = "Option_zsw_Cooldown_Enable", convar = "zsw_enable_cooldown" },
+            { type = "checkbox", label = "Option_zsw_enable_hud", convar = "zsw_enable_hud" },
+            { type = "checkbox", label = "Option_zsw_rts_hud", convar = "zsw_enable_rts_hud" },
+            { type = "checkbox", label = "Option_zsw_crosshair_mode", convar = "zsw_crosshair_mode" },
+
             { type = "slider", label = "Option_CrosshairLineCount", convar = "zs_crosshairlines", min = 2, max = 8, decimals = 0 },
             { type = "slider", label = "Option_CrosshairAngleOffset", convar = "zs_crosshairoffset", min = 0, max = 90, decimals = 0 },
             { type = "slider", label = "Option_CrosshairThickness", convar = "zs_crosshairthickness", min = 0.5, max = 2, decimals = 1 },
@@ -168,6 +222,12 @@ function PANEL:PopulateOptionsData()
             { type = "slider", label = "Option_DamageNumberSpeed", convar = "zs_dmgnumberspeed", min = 0, max = 1, decimals = 1 },
             { type = "slider", label = "Option_DamageNumberLife", convar = "zs_dmgnumberlife", min = 0.2, max = 1.5, decimals = 1 },
             { type = "slider", label = "Option_PropRotationSensitivity", convar = "zs_proprotationsens", min = 0.1, max = 4, decimals = 1 },
+            { type = "combobox", label = "Option_PropRotationAngle", choices = {
+                { text = translate.Get("Option_PropRotationAngle_NONE"), value = 0 },
+                { text = translate.Get("Option_PropRotationAngle_15"), value = 15 },
+                { text = translate.Get("Option_PropRotationAngle_30"), value = 30 },
+                { text = translate.Get("Option_PropRotationAngle_45"), value = 45 },
+            }, onselect = function(index, value) RunConsoleCommand("zs_proprotationsnap", value) end, getdefault = function() return GetConVarNumber("zs_proprotationsnap") end },
         }
     }
 end

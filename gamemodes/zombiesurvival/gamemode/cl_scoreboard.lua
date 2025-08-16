@@ -402,10 +402,10 @@ end
 
 -- 用下面的代码替换你旧的 OnCursorEntered 函数
 function PANEL:OnCursorEntered()
-    if not IsValid(PlayerCard) then return end
+    if not IsValid(PlayerHoverCard) then return end
     
     -- 调用我们新的显示函数，将自己 (self) 作为源面板传入
-    PlayerCard:ShowAndUpdate(self)
+    PlayerHoverCard:ShowAndUpdate(self)
 end
 
 
@@ -446,8 +446,8 @@ function PANEL:PerformLayout()
 	self.m_RemortLabel:CenterVertical()
 
 	    -- 新增代码: 确保全局名片面板存在
-    if not IsValid(PlayerCard) then
-        PlayerCard = vgui.Create("ZSPlayerCard")
+    if not IsValid(PlayerHoverCard) then
+        PlayerHoverCard = vgui.Create("ZSPlayerHoverCard")
     end
 	
 end
@@ -569,7 +569,7 @@ end
 vgui.Register("ZSPlayerPanel", PANEL, "Button")
 
 
-local PlayerCard = nil
+local PlayerHoverCard = nil
 local PANEL = {}
 
 function PANEL:Init()
@@ -684,4 +684,4 @@ end
 function PANEL:OnCursorExited()
 end
 
-vgui.Register("ZSPlayerCard", PANEL, "DPanel")
+vgui.Register("ZSPlayerHoverCard", PANEL, "DPanel")

@@ -1955,12 +1955,14 @@ LANGUAGE.weapon_quality_modifier_headshot_multi = "爆头伤害加成"
 LANGUAGE.weapon_quality_modifier_melee_knock = "击退"
 
 -------- Option Menu ------
+-------- 分类设置     ------
 LANGUAGE.Category_HUD = "HUD"
 LANGUAGE.Category_Environment = "环境"
 LANGUAGE.Category_Crosshair = "准星"
 LANGUAGE.Category_Color = "颜色"
 LANGUAGE.Category_Effect = "效果"
 LANGUAGE.Category_Other = "其他"
+-------------- 其他选项 ----------------
 LANGUAGE.Option_ThirdPersonKnockdown = "被击倒时暂时使用第三人称视角"
 LANGUAGE.Option_AlwaysBecomeZombie = "始终作为僵尸开始"
 LANGUAGE.Option_AlwaysQuickBuy = "始终从商店和重组机快速购买"
@@ -1969,8 +1971,8 @@ LANGUAGE.Option_DisableAutoRevive = "禁用自动复活（适用于下一回合�
 LANGUAGE.Option_DisableAmmoFromBoxes = "禁用从补给箱和迷你补给箱获得弹药"
 LANGUAGE.Option_DisablePropPickup = "禁用道具拾取（仅拾取物品）"
 LANGUAGE.Option_DisableIronSights = "禁用铁瞄准镜反转"
-LANGUAGE.Option_DisableCrosshairRotate = "禁用准星旋转"
-LANGUAGE.Option_Usecirclecrosshair = "启用环形准星（散弹枪）"
+
+
 LANGUAGE.Option_DisableScopes = "禁用瞄准镜"
 LANGUAGE.Option_PreventBossPick = "防止被选为boss僵尸"
 LANGUAGE.Option_OneClickUnluck = "一键解锁禁用"
@@ -1978,9 +1980,12 @@ LANGUAGE.Option_DamageNumberSize = "伤害数字大小"
 LANGUAGE.Option_DamageNumberSpeed = "伤害数字弹出时间"
 LANGUAGE.Option_DamageNumberLife = "伤害数字寿命"
 LANGUAGE.Option_PropRotationSensitivity = "道具旋转灵敏度"
-LANGUAGE.Option_TransparencyRadius = "透明度半径"
-LANGUAGE.Option_ThirdPersonTransparencyRadius = "第三人称透明度半径"
 LANGUAGE.Option_PropRotationAngle = "道具旋转角度"
+LANGUAGE.Option_PropRotationAngle_NONE = "自由旋转"
+LANGUAGE.Option_PropRotationAngle_15 = "15度"
+LANGUAGE.Option_PropRotationAngle_30 = "30度"
+LANGUAGE.Option_PropRotationAngle_45 = "45度"
+--------------- HUD选项 ---------------
 LANGUAGE.Option_AlwaysShowNailHealth = "始终显示钉子的健康值"
 LANGUAGE.Option_ShowXP = "显示经验值"
 LANGUAGE.Option_NoFloatingScore = "不显示浮动分数"
@@ -2008,6 +2013,9 @@ LANGUAGE.Option_AllDisplay = "所有显示"
 LANGUAGE.Option_HumanHealthDisplay = "人类健康显示"
 LANGUAGE.Option_PercentageHealth = "百分比健康"
 LANGUAGE.Option_NumericHealth = "数字健康"
+LANGUAGE.Option_TransparencyRadius = "透明度半径"
+LANGUAGE.Option_ThirdPersonTransparencyRadius = "第三人称透明度半径"
+
 LANGUAGE.Option_EnableAmbientMusic = "启用环境音乐"
 LANGUAGE.Option_EnableLastManMusic = "启用最后一个人音乐"
 LANGUAGE.Option_MusicVolume = "音乐音量"
@@ -2015,12 +2023,22 @@ LANGUAGE.Option_HumanAmbientMusic = "人类环境音乐"
 LANGUAGE.Option_Default = "默认"
 LANGUAGE.Option_ZombieAmbientMusic = "僵尸环境音乐"
 LANGUAGE.Option_None = "无"
+------- 准星设置 ------
 LANGUAGE.Option_DrawCrosshairOnAim = "瞄准时绘制准星"
+LANGUAGE.Option_DisableCrosshairRotate = "禁用准星旋转"
+LANGUAGE.Option_Usecirclecrosshair = "启用环形准星（散弹枪）"
 LANGUAGE.Option_CrosshairLineCount = "准星线条数"
 LANGUAGE.Option_CrosshairAngleOffset = "准星角度偏移"
 LANGUAGE.Option_CrosshairThickness = "准星粗细"
 LANGUAGE.Option_CrosshairColor = "准星颜色"
 LANGUAGE.Option_CrosshairAuxiliaryColor = "准星辅助颜色"
+LANGUAGE.Option_zsw_Cooldown_Enable = "显示近战冷却"
+LANGUAGE.Option_zsw_enable_hud= "近战显示"
+LANGUAGE.Option_zsw_rts_hud= "显示格挡图标和近战HUD"
+LANGUAGE.Option_zsw_crosshair_mode = "近战准星模式"
+
+
+
 LANGUAGE.Option_HumanHealthIndicatorHigh = "人类健康指示器 - 高健康"
 LANGUAGE.Option_HumanHealthIndicatorLow = "人类健康指示器 - 低健康"
 -- language_chinese.lua

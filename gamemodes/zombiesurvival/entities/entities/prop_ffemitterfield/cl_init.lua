@@ -23,7 +23,7 @@ end
 function ENT:OnRemove()
 	self.AmbientSound:Stop()
 end
-
+ 
 local materialp = {}
 materialp["$refractamount"] = 0.01
 materialp["$colortint"] = "[1.0 1.3 1.9]"

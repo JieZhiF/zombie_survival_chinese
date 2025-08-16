@@ -10,21 +10,142 @@ SWEP.BobScale = 1
 SWEP.SwayScale = 1
 SWEP.Slot = 0
 
+SWEP.offset = 0
+SWEP.IronSightAng = Angle(0,0,0)
+SWEP.IronSightPos = Vector(0,0,0)
+SWEP.IronPos = Vector(0,0,0) -- dont edit this
+SWEP.IronAng = Angle(0,0,0) -- dont edit this
+SWEP.InspectSpeed = 1
+SWEP.IronSpeed = 3
+SWEP.InspectOnDeploy = false
+SWEP.DeployInspectTime = 5
+SWEP.Inspect = {
+	{pos = Vector(0,0,0), ang = Angle(0,0,0), time = -1}, //default inspect position is the default position
+}
+SWEP.BoneInspect = {
+	{
+		{pos = Vector(0,0,0), ang = Angle(0,0,0),bone = "default"}, //allows you to manipulate the C model bones
+	}
+}
+SWEP.Breath = 0
+SWEP.Breathmult = 10
+SWEP.IronEnable = true 
+SWEP.deploytime = 0
+
+
 SWEP.IronsightsMultiplier = 0.6
 
 SWEP.HUD3DScale = 0.01
 SWEP.HUD3DBone = "base"
 SWEP.HUD3DAng = Angle(180, 0, 0)
 
+local key = 1
+local keytime = 0
+for k ,v in pairs(SWEP.BoneInspect) do //add extra variables to all bones so that we dont have to modify the original bone positions
+	for f, b in pairs(v) do
+		b.modv = Vector(0,0,0)
+		b.moda = Angle(0,0,0)
+	end
+end
+
 function SWEP:Deploy()
+	if self.InspectOnDeploy == true then
+		self.deploytime = CurTime()+self.DeployInspectTime
+	end
+	self:CreateModels(self.VElements)
 	return true
 end
 
-function SWEP:TranslateFOV(fov)
+function SWEP:DoAnims() //call this function from the child sweps think hook to enable iron sights, inspecting, and 'breathing' viewmodel shifting
+	
+	//check to see if the models are valid or nil
+	local check = true
+	if self.VElements~=nil then
+		for k, v in pairs(self.VElements) do
+			if check == true then
+				if v.modelEnt==nil then
+					self:CreateModels(self.VElements)
+					check = false
+				end
+			end
+		end
+	end
+	check = true
+	if self.WElements~=nil then
+		for k, v in pairs(self.WElements) do
+			if check == true then
+				if v.modelEnt==nil then
+					self:CreateModels(self.WElements)
+					check = false
+				end
+			end
+		end
+	end
+	
+	if self.Owner:KeyDown(IN_ATTACK2) and self.IronEnable then //do ironsighting first to allow it to override inspecting
+		self.IronPos.x = Lerp(RealFrameTime()*self.IronSpeed,self.IronPos.x,self.IronSightPos.x)
+		self.IronPos.y = Lerp(RealFrameTime()*self.IronSpeed,self.IronPos.y,self.IronSightPos.y)
+		self.IronPos.z = Lerp(RealFrameTime()*self.IronSpeed,self.IronPos.z,self.IronSightPos.z)
+		self.IronAng = LerpAngle(RealFrameTime()*self.IronSpeed,self.IronAng,self.IronSightAng)
+		self.Breath = math.sin(CurTime())/(self.Breathmult*80)
+		self.SwayScale = 0.0 //decreases swep viewmodel sway while scoping
+     	self.BobScale = 0.0 //decreases swep viewemodel bob while scoping
+	elseif (input.IsKeyDown(KEY_G) or self.deploytime > CurTime()) and not input.IsMouseDown(MOUSE_LEFT) then //does inspecting while the G key is pressed down. this key is used because by default garrysmod does not bind G to any function.
+		self.Breath = math.sin(CurTime())/(self.Breathmult*4) //simple sine function
+		self:DoInspect() //calls inspecting
+	else //reset to default position when doing nothing
+		self.IronPos.x = Lerp(RealFrameTime()*self.IronSpeed,self.IronPos.x,0)
+		self.IronPos.y = Lerp(RealFrameTime()*self.IronSpeed,self.IronPos.y,0)
+		self.IronPos.z = Lerp(RealFrameTime()*self.IronSpeed,self.IronPos.z,0)
+		self.IronAng = LerpAngle(RealFrameTime()*self.IronSpeed,self.IronAng,Angle(0,0,0))
+		self.Breath = math.sin(CurTime())/(self.Breathmult*4)
+		self.SwayScale = 1
+     	self.BobScale = 1
+		keytime = 0
+		key = 1
+	end
+	local pos = self.Owner:GetViewModel(0):GetPos()
+	local ang = self.Owner:GetViewModel(0):GetAngles()
+	self:GetViewModelPosition(pos,ang)
+end
+
+function SWEP:GetViewModelPosition(Pos,Ang)
+	local tmp = Ang
+	Ang:RotateAroundAxis(EyeAngles():Forward(),self.IronAng.p) //rotate the shit
+	Ang:RotateAroundAxis(EyeAngles():Up(),self.IronAng.y)
+	Ang:RotateAroundAxis(EyeAngles():Right(),self.IronAng.r)
+	return Pos+(tmp:Forward()*(self.offset+self.IronPos.x))+(tmp:Right()*self.IronPos.y)+(tmp:Up()*(self.IronPos.z+self.Breath)),Ang+Angle((self.offset+10)/3,0,0)
+end
+
+function SWEP:DoInspect()
+	local info = self.Inspect[key]
+	local Bones = self.BoneInspect[key]
+	if keytime == 0 then
+		keytime = CurTime()+self.Inspect[key].time
+	end
+	if CurTime() > keytime and info.time > 0 then
+		key = key + 1
+		keytime = CurTime()+self.Inspect[key].time
+	end
+	self.keyframe=key
+	self.IronPos = self:LerpCurveVec(1,self.IronPos,info.pos)
+	self.IronAng = self:LerpCurveAng(1,self.IronAng,info.ang)
+end
+
+function SWEP:LerpCurveVec(a,b,c)
+	return LerpVector( self:inv_lerp( 1, -1, math.cos( ((CurTime()-(keytime-self.Inspect[key].time))/(self.Inspect[key].time)) / self.InspectSpeed)), b, c)
+end
+function SWEP:LerpCurveAng(a,b,c)
+	return LerpAngle( self:inv_lerp( 1, -1, math.cos( ((CurTime()-(keytime-self.Inspect[key].time))/(self.Inspect[key].time)) / self.InspectSpeed)), b, c)
+end
+function SWEP:inv_lerp(a,b,c)
+	return (c-a)/(b-a)
+end
+function SWEP:TranslateFOV(fov)//调节FOV
 	return (GAMEMODE.FOVLerp + (self.IsScoped and not GAMEMODE.DisableScopes and 0 or (1 - GAMEMODE.FOVLerp) * (1 - GAMEMODE.IronsightZoomScale))) * fov
 end
 
-function SWEP:AdjustMouseSensitivity()
+function SWEP:AdjustMouseSensitivity()//调节鼠标灵敏度
 	if self:GetIronsights() then return GAMEMODE.FOVLerp + (self.IsScoped and not GAMEMODE.DisableScopes and 0 or (1 - GAMEMODE.FOVLerp) * (1 - GAMEMODE.IronsightZoomScale)) end
 end
 
@@ -256,7 +377,7 @@ function SWEP:GetIronsightsDeltaMultiplier()
 end
 
 local ghostlerp = 0
-function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
+function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang) //这个覆盖了sbase的机瞄
 	local bIron = self:GetIronsights() and not GAMEMODE.NoIronsights
 
 	if bIron ~= self.bLastIron then

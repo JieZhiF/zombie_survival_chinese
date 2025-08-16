@@ -1,5 +1,4 @@
 SWEP.Base = "weapon_zs_basemelee"
---labordbj劳动节标记
 SWEP.PrintName = ""..translate.Get("weapon_zs_hammer")
 SWEP.Description = ""..translate.Get("weapon_zs_hammer_description")
 
@@ -12,7 +11,7 @@ SWEP.UseHands = true
 SWEP.Primary.ClipSize = 1
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "GaussEnergy"
-SWEP.Primary.Delay = 1
+SWEP.Primary.Delay = 0.5
 SWEP.Primary.DefaultClip = 32
 
 SWEP.Secondary.ClipSize = 1
@@ -20,7 +19,7 @@ SWEP.Secondary.DefaultClip = 1
 SWEP.Secondary.Ammo = "dummy"
 
 --SWEP.MeleeDamage = 35 -- Reduced due to instant swing speed
-SWEP.MeleeDamage = 25
+SWEP.MeleeDamage = 13
 SWEP.MeleeRange = 75
 SWEP.MeleeSize = 0.875
 
@@ -33,7 +32,7 @@ SWEP.NoPropThrowing = true
 SWEP.HitGesture = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE
 SWEP.MissGesture = SWEP.HitGesture
 
-SWEP.HealStrength = 1.875
+SWEP.HealStrength = 12
 
 SWEP.NoHolsterOnCarry = true
 

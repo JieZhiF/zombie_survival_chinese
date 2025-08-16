@@ -13,7 +13,6 @@ function ENT:Initialize()
 		phys:EnableMotion(false)
 		phys:Wake()
 	end
-	self.CollisionWithHuamn = false
 	self:SetMaxObjectHealth(450)
 	self:SetObjectHealth(self:GetMaxObjectHealth())
 end

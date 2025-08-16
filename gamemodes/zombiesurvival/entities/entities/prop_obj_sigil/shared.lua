@@ -1,3 +1,4 @@
+INC_SHARED()
 ENT.Type = "anim"
 
 ENT.MaxHealth = 888

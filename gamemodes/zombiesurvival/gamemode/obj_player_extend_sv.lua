@@ -278,6 +278,33 @@ function meta:HasWon()
 	return false
 end
 
+function meta:IsDefending()
+    local wep = self:GetActiveWeapon()
+    -- wep:IsBlocking() 是你武器中已经定义好的函数，直接调用即可
+    return IsValid(wep) and wep.IsBlocking and wep:IsBlocking()
+end
+
+--[[
+    功能: 获取玩家当前格挡武器的防御值。
+    注意: 这个函数现在在服务器上运行，'self' 代表任意一个玩家实例，而不是特指本地玩家。
+    用法: ply:GetBlockDefense()
+    领域: Server
+]]
+function meta:GetBlockDefense()
+    local wep = self:GetActiveWeapon()
+    return IsValid(wep) and wep.DefendingDamageBlocked
+end
+
+--[[
+    功能: 获取玩家当前格挡武器的默认防御值。
+    用法: ply:GetBlockDefenseDefault()
+    领域: Server
+]]
+function meta:GetBlockDefenseDefault()
+    local wep = self:GetActiveWeapon()
+    return IsValid(wep) and wep.DefendingDamageBlockedDefault
+end
+
 function meta:GetBossZombieIndex()
 	local bossclasses = {}
 	for _, classtable in pairs(GAMEMODE.ZombieClasses) do

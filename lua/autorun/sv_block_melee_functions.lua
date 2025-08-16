@@ -1,20 +1,6 @@
 -- Enable/Disable the melee blocking feature
 CreateConVar("zsw_enable_block", 1, {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Enable or disable the melee blocking feature")
 
--- Enable/Disable the melee cooldown feature
-CreateClientConVar("zsw_enable_cooldown", 1, true, false, "Enable or disable the melee cooldown feature")
-
--- Enable/Disable the custom HUD
-CreateClientConVar("zsw_enable_hud", 1, true, false, "Enable or disable the custom HUD")
-
--- Enable/Disable RTS Hud
-CreateClientConVar("zsw_enable_rts_hud", 1, true, false, "Enable or disable the RTS HUD")
-
--- Crosshair mode: 0 = Classic, 1 = Remastered
-CreateClientConVar("zsw_crosshair_mode", 1, true, false, "Select the crosshair mode: 0 for Classic, 1 for Remastered")
-
--- Define the client CVAR for font choice
-CreateClientConVar("zsw_font_choice", "1", true, false, "Choose the font to use: 1 = ZSM_Coolvetica (default), 2 = Remington Noiseless, 3 = Typenoksidi, 4 = Ghoulish Fright AOE")
 
 if CLIENT then
     

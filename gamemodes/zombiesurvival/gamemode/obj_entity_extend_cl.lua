@@ -205,8 +205,11 @@ timer.Create("CachedBabies", 0.5, 0, function()
 end)
 
 GM.CachedSigils = {}
-timer.Create("CacheSigils", 1, 0, function()
-	if not GAMEMODE then return end
-
-	GAMEMODE.CachedSigils = GAMEMODE:GetSigils()
+timer.Create("CacheSigils", 2, 0, function()  -- 改为2秒间隔
+    if not GAMEMODE then return end
+    
+    -- 检查游戏是否在进行中，避免重启时的问题
+    if GAMEMODE:GetWave() < 0 then return end
+    
+    GAMEMODE.CachedSigils = GAMEMODE:GetSigils()
 end)

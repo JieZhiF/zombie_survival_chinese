@@ -3,16 +3,17 @@ ESCAPESTAGE_ESCAPE = 1
 ESCAPESTAGE_BOSS = 2
 ESCAPESTAGE_DEATH = 3
 
+-- 在 sh_sigils.lua 中
 function GM:GetSigils()
-	local sigils = {}
+    local sigils = {}
 
-	for _, ent in pairs(ents.FindByClass("prop_obj_sigil")) do
-		if ent:IsValid() and ent:GetSigilHealthBase() ~= 0 then
-			sigils[#sigils + 1] = ent
-		end
-	end
+    for _, ent in pairs(ents.FindByClass("prop_obj_sigil")) do
+        if ent:IsValid() and ent.GetSigilHealthBase and ent:GetSigilHealthBase() ~= 0 then
+            sigils[#sigils + 1] = ent
+        end
+    end
 
-	return sigils
+    return sigils
 end
 
 function GM:GetUncorruptedSigils()
