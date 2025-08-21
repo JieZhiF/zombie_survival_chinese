@@ -1,3 +1,14 @@
+-- 本文件主要负责处理服务器端的“符文”（Sigil）系统，这是一种游戏目标。文件包含了创建、放置符文的逻辑，以及当符文状态（被腐化或净化）改变时触发的事件和网络通信。
+
+-- GM:PreOnSigilCorrupted 在符文被腐化之前调用的钩子函数，用于执行前置逻辑。
+-- GM:OnSigilCorrupted 当符文被腐化时调用，并向所有客户端广播当前已腐化的符文数量。
+-- GM:PreOnSigilUncorrupted 在符文被净化之前调用的钩子函数。
+-- GM:OnSigilUncorrupted 当符文被净化时调用，并向所有客户端广播事件。
+-- SortDistFromLast 一个排序辅助函数，用于根据距离对节点进行升序排序。
+-- GM:CreateSigils 核心函数，负责在地图上创建和布置符文实体。它会从地图预设的节点或分析器（Profiler）生成的节点中，通过一套复杂的加权选择算法来挑选出合适的位置，以确保符文的分布既分散又合理。
+-- GM:SetUseSigils 设置是否启用符文系统，并将这个状态同步为一个全局变量。
+-- GM:GetUseSigils 获取当前是否启用了符文系统。
+
 -- 在Sigil被腐化前调用（钩子函数，用于在事件发生前插入自定义逻辑）
 function GM:PreOnSigilCorrupted(ent, dmginfo)
 end

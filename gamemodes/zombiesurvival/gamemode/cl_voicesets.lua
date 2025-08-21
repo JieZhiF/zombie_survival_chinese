@@ -1,3 +1,24 @@
+-- 本文件主要负责定义和管理不同角色模型的语音音效集，并根据从服务器接收的网络事件指令，在客户端播放对应的玩家声音。
+
+-- VoiceSets[VOICESET_MALE] 定义标准男性角色的语音集
+-- VoiceSets[VOICESET_BARNEY] 定义Barney角色的语音集
+-- VoiceSets[VOICESET_FEMALE] 定义标准女性角色的语音集
+-- VoiceSets[VOICESET_ALYX] 定义Alyx角色的语音集
+-- VoiceSets[VOICESET_COMBINE] 定义联合军士兵角色的语音集
+-- VoiceSets[VOICESET_MONK] 定义Grigori神父角色的语音集
+-- meta:GetVoiceLines 根据玩家当前语音模型和事件类型，获取对应的音效列表
+-- meta:PlayEyePainSound 播放一个随机的眼部受伤音效
+-- meta:PlayGiveAmmoSound 播放一个随机的给予弹药音效
+-- meta:PlayDeathSound 播放一个随机的死亡音效
+-- meta:PlayZombieDeathSound 播放玩家扮演僵尸时的死亡音效
+-- meta:PlayPainSound 根据传入的生命值，播放轻度、中度或重度的受伤音效
+-- meta:PlayZombiePainSound 播放玩家扮演僵尸时的受伤音效
+-- net.Receive("voice_eyepain") 接收播放眼部受伤音效的网络消息
+-- net.Receive("voice_giveammo") 接收播放给予弹药音效的网络消息
+-- net.Receive("voice_death") 接收播放死亡音效的网络消息
+-- net.Receive("voice_zombiedeath") 接收播放僵尸死亡音效的网络消息
+-- net.Receive("voice_pain") 接收播放受伤音效的网络消息，并附带生命值信息
+-- net.Receive("voice_zombiepain") 接收播放僵尸受伤音效的网络消息
 local VoiceSets = {}
 
 VoiceSets[VOICESET_MALE] = {

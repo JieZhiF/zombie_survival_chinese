@@ -1,4 +1,29 @@
 -- 这个系统用于创建节点，这些节点可以被用来生成动态目标点（例如僵尸逃生模式中的僵尸刷新点或目标点）。
+-- 本文件主要负责一个名为“分析器”（Profiler）的系统，该系统用于在地图上动态生成或加载一组节点（位置点）。这些节点可以被游戏模式用于各种目的，例如作为僵尸的刷新点、玩家的目标点或路径点。系统可以在游戏开始前通过观察玩家的位置来自动学习合适的节点，也可以加载由地图作者预先制作好的节点文件。
+
+-- GM.ProfilerNodes 一个表格，用于存储当前地图所有已加载或已生成的节点坐标。
+-- GM.ProfilerFolder 存放自动生成的节点文件的目录名称。
+-- GM.ProfilerFolderPreMade 存放预先制作（手动放置）的节点文件的目录名称。
+-- GM.ProfilerVersion 节点数据文件的版本号，用于检查兼容性。
+-- GM.MaxProfilerNodes 允许系统自动生成的最大节点数量。
+-- ZSProfiler (Initialize Hook) 在服务器初始化时创建所需的节点文件目录。
+-- GM:ClearProfiler 清除（实际上是保存）当前的分析器节点数据。
+-- GM:SaveProfilerPreMade 将当前的节点数据保存为预设文件，供地图制作者或管理员使用。
+-- GM:DeleteProfilerPreMade 删除当前地图的预设节点文件。
+-- GM:SaveProfiler 保存自动生成的节点数据。
+-- FetchNodes 一个回调函数，用于处理从网络URL下载的节点数据。
+-- GM:LoadNodeProfile 加载并验证节点数据，会检查版本号以确保兼容性。
+-- GM:LoadProfiler 加载自动生成的节点文件。
+-- GM:GetProfilerFile 获取当前地图的自动生成节点文件的完整路径。
+-- GM:GetProfilerFilePreMade 获取当前地图的预设节点文件的完整路径。
+-- GM:ProfilerEnabled 检查分析器功能是否应在当前游戏模式下启用。
+-- GM:NeedsProfiling 检查是否还需要继续分析并添加新的节点。
+-- GM:DebugProfiler 一个调试函数，用于在游戏内将所有节点的位置可视化显示出来。
+-- SkewedDistance 一个自定义的距离计算函数，它在计算时会给予垂直（Z轴）距离更大的权重。
+-- GM:ProfilerPlayerValid 核心验证函数，通过一系列复杂的检查（如玩家状态、周围环境、是否在室内、是否靠近现有节点或危险区域等）来判断一个玩家当前的位置是否适合作为一个新的节点。
+-- GM:ProfilerTick 分析器的主要逻辑循环，由计时器定期调用。它会遍历所有玩家，验证他们的位置，并将有效的位置添加为新的节点。
+-- ZSProfiler (Timer) 创建一个定时器，周期性地执行 ProfilerTick 函数来收集节点。
+-- ZSProfiler (OnWaveStateChanged Hook) 在游戏波次开始后，停止节点收集的定时器，锁定本局游戏使用的节点。
 
 GM.ProfilerNodes = {} -- 一个表，用于存储地图上所有自动或手动生成的“分析器节点”（即潜在的sigil点或路径点）。
 GM.ProfilerFolder = "zsprofiler" -- 用于存储自动生成节点数据的文件目录名。

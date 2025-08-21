@@ -1,3 +1,7 @@
+-- 本文件提供了将Lua table（表）序列化为字符串以及从字符串反序列化回table的功能，主要用于数据存储或网络传输。
+
+-- Deserialize 将一个序列化后的字符串转换回Lua table
+-- Serialize 将一个Lua table转换为序列化字符串
 local sandbox_env = {Vector = Vector, Angle = Angle}
 
 function Deserialize(sIn)

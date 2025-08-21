@@ -1,4 +1,12 @@
-GM.OverTheShoulder = false
+
+-- 本文件负责管理游戏中的越肩（第三人称）摄像机系统。它包括摄像机的启用/禁用、鼠标输入处理、与摄像机视角同步的玩家移动调整，以及计算摄像机的最终位置和朝向，同时处理墙壁碰撞和辅助瞄准。
+
+-- GM.OverTheShoulder 一个布尔值，用于标记越肩摄像机模式是否已激活。
+-- GM:UseOverTheShoulder 检查当前是否应使用越肩摄像机。
+-- GM:ToggleOTSCamera 切换越肩摄像机模式的开关，可在左肩、右肩和第一人称之间循环。
+-- GM:InputMouseApplyOTS 处理鼠标输入，以更新越肩摄像机的俯仰角和偏航角。
+-- GM:CreateMoveOTS 在玩家移动时被调用，用于实现低血量或特定状态下的镜头摇晃效果，并根据摄像机朝向校正玩家的移动方向。
+-- GM:CalcViewOTS 核心的摄像机视图计算函数。它确定摄像机在世界中的最终位置（避免穿墙），计算玩家模型的精确瞄准方向以对准屏幕中心，并设置最终的渲染视角。GM.OverTheShoulder = false
 
 local otscameraangles = Angle()
 local otsdesiredright = 0

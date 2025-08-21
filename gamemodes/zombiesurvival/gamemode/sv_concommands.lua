@@ -1,3 +1,26 @@
+-- 本文件主要负责处理从客户端发送至服务器的控制台指令（ConCommand），用于处理玩家的各种交互行为，如购买、升级、给予物品以及管理员调试等。
+
+-- GM:ConCommandErrorMessage 向玩家发送一个居中显示的错误消息并播放提示音。
+-- zs_pointsshopbuy 处理玩家从点数商店或废料商店购买物品的逻辑。
+-- zs_dismantle 处理玩家拆解武器或物品以获得废料的逻辑。
+-- zs_upgrade 处理玩家使用废料在升级台升级当前武器的逻辑。
+-- worthrandom 在游戏开始时给予玩家一件随机的初始装备。
+-- worthcheckout 处理玩家在游戏开始时根据“价值点”选择并确认初始装备的逻辑。
+-- zsdropweapon 处理玩家丢弃当前手持武器或指定库存物品的逻辑。
+-- zsemptyclip 处理玩家清空当前武器弹匣，将子弹退回备弹的逻辑。
+-- GM:TryGetLockOnTrace 一个辅助函数，用于检测玩家面前是否有可以互动的其他玩家。
+-- zsgiveammo 处理玩家将自己的备用弹药给予面前另一名玩家的逻辑。
+-- zsgiveweapon 处理玩家将当前武器或库存物品给予面前另一名玩家的逻辑。
+-- zsgiveweaponclip 处理玩家将当前武器（包含弹匣内的子弹）给予面前另一名玩家的逻辑。
+-- zsdropammo 处理玩家丢弃一份指定类型弹药的逻辑。
+-- zs_resupplyammotype 设置玩家在补给点优先补给的弹药类型。
+-- zs_shitmap_check 管理员指令，用于检查地图中特定实体（传送门、按钮、门）的数量。
+-- zs_shitmap_toteleport 超级管理员指令，用于传送到地图上指定的传送门实体。
+-- zs_shitmap_teleport_on 超级管理员指令，用于启用地图上所有的传送门。
+-- zs_shitmap_teleport_off 超级管理员指令，用于禁用地图上所有的传送门。
+-- zs_shitmap_tobutton 超级管理员指令，用于传送到地图上指定的按钮实体。
+-- zs_shitmap_tomover 超级管理员指令，用于传送到地图上指定的门或移动平台实体。
+-- zs_mutationshop_click 处理僵尸玩家使用代币购买变异技能的逻辑。
 function GM:ConCommandErrorMessage(pl, message)
 	pl:CenterNotify(COLOR_RED, message)
 	pl:SendLua("surface.PlaySound(\"buttons/button10.wav\")")

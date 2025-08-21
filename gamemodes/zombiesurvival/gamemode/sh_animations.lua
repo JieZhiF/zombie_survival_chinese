@@ -1,3 +1,10 @@
+-- 本文件主要负责处理和优化玩家的动画，根据玩家的移动状态（如跑、跳、蹲）、团队（人类或僵尸）以及是否携带物品来计算和更新正确的动画。
+
+-- GM:PlayerShouldTaunt 判断玩家是否应该执行嘲讽动作
+-- GM:CalcMainActivity 根据玩家的速度和状态（如跳跃、蹲伏、游泳）计算其主要动画活动
+-- GM:UpdateAnimation 根据玩家的移动速度更新动画的播放速率
+-- GM:DoAnimationEvent 处理动画事件，如头部受创的退缩动画
+-- GM:TranslateActivity 当玩家携带物体时，转换其动画活动到相应的持物动画
 -- Animations are heavily optimized.
 
 local TEAM_UNDEAD = TEAM_UNDEAD

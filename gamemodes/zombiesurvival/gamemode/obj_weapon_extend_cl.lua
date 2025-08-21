@@ -1,3 +1,14 @@
+-- 本文件主要负责扩展Garry's Mod中"Weapon"（武器）对象在客户端的绘制功能，包括自定义准星、瞄准镜样式、武器选择界面的显示以及隐藏武器模型等。
+
+-- DrawWeaponCrosshair 一个主函数，用于根据设置调用绘制十字准星和中心点。
+-- DrawAnimatedRingCrosshair 绘制一个动态的、可以根据武器精准度（cone）变化大小和间距的环形准星。
+-- DrawCrosshairCross 绘制十字形的准星线条，其大小和间距会根据武器的精准度动态变化。
+-- DrawCrosshairDot 在屏幕中心绘制准星的点，并处理特殊情况下的UI提示（如越肩视角被阻挡）。
+-- DrawRegularScope 绘制一个传统的、带有黑色边框的圆形瞄准镜遮罩。
+-- DrawFuturisticScope 绘制一个具有科幻风格的、带有蓝色线条和光晕效果的瞄准镜遮罩。
+-- BaseDrawWeaponSelection 在武器选择菜单中绘制武器的图标、名称和弹药信息。
+-- HideWorldModel 通过重写绘制函数来隐藏武器的世界模型（即其他玩家看到的模型）。
+-- HideViewModel 通过修改视图模型的位置函数来隐藏武器的视图模型（即玩家自己看到的模型）。
 local meta = FindMetaTable("Weapon")
 
 function meta:DrawWeaponCrosshair()

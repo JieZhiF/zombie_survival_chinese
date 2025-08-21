@@ -1,3 +1,45 @@
+-- 本文件主要负责定义客户端的各种配置、设置和控制台变量（ConVar）。
+-- 它包含了用于UI显示的查找表（如物品图标、颜色、文本翻译），并创建了大量允许玩家自定义游戏体验的客户端选项，例如准星、HUD、视觉效果和游戏性偏好。
+
+-- GM.BeatSet...Default          定义默认的人类和僵尸BGM（背景音乐）设置
+-- GM.ItemCategoryIcons          定义不同物品类别的图标路径
+-- GM.RemortColors               定义不同转生等级对应的颜色
+-- GM.SpeedToText                将内部速度值映射为可读的文本描述
+-- GM.AmmoToPurchaseNames        将弹药类型映射到商店中对应的购买名称
+-- GM.WeaponStatBarVals          定义武器统计信息在UI中的显示方式和范围
+-- GM.LifeStatsLifeTime          设置当局统计数据显示的持续时间
+-- GM.RewardIcons                定义奖励物品的模型路径
+-- zs_crosshair_col* ConVars     控制准星的颜色
+-- zs_filmmode ConVar            启用或禁用电影模式（隐藏HUD）
+-- zs_noredeem, etc. ConVars     定义玩家的自动行为偏好（不兑换、总是当志愿者等）
+-- zs_disablescopes ConVar       禁用武器瞄准镜
+-- zs_one_click_unlock ConVar    启用或禁用一键解锁功能
+-- zs_ironsightzoom ConVar       调整机械瞄准时的缩放比例
+-- zs_thirdpersonknockdown ConVar 设置被击倒时是否切换到第三人称视角
+-- zs_suicideonchange ConVar     设置更换职业时是否自动自杀
+-- zs_beats* ConVars             控制游戏内BGM（背景音乐）的启用和音量
+-- zs_damagefloaterswalls ConVar 设置伤害数字是否穿墙显示
+-- zs_crosshair* ConVars         控制准星的样式（线条数、偏移、粗细、旋转）
+-- zs_proprotation* ConVars      控制拖拽道具时的旋转灵敏度和吸附角度
+-- zs_dmg* ConVars               控制伤害数字的大小、速度和生命周期
+-- zs_interfacesize ConVar       调整游戏UI界面的整体大小
+-- zs_alwaysshownails ConVar     设置是否总是显示钉子
+-- zs_alwaysquickbuy ConVar      设置是否总是使用快速购买
+-- zs_noironsights ConVar        禁用机械瞄准功能
+-- zs_hideviewmodels ConVar      隐藏玩家的第一人称手臂和武器模型
+-- zs_transparencyradius* ConVar 控制玩家模型在靠近时变透明的半径
+-- zs_movementviewroll ConVar    启用或禁用移动时的视角倾斜效果
+-- zs_messagebeaconshow ConVar   控制是否显示信息信标
+-- zs_weaponhudmode ConVar       设置武器HUD的显示模式
+-- zs_healthtargetdisplay ConVar 设置目标生命值的显示方式
+-- zs_drawpainflash ConVar       控制受伤时是否显示疼痛闪光效果
+-- zs_drawxp ConVar              控制是否显示经验值HUD
+-- zs_fonteffects ConVar         启用或禁用字体特效
+-- zs_hidepacks ConVar           隐藏背包装饰
+-- zs_showfriends ConVar         设置是否总是高亮显示好友
+-- cl_playercolor/weaponcolor    GMod内置ConVar，用于自定义模型颜色
+-- zs_beatset_* ConVars          设置人类和僵尸使用的BGM（背景音乐）包
+-- zsw_* ConVars                 一系列用于控制自定义HUD、准星模式和字体的开关
 GM.BeatSetHumanDefault = "defaulthuman"
 GM.BeatSetZombieDefault = "defaultzombiev2"
 

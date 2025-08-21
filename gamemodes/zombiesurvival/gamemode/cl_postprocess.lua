@@ -1,3 +1,25 @@
+-- 本文件主要负责处理客户端的屏幕空间效果和视觉渲染，包括后期处理、颜色修正、特殊视觉模式（夜视、僵尸视觉）、玩家光环以及各种基于玩家状态（如受伤、恐惧、死亡）的视觉反馈。
+-- GM:RenderScreenspaceEffects 预定义的空渲染钩子，实际逻辑在 RenderScreenspaceEffects 中。
+-- zs_postprocessing 客户端控制台变量，用于开关所有后期处理效果。
+-- zs_filmgrain 客户端控制台变量，用于开关电影胶片颗粒效果。
+-- zs_filmgrainopacity 客户端控制台变量，用于设置电影胶片颗粒效果的不透明度。
+-- zs_colormod 客户端控制台变量，用于开关颜色修正效果。
+-- zs_auras 客户端控制台变量，用于开关僵尸视角下的人类光环。
+-- zs_auracolor_empty* 客户端控制台变量，设置人类在低血量时光环的RGB颜色。
+-- zs_auracolor_full_* 客户端控制台变量，设置人类在满血量时光环的RGB颜色。
+-- tColorModDead 玩家死亡后的颜色修正参数表。
+-- tColorModHuman 人类玩家的默认颜色修正参数表。
+-- tColorModZombie 僵尸玩家的默认颜色修正参数表。
+-- tColorModZombieVision 僵尸开启特殊视觉后的颜色修正参数表。
+-- tColorModNightVision 人类开启夜视仪后的颜色修正参数表。
+-- GM:_RenderScreenspaceEffects 核心的屏幕效果渲染函数，根据玩家状态应用不同的视觉效果。
+-- GM:_RenderScene 渲染场景前调用，用于根据视觉模式（夜视/僵尸视觉）设置全亮模式。
+-- GM:FullBrightOn 开启全亮渲染模式。
+-- GM:FullBrightOff 关闭全亮渲染模式。
+-- GM:DrawHumanIndicators 为僵尸玩家绘制人类玩家身上的光环指示器。
+-- GM:ToggleZombieVision 切换僵尸视觉的开关，并播放音效。
+-- RenderWhiteOut 渲染白屏/闪光效果的内部函数。
+-- util.WhiteOut 触发一个白屏/闪光效果。
 function GM:RenderScreenspaceEffects()
 end
 

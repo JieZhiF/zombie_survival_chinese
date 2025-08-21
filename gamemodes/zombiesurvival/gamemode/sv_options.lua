@@ -1,4 +1,50 @@
 -- Weapon sets that humans can start with if they choose RANDOM.
+-- 本文件主要负责定义服务器端的各种游戏性选项、参数以及回合结束后的荣誉提名（奖励）逻辑。
+
+-- GM.StartLoadouts 定义了人类玩家选择“随机”时可能获得的初始武器配置组合。
+-- zs_bosszombies 设置是否在每波进攻的间歇期间生成一个Boss僵尸。
+-- zs_outnumberedhealthbonus 当僵尸数量少于或等于设定值时，为僵尸提供额外的最大生命值加成。
+-- zs_pantsmode 一个特殊的趣味游戏模式。
+-- zs_classicmode 启用经典模式，该模式下没有钉子和职业选择。
+-- zs_babymode 启用婴儿（简单）模式。
+-- zs_endwavehealthbonus 人类在每波成功防守后获得的生命值奖励。
+-- zs_giblifetime 设置玩家死亡后身体碎块在被吃掉或销毁前存留的时间。
+-- zs_grief_forgiveness 调整对友方建筑造成伤害的惩罚宽容度，数值越小越宽容。
+-- zs_grief_strict 启用反恶意破坏系统，惩罚破坏友方障碍物的玩家。
+-- zs_grief_minimumhealth 一个物件被反恶意破坏系统监视的最低生命值。
+-- zs_grief_damagemultiplier 人类对友方可破坏物件造成的伤害乘数。
+-- zs_grief_reflectthreshold 当玩家的恶意破坏分数低于此阈值时，开始对其自身造成伤害。
+-- zs_maxpropsinbarricade 限制一个由钉子固定的障碍物结构中可以包含的最大物件数量。
+-- zs_maxdroppeditems 限制地图上存在的最大掉落物品数量，以防止服务器卡顿。
+-- zs_nailhealthperrepair 每次修理钉子时为其恢复的生命值数量。
+-- zs_nopropdamagefromhumanmelee 设置人类的近战攻击是否对物件造成伤害。
+-- zs_medkitpointsperhealth 通过治疗队友获得点数的效率。
+-- zs_repairpointsperhealth 通过修理建筑获得点数的效率。
+-- GetMostKey 一个辅助函数，用于查找在某个特定统计数据上值最高的玩家。
+-- GetMostFunc 一个辅助函数，通过调用一个函数来计算并查找值最高的玩家。
+-- GM.HonorableMentions 定义了各种回合结束荣誉称号的评定逻辑，例如：
+-- HM_MOSTZOMBIESKILLED 击杀僵尸最多
+-- HM_MOSTBRAINSEATEN 吃掉大脑最多
+-- HM_MOSTHEADSHOTS 爆头最多
+-- HM_SCARECROW 击杀乌鸦最多
+-- HM_DEFENCEDMG 造成防御伤害最多
+-- HM_STRENGTHDMG 在力量增强状态下造成伤害最多
+-- HM_BARRICADEDESTROYER 对障碍物造成伤害最多
+-- HM_HANDYMAN 修理量最多
+-- HM_LASTHUMAN 最后一名幸存的人类
+-- HM_MOSTHELPFUL 助攻最多
+-- HM_GOODDOCTOR 治疗量最多
+-- HM_MOSTDAMAGETOUNDEAD 对僵尸阵营造成总伤害最多
+-- HM_MOSTDAMAGETOHUMANS 对人类阵营造成总伤害最多
+-- HM_LASTBITE 造成最后一次感染的僵尸
+-- HM_USEFULTOOPPOSITE 死亡次数最多（对敌方最“有用”）
+-- HM_PACIFIST 作为人类获胜但未击杀任何僵尸
+-- HM_STUPID 死亡地点离僵尸出生点最近
+-- HM_OUTLANDER 死亡地点离僵尸出生点最远
+-- HM_SALESMAN 通过队友购买物品获得的佣金最多
+-- HM_WAREHOUSE 放置的补给箱被队友使用次数最多
+-- HM_NESTDESTROYER 摧毁僵尸巢穴最多
+-- HM_NESTMASTER 通过放置的巢穴生成的僵尸最多
 GM.StartLoadouts = {
 	{"pshtr", "3pcp", "2pcp", "2sgcp", "3sgcp"},
 	{"btlax", "3pcp", "2pcp", "2arcp", "3arcp"},

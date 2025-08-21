@@ -1,3 +1,11 @@
+-- 本文件负责在玩家准星瞄准其他玩家或特定实体时，在屏幕上绘制出目标的信息ID，如名称、生命值、状态效果、等级和所持武器等。
+
+-- GM:DrawTargetID 绘制目标玩家的详细信息，包括名字、生命值、各种状态（中毒、流血等）、等级和装备。
+-- GM:DrawSigilTargetHint 当目标是传送符文（Sigil）时，绘制一个特殊的提示信息。
+-- GM.TraceTarget 存储玩家当前准星所指向的实体。
+-- FuncFilterPlayers 一个用于射线检测的过滤器函数，会忽略所有玩家。
+-- FuncFilterTeam 一个用于射线检测的过滤器函数，会忽略与玩家同队的队友。
+-- GM:HUDDrawTargetID 核心的HUD绘制函数，它执行射线检测以确定玩家的目标，并调用相应的绘制函数来显示目标信息，同时处理信息的淡出效果。
 local TEXT_ALIGN_CENTER = TEXT_ALIGN_CENTER
 local EyePos = EyePos
 local EyeVector = EyeVector

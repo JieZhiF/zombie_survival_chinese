@@ -8,17 +8,9 @@ SWEP.OriginalMeleeDamage = SWEP.MeleeDamage
 SWEP.Primary.Delay = 0.15
 SWEP.AllowQualityWeapons = false
 function SWEP:OnMeleeHit(hitent, hitflesh, tr)
-	if not hitent:IsPlayer() then
-		self.MeleeDamage = 65
-	end
-end
-
-function SWEP:PostOnMeleeHit(hitent, hitflesh, tr)
-	self.MeleeDamage = self.OriginalMeleeDamage
-end
-
-function SWEP:SetNextAttack()
-	local owner = self:GetOwner()
-	local armdelay = owner:GetMeleeSpeedMul()
-	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay * armdelay)
+    if hitent:IsPlayer() then
+        self.MeleeDamage = 3  -- 对玩家造成30伤害
+    else
+        self.MeleeDamage = 65  -- 对其他目标造成65伤害
+    end
 end

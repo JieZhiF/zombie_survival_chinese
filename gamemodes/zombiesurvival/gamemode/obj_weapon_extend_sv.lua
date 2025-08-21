@@ -1,3 +1,8 @@
+-- 本文件主要负责扩展Garry's Mod中"Weapon"（武器）对象在服务器端的功能，提供了弹药管理和模型显示控制的方法。
+
+-- EmptyAll 将武器弹夹中的子弹全部退还给玩家，并清空弹夹。
+-- HideWorldModel 隐藏武器的世界模型（对其他玩家可见的模型），主要是通过禁用其阴影实现。
+-- HideViewModel 一个空的占位函数，因为隐藏视图模型（玩家第一人称视角看到的模型）是客户端操作。
 local meta = FindMetaTable("Weapon")
 
 function meta:EmptyAll(nodefaultclip)

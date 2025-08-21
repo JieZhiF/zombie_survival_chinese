@@ -1,3 +1,24 @@
+-- 本文件主要负责管理游戏中的“印记（Sigil）”目标和相关的“逃脱阶段”逻辑。它提供了一系列函数来获取、计数和检查地图上不同状态（正常、已腐化）的印记实体，并控制逃脱流程的各个阶段。
+
+-- ESCAPESTAGE_NONE, ESCAPESTAGE_ESCAPE, ESCAPESTAGE_BOSS, ESCAPESTAGE_DEATH -- 定义逃脱阶段的常量
+-- GM:GetSigils 获取地图上所有有效的印记实体
+-- GM:GetUncorruptedSigils 获取所有未被腐化的印记实体
+-- GM.GetSigilsUncorrupted 是GM:GetUncorruptedSigils的别名
+-- GM:GetCorruptedSigils 获取所有已被腐化的印记实体
+-- GM.GetSigilsCorrupted 是GM:GetCorruptedSigils的别名
+-- GM:NumSigils 计算地图上有效印记的总数
+-- GM:HasSigils 检查地图上是否存在任何有效的印记
+-- GM:NumUncorruptedSigils 计算未被腐化的印记数量
+-- GM.NumSigilsUncorrupted 是GM:NumUncorruptedSigils的别名
+-- GM:NumCorruptedSigils 计算已被腐化的印记数量
+-- GM.NumSigilsCorrupted 是GM:NumCorruptedSigils的别名
+-- GM:GetUseSigils 检查当前游戏是否启用了印记目标
+-- GM:IsEscapeDoorOpen 检查是否有逃脱门已经打开
+-- GM:GetEscapeSequence 判断逃脱程序是否已经启动
+-- GM.IsEscapeSequence 是GM:GetEscapeSequence的别名
+-- GM:SetEscapeStage 设置当前的逃脱阶段
+-- GM:GetEscapeStage 获取当前的逃脱阶段
+
 ESCAPESTAGE_NONE = 0
 ESCAPESTAGE_ESCAPE = 1
 ESCAPESTAGE_BOSS = 2

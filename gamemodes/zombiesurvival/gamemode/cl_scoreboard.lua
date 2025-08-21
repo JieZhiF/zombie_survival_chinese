@@ -1,3 +1,40 @@
+-- 本文件主要负责创建和管理游戏内的计分板（Scoreboard）用户界面。它包括显示玩家列表、队伍信息、分数，并提供了如静音玩家、查看玩家资料以及一个当鼠标悬停在玩家上时显示详细信息卡片的功能。同时，它还包含一个为机器人（Bot）随机分配并缓存头像的系统。
+
+-- GM:ScoreboardShow 显示计分板界面。
+-- GM:ScoreboardRebuild 重建计分板界面（当前仅实现隐藏）。
+-- GM:ScoreboardHide 隐藏计分板界面。
+-- GetRandomBotAvatar 从文件系统中查找并随机返回一个机器人头像的材质路径，以用于UI显示。
+-- ZSScoreBoard VGUI面板，作为整个计分板的主容器。
+-- ZSScoreBoard:Init 初始化计分板的静态元素，如标题、服务器名和队伍列表容器。
+-- ZSScoreBoard:PerformLayout 定义并排列计分板内各个UI元素的位置和大小。
+-- ZSScoreBoard:Think 定时器，周期性地刷新计分板内容。
+-- ZSScoreBoard:Paint 绘制计分板的自定义背景和装饰性元素。
+-- ZSScoreBoard:GetPlayerPanel 查找与特定玩家关联的玩家行面板。
+-- ZSScoreBoard:CreatePlayerPanel 为一个新玩家创建一个专属的玩家行面板并添加到队伍列表中。
+-- ZSScoreBoard:RefreshScoreboard 核心刷新函数，同步游戏内的玩家列表到UI上，添加新玩家并移除已断开的玩家。
+-- ZSScoreBoard:RemovePlayerPanel 从UI中移除一个指定的玩家行面板。
+
+-- ZSPlayerPanel VGUI面板，代表计分板中的单个玩家行。
+-- ZSPlayerPanel:Init 初始化玩家行内的所有UI元素，如头像、名字、分数、静音按钮等。
+-- ZSPlayerPanel:Paint 绘制玩家行的背景，颜色会根据队伍和鼠标悬停状态变化。
+-- ZSPlayerPanel:DoClick 处理对玩家行的点击事件。
+-- ZSPlayerPanel:OnCursorEntered 当鼠标光标进入玩家行区域时，触发显示玩家信息悬停卡。
+-- ZSPlayerPanel:PerformLayout 排列玩家行内部各元素的位置。
+-- ZSPlayerPanel:RefreshPlayer 用最新的玩家数据（如分数、转生等级、僵尸职业图标）更新UI显示。
+-- ZSPlayerPanel:Think 定时器，周期性地调用刷新函数。
+-- ZSPlayerPanel:SetPlayer 将一个玩家实体与该面板关联，并设置其头像（真人或机器人）。
+-- ZSPlayerPanel:GetPlayer 获取与该面板关联的玩家实体。
+-- ZSPlayerPanel:GetBotAvatarMaterial 获取分配给该机器人玩家行的特定头像材质路径。
+
+-- ZSPlayerHoverCard VGUI面板，当鼠标悬停在玩家行上时弹出的详细信息卡。
+-- ZSPlayerHoverCard:Init 初始化信息卡内的元素，如大头像、名字、SteamID等。
+-- ZSPlayerHoverCard:Paint 绘制信息卡的背景。
+-- ZSPlayerHoverCard:PerformLayout 排列信息卡内部各元素的位置。
+-- ZSPlayerHoverCard:UpdateWithPlayer 使用特定玩家的数据填充信息卡，并能正确显示机器人的头像。
+-- ZSPlayerHoverCard:ShowAndUpdate 显示信息卡，将其定位在源玩家行的旁边，并更新其内容。
+-- ZSPlayerHoverCard:Think 检查鼠标是否还在源玩家行或信息卡上，如果不在则隐藏卡片。
+-- ZSPlayerHoverCard:HideAndStopThinking 隐藏信息卡并停止其Think逻辑。
+-- ZSPlayerHoverCard:OnCursorExited 当鼠标离开信息卡时触发的事件。
 local ScoreBoard
 function GM:ScoreboardShow() //面板显示
 	gui.EnableScreenClicker(true) //启用光标移动

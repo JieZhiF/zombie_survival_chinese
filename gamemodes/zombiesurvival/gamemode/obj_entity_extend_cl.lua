@@ -1,3 +1,20 @@
+-- 本文件主要用于在客户端扩展实体（Entity）的功能，包括添加新的方法和通过定时器缓存特定类型的实体以优化性能。
+
+-- SetModelScaleVector 设置实体模型的缩放比例
+-- TakeDamageInfo （占位函数）防止客户端调用时出错
+-- SetPhysicsAttacker （占位函数）防止客户端调用时出错
+-- HealPlayer 计算治疗量对玩家的具体效果（优先治疗流血和中毒）
+-- Draw3DHealthBar 在3D空间中为实体绘制一个生命条
+-- CacheNails (Timer) 定时缓存地图上所有的钉子（prop_nail）实体
+-- IsNailed 检查实体是否被钉子固定
+-- TransAlphaToMe 根据实体与玩家的距离调整其透明度，防止遮挡视线
+-- CacheArsenalEntities (Timer) 定时缓存军火相关的实体（军火箱、军火包、携带军火箱的玩家）
+-- CachedResupplyEntities (Timer) 定时缓存补给相关的实体（补给箱、补给包、携带补给箱的玩家）
+-- CachedRemantlerEntities (Timer) 定时缓存拆解器相关的实体
+-- CachedNests (Timer) 定时缓存爬行者巢穴实体
+-- CachedBabies (Timer) 定时缓存被投掷的婴儿实体
+-- CacheSigils (Timer) 定时缓存游戏中的印记（Sigils）实体
+
 local meta = FindMetaTable("Entity")
 
 local M_Player = FindMetaTable("Player")

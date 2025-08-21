@@ -1,3 +1,46 @@
+-- 本文件主要负责在服务器端扩展实体（Entity）的功能，添加了大量关于路障、钉子系统、治疗、部署物、自定义伤害处理和实体交互的游戏逻辑。
+
+-- IsDoorLocked 检查门是否被锁定
+-- HealPlayer 处理对玩家的治疗逻辑，优先治疗流血和中毒，并计算治疗者的得分
+-- GetDefaultBarricadeHealth 获取一个道具作为路障时的默认生命值，基于其物理质量和体积
+-- HitFence 处理实体撞击栅栏类物体的物理逻辑，防止穿透或卡住
+-- FakePropBreak 创建一个临时的实体来模拟原实体破碎的效果
+-- SetBarricadeHealth 设置路障的当前生命值
+-- SetMaxBarricadeHealth 设置路障的最大生命值
+-- SetBarricadeRepairs 设置路障已被修理的次数
+-- GhostAllPlayersInMe 使实体在一段时间内对所有玩家变为非碰撞，以防卡住玩家
+-- AddUselessDamage 为路障添加“无效伤害”（此伤害在被修复时不会提供分数）
+-- RemoveUselessDamage 移除路障的“无效伤害”
+-- ClearUselessDamage 清除路障所有的“无效伤害”
+-- ItemCreated 当一个可拾取物品被创造时调用，用于管理地图上掉落物品的数量上限
+-- FireOutput 触发一个实体的自定义输出，类似于Hammer地图编辑器的I/O系统
+-- AddOnOutput 为实体添加一个自定义输出事件
+-- FindByNameHammer 根据名称查找实体，支持!self、!activator等特殊目标
+-- IsNailed 检查实体是否被钉子钉住
+-- IsNailedToWorld 检查实体是否被直接钉在世界上
+-- IsNailedToWorldHierarchy 检查实体是否通过一个或多个约束层级被钉在世界上
+-- GetNailFrozen 获取实体是否因被钉住而物理冻结
+-- IsNailFrozen 与GetNailFrozen功能相同
+-- SetNailFrozen 设置实体是否因被钉住而物理冻结
+-- GetAllConstrainedEntities 获取所有通过物理约束连接到此实体的实体
+-- PackUp 允许玩家开始打包回收一个可部署的实体
+-- GetPropsInContraption 获取一个由多个道具组成的构造体中的道具数量
+-- HumanNearby 检查附近是否有存活的人类玩家
+-- ResetLastBarricadeAttacker 更新路障的最后攻击者信息，并为僵尸玩家记录对路障造成的伤害
+-- SetPhysicsAttacker 重写物理攻击者设置，用于追踪func_physbox的攻击者
+-- DamageNails 处理对被钉住的路障的伤害，将伤害分配给路障本身和钉子
+-- GetNails 获取附着在该实体上的所有钉子实体
+-- GetLivingNails 获取附着在该实体上所有未损坏的钉子实体
+-- NumLivingNails 获取附着在该实体上未损坏钉子的数量
+-- GetFirstNail 获取附着在该实体上的第一个有效钉子
+-- RemoveNail 移除连接到此实体的一个钉子
+-- RemoveNextFrame 在下一帧或指定时间后移除该实体
+-- TemporaryBarricadeObject 当玩家靠近时，临时将实体标记为路障以改变碰撞规则
+-- RecalculateNailBonuses 根据存活的钉子数量重新计算路障的生命值加成
+-- SetupDeployableSkillHealth 根据部署物所有者的技能来设置部署物的生命值
+-- DealProjectileTraceDamage 为自定义抛射物处理命中实体后的伤害计算
+-- ProjectileTraceAhead 为抛射物在当前位置前方进行一次射线检测，用于提前命中判断
+-- CachedInvisibleEntities (Timer) 定时缓存所有隐形或应被忽略追踪的实体，以优化可见性检查的性能
 local meta = FindMetaTable("Entity")
 
 --[[local o = meta.SetCollisionGroup

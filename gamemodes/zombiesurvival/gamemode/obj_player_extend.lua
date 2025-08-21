@@ -1,3 +1,87 @@
+-- 本文件为共享脚本(shared)，定义了在服务器和客户端之间通用的Player（玩家）扩展功能。它包含了玩家动画事件、状态获取、伤害计算（如腿部/手臂伤害）、移动速度控制、碰撞规则、自定义追踪函数以及与游戏特定机制（如僵尸职业、补给、传送）相关的核心逻辑。
+
+-- meta:LogID 返回一个包含玩家SteamID和名字的格式化字符串，用于日志记录。
+-- meta:GetMaxHealthEx 获取玩家的最大生命值，会根据玩家是人类还是僵尸返回不同的值。
+-- meta:Dismember 触发一个肢解的视觉效果。
+-- meta:DoRandomEvent 触发一个带有随机参数的自定义玩家动画事件。
+-- meta:DoZombieEvent 触发一个随机的僵尸主攻击动画事件。
+-- meta:DoFlinchEvent 根据被击中的部位触发一个特定的 움찔(flinch) 动画事件。
+-- meta:DoRandomFlinchEvent 触发一个完全随机的 움찔(flinch) 动画事件。
+-- meta:SetTokens 设置玩家的代币数量（网络同步变量）。
+-- meta:GetTokens 获取玩家的代币数量（网络同步变量）。
+-- meta:DoFlinchAnim 根据索引播放一个预定义的 움찔(flinch) 动画序列。
+-- meta:DoZombieAttackAnim 根据索引播放一个预定义的僵尸攻击动画序列。
+-- meta:IsSpectator 检查玩家是否为观察者。
+-- meta:GetAuraRange 获取玩家当前武器的光环效果范围。
+-- meta:GetAuraRangeSqr 获取玩家光环效果范围的平方值，用于距离比较。
+-- meta:GetPoisonDamage 获取玩家当前中毒状态造成的伤害值。
+-- meta:GetBleedDamage 获取玩家当前流血状态造成的伤害值。
+-- meta:CallWeaponFunction 调用玩家当前持有武器上的一个指定函数。
+-- meta:ClippedName 返回一个被截断（最长16个字符）的玩家名字。
+-- meta:SigilTeleportDestination 决定玩家在使用印记传送时的最佳目标位置。
+-- meta:DispatchAltUse 处理玩家的“交替使用”输入，通常用于与环境物体交互。
+-- meta:MeleeViewPunch 根据近战伤害对玩家视角产生一个晃动效果。
+-- meta:NearArsenalCrate 检查玩家是否在军火箱或印记附近。
+-- meta:IsNearArsenalCrate meta:NearArsenalCrate 的别名。
+-- meta:NearRemantler 检查玩家是否在“拆解台”(Remantler)附近。
+-- meta:GetResupplyAmmoType 获取玩家当前应该从补给中获得的弹药类型。
+-- meta:SetZombieClassName 通过职业名称字符串来设置玩家的僵尸职业。
+-- meta:GetPoints 获取玩家的点数。
+-- meta:GetBloodArmor 获取玩家的血甲值。
+-- meta:AddLegDamage 增加玩家的腿部伤害，这通常会影响移动速度。
+-- meta:AddLegDamageExt 根据特定类型（如脉冲、冰冻）增加额外的腿部伤害，并可能触发特殊效果。
+-- meta:SetLegDamage 设置一个原始的腿部伤害值。
+-- meta:RawSetLegDamage 直接设置腿部伤害的到期时间。
+-- meta:RawCapLegDamage 设置腿部伤害到期时间，但不低于当前值。
+-- meta:GetLegDamage 获取当前腿部伤害的剩余时间。
+-- meta:GetFlatLegDamage 将腿部伤害的剩余时间转换为一个固定的数值。
+-- meta:AddArmDamage 增加玩家的手臂伤害，这通常会影响攻击速度。
+-- meta:SetArmDamage 设置一个原始的手臂伤害值。
+-- meta:RawSetArmDamage 直接设置手臂伤害的到期时间。
+-- meta:RawCapArmDamage 设置手臂伤害到期时间，但不低于当前值。
+-- meta:GetArmDamage 获取当前手臂伤害的剩余时间。
+-- meta:GetFlatArmDamage 将手臂伤害的剩余时间转换为一个固定的数值。
+-- meta:Flinch 在冷却时间结束后，触发一次 움찔(flinch) 动画。
+-- meta:GetZombieClass 获取玩家当前的僵尸职业索引。
+-- meta:GetZombieClassTable 获取玩家当前僵尸职业的属性表。
+-- meta:CallZombieFunction0-5 一系列经过优化的函数，用于调用当前僵尸职业属性表中的函数，并传递0到5个参数。
+-- meta:TraceLine 从玩家的射击位置发出一条射线检测。
+-- meta:TraceHull 从玩家的射击位置发出一个带有体积的射线检测。
+-- meta:SetSpeed 设置玩家的行走、奔跑和最大速度。
+-- meta:SetHumanSpeed 如果玩家是人类，则设置其速度。
+-- meta:ResetSpeed 根据玩家的队伍、武器、技能和生命值等状态，重新计算并设置其移动速度。
+-- meta:ResetJumpPower 根据玩家状态重新计算并设置其跳跃力。
+-- meta:SetBarricadeGhosting 设置玩家是否可以穿透障碍物（“幽灵”状态）。
+-- meta:GetBarricadeGhosting 获取玩家是否处于穿透障碍物的状态。
+-- meta:IsBarricadeGhosting meta:GetBarricadeGhosting 的别名。
+-- meta:ShouldBarricadeGhostWith 判断玩家是否应该穿透给定的实体。
+-- meta:BarricadeGhostingThink 处理“幽灵”状态下的逻辑，例如在特定条件下自动取消该状态。
+-- meta:ShouldNotCollide 决定本玩家是否应该与另一个实体发生碰撞的核心函数。
+-- meta:SetHealth 重写设置生命值的函数，以便在生命值改变时更新移动速度。
+-- meta:IsHeadcrab 检查玩家是否为头蟹类型的僵尸。
+-- meta:IsTorso 检查玩家是否为躯干类型的僵尸。
+-- meta:AirBrake 在空中急剧减速。
+-- meta:MeleeTrace 执行一次近战攻击的射线检测。
+-- meta:CompensatedMeleeTrace 执行一次经过延迟补偿的近战攻击射线检测。
+-- meta:CompensatedPenetratingMeleeTrace 执行一次可穿透多个目标的、经过延迟补偿的近战射线检测。
+-- meta:CompensatedZombieMeleeTrace 专为僵尸设计的、经过延迟补偿的组合近战射线检测。
+-- meta:PenetratingMeleeTrace 执行一次可穿透多个目标的近战射线检测。
+-- meta:ActiveBarricadeGhosting 检查玩家当前是否正处于障碍物内部并且启用了“幽灵”状态。
+-- meta:IsHolding 检查玩家是否正持有（搬运）一个物体。
+-- meta:IsCarrying meta:IsHolding 的别名。
+-- meta:GetHolding 获取玩家当前持有（搬运）的物体。
+-- meta:NearestRemantler 寻找离玩家最近的“拆解台”(Remantler)。
+-- meta:GetMaxZombieHealth 获取玩家作为僵尸时的最大生命值。
+-- meta:GetMaxHealth 重写获取最大生命值的函数，以区分人类和僵尸状态。
+-- meta:Alive 重写存活判断函数，加入观察者模式和自定义状态的检查。
+-- meta:SyncAngles 同步并返回玩家的水平朝向角度。
+-- meta:GetAngles meta:SyncAngles 的别名。
+-- meta:GetForward 获取玩家的水平前向向量。
+-- meta:GetUp 获取玩家的水平上向向量。
+-- meta:GetRight 获取玩家的水平右向向量。
+-- meta:GetZombieMeleeSpeedMul 获取僵尸的近战攻击速度加成。
+-- meta:GetMeleeSpeedMul 获取玩家（人类或僵尸）的近战攻击速度加成。
+-- meta:GetPhantomHealth 获取玩家的幻影生命值。
 local meta = FindMetaTable("Player")
 
 local util_SharedRandom = util.SharedRandom

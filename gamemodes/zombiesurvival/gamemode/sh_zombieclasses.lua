@@ -1,3 +1,13 @@
+-- 本文件主要负责管理游戏中的僵尸职业系统，包括注册、加载、排序、解锁条件判断以及网络同步僵尸职业的解锁状态。
+
+-- GM.RevertableZombieClasses 备份初始的僵尸职业列表，用于在需要时恢复。
+-- GM:IsClassUnlocked 检查指定的僵尸职业是否已根据游戏进度（如波数、理智值）解锁。
+-- GM:ClassUnlocksUpdate 向客户端同步所有僵尸职业的解锁状态。
+-- ReorderZombieClassesSort (内部函数) 用于对僵尸职业列表进行排序的比较函数。
+-- GM:ReorderZombieClasses 根据预设的排序规则（如出场波数、自定义顺序）对所有僵尸职业进行排序和索引。
+-- GM:RegisterZombieClass 将一个新的僵尸职业注册到系统中，并设置其基本属性。
+-- GM:RevertZombieClasses 将当前的僵尸职业列表恢复到初始备份的状态。
+-- GM:RegisterZombieClasses 加载、注册并处理所有僵尸职业定义文件，包括处理职业间的继承关系。
 GM.RevertableZombieClasses = {}
 
 function GM:IsClassUnlocked(classname)

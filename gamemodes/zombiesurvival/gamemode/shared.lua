@@ -1,3 +1,119 @@
+-- 本文件是游戏模式的核心共享文件，定义了游戏模式的基本信息、规则、团队设置、自定义函数以及加载其他核心脚本。
+-- 它处理从游戏回合状态、玩家交互、伤害计算到动态生成点等多种核心游戏逻辑。
+
+-- GM:GetNumberOfWaves 获取当前游戏的总波数。
+-- GM:GetWaveOneLength 获取第一波的持续时间。
+-- GM:AddCustomAmmo 注册游戏模式所需的自定义弹药类型。
+-- GM:RegisterFood 注册所有食物类型的武器。
+--[[
+GM:RefreshMapIsObjective 检查当前地图是否为目标模式地图。
+
+GM:AssignItemProperties 将武器的属性（如描述、等级）赋予对应的商店物品。
+
+GM:SetupDefaultClip 工具函数，用于设置武器的默认弹药量。
+
+GM:FixWeaponBase 修复和调整基础武器类(weapon_base)的功能。
+
+GM:GetRedeemBrains 获取复活所需的脑子数量。
+
+GM:PlayerIsAdmin 检查玩家是否为管理员。
+
+GM:GetFallDamage 获取玩家的坠落伤害（实际逻辑在OnPlayerHitGround中处理）。
+
+GM:ValidMenuLockOnTarget 判断玩家是否可以对目标实体使用锁定菜单。
+
+GM:GetHandsModel 获取玩家当前模型对应的手臂模型。
+
+GM:GetBestAvailableZombieClass 获取玩家可用的最高级的僵尸职业。
+
+GM:ShouldUseBetterVersionSystem 判断是否应启用僵尸职业的“高级版本”系统。
+
+GM:DynamicSpawnIsValidOld (旧版逻辑) 检查一个动态僵尸出生点是否有效。
+
+GM:GetBestDynamicSpawnOld (旧版逻辑) 寻找最佳的动态僵尸出生点。
+
+GM:GetDynamicSpawnsOld (旧版逻辑) 获取所有可用的动态僵尸出生点列表。
+
+GM:DynamicSpawnIsValid 检查一个动态出生点（僵尸或巢穴）是否有效。
+
+GM:GetBestDynamicSpawn 寻找最佳的动态出生点。
+
+GM:GetDynamicSpawns 获取所有可用的动态出生点（通常是爬行者巢穴）列表。
+
+GM:GetDesiredStartingZombies 计算回合开始时应选择的初始僵尸数量。
+
+GM:GetEndRound 检查回合是否已经结束。
+
+GM:PrecacheResources 预缓存游戏所需的模型、声音和粒子效果等资源。
+
+GM:ShouldCollide 决定两个实体之间是否应该发生碰撞。
+
+GM:DoChangeDeploySpeed 根据玩家状态调整武器的切换速度。
+
+GM:OnPlayerHitGround 处理玩家落地时的坠落伤害和效果。
+
+GM:PlayerCanBeHealed 检查玩家是否可以被治疗。
+
+GM:PlayerCanPurchase 检查人类玩家是否满足购买物品的条件。
+
+GM:ZombieCanPurchase 检查僵尸玩家是否可以打开购买菜单。
+
+GM:PlayerCanHearPlayersVoice 决定玩家之间是否能听到对方的语音。
+
+GM:PlayerCanHearPlayersVoiceDefault 默认的语音通信规则。
+
+GM:PlayerCanHearPlayersVoiceAllTalk 全局语音开启时的通信规则。
+
+GM:PlayerTraceAttack 处理玩家受到子弹等射线攻击时的逻辑。
+
+GM:GetDamageResistance 根据恐惧值和符文计算伤害抗性。
+
+GM:FindUseEntity 寻找玩家准星指向的可交互实体。
+
+GM:ShouldUseAlternateDynamicSpawn 判断是否应使用备用的（旧版）动态出生点系统。
+
+GM:GetZombieDamageScale 根据恐惧值计算僵尸的伤害缩放比例。
+
+GM:GetClosestSpawnPoint 从一个列表中找到离目标位置最近的出生点。
+
+GM:GetFurthestSpawnPoint 从一个列表中找到离目标位置最远的出生点。
+
+GM:GetTeamRallyGroups 识别并分组聚集在一起的同队玩家。
+
+GM:GetTeamRallyPoints 计算队伍集结点的中心位置和强度。
+
+GM:GetTeamEpicentre 计算一个队伍所有存活玩家的平均位置（中心点）。
+
+GM:GetTeamEpicenter (同上)
+
+GM:GetCurrentEquipmentCount 统计地图上特定装备的总数量。
+
+GM:GetFearMeterPower 根据周围敌人的数量和距离计算一个点的“恐惧值”。
+
+GM:GetRagdollEyes 获取玩家死亡后布娃娃模型的眼睛位置和朝向。
+
+GM:PlayerNoClip 处理玩家尝试开启/关闭穿墙模式(noclip)的逻辑。
+
+GM:IsSpecialPerson 检查玩家是否为开发者、管理员等特殊身份，并返回对应的图标信息。
+
+GM:GetWaveEnd 获取当前波次结束的时间点。
+
+GM:SetWaveEnd 设置当前波次结束的时间点。
+
+GM:GetWaveStart 获取当前波次开始的时间点。
+
+GM:SetWaveStart 设置当前波次开始的时间点。
+
+GM:GetWave 获取当前是第几波。
+
+GM:GetWaveActive 检查当前是否处于僵尸进攻的活跃波次。
+
+GM:SetWaveActive 设置波次的活跃状态。
+
+SoundDuration 修复引擎对.ogg和.mp3格式声音文件时长计算不准的问题。
+
+GM:VehicleMove 载具移动时的钩子函数（当前为空）。
+]]
 GM.Name		=	"Zombie Survival"
 GM.Author	=	"William \"JetBoom\" Moodhe"
 GM.Email	=	"williammoodhe@gmail.com"

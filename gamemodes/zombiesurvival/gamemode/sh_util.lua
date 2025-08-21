@@ -1,3 +1,51 @@
+-- 本文件是一个共享的实用工具库，包含大量用于游戏模式的辅助函数，可在服务器和客户端上通用。它提供了玩家管理、数据查找、可见性检查、伤害计算、数学插值、字符串和表格处理等多种功能。
+
+-- player.GetAllActive 获取所有非观察者玩家
+-- player.GetAllSpectators 获取所有观察者玩家
+-- FindStartingItem 根据ID查找一个可在商店中购买的初始物品
+-- FindItem 根据ID查找一个游戏模式中的物品
+-- FindMutation 根据ID或签名查找一个可在商店中购买的变异
+-- TrueVisible 检查两点之间是否有障碍物（已弃用）
+-- TrueVisibleFilters 使用可变参数过滤器检查两点之间是否有障碍物（已弃用）
+-- INC_SERVER 用于服务器脚本的宏，包含共享脚本并添加客户端脚本
+-- INC_CLIENT 用于客户端脚本的宏，包含共享脚本
+-- INC_CLIENT_NO_SHARED INC_CLIENT的别名
+-- INC_SERVER_NO_SHARED 用于服务器脚本的宏，仅添加客户端脚本
+-- INC_SERVER_NO_CLIENT 用于服务器脚本的宏，仅添加共享脚本
+-- INC_SHARED 一个空宏，无任何作用
+-- LightVisible 检查光线是否能在两点之间无障碍地传播
+-- WorldVisible 仅考虑世界几何体，检查两点之间是否可见
+-- CosineInterpolation 执行余弦插值
+-- CubicInterpolate 执行三次插值
+-- CatmullInterpolate 执行Catmull-Rom样条插值
+-- string.AndSeparate 将字符串列表用逗号和"and"连接成自然语言格式
+-- util.SkewedDistance 计算两个向量之间的倾斜距离，Z轴有权重
+-- util.IsServerOrClient 返回当前代码运行环境是"SERVER"还是"CLIENT"
+-- util.Blood 创建一个血液效果
+-- util.BlastDamagePlayer 对玩家造成爆炸伤害，会应用玩家特有的伤害和范围乘数
+-- util.BlastDamageEx 对球形范围内的实体造成爆炸伤害，并进行可见性检查
+-- util.BlastDamageExAlloc 与BlastDamageEx类似，但返回一个记录了受伤害实体和伤害值的表
+-- util.BlastAlloc 返回爆炸范围内所有可见的实体
+-- util.FindValidInSphere 查找球形范围内所有有效的实体
+-- util.PoisonBlastDamage 在球形范围内造成毒素伤害，并进行可见性检查
+-- util.ToMinutesSeconds 将秒数转换为"MM:SS"格式的字符串
+-- util.ToMinutesSecondsCD 将秒数转换为用于倒计时的"MM:SS"格式，会向上取整
+-- util.ToMinutesSecondsMilliseconds 将秒数转换为"MM:SS.ms"格式的字符串
+-- util.RemoveAll 移除指定类别下的所有实体
+-- util.CompressBitTable 将一个布尔值表压缩成字符串以便存储
+-- util.DecompressBitTable 将压缩后的字符串解压回布尔值表
+-- table.IsAssoc 检查一个表是否为关联表（键值对形式的集合）
+-- table.ToAssoc 将索引数组转换为关联表
+-- table.ToKeyValues 将关联表转换回索引数组
+-- team.GetSpawnPointGrouped 获取分组的队伍出生点，确保点之间有最小距离
+-- AccessorFuncDT 为实体动态创建DT变量的Get/Set访问器函数
+-- team.GetValidSpawnPoint 获取一个队伍所有有效的出生点
+-- ents.CreateLimited 在不超过数量限制的情况下创建一个实体
+-- string.CommaSeparate 为数字字符串添加千位分隔符
+-- tonumbersafe 一个更安全的tonumber版本，会处理NaN情况
+-- util.IntersectRayWithQuad 计算射线与一个四边形的交点
+-- util.CreatePulseImpactEffect 创建一个脉冲武器的撞击效果
+-- table.FullCopy 深度复制一个表，包括嵌套的表、向量和角度
 function player.GetAllActive()
 	local t = {}
 
@@ -523,4 +571,25 @@ function util.CreatePulseImpactEffect(hitpos, hitnormal)
 	pulseeffect:SetOrigin(hitpos)
 	pulseeffect:SetNormal(hitnormal)
 	util.Effect("cball_bounce", pulseeffect)
+end
+
+function table.FullCopy( tab )
+
+	if (!tab) then return nil end
+
+	local res = {}
+	for k, v in pairs( tab ) do
+		if (type(v) == "table") then
+			res[k] = table.FullCopy(v) -- recursion ho!
+		elseif (type(v) == "Vector") then
+			res[k] = Vector(v.x, v.y, v.z)
+		elseif (type(v) == "Angle") then
+			res[k] = Angle(v.p, v.y, v.r)
+		else
+			res[k] = v
+		end
+	end
+
+	return res
+
 end

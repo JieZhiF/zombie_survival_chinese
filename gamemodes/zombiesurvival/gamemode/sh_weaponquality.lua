@@ -1,3 +1,22 @@
+-- 本文件主要负责定义和管理武器的品质和升级系统。它通过创建基础武器的改良版本来提升武器属性，
+-- 同时处理不同的升级分支路径，并计算升级和分解武器相关的游戏内货币（废料）成本。
+
+-- GM.WeaponQualityModifiers 存储所有可用的武器属性修改器的定义。
+-- GM.WeaponQualities 定义不同的武器品质等级，包括其名称和基础伤害乘数。
+-- GM.WeaponQualityColors 定义用于不同品质等级武器UI或击杀图标的颜色。
+-- WEAPON_MODIFIER_* 一系列常量，用作每种武器属性修改器的唯一ID。
+-- GM:AddWeaponQualityModifier 注册一种新的武器属性修改器（例如“换弹速度”）及其影响的武器变量。
+-- GM:SetPrimaryWeaponModifier 为一个武器设置主要的品质升级属性，以替代默认的伤害加成。
+-- GM:AttachWeaponModifier 为一个武器的品质升级路径添加一个次要的属性修改器。
+-- GM:AddNewRemantleBranch 为一个武器定义一个可供选择的升级分支，具有独特的名称、描述和修改功能。
+-- ApplyWeaponModifier (内部函数) 根据武器的品质等级，将指定的属性修改器应用到武器上。
+-- CreateQualityKillicon (内部函数) 为一个经过品质改良的武器创建一个新的、带有颜色的击杀图标。
+-- GM:CreateWeaponOfQuality 根据品质等级和分支，生成一个具有修改后属性的全新武器实体。
+-- GM:CreateWeaponQualities 在游戏启动时遍历所有符合条件的武器，并创建它们所有可能的品质和分支变体。
+-- GM:GetWeaponClassOfQuality 为一个特定品质和分支的武器生成唯一的类名字符串。
+-- GM:GetDismantleScrap 计算分解一件武器时返还的废料数量。
+-- GM:GetUpgradeScrap 计算升级一件武器所需的废料成本。
+-- GM:PointsToScrap 将点数（points）转换为等值的废料（scrap）数量。
 GM.WeaponQualityModifiers = {}
 GM.WeaponQualities = {
     {translate.Get("weapon_quality_sturdy"), 1.09, translate.Get("weapon_quality_tuned")},

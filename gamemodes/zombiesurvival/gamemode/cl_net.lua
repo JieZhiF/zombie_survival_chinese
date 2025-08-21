@@ -1,3 +1,53 @@
+-- 本文件主要负责处理从服务器接收的网络消息，用于更新客户端的游戏状态、UI显示和触发各种客户端事件。
+
+-- zs_legdamage          读取腿部伤害
+-- zs_armdamage          读取手臂伤害
+-- zs_nextboss           获取下一个boss的信息
+-- zs_zvols              获取僵尸志愿者列表
+-- zs_dmg                接收伤害数据以显示伤害数字
+-- zs_dmg_prop           接收对道具的伤害数据以显示伤害数字
+-- zs_lifestats          接收玩家的当局统计数据（对障碍物的伤害、对人类的伤害、吃掉的大脑数）
+-- zs_lifestatsbd        单独更新对障碍物的伤害统计
+-- zs_lifestatshd        单独更新对人类的伤害统计
+-- zs_lifestatsbe        单独更新吃掉的大脑数统计
+-- zs_honmention         接收回合结束时的荣誉提名信息
+-- zs_mutations_table    接收当前生效的突变列表
+-- zs_wavestart          处理波数开始事件，显示通知和播放声音
+-- zs_classunlock        显示新职业解锁的通知
+-- zs_waveend            处理波数结束事件，显示通知和生存奖励
+-- zs_gamestate          同步当前的游戏状态（波数、时间等）
+-- zs_boss_spawned       处理Boss生成事件，显示通知
+-- zs_boss_slain         处理Boss被击杀事件，显示通知
+-- zs_classunlockstate   更新特定僵尸职业的解锁状态
+-- zs_centernotify       在屏幕中央显示通知
+-- zs_topnotify          在屏幕顶部显示通知
+-- zs_survivor           处理玩家幸存事件，显示通知
+-- zs_lasthuman          接收最后一名人类玩家的信息
+-- zs_gamemodecall       远程调用一个游戏模式函数
+-- zs_lasthumanpos       接收最后一名人类玩家的位置
+-- zs_endround           处理回合结束事件，接收胜利方和下一张地图
+-- zs_healother          处理治疗其他玩家的通知
+-- zs_repairobject       处理修复物体的事件
+-- zs_commission         处理收到佣金的事件
+-- zs_sigilcorrupted     处理印记被腐化的事件，显示通知和播放声音
+-- zs_sigiluncorrupted   处理印记被净化的事件，显示通知和播放声音
+-- zs_ammopickup         显示拾取弹药的通知
+-- zs_ammogive           显示给予其他玩家弹药的通知
+-- zs_ammogiven          显示从其他玩家那里获得弹药的通知
+-- zs_deployablelost     显示可部署物品丢失的通知
+-- zs_deployableclaim    显示可部署物品被领取的通知
+-- zs_deployableout      显示可部署物品弹药耗尽的通知
+-- zs_trinketrecharged   显示饰品充能完毕的通知
+-- zs_trinketconsumed    显示饰品被消耗的通知
+-- zs_invitem            显示获得物品栏物品的通知
+-- zs_invgiven           显示从其他玩家处获得物品栏物品的通知
+-- zs_healby             显示被其他玩家治疗的通知
+-- zs_buffby             显示被其他玩家施加增益效果的通知
+-- zs_buffwith           显示为其他玩家施加增益效果的通知
+-- zs_nailremoved        显示自己的木板被其他玩家移除的通知
+-- zs_currentround       接收并更新当前回合数
+-- zs_updatealtselwep    更新人类菜单中当前选中武器的显示
+-- zs_nestbuilt          刷新僵尸出生菜单以响应巢穴建成
 local surface_PlaySound = surface.PlaySound
 
 local DamageFloaters = CreateClientConVar("zs_damagefloaters", "1", true, false):GetBool()

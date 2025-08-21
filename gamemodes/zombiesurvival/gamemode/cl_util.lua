@@ -1,3 +1,14 @@
+-- 本文件包含一系列客户端辅助函数和控制台命令，用于调试、简化UI创建、处理UI缩放、快捷购买以及修改视图模型等。
+
+-- printdxinfo 添加一个控制台命令，用于打印客户端的DirectX支持信息到控制台。
+-- ammonames 将武器弹药类型映射到商店购买命令名称的查找表。
+-- zs_quickbuyammo 添加一个控制台命令，用于快速购买上次补给的弹药类型。
+-- GetViewModelPosition 返回一个远离玩家的视图模型位置，用于隐藏它。
+-- DontDrawViewModel 一个用于隐藏当前武器视图模型（玩家的手和武器）的函数。
+-- BetterScreenScale 根据屏幕分辨率计算一个合适的UI缩放比例，以确保界面在不同分辨率下显示良好。
+-- render.GetLightRGB 获取指定位置的光照颜色并返回其独立的R、G、B分量。
+-- EasyLabel 一个用于快速创建和配置VGUI标签（DLabel）的辅助函数。
+-- EasyButton 一个用于快速创建和配置VGUI按钮（DButton）的辅助函数。
 concommand.Add("printdxinfo", function()
 	print("DX Level: "..tostring(render.GetDXLevel()))
 	print("Supports HDR: "..tostring(render.SupportsHDR()))

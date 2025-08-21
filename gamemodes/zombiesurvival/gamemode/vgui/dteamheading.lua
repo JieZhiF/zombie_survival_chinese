@@ -1,5 +1,5 @@
 local PANEL = {}
-//这个就是按下TAB键时候的面板
+
 //注释状态：已完成
 PANEL.m_Team = 0//默认队伍ID
 PANEL.NextRefresh = 0//下次刷新时间

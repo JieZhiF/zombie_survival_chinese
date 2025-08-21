@@ -1,3 +1,39 @@
+-- 本文件为实体（Entity）元表添加了大量共享功能，可在服务器和客户端通用。主要包括自定义子弹发射逻辑、实体状态检查、伤害处理、物理交互以及路障属性的访问等。
+
+-- FireBulletsLua 一个完全在Lua中实现的开火函数，用于处理子弹的弹道、伤害、特效和回调
+-- IsValidPlayer 检查实体是否为一个有效的玩家
+-- IsValidHuman 检查实体是否为一个有效的人类玩家
+-- IsValidZombie 检查实体是否为一个有效的僵尸玩家
+-- IsHuman 检查实体是否为人类玩家（不检查有效性或存活状态）
+-- IsZombie 检查实体是否为僵尸玩家（不检查有效性或存活状态）
+-- IsValidLivingPlayer 检查实体是否为一个有效的、存活的玩家
+-- IsValidLivingHuman 检查实体是否为一个有效的、存活的人类玩家
+-- IsValidLivingZombie 检查实体是否为一个有效的、存活的僵尸玩家
+-- ApplyPlayerProperties 将一个玩家的外观属性（颜色、身体组件、材质、皮肤）应用到该实体上
+-- GetVolume 根据实体的包围盒计算其大致体积
+-- TakeSpecialDamage 一个便捷函数，用于对实体造成特定类型的伤害
+-- NearestBone 找到实体上离指定位置最近的骨骼
+-- IsProjectile 检查实体是否被视为一个投射物
+-- SetupGenericProjectile 将实体设置为一个通用的投射物（设置碰撞组、物理属性等）
+-- ProjectileDamageSource 获取投射物的实际伤害来源实体
+-- ResetBones 重置实体所有骨骼的缩放、角度和位置
+-- GetBarricadeHealth 获取路障的当前生命值
+-- GetMaxBarricadeHealth 获取路障的最大生命值
+-- GetBarricadeRepairs 获取路障已被修理的次数
+-- GetMaxBarricadeRepairs 获取路障的最大可修理次数
+-- GetBonePositionMatrixed 通过骨骼矩阵获取其精确的位置和角度
+-- CollisionRulesChanged 通过快速切换碰撞组来强制物理引擎重新计算实体的碰撞规则
+-- GetAlpha 获取实体颜色的Alpha（透明度）值
+-- SetAlpha 设置实体颜色的Alpha（透明度）值
+-- IsBarricadeProp 检查实体当前是否为一个路障道具
+-- GetHolder 获取当前正在举起该实体的玩家
+-- ThrowFromPosition 从指定位置将实体抛出，施加一个力
+-- ThrowFromPositionSetZ 从指定位置将实体抛出，并可自定义垂直方向的力度
+-- PoisonDamage 对实体造成毒性伤害，对玩家有特殊效果（如视角震动、音效）
+-- SequenceDuration 重写原函数，防止在获取动画序列长度时返回nil而出错
+-- DispatchTraceAttack 重写原函数，允许某些实体绕过常规的射线攻击检测直接承受伤害
+-- IsPhysicsModel 检查实体是否为物理道具（prop_physics），并可选择性地匹配模型
+-- IsWeaponType 检查实体是否为特定类型的武器（包括掉落的和持有的）
 local meta = FindMetaTable("Entity")
 
 local vector_origin = vector_origin

@@ -1,3 +1,32 @@
+-- 本文件为客户端脚本，主要通过扩展Player元表(meta)来为玩家对象添加或修改功能，并处理从服务器接收的相关网络消息，用于更新玩家状态、物理属性和触发客户端效果。
+
+-- meta:FloatingScore 当本地玩家触发时，调用游戏模式的 "FloatingScore" 钩子来显示浮动分数。
+-- meta:FixModelAngles 根据玩家的移动速度和朝向，修正其模型角度，使其看起来更自然。
+-- meta:RemoveAllStatus 移除玩家所有状态效果的存根函数（无具体实现）。
+-- meta:RemoveStatus 移除玩家特定状态效果的存根函数（无具体实现）。
+-- meta:HasWon 判断玩家是否已作为人类获胜（处于漫游观察模式）。
+-- meta:GetStatus 获取与玩家关联的特定状态实体。
+-- meta:GiveStatus 给予玩家特定状态的存根函数（无具体实现）。
+-- meta:KnockDown 将玩家击倒的存根函数（无具体实现）。
+-- meta:GetThirdPersonCameraPos 计算第三人称摄像机的理想位置，进行碰撞检测以防穿墙。
+-- meta:IsFriend 检查目标玩家是否为好友（使用缓存数据以提高性能）。
+-- timer.Create("checkfriend") 定时器，周期性地检查并缓存所有玩家的好友状态。
+-- meta:SetGroundEntity 如果不存在，则定义一个空的 SetGroundEntity 函数，以保证兼容性。
+-- meta:Kill 如果不存在，则定义一个空的 Kill 函数，以保证兼容性。
+-- meta:HasWeapon 如果不存在，则定义 HasWeapon 函数，用于检查玩家是否拥有特定武器。
+-- meta:SetMaxHealth 设置玩家的最大生命值。
+-- meta:GetMaxHealth 获取玩家的最大生命值。
+-- meta:DoHulls 根据玩家的队伍和僵尸职业，动态调整其碰撞箱、模型大小、重力、跳跃力等物理属性。
+-- meta:GivePenalty 当玩家受到惩罚时，播放警报声。
+-- meta:SetZombieClass 设置玩家的僵尸职业，并调用相应的职业切换钩子。
+-- meta:GetRateOfPalsy 根据玩家的生命值、恐惧状态和武器晃动，计算准星的晃动幅度。
+-- GM.CachedResupplyAmmoType 用于缓存当前补给所用的弹药类型。
+-- timer.Create("CacheResupplyAmmoType") 定时器，周期性地更新缓存的补给弹药类型。
+-- net.Receive("zs_penalty") 接收服务器消息，对本地玩家执行惩罚效果。
+-- net.Receive("zs_dohulls") 接收服务器消息，更新指定玩家的物理属性（DoHulls）。
+-- net.Receive("zs_zclass") 接收服务器消息，设置指定玩家的僵尸职业。
+-- net.Receive("zs_floatscore") 接收服务器消息，在目标实体位置显示浮动分数。
+-- net.Receive("zs_floatscore_vec") 接收服务器消息，在指定三维坐标位置显示浮动分数。
 local meta = FindMetaTable("Player")
 
 function meta:FloatingScore(victim, effectname, frags, flags)
