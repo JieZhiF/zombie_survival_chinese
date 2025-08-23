@@ -101,7 +101,8 @@ if CLIENT then
 
 			local v = self.VElements[name]
 			if (!v) then self.vRenderOrder = nil break end
-			if (v.hide) then continue end
+			-- 添加对 active 属性的检查，如果为 false 则跳过绘制
+			if (v.hide or v.active == false) then continue end
 
 			local model = v.modelEnt
 			local sprite = v.spriteMaterial
@@ -215,7 +216,8 @@ if CLIENT then
 
 			local v = self.WElements[name]
 			if (!v) then self.wRenderOrder = nil break end
-			if (v.hide) then continue end
+			-- 添加对 active 属性的检查，如果为 false 则跳过绘制
+			if (v.hide or v.active == false) then continue end
 
 			local pos, ang
 
@@ -346,8 +348,28 @@ if CLIENT then
 
 		-- Create the clientside models here because Garry says we can't do it in the render hook
 		for k, v in pairs( tab ) do
+			-- 添加对 active 属性的检查
+			if v.active == false then
+				-- 如果该元素被设置为 inactive，并且它之前被创建过，则移除它
+				if (v.type == "Model" and IsValid(v.modelEnt)) then
+					v.modelEnt:Remove()
+					v.modelEnt = nil
+					v.createdModel = nil -- 重置创建状态
+				elseif (v.type == "Sprite" and v.spriteMaterial) then
+					v.spriteMaterial = nil -- 移除材质引用
+					v.createdSprite = nil
+				end
+				continue -- 跳过对非活动元素的创建
+			end
+
+			-- 以下是原有的模型创建逻辑
 			if (v.type == "Model" and v.model and v.model != "" and (!IsValid(v.modelEnt) or v.createdModel != v.model) and
 					string.find(v.model, ".mdl") and file.Exists (v.model, "GAME") ) then
+
+				if (IsValid(v.modelEnt)) then -- 如果模型存在但其定义已更改，则移除旧模型
+					v.modelEnt:Remove()
+					v.modelEnt = nil
+				end
 
 				v.modelEnt = ClientsideModel(v.model, RENDER_GROUP_VIEW_MODEL_OPAQUE)
 				if (IsValid(v.modelEnt)) then
@@ -383,7 +405,6 @@ if CLIENT then
 		end
 
 	end
-
 	local allbones
 	local hasGarryFixedBoneScalingYet = true
 

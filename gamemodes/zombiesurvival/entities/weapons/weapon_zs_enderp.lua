@@ -37,7 +37,7 @@ SWEP.WorldModel				= "models/weapons/w_rif_famas.mdl"
 SWEP.ViewModelFlip 			= false
 SWEP.HoldType				= "ar2"
 
-SWEP.Primary.Damage			= 26
+SWEP.Primary.Damage			= 20
 SWEP.Primary.NumShots		= 1
 SWEP.Primary.Sound			= Sound("weapons/ender.wav")
 SWEP.Primary.ClipSize		= 30

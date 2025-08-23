@@ -447,7 +447,7 @@ function GM:AddResources()
 	resource.AddFile("models/weapons/c_aegiskit.mdl")
 
 	resource.AddFile("materials/models/weapons/v_hand/armtexture.vmt")
-
+	resource.AddFile("models/htfovichi/invpistol.mdl")
 	resource.AddFile("models/weapons/v_supershorty/v_supershorty.mdl")
 	resource.AddFile("models/weapons/w_supershorty.mdl")
 	for _, filename in pairs(file.Find("materials/weapons/v_supershorty/*.vmt", "GAME")) do

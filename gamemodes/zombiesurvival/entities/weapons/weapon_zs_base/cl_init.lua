@@ -15,6 +15,8 @@ SWEP.IronSightAng = Angle(0,0,0)
 SWEP.IronSightPos = Vector(0,0,0)
 SWEP.IronPos = Vector(0,0,0) -- dont edit this
 SWEP.IronAng = Angle(0,0,0) -- dont edit this
+SWEP.VMPos = Vector(0,0, 0)
+SWEP.VMAng = Angle(0, 0, 0)
 SWEP.InspectSpeed = 1
 SWEP.IronSpeed = 3
 SWEP.InspectOnDeploy = false
@@ -108,7 +110,7 @@ function SWEP:DoAnims() //call this function from the child sweps think hook to 
 	local ang = self.Owner:GetViewModel(0):GetAngles()
 	self:GetViewModelPosition(pos,ang)
 end
-
+--[[
 function SWEP:GetViewModelPosition(Pos,Ang)
 	local tmp = Ang
 	Ang:RotateAroundAxis(EyeAngles():Forward(),self.IronAng.p) //rotate the shit
@@ -116,7 +118,7 @@ function SWEP:GetViewModelPosition(Pos,Ang)
 	Ang:RotateAroundAxis(EyeAngles():Right(),self.IronAng.r)
 	return Pos+(tmp:Forward()*(self.offset+self.IronPos.x))+(tmp:Right()*self.IronPos.y)+(tmp:Up()*(self.IronPos.z+self.Breath)),Ang+Angle((self.offset+10)/3,0,0)
 end
-
+]]
 function SWEP:DoInspect()
 	local info = self.Inspect[key]
 	local Bones = self.BoneInspect[key]

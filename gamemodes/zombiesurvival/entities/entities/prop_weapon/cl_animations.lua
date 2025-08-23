@@ -15,7 +15,7 @@ function ENT:RenderModels(ble, cmod)
 	for k, name in pairs( self.wRenderOrder ) do
 		local v = self.WElements[name]
 		if (!v) then self.wRenderOrder = nil break end
-		if (v.hide) then continue end
+		if (v.hide or v.active == false) then continue end
 
 		local pos, ang
 
