@@ -170,6 +170,27 @@ function meta:DrawRegularScope()
 		surface.DrawRect(0, 0, scrw, extra)
 		surface.DrawRect(0, scrh - extra, scrw, extra)
 	end
+	local scope_size = 1          -- 瞄准镜的尺寸，1 代表占满屏幕的垂直高度
+	local scope_radius = (scrh * scope_size) / 2
+
+	local crosshair_color = Color(0, 0, 0, 220) -- 十字准星的颜色 (RGBA)
+	local line_thickness = 3          -- 十字准星线条的粗细 (像素)
+	local gap_size = 6              -- 中心点的大小/间隙 (像素)
+	local x, y = scrw / 2, scrh / 2 -- 获取屏幕中心点
+			-- 3. 绘制十字准星
+	surface.SetDrawColor(crosshair_color)
+	local gap = gap_size / 2
+	local thickness_half = line_thickness / 2
+
+	-- 绘制四条线，构成一个中间有间隙的十字
+	-- 上方竖线
+	surface.DrawRect(x - thickness_half, y - scope_radius, line_thickness, scope_radius - gap)
+	-- 下方竖线
+	surface.DrawRect(x - thickness_half, y + gap, line_thickness, scope_radius - gap)
+	-- 左侧横线
+	surface.DrawRect(x - scope_radius, y - thickness_half, scope_radius - gap, line_thickness)
+	-- 右侧横线
+	surface.DrawRect(x + gap, y - thickness_half, scope_radius - gap, line_thickness)
 end
 
 local texGradientU = Material("vgui/gradient-u")

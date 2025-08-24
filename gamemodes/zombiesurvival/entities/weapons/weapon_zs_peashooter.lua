@@ -127,7 +127,7 @@ SWEP.IronSightsAng = Vector(0.094, -0.08, -0.737)
 SWEP.IronSightsPos_Rumor = Vector(-6.08, -6.532, 2.2)
 SWEP.IronSightsAng_Rumor = Vector(0, 0, 0)
 ]]
-SWEP.IronSightsPos = Vector(-6.08, -6.532, 2.2)
+SWEP.IronSightsPos = Vector(-6.08, -4, 2.2)
 SWEP.IronSightsAng = Vector(0, 0, 0)
 SWEP.ViewModelBoneMods = {
 	["v_weapon.p228_Parent"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },

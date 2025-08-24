@@ -16,28 +16,8 @@ if CLIENT then
 	SWEP.HUD3DPos = Vector(1.2,-5.08,7.8)
 	SWEP.HUD3DAng = Angle(0, -10, -30)
 	SWEP.HUD3DScale = 0.008
-	SWEP.VMPos = Vector(-1.453, -0.212, -0.098)
-	SWEP.VMAng = Angle(0, 0, -6.572)
-	function SWEP:GetViewModelPosition(pos, ang)
-			if self.VMAng and self.VMPos then
-
-			ang:RotateAroundAxis(ang:Right(), self.VMAng.x)
-
-			ang:RotateAroundAxis(ang:Up(), self.VMAng.y)
-
-			ang:RotateAroundAxis(ang:Forward(), self.VMAng.z)
-
-
-
-			pos:Add(ang:Right() * self.VMPos.x)
-
-			pos:Add(ang:Forward() * self.VMPos.y)
-
-			pos:Add(ang:Up() * self.VMPos.z)
-
-		end
-		return self.BaseClass.GetViewModelPosition(self, pos, ang)
-	end
+	--SWEP.VMPos = Vector(-1.453, -0.212, -0.098)
+	--SWEP.VMAng = Angle(0, 0, -6.572)
 end
 
 SWEP.Base = "weapon_zs_base"
@@ -54,6 +34,7 @@ SWEP.ViewModelBoneMods = {
 
 SWEP.ViewModel = "models/weapons/cstrike/c_rif_aug.mdl"
 SWEP.WorldModel = "models/htfovichi/invpistol.mdl"
+
 SWEP.VElements = {
 	["reciever++"] = { type = "Model", model = "models/tfa/lbeam.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "stvol", pos = Vector(1.639, -0.5, 3.884), angle = Angle(-90, 90, 0), size = Vector(1, 1, 1), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "", skin = 0, bodygroup = {} },
 	["mag"] = { type = "Model", model = "models/props_lab/blastdoor001c.mdl", bone = "v_weapon.aug_Clip", rel = "", pos = Vector(-0.902, 2.68, -1.371), angle = Angle(-3.001, -10.004, -0.003), size = Vector(0.09, 0.029, 0.029), color = Color(172, 172, 172, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "metal2", skin = 0, bodygroup = {} },
@@ -122,7 +103,7 @@ sound.Add( {
 	name = "Weapon_enamtpr.Silende",
 	channel = CHAN_WEAPON,
 	volume = 0.65,
-	level = 50,
+	level = 60,
 	pitch = 210,//{80,85},
 	sound = "weapons/ar2/npc_ar2_altfire.wav"
 } )
@@ -144,6 +125,7 @@ SWEP.WalkSpeed = SPEED_SLOW
 SWEP.TracerName = "tracer_htfov"
 SWEP.Tier = 4
 SWEP.MaxStock = 3
+SWEP.StandOffset = -1
 SWEP.IronSightsPos = Vector(-7.02, -5, 1.8)
 SWEP.IronSightsAng = Vector(0.35, -3.18, -2.2	)
 SWEP.BulletCallback = function(attacker, tr, dmginfo)

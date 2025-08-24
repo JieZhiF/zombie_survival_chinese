@@ -130,7 +130,7 @@ SWEP.Primary.Damage = 55
 SWEP.Primary.NumShots = 1
 SWEP.Primary.Delay = 1.25
 SWEP.ReloadDelay = SWEP.Primary.Delay
-
+ 
 SWEP.Primary.ClipSize = 5
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "357"
@@ -157,17 +157,17 @@ end
 
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
-
+	
 	function SWEP:GetViewModelPosition(pos, ang)
 		if GAMEMODE.DisableScopes then return end
 
 		if self:IsScoped() then
-			return pos + ang:Up() * 256, ang
+			return pos --+ ang:Up() * 256, ang
 		end
 
 		return BaseClass.GetViewModelPosition(self, pos, ang)
 	end
-
+	
 	function SWEP:DrawHUDBackground()
 		if GAMEMODE.DisableScopes then return end
 

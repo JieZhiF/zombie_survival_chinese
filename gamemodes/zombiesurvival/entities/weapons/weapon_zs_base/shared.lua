@@ -38,7 +38,7 @@ SWEP.ReloadSpeed = 1.0
 SWEP.FireAnimSpeed = 1.0
 
 SWEP.IdleActivity = ACT_VM_IDLE
-
+SWEP.StandOffset = -1
 -- 全局开关
 SWEP.Recoil_Enabled         = false -- 设为 true 来为武器启用此系统
 
@@ -407,7 +407,11 @@ end
 
 function SWEP:ShootBullets(dmg, numbul, cone)
 	local owner = self:GetOwner()
-	self:SendWeaponAnimation()
+	if not self:GetIronsights() then
+		self:SendWeaponAnimation()
+	else
+		self.offset = self.StandOffset -- 如果在瞄准状态，可能用于触发不同的动画效果
+	end
 	owner:DoAttackEvent()
 	if self.Recoil > 0 then
 		local r = math.Rand(0.8, 1)

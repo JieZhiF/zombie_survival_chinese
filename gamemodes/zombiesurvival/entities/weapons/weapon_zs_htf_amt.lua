@@ -104,7 +104,7 @@ SWEP.ViewModelBoneMods = {
 	["ValveBiped.Bip01_L_Clavicle"] = { scale = Vector(1, 1, 1), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },
 	["v_weapon.p228_Slide"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
-
+SWEP.StandOffset = -1.5
 SWEP.SCKMaterials = {}
 
 SWEP.VElements = {

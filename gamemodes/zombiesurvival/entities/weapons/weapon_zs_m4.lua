@@ -73,7 +73,7 @@ SWEP.VElements = {
 	["reciever+++++++++++++++++++++++++++++++"] = { type = "Model", model = "models/props_junk/MetalBucket01a.mdl", bone = "v_weapon.m4_Parent", rel = "stvol", pos = Vector(0, -0.058, 12.13), angle = Angle(179.559, 90, 180), size = Vector(0.146, 0.146, 0.056), color = Color(131, 133, 136, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {} },
 	["reciever++++++++++++++++++++++++++++++++"] = { type = "Model", model = "models/hunter/tubes/circle4x4.mdl", bone = "v_weapon.m4_Parent", rel = "stvol", pos = Vector(0, -0.091, 12.5), angle = Angle(0, 0, 0), size = Vector(0.013, 0.013, 0.013), color = Color(131, 133, 136, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {} },
 	["reciever+++++++++++++++++++++++++++++++++"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "v_weapon.m4_Parent", rel = "stvol", pos = Vector(-0.062, 1.355, 15.876), angle = Angle(90, 0, 0), size = Vector(0.014, 0.019, 0.014), color = Color(81, 81, 81, 255), surpresslightning = false, material = "phoenix_storms/pack2/train_floor", skin = 0, bodygroup = {} },
-	--["reciever_tryasun"] = { type = "Model", model = "models/props_trainstation/traincar_rack001.mdl", bone = "v_weapon.m4_Eject", rel = "", pos = Vector(0, -0.613, -0.429), angle = Angle(0, -101.689, 90), size = Vector(0.05, 0.025, 0.024), color = Color(125, 128, 121, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {} },
+	["reciever_tryasun"] = { type = "Model", model = "models/props_trainstation/traincar_rack001.mdl", bone = "v_weapon.m4_Eject", rel = "", pos = Vector(0, -0.613, -0.429), angle = Angle(0, -101.689, 90), size = Vector(0.05, 0.025, 0.024), color = Color(125, 128, 121, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {} },
 
 	--------------------
 	-- 枪托 (Stock)
@@ -126,9 +126,9 @@ SWEP.VElements = {
 	["muzzlehui+"] = { type = "Model", model = "models/props_junk/metalgascan.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "stvol", pos = Vector(0, -2.26, 4.46), angle = Angle(180, 180, 90), size = Vector(0.009, 0.009, 0.012), color = Color(134, 129, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false },
 	["muzzlehui++"] = { type = "Model", model = "models/props_junk/metalgascan.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "stvol", pos = Vector(-0.241, -2.28, 4.46), angle = Angle(180, 180, 90), size = Vector(0.019, 0.019, 0.019), color = Color(134, 129, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false },
 	["muzzlehui+++"] = { type = "Model", model = "models/props_junk/metalgascan.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "stvol", pos = Vector(0.24, -2.274, 4.46), angle = Angle(180, 180, 90), size = Vector(0.019, 0.019, 0.019), color = Color(134, 129, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {} , active = false},
-	--["sosilence"] = { type = "Model", model = "models/props_c17/canister02a.mdl", bone = "v_weapon.m4_Parent", rel = "stvol", pos = Vector(0, -0.082, -2.25), angle = Angle(0, 0, 0), size = Vector(0.159, 0.159, 0.094), color = Color(131, 131, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false  },
-	["sosilence+"] = { type = "Model", model = "models/props_c17/canister02a.mdl", bone = "v_weapon.m4_Silencer", rel = "stvol", pos = Vector(0, -0.082, 1.014), angle = Angle(0, 0, 0), size = Vector(0.104, 0.104, 0.263), color = Color(131, 131, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false  },
-	--	["sosilence++"] = { type = "Model", model = "models/props_lab/tpplug.mdl", bone = "v_weapon.m4_Silencer", rel = "stvol", pos = Vector(0, -0.082, -6.94), angle = Angle(90, 0, 0), size = Vector(0.202, 0.187, 0.393), color = Color(131, 131, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false  },
+	["sosilence"] = { type = "Model", model = "models/props_c17/canister02a.mdl", bone = "v_weapon.m4_Parent", rel = "stvol", pos = Vector(0, -0.082, -2.25), angle = Angle(0, 0, 0), size = Vector(0.159, 0.159, 0.094), color = Color(131, 131, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false  },
+	["sosilence+"] = { type = "Model", model = "models/props_c17/canister02a.mdl", bone = "v_weapon.m4_Silencer", rel = "stvol", pos = Vector(0, -0.082, 1.014), angle = Angle(0, 0, 0), size = Vector(0.104, 0.104, 0.263), color = Color(131, 131, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = true  },
+	["sosilence++"] = { type = "Model", model = "models/props_lab/tpplug.mdl", bone = "v_weapon.m4_Silencer", rel = "stvol", pos = Vector(0, -0.082, -6.94), angle = Angle(90, 0, 0), size = Vector(0.202, 0.187, 0.393), color = Color(131, 131, 131, 255), surpresslightning = false, material = "metal2", skin = 0, bodygroup = {}, active = false  },
 
 	--------------------
 	-- 瞄具 (Sights)
@@ -349,7 +349,7 @@ sound.Add( {
 	name = "Weapon_PyatnadtsatSosilence.SingleHeavy",
 	channel = CHAN_WEAoPON,
 	volume = 0.7,
-	level = 100,
+	level = 75,
 	pitch = 150,//{80,85},
 	sound = "weapons/usp/usp_unsil-1.wav"
 } )
