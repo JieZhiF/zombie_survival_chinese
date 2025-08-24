@@ -375,8 +375,8 @@ function GM:AddResources()
 		resource.AddFile("materials/botavatar/"..filename)
 	end
 	resource.AddFile("materials/zombiesurvival/filmgrain/filmgrain.vmt")
-	resource.AddFile("materials/zombiesurvival/filmgrain/filmgrain.vtf")
-
+	resource.AddFile("materials/sights/rpgsight.vtf")
+	resource.AddFile("materials/silly/sillymaterialfix.vtf")
 	for _, filename in pairs(file.Find("sound/zombiesurvival/*.ogg", "GAME")) do
 		resource.AddFile("sound/zombiesurvival/"..filename)
 	end
