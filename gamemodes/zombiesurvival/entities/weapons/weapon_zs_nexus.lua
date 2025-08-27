@@ -28,7 +28,7 @@ SWEP.Tier = 5
 -- =================================================================
 SWEP.Primary.Damage			= 30
 SWEP.Primary.NumShots		= 1
-SWEP.Primary.Sound			= Sound("weapons/nexus_fire.wav")
+SWEP.Primary.Sound			= Sound("Weapon_Nexus.Single")
 SWEP.Primary.ClipSize		= 30
 SWEP.Primary.Delay			= 0.09 -- 1/(666/60)
 SWEP.Primary.DefaultClip = 90
@@ -41,7 +41,7 @@ SWEP.Primary.Automatic 		= true
 SWEP.IronSightsPos          = Vector(0,0,0)--Vector(-7.32, -8.78, 0.08)
 SWEP.IronSightsAng          = Vector(0, 0, 0)
 SWEP.IronsightsMultiplier   = 0.25
-
+SWEP.SniperRifle = true
 -- =================================================================
 --                      SCK 元素定义 (VElements & WElements)
 -- =================================================================
@@ -86,6 +86,15 @@ SWEP.HUD3DPos = Vector(-1.15, -4.4, -4)
 SWEP.HUD3DAng = Angle(0, 0, -18)
 SWEP.HUD3DScale = 0.015
 
+sound.Add(
+{
+	name = "Weapon_Nexus.Single",
+	channel = CHAN_WEAPON,
+	volume =0.6,
+	level = 60,
+	pitch = 190,
+	sound = {"weapons/nexus_fire.wav"}
+})
 
 -- 判断是否处于“完全开镜”状态的函数 (开镜动画结束后)
 function SWEP:IsScoped()

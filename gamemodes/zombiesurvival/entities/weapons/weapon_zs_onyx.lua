@@ -96,7 +96,7 @@ end
 function SWEP:IsScoped()
 	return self:GetIronsights() and self.fIronTime and self.fIronTime + 0.25 <= CurTime()
 end
-
+SWEP.SniperRifle = true
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
 

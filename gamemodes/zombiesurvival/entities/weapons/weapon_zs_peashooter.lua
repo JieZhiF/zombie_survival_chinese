@@ -20,6 +20,7 @@ SWEP.Base = "weapon_zs_base"
 
 SWEP.HoldType = "pistol"
 SWEP.ShowViewModel = false
+SWEP.ShowWorldModel = false
 SWEP.CSMuzzleFlashes = true
 SWEP.ShowWorldModel = false
 SWEP.ViewModel = "models/weapons/cstrike/c_pist_p228.mdl"

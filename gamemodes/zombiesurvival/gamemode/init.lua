@@ -377,6 +377,7 @@ function GM:AddResources()
 	resource.AddFile("materials/zombiesurvival/filmgrain/filmgrain.vmt")
 	resource.AddFile("materials/sights/rpgsight.vtf")
 	resource.AddFile("materials/silly/sillymaterialfix.vtf")
+	resource.AddFile("materials/htfovichi/pistol.vtf")
 	for _, filename in pairs(file.Find("sound/zombiesurvival/*.ogg", "GAME")) do
 		resource.AddFile("sound/zombiesurvival/"..filename)
 	end
@@ -447,6 +448,8 @@ function GM:AddResources()
 	resource.AddFile("models/weapons/c_aegiskit.mdl")
 
 	resource.AddFile("materials/models/weapons/v_hand/armtexture.vmt")
+	resource.AddFile("materials/models/htfovichi/pistol.vmt")
+	resource.AddFile("materials/models/htfovichi/pistol.vtf")
 	resource.AddFile("models/htfovichi/invpistol.mdl")
 	resource.AddFile("models/weapons/v_supershorty/v_supershorty.mdl")
 	resource.AddFile("models/weapons/w_supershorty.mdl")
@@ -1682,11 +1685,10 @@ function GM:PlayerHealedTeamMember(pl, other, health, wep, pointmul, nobymsg, fl
 		pl:AddPoints(points) //增加点数
 	end
 	net.Start("zs_healother")
-		net.WriteBool(not floater)
+		--net.WriteBool(floater)
 		net.WriteEntity(other)
 		net.WriteFloat(health)
 	net.Send(pl)
-	--if floater then print("floater is true" )end //是否显示
 	 
 	if not nobymsg then
 		net.Start("zs_healby")

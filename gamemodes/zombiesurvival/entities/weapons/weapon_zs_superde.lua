@@ -57,6 +57,7 @@ GAMEMODE:AddNewRemantleBranch(SWEP, 1, "白焰", "每发子弹附加燃烧效果
 		local ent = tr.Entity
 		if SERVER and math.random(1) == 1 and ent:IsValidLivingZombie() then
 			ent:Ignite(2)
+			ent:SetNWFloat("FireDieTime", CurTime() + 2)
 			for __, fire in pairs(ents.FindByClass("entityflame")) do
 				if fire:IsValid() and fire:GetParent() == ent then
 					fire:SetOwner(attacker)

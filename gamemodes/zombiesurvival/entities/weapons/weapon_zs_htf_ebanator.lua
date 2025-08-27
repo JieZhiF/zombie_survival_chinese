@@ -34,7 +34,7 @@ SWEP.ViewModelBoneMods = {
 
 SWEP.ViewModel = "models/weapons/cstrike/c_rif_aug.mdl"
 SWEP.WorldModel = "models/htfovichi/invpistol.mdl"
-
+SWEP.ShowWorldModel = false
 SWEP.VElements = {
 	["reciever++"] = { type = "Model", model = "models/tfa/lbeam.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "stvol", pos = Vector(1.639, -0.5, 3.884), angle = Angle(-90, 90, 0), size = Vector(1, 1, 1), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "", skin = 0, bodygroup = {} },
 	["mag"] = { type = "Model", model = "models/props_lab/blastdoor001c.mdl", bone = "v_weapon.aug_Clip", rel = "", pos = Vector(-0.902, 2.68, -1.371), angle = Angle(-3.001, -10.004, -0.003), size = Vector(0.09, 0.029, 0.029), color = Color(172, 172, 172, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "metal2", skin = 0, bodygroup = {} },
@@ -132,6 +132,7 @@ SWEP.BulletCallback = function(attacker, tr, dmginfo)
 	local ent = tr.Entity
 	if SERVER and ent:IsValidLivingZombie() then
 		ent:Ignite(3)
+		ent:SetNWFloat("FireDieTime", CurTime() + 3)
 		for __, fire in pairs(ents.FindByClass("entityflame")) do
 			if fire:IsValid() and fire:GetParent() == ent then
 				fire:SetOwner(attacker)

@@ -325,14 +325,21 @@ net.Receive("zs_endround", function(length)
 end)
 
 net.Receive("zs_healother", function(length)
-	print("Receive zs_healother")
-	if net.ReadBool() then
-		gamemode.Call("HealedOtherPlayer", net.ReadEntity(), net.ReadFloat())
-	else
-		GAMEMODE:CenterNotify({killicon = "weapon_zs_medicalkit"}, " ", COLOR_GREEN, translate.Format("healed_x_for_y", net.ReadEntity():Name(), net.ReadFloat()))
-	end
-end)
+	-- 先把网络消息里的数据读出来，存到变量里
+	local healed_player = net.ReadEntity()
+	local health_amount = net.ReadFloat()
 
+	-- 加一个安全检查，确保实体是有效的，防止其他错误
+	if not IsValid(healed_player) then return end
+
+	-- 现在使用这些变量来调用两个函数
+
+	-- 1. 调用函数显示浮动数字
+	gamemode.Call("HealedOtherPlayer", healed_player, health_amount)
+	
+	-- 2. 调用函数显示屏幕中央的提示
+	GAMEMODE:CenterNotify({killicon = "weapon_zs_medicalkit"}, " ", COLOR_GREEN, translate.Format("healed_x_for_y", healed_player:Name(), health_amount))
+end)
 net.Receive("zs_repairobject", function(length)
 	gamemode.Call("RepairedObject", net.ReadEntity(), net.ReadFloat())
 end)

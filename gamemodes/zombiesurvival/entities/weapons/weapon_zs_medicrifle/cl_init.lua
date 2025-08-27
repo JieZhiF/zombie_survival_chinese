@@ -6,7 +6,7 @@ SWEP.ViewModelFlip = false
 SWEP.ViewModelFOV = 55
 SWEP.ShowViewModel = true
 SWEP.ShowWorldModel = true
-
+SWEP.SniperRifle = true
 SWEP.IronsightsMultiplier = 0.25
 SWEP.HUD3DBone = "v_weapon.scout_Parent"
 SWEP.HUD3DPos = Vector(-1.25, -2.75, -6)

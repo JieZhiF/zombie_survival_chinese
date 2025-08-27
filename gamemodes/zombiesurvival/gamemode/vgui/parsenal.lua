@@ -177,14 +177,24 @@ function GM:HasPurchaseableAmmo(sweptable)
 		return true
 	end
 end
-
 function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 	viewer.m_Title:SetText(sweptable.PrintName)
 	viewer.m_Title:PerformLayout()
 
 	local desctext = sweptable.Description or ""
 	if not self.ZSInventoryItemData[shoptbl.SWEP] then
-		viewer.ModelPanel:SetModel(sweptable.WorldModel)
+		if IsValid(viewer.ModelPanel) and viewer.ModelPanel.SetWeaponPreview then
+			viewer.ModelPanel:SetWeaponPreview(sweptable)
+			-- 如果你想要自定义摄像机位置（用你原来的偏移）
+			if viewer.ModelPanel.Entity and IsValid(viewer.ModelPanel.Entity) then
+				local mins, maxs = viewer.ModelPanel.Entity:GetRenderBounds()
+				viewer.ModelPanel:SetCamPos(mins:Distance(maxs) * Vector(1.15, 0.75, 0.5))
+				viewer.ModelPanel:SetLookAt((mins + maxs) / 2)
+
+			end
+		else
+			viewer.ModelPanel:SetModel(sweptable.WorldModel)
+		end
 		local mins, maxs = viewer.ModelPanel.Entity:GetRenderBounds()
 		viewer.ModelPanel:SetCamPos(mins:Distance(maxs) * Vector(1.15, 0.75, 0.5))
 		viewer.ModelPanel:SetLookAt((mins + maxs) / 2)
@@ -193,7 +203,6 @@ function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 		if sweptable.NoDismantle then
 			desctext = desctext .. "\n" .. translate.Get("arsenal_CannotDismantle")
 		end
-		
 
 		viewer.m_Desc:MoveBelow(viewer.m_VBG, 8)
 		viewer.m_Desc:SetFont("ZSBodyTextFont")
@@ -204,6 +213,7 @@ function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 		viewer.m_Desc:MoveBelow(viewer.m_Title, 20)
 		viewer.m_Desc:SetFont("ZSBodyTextFontBig")
 	end
+
 	viewer.m_Desc:SetText(desctext)
 
 	self:ViewerStatBarUpdate(viewer, shoptbl.Category ~= ITEMCAT_GUNS and shoptbl.Category ~= ITEMCAT_MELEE, sweptable)

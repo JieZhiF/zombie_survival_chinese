@@ -1,4 +1,8 @@
-"LightmappedGeneric"
+"UnlitGeneric"
 {
-	"$basetexture" "Viola/Documents/kemiya"
+	"$basetexture" "botavatar/kemiya"
+	"$vertexalpha" "1"
+    "$vertexcolor" "1"
+    "$translucent"  "1"
+    "$ignorez"      "1" 
 }

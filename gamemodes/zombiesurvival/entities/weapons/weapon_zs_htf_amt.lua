@@ -98,6 +98,7 @@ SWEP.HoldType = "pistol"
 
 SWEP.ViewModel = "models/weapons/cstrike/c_pist_p228.mdl"
 SWEP.WorldModel = "models/htfovichi/invpistol.mdl"
+SWEP.ShowWorldModel = false
 SWEP.ViewModelBoneMods = {
 	["v_weapon.p228_Hammer"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },
 	["v_weapon.p228_Parent"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },

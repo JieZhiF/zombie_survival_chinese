@@ -11,7 +11,7 @@ SWEP.Slot = 3
 SWEP.SlotPos = 0
 
 SWEP.IronsightsMultiplier = 0.25
-
+SWEP.SniperRifle = true
 function SWEP:GetViewModelPosition(pos, ang)
 	if GAMEMODE.DisableScopes then return end
 

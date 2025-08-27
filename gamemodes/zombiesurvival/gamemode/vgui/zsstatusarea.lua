@@ -23,6 +23,24 @@ surface.CreateFont("ZsStatusFontModern", {
 -- Configuration for each status effect. This data-driven approach is great for extensibility.
 local statusdisplays = {
 	{
+        Color = Color(255, 100, 0),
+        Name = translate.Get("Status_Burning"), -- 你可能需要在你的语言文件中添加 "Status_Burning" = "燃烧"
+        ValFunc = function(self, lp)
+            -- 遍历所有的entityflame实体
+            for _, flame in pairs(ents.FindByClass("entityflame")) do
+                -- 检查火焰是否有效，并且其父实体是我们关心的玩家
+                if flame:IsValid() and flame:GetParent() == lp then
+					local dieTime = lp:GetNWFloat("FireDieTime", 0)
+					-- 计算剩余时间。如果 dieTime 是 0 或已经过去，math.max会确保我们返回0。
+					return math.max(dieTime - CurTime(), 0)
+                end
+            end
+            return 0 -- 如果没有找到燃烧实体，则返回0
+        end,
+        Max = 999, -- 假设最大燃烧时间为10秒, 你可以根据你的游戏设置进行调整
+        Icon = Material("zombiesurvival/killicons/burn") -- 假设你有一个火焰的图标
+    },
+	{
 		Color = Color(220, 255, 0),
 		Name = translate.Get("Status_Poison"),
 		ValFunc = function(self, lp) return lp:GetPoisonDamage() end,
@@ -289,12 +307,26 @@ function PANEL:Paint(w, h)
 	surface.DrawTexturedRect(w * 0.015, 0, w * 0.075, h)
 	surface.SetTexture(texRightEdge)
 	surface.DrawTexturedRect(w * 0.125, 0, w , h)
-	-- 图像显示
 	if self.Icon and w > h then
 		surface.SetMaterial(self.Icon)
-		surface.SetDrawColor(255, 255, 255,255)
-		local iconSize = h - 12
-		surface.DrawTexturedRect(w * 0.1075 - iconSize / 2  , 0, iconSize, iconSize)
+		surface.SetDrawColor(255, 255, 255, 255)
+
+		-- 1. 定义一个动态的图标尺寸，让它几乎撑满整个面板高度，并留出一点边距
+		--    您可以调整 "- 8" 这个值来改变图标与上下的间距
+		local iconSize = h - 8
+
+		-- 2. 计算图标应该放置的区域的中心点X坐标
+		--    根据您的代码，这个区域的中心点在 w * 0.1075 的位置
+		local iconCenterX = w * 0.1075
+		
+		-- 3. 根据中心点和图标的实际尺寸，计算出绘制的起始X坐标
+		local xPos = iconCenterX - (iconSize / 2)
+
+		-- 4. 计算垂直居中的Y坐标
+		local yPos = (h - iconSize -8) / 2
+
+		-- 5. 使用计算好的动态尺寸和坐标来绘制图标
+		surface.DrawTexturedRect(xPos, yPos, iconSize, iconSize)
 	end
 
     local textColor = Color(col.r+50, col.g+50, col.b+50, 255)

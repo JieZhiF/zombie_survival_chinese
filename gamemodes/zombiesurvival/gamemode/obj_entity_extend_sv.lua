@@ -95,7 +95,7 @@ function meta:HealPlayer(pl, amount, pointmul, nobymsg, poisononly)
 	pointmul = (pointmul or 1) / (math.max(healed, regamount) / regamount)
 
 	if healed > 0 and self:IsPlayer() then
-		gamemode.Call("PlayerHealedTeamMember", self, pl, healed, self:GetActiveWeapon(), pointmul, nobymsg, 1) //大到一定量才显示，这里改成了始终显示
+		gamemode.Call("PlayerHealedTeamMember", self, pl, healed, self:GetActiveWeapon(), pointmul, nobymsg, 1) 
 		pl:SetPhantomHealth(math.max(0, pl:GetPhantomHealth() - healed))
 	end
 

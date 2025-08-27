@@ -37,6 +37,27 @@ SWEP.SwingRotation = Angle(0, -20, -40)
 SWEP.SwingOffset = Vector(10, 0, 0)
 SWEP.SwingHoldType = "melee"
 
+
+SWEP.MeleePuch_Pitch_Up_Min = 0   -- 攻击时，视角【最少】向上抬起多少
+SWEP.MeleePuch_Pitch_Up_Max = 1.1   -- 攻击时，视角【最多】向上抬起多少
+
+SWEP.MeleePuch_Pitch_Down_Min = 0.9 -- 攻击后，视角【最少】向下回落多少
+SWEP.MeleePuch_Pitch_Down_Max = 3 -- 攻击后，视角【最多】向下回落多少
+
+-- 左右晃动 (Yaw): 正值向左, 负值向右
+SWEP.MeleePuch_Yaw_Left_Min = 0.7   -- 【最少】向左偏移多少
+SWEP.MeleePuch_Yaw_Left_Max = 2.4   -- 【最多】向左偏移多少
+
+SWEP.MeleePuch_Yaw_Right_Min = 0  -- 【最少】向右偏移多少
+SWEP.MeleePuch_Yaw_Right_Max = 0.4  -- 【最多】向右偏移多少
+
+-- 旋转晃动 (Roll): 正值逆时针, 负值顺时针
+SWEP.MeleePuch_Roll_CCW_Min = 0 -- 【最少】逆时针旋转多少 (Counter-Clockwise)
+SWEP.MeleePuch_Roll_CCW_Max = 0 -- 【最多】逆时针旋转多少
+
+SWEP.MeleePuch_Roll_CW_Min = 0  -- 【最少】顺时针旋转多少 (Clockwise)
+SWEP.MeleePuch_Roll_CW_Max = 0  -- 【最多】顺时针旋转多少
+
 SWEP.HitDecal = "Manhackcut"
 
 SWEP.BlockPos = Vector(0, -8.643, -4.824)

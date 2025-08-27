@@ -173,7 +173,7 @@ local branch = GAMEMODE:AddNewRemantleBranch(SWEP, 2, ""..translate.Get("weapon_
 		wept.HUD3DBone = "v_weapon.famas"
 		wept.HUD3DPos = Vector(-0.2, -4, 8.6)
 		wept.HUD3DAng = BaseClass.HUD3DAng
-
+		wept.SniperRifle = true
 		wept.IronsightsMultiplier = 0.25
 
 		wept.GetViewModelPosition = function(self, pos, ang)

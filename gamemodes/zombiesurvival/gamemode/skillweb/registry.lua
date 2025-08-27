@@ -248,6 +248,20 @@ SKILL_STOWAGE = 146
 SKILL_TRUEWOOISM = 147
 SKILL_UNBOUND = 148
 
+SKILL_BATTLERSP01 = 149
+SKILL_BATTLERSP02 = 150
+SKILL_BATTLERSP03 = 151
+SKILL_BATTLERSP04 = 152
+SKILL_BATTLERSP05 = 153
+SKILL_BATTLERSP06 = 154
+SKILL_BATTLERSP07 = 155
+SKILL_BARRICADEEXPERT_SP01 = 156
+SKILL_HANDY6 = 157
+SKILL_HANDY7 = 158
+SKILL_HANDYSP_01 = 159
+SKILL_BATTLERSP_114514 = 160
+
+
 SKILLMOD_HEALTH = 1
 SKILLMOD_SPEED = 2
 SKILLMOD_WORTH = 3
@@ -766,6 +780,30 @@ GM:AddSkill(SKILL_BLOODLUST, ""..translate.Get("Skill_Bloodlust"), ""..translate
 
 GM:AddSkill(SKILL_BRASH, ""..translate.Get("Skill_Brash"), GOOD..""..translate.Get("Skill_Brash_Good").."\n"..BAD..""..translate.Get("Skill_Brash_Bad"),
     6, 0, {}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BARRICADEEXPERT_SP01, "熟练于心", GOOD.."+12% 木工锤挥动速度",
+																0,			5,					{SKILL_BARRICADEEXPERT}, TREE_BUILDINGTREE)
+GM:AddSkill(SKILL_HANDY6, "能手 VI", GOOD.."+9% repair rate",
+																-3,			5,					{SKILL_HANDY5}, TREE_BUILDINGTREE)
+GM:AddSkill(SKILL_HANDY7, "能手 VII", GOOD.."+10% repair rate",
+																-4,			5,					{SKILL_HANDY6}, TREE_BUILDINGTREE)
+GM:AddSkill(SKILL_HANDYSP_01, "巧夺天工", GOOD.."+15% repair rate",
+																-5,			5,					{SKILL_HANDY7}, TREE_BUILDINGTREE)
+GM:AddSkill(SKILL_BATTLERSP01, "磨炼 I", GOOD.."+2 初始菜单点数",
+																0,			7,					{SKILL_LASTSTAND}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP02, "磨炼 II", GOOD.."+2 初始菜单点数",
+																1,			7,					{SKILL_BATTLERSP01}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP03, "磨炼 III", GOOD.."+2 初始菜单点数",
+																2,			7,					{SKILL_BATTLERSP02}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP04, "锐不可当", GOOD.."+10% 近战伤害",
+																3,			7,					{SKILL_BATTLERSP03}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP05, "磨炼 IV", GOOD.."+2 初始菜单点数",
+																4,			7,					{SKILL_BATTLERSP04}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP06, "磨炼 V", GOOD.."+2 初始菜单点数\n"..GOOD.."+5% 近战范围",
+																5,			7,					{SKILL_BATTLERSP05}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP07, "重斩", GOOD.."+20% 近战伤害\n"..BAD.."+8% 近战攻击延迟",
+																6,			7,					{SKILL_BATTLERSP06}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP_114514, "究极天赋：良缘的庇佑", GOOD.."近战攻击时附加30%真实伤害\n"..GOOD.."空中攻击时.攻速增加300%且会每次攻击会滞留一段时间\n"..GOOD.."势不可挡:霸体",
+																3,			9,					{}, TREE_MELEETREE)
 
 
 GM:SetSkillModifierFunction(SKILLMOD_SPEED, function(pl, amount)
@@ -1372,3 +1410,26 @@ end)
 GM:AddSkillFunction(SKILL_TRUEWOOISM, function(pl, active)
 	pl.TrueWooism = active
 end)
+--以下是新增的天赋代码
+GM:AddSkillModifier(SKILL_BATTLERSP01, SKILLMOD_WORTH, 2)
+
+GM:AddSkillModifier(SKILL_BATTLERSP02, SKILLMOD_WORTH, 2)
+
+GM:AddSkillModifier(SKILL_BATTLERSP03, SKILLMOD_WORTH, 2)
+
+GM:AddSkillModifier(SKILL_BATTLERSP04, SKILLMOD_MELEE_DAMAGE_MUL, 0.1)
+
+GM:AddSkillModifier(SKILL_BATTLERSP05, SKILLMOD_WORTH, 2)
+
+GM:AddSkillModifier(SKILL_BATTLERSP06, SKILLMOD_WORTH, 2)
+GM:AddSkillModifier(SKILL_BATTLERSP06, SKILLMOD_MELEE_RANGE_MUL, 0.05)
+
+GM:AddSkillModifier(SKILL_BATTLERSP07, SKILLMOD_MELEE_DAMAGE_MUL, 0.2)
+GM:AddSkillModifier(SKILL_BATTLERSP07, SKILLMOD_MELEE_SWING_DELAY_MUL, 0.08)
+
+GM:AddSkillModifier(SKILL_BARRICADEEXPERT_SP01, SKILLMOD_HAMMER_SWING_DELAY_MUL, -0.12)
+
+GM:AddSkillModifier(SKILL_HANDY6, SKILLMOD_REPAIRRATE_MUL, 0.09)
+GM:AddSkillModifier(SKILL_HANDY7, SKILLMOD_REPAIRRATE_MUL, 0.1)
+GM:AddSkillModifier(SKILL_HANDYSP_01, SKILLMOD_REPAIRRATE_MUL, 0.15)
+

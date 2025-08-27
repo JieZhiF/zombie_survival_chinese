@@ -122,7 +122,7 @@ function SWEP:OnZombieKilled(zombie)
 		end
 	end
 end
-
+SWEP.SniperRifle = true
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
 

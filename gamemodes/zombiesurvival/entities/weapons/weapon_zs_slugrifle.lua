@@ -98,7 +98,7 @@ function SWEP:Think()
 
 	BaseClass.Think(self)
 end
-
+SWEP.SniperRifle = true
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
 

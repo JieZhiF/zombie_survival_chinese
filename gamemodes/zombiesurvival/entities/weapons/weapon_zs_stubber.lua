@@ -20,6 +20,7 @@ SWEP.Base = "weapon_zs_base"
 
 SWEP.HoldType = "ar2"
 SWEP.ShowViewModel = false
+SWEP.ShowWorldModel = false
 SWEP.ViewModel = "models/weapons/cstrike/c_snip_awp.mdl"
 SWEP.WorldModel = "models/htfovichi/invpistol.mdl"
 SWEP.VElements = {
@@ -154,7 +155,7 @@ end
 function SWEP:EmitFireSound()
 	self:EmitSound(self.Primary.Sound, 85, 100)
 end
-
+SWEP.SniperRifle = true
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
 	

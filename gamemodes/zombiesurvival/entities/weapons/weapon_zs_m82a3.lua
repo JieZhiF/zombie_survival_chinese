@@ -93,7 +93,7 @@ SWEP.Undroppable = true
 SWEP.NoPickupNotification = true
 SWEP.NoDismantle = true
 SWEP.NoGlassWeapons = true
-
+SWEP.SniperRifle = true
 SWEP.IronSightsPos = Vector(11, -9, -2.2)
 SWEP.IronSightsAng = Vector(0, 0, 0)
 

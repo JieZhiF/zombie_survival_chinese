@@ -150,7 +150,7 @@ function SWEP.BulletCallback(attacker, tr, dmginfo)
 		util.CreatePulseImpactEffect(tr.HitPos, tr.HitNormal)
 	end
 end
-
+SWEP.SniperRifle = true
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
 

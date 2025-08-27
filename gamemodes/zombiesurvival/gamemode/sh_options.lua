@@ -148,6 +148,7 @@ GM.AmmoCache["helicoptergun"]				= 1			-- Resupply boxes.
 GM.AmmoCache["spotlamp"]					= 1
 GM.AmmoCache["manhack"]						= 1
 GM.AmmoCache["repairfield"]					= 1
+GM.AmmoCache["medicfield"]					= 1
 GM.AmmoCache["zapper"]						= 1
 GM.AmmoCache["pulse"]						= 135
 GM.AmmoCache["impactmine"]					= 9			--爆炸弹药
@@ -170,7 +171,9 @@ GM:AddStartingItem("blstr",				ITEMCAT_GUNS,			40,				"weapon_zs_blaster")
 GM:AddStartingItem("tossr",				ITEMCAT_GUNS,			40,				"weapon_zs_tosser")
 GM:AddStartingItem("stbbr",				ITEMCAT_GUNS,			40,				"weapon_zs_stubber")
 GM:AddStartingItem("crklr",				ITEMCAT_GUNS,			40,				"weapon_zs_crackler")
-GM:AddStartingItem("sling",				ITEMCAT_GUNS,			40,				"weapon_zs_slinger")
+--GM:AddStartingItem("sling",				ITEMCAT_GUNS,			40,				"weapon_zs_slinger")
+GM:AddStartingItem("handgrenade",		ITEMCAT_GUNS,			60,				"weapon_zs_handgrenade")
+
 GM:AddStartingItem("z9000",				ITEMCAT_GUNS,			40,				"weapon_zs_z9000")
 GM:AddStartingItem("minelayer",			ITEMCAT_GUNS,			70,				"weapon_zs_minelayer")
 --GM:AddStartingItem("qiyuanm4",			ITEMCAT_GUNS,			0,				"weapon_zs_stm4") --起源M4
@@ -237,6 +240,10 @@ item.SkillRequirement = SKILL_U_BLASTTURRET
 item =
 GM:AddStartingItem("repairfield",		ITEMCAT_DEPLOYABLES,			60,				"weapon_zs_repairfield",		nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_repairfield") pl:GiveAmmo(1, "repairfield") pl:GiveAmmo(50, "pulse") end)
 item.Countables = "prop_repairfield"
+item.NoClassicMode = true
+item =
+GM:AddStartingItem("medicfield",		ITEMCAT_DEPLOYABLES,			60,				"weapon_zs_medicfield",		nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_medicfield") pl:GiveAmmo(1, "medicfield") pl:GiveAmmo(50, "Battery") end)
+item.Countables = "prop_medicfield"
 item.NoClassicMode = true
 item =
 GM:AddStartingItem("zapper",			ITEMCAT_DEPLOYABLES,			75,				"weapon_zs_zapper",				nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_zapper") pl:GiveAmmo(1, "zapper") pl:GiveAmmo(50, "pulse") end)
@@ -334,8 +341,10 @@ GM:AddPointShopItem("blstr",			ITEMCAT_GUNS,			15,				"weapon_zs_blaster", nil, 
 GM:AddPointShopItem("tossr",			ITEMCAT_GUNS,			15,				"weapon_zs_tosser", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_tosser") end)
 GM:AddPointShopItem("stbbr",			ITEMCAT_GUNS,			15,				"weapon_zs_stubber", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_stubber") end)
 GM:AddPointShopItem("crklr",			ITEMCAT_GUNS,			15,				"weapon_zs_crackler", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_crackler") end)
-GM:AddPointShopItem("sling",			ITEMCAT_GUNS,			15,				"weapon_zs_slinger", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_slinger") end)
+--GM:AddPointShopItem("sling",			ITEMCAT_GUNS,			15,				"weapon_zs_slinger", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_slinger") end) --weapon_zs_handgrenade
+
 GM:AddPointShopItem("z9000",			ITEMCAT_GUNS,			15,				"weapon_zs_z9000", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_z9000") end)
+GM:AddPointShopItem("handgrenade",		ITEMCAT_GUNS,			20,				"weapon_zs_handgrenade")
 GM:AddPointShopItem("minelayer",		ITEMCAT_GUNS,			20,				"weapon_zs_minelayer", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_minelayer") end)
 -- Tier 2
 GM:AddPointShopItem("glock3",			ITEMCAT_GUNS,			35,				"weapon_zs_glock3")
@@ -582,9 +591,15 @@ item.Countables = "prop_rollermine"
 item.SkillRequirement = SKILL_U_ROLLERMINE
 
 item =
-GM:AddPointShopItem("repairfield",		ITEMCAT_DEPLOYABLES,			55,				"weapon_zs_repairfield",		nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_repairfield") pl:GiveAmmo(1, "repairfield") pl:GiveAmmo(30, "pulse") end)
+GM:AddPointShopItem("repairfield",		ITEMCAT_DEPLOYABLES,			50,				"weapon_zs_repairfield",		nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_repairfield") pl:GiveAmmo(1, "repairfield") pl:GiveAmmo(30, "pulse") end)
 item.Countables = "prop_repairfield"
 item.NoClassicMode = true
+
+item =
+GM:AddPointShopItem("medicfield",		ITEMCAT_DEPLOYABLES,			50,				"weapon_zs_medicfield",		nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_medicfield") pl:GiveAmmo(1, "medicfield") pl:GiveAmmo(60, "Battery") end)
+item.Countables = "prop_medicfield"
+item.NoClassicMode = true
+
 item =
 GM:AddPointShopItem("zapper",			ITEMCAT_DEPLOYABLES,			50,				"weapon_zs_zapper",				nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_zapper") pl:GiveAmmo(1, "zapper") pl:GiveAmmo(30, "pulse") end)
 item.Countables = "prop_zapper"
@@ -787,6 +802,7 @@ GM:AddDeployableInfo("prop_gunturret_buckshot",	"Blast Turret",	 		"weapon_zs_gu
 GM:AddDeployableInfo("prop_gunturret_pulse",	"Pulse Turret",	 	    "weapon_zs_gunturret_pulse")
 GM:AddDeployableInfo("prop_gunturret_rocket",	"Rocket Turret",	 	"weapon_zs_gunturret_rocket")
 GM:AddDeployableInfo("prop_repairfield",		"Repair Field Emitter",	"weapon_zs_repairfield")
+GM:AddDeployableInfo("prop_medicfield",		    "Medic Field Emitter",	"weapon_zs_medicfield")
 GM:AddDeployableInfo("prop_zapper",				"Zapper",				"weapon_zs_zapper")
 GM:AddDeployableInfo("prop_zapper_arc",			"Arc Zapper",			"weapon_zs_zapper_arc")
 GM:AddDeployableInfo("prop_ffemitter",			"Force Field Emitter",	"weapon_zs_ffemitter")
@@ -796,7 +812,7 @@ GM:AddDeployableInfo("prop_drone",				"Drone",				"weapon_zs_drone")
 GM:AddDeployableInfo("prop_drone_pulse",		"Pulse Drone",			"weapon_zs_drone_pulse")
 GM:AddDeployableInfo("prop_drone_hauler",		"Hauler Drone",			"weapon_zs_drone_hauler")
 GM:AddDeployableInfo("prop_rollermine",			"Rollermine",			"weapon_zs_rollermine")
-GM:AddDeployableInfo("prop_tv",                   	 "TV",                    	"weapon_zs_tv")
+GM:AddDeployableInfo("prop_tv",                   	"TV",                    	"weapon_zs_tv")
 
 GM.MaxSigils = 3
 

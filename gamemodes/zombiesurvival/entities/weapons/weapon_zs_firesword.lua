@@ -52,8 +52,9 @@ GAMEMODE:AddNewRemantleBranch(SWEP, 1, "魔狱", "基础伤害提高，攻击范
 		-- 添加火焰效果
 		if SERVER and hitent:IsValidLivingZombie() then
 			local attacker = self:GetOwner()
-			hitent:Ignite(20)
-			
+			local fireduration = 20
+			hitent:Ignite(fireduration)
+			hitent:SetNWFloat("FireDieTime", CurTime() + fireduration)
 			-- 设置火焰所有权
 			for _, fire in pairs(ents.FindByClass("entityflame")) do
 				if fire:IsValid() and fire:GetParent() == hitent then

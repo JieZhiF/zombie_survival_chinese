@@ -12,6 +12,30 @@ SWEP.MeleeRange = 65
 SWEP.MeleeSize = 1.5
 SWEP.MeleeKnockBack = 0
 
+SWEP.MeleePuch = true -- 是否启用玩家左键攻击时的视角晃动
+
+-- 上下晃动 (Pitch): 负值向上, 正值向下
+-- 所有值请填正数, 代码会自动处理方向
+SWEP.MeleePuch_Pitch_Up_Min = 0   -- 攻击时，视角【最少】向上抬起多少
+SWEP.MeleePuch_Pitch_Up_Max = 0   -- 攻击时，视角【最多】向上抬起多少
+
+SWEP.MeleePuch_Pitch_Down_Min = 0 -- 攻击后，视角【最少】向下回落多少
+SWEP.MeleePuch_Pitch_Down_Max = 0 -- 攻击后，视角【最多】向下回落多少
+
+-- 左右晃动 (Yaw): 正值向左, 负值向右
+SWEP.MeleePuch_Yaw_Left_Min = 0   -- 【最少】向左偏移多少
+SWEP.MeleePuch_Yaw_Left_Max = 0   -- 【最多】向左偏移多少
+
+SWEP.MeleePuch_Yaw_Right_Min = 0  -- 【最少】向右偏移多少
+SWEP.MeleePuch_Yaw_Right_Max = 0  -- 【最多】向右偏移多少
+
+-- 旋转晃动 (Roll): 正值逆时针, 负值顺时针
+SWEP.MeleePuch_Roll_CCW_Min = 0 -- 【最少】逆时针旋转多少 (Counter-Clockwise)
+SWEP.MeleePuch_Roll_CCW_Max = 0 -- 【最多】逆时针旋转多少
+
+SWEP.MeleePuch_Roll_CW_Min = 0  -- 【最少】顺时针旋转多少 (Clockwise)
+SWEP.MeleePuch_Roll_CW_Max = 0  -- 【最多】顺时针旋转多少
+
 SWEP.Secondary.ClipSize = 1
 SWEP.Secondary.DefaultClip = 1
 SWEP.Secondary.Ammo = "dummy"
@@ -248,6 +272,26 @@ function SWEP:MeleeSwing()
 
 	self:DoMeleeAttackAnim()
 
+	if self.MeleePuch then -- 玩家左键攻击视角晃动
+		-- 1. 计算上下晃动 (Pitch)
+		-- 在最小/最大值之间取一个随机数，并乘以-1使其向上
+		local pitch_up = -math.random(self.MeleePuch_Pitch_Up_Min or 0, self.MeleePuch_Pitch_Up_Max or 0)
+		-- 在最小/最大值之间取一个随机数，作为向下的部分
+		local pitch_down = math.random(self.MeleePuch_Pitch_Down_Min or 0, self.MeleePuch_Pitch_Down_Max or 0)
+		
+		-- 2. 计算左右晃动 (Yaw)
+		local yaw_left = math.random(self.MeleePuch_Yaw_Left_Min or 0, self.MeleePuch_Yaw_Left_Max or 0)
+		local yaw_right = -math.random(self.MeleePuch_Yaw_Right_Min or 0, self.MeleePuch_Yaw_Right_Max or 0)
+		
+		-- 3. 计算旋转晃动 (Roll)
+		local roll_ccw = math.random(self.MeleePuch_Roll_CCW_Min or 0, self.MeleePuch_Roll_CCW_Max or 0)
+		local roll_cw = -math.random(self.MeleePuch_Roll_CW_Min or 0, self.MeleePuch_Roll_CW_Max or 0)
+		
+		-- 将各方向的晃动值相加，形成最终效果
+		-- (使用 `or 0` 是为了防止未定义这些参数时代码出错)
+		local punchAngle = Angle(pitch_up + pitch_down, yaw_left + yaw_right, roll_ccw + roll_cw)
+		owner:ViewPunch(punchAngle)
+	end
 	local tr = owner:CompensatedMeleeTrace(self.MeleeRange * (owner.MeleeRangeMul or 1), self.MeleeSize)
 
 	if not tr.Hit then

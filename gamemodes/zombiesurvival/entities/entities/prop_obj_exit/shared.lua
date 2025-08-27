@@ -3,9 +3,9 @@ ENT.Type = "anim"
 ENT.m_NoNailUnfreeze = true
 ENT.NoNails = true
 
-ENT.RiseTime = 4
+ENT.RiseTime = 2
 
-ENT.OpenTime = 10
+ENT.OpenTime = 8
 
 AccessorFuncDT(ENT, "OpenStartTime", "Float", 0)
 AccessorFuncDT(ENT, "CreationTime", "Float", 1)

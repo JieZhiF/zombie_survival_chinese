@@ -53,7 +53,7 @@ GAMEMODE:AddNewRemantleBranch(SWEP, 1, "天照", "伤害较低，范围较广，
 		if SERVER and hitent:IsValidLivingZombie() then
 			local attacker = self:GetOwner()
 			hitent:Ignite(4)
-			
+			hitent:SetNWFloat("FireDieTime", CurTime() + 4)
 			-- 设置火焰所有权
 			for _, fire in pairs(ents.FindByClass("entityflame")) do
 				if fire:IsValid() and fire:GetParent() == hitent then

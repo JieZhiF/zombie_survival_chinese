@@ -36,7 +36,7 @@ SWEP.Recoil = 0
 
 SWEP.ReloadSpeed = 1.0
 SWEP.FireAnimSpeed = 1.0
-
+SWEP.SniperRifle = false
 SWEP.IdleActivity = ACT_VM_IDLE
 SWEP.StandOffset = -1
 -- 全局开关
@@ -407,7 +407,7 @@ end
 
 function SWEP:ShootBullets(dmg, numbul, cone)
 	local owner = self:GetOwner()
-	if not self:GetIronsights() then
+	if not self:GetIronsights() or self.SniperRifle then 
 		self:SendWeaponAnimation()
 	else
 		self.offset = self.StandOffset -- 如果在瞄准状态，可能用于触发不同的动画效果

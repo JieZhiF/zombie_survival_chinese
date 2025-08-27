@@ -22,7 +22,7 @@ function ENT:Initialize()
 	self:SetSigilHealthBase(self.MaxHealth)
 	self:SetSigilHealthRegen(self.HealthRegen)
 	self:SetSigilLastDamaged(0)
-
+	
 	local ent = ents.Create("prop_prop_blocker")
 	if ent:IsValid() then
 		ent:SetPos(self:GetPos())
@@ -32,6 +32,7 @@ function ENT:Initialize()
 		--ent:SetParent(self) -- Prevents collisions
 		self:DeleteOnRemove(ent)
 	end
+	
 end
 
 function ENT:Use(pl)

@@ -1,201 +1,139 @@
 INC_CLIENT()
 
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
+--[[
+"effects/strider_pinch_dudv" → HL2 stock dudv texture (used for Combine shield distortions)"effects/strider_pinch_dudv" →HL2 库存 dudv 纹理（用于联合盾牌扭曲）
+
+"effects/warp01" → classic HL2 vortex warp texture"effects/warp01" →经典 HL2 涡旋扭曲纹理
+
+"effects/blueblacklargebeam" → additive beam, not refract but nice layered look"effects/blueblacklargebeam" →附加光束，不折射，但有漂亮的分层外观
+
+"sprites/heatwave" → this is in base HL2 and supports refract if you call render.UpdateRefractTexture() before drawing."sprites/heatwave" → 这是基础 HL2 中的功能 ，如果在绘制之前调用 render.UpdateRefractTexture() ，则支持折射
+]]
+
+-- 参数可调
+local ROCK_MODEL = "models/props_junk/rock001a.mdl"
+local NUM_ROCKS = 8
+local ROCK_SCALE = 1.0
+local RING_SPRITES = 24
+local ELLIPSE_RX = 50
+local ELLIPSE_RY = 70
+
+local MAT_GLOW = Material("sprites/glow04_noz")
+local MAT_RING = Material("effects/blueflare1")
+local MAT_REFRACT = Material("effects/bluelaser1")
+local PORTAL_OFFSET = Vector(0, -20, 0)
 
 function ENT:Initialize()
-	self:SetRenderBounds(Vector(-128, -128, -128), Vector(128, 128, 200))
+    self:SetRenderBounds(Vector(-256, -256, -256), Vector(256, 256, 256))
 
-	local ent = ClientsideModel("models/props_doors/door01_dynamic.mdl", RENDERGROUP_TRANSLUCENT)
-	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(0, 0, 52)))
-		ent:SetAngles(self:GetAngles())
-		ent:DrawShadow(false)
-		ent:SetNoDraw(true)
-		ent:SetParent(self)
-		ent:Spawn()
-		self.Door = ent
-	end
-
-	ent = ClientsideModel("models/props_debris/wood_board07a.mdl", RENDERGROUP_TRANSLUCENT)
-	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(0, 0, 49)))
-		ent:SetAngles(self:GetAngles())
-		ent:DrawShadow(false)
-		ent:SetNoDraw(true)
-		ent:SetParent(self)
-		ent:Spawn()
-		self.LeftBoard = ent
-	end
-
-	ent = ClientsideModel("models/props_debris/wood_board07a.mdl", RENDERGROUP_TRANSLUCENT)
-	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(-52, 0, 49)))
-		ent:SetAngles(self:GetAngles())
-		ent:DrawShadow(false)
-		ent:SetNoDraw(true)
-		ent:SetParent(self)
-		ent:Spawn()
-		self.RightBoard = ent
-	end
-
-	ent = ClientsideModel("models/props_debris/wood_board07a.mdl", RENDERGROUP_TRANSLUCENT)
-	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(-24, 0, 109)))
-		ent:SetAngles(self:LocalToWorldAngles(Angle(90, 0, 0)))
-		ent:DrawShadow(false)
-		ent:SetNoDraw(true)
-		ent:SetParent(self)
-		ent:Spawn()
-		ent:SetModelScaleVector(Vector(1, 1, 0.38))
-		self.TopBoard = ent
-	end
-
-	ent = ClientsideModel("models/props_debris/wood_board07a.mdl", RENDERGROUP_TRANSLUCENT)
-	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(-24, 0, 48)))
-		ent:SetAngles(self:GetAngles())
-		ent:DrawShadow(false)
-		ent:SetNoDraw(true)
-		ent:SetParent(self)
-		ent:Spawn()
-		ent:SetModelScaleVector(Vector(6, 0.001, 1))
-		self.Rift = ent
-	end
-
-	hook.Add("RenderScreenspaceEffects", self, self.RenderScreenspaceEffects)
+    -- 环绕的石头
+    self.Rocks = {}
+    for i = 1, NUM_ROCKS do
+        local rock = ClientsideModel(ROCK_MODEL, RENDERGROUP_OPAQUE)
+        if IsValid(rock) then
+            rock:SetNoDraw(true)
+            rock:SetModelScale(ROCK_SCALE)
+            table.insert(self.Rocks, rock)
+        end
+    end
 end
 
-local CModWhiteOut = {
-	["$pp_colour_addr"] = 0,
-	["$pp_colour_addg"] = 0,
-	["$pp_colour_addb"] = 0,
-	["$pp_colour_brightness"] = 0,
-	["$pp_colour_contrast"] = 1,
-	["$pp_colour_colour"] = 1,
-	["$pp_colour_mulr"] = 0,
-	["$pp_colour_mulg"] = 0,
-	["$pp_colour_mulb"] = 0
-}
-
-function ENT:RenderScreenspaceEffects()
-	local eyepos = EyePos()
-	local nearest = self:NearestPoint(eyepos)
-	local power = math.Clamp(1 - eyepos:DistToSqr(nearest) / 45000, 0, 1) ^ 2 * self:GetOpenedPercent()
-
-	if power > 0 then
-		local size = 1 + power * 2
-
-		CModWhiteOut["$pp_colour_brightness"] = power * 0.25
-		if MySelf:GetObserverMode() == OBS_MODE_NONE then
-			CModWhiteOut["$pp_colour_brightness"] = CModWhiteOut["$pp_colour_brightness"] / 2
-		end
-		DrawBloom(1 - power, power * 4, size, size, 1, 1, 1, 1, 1)
-		DrawColorModify(CModWhiteOut)
-
-		if render.SupportsPixelShaders_2_0() then
-			local eyevec = EyeVector()
-			local pos = self:LocalToWorld(self:OBBCenter()) - eyevec * 16
-			local distance = eyepos:Distance(pos)
-			local dot = (pos - eyepos):GetNormalized():Dot(eyevec) - distance * 0.0005
-			if dot > 0 then
-				local srcpos = pos:ToScreen()
-				DrawSunbeams(0.8, dot * power, 0.1, srcpos.x / w, srcpos.y / h)
-			end
-		end
-	end
+function ENT:OnRemove()
+    for _, r in ipairs(self.Rocks or {}) do
+        if IsValid(r) then r:Remove() end
+    end
+    self.Rocks = nil
 end
 
 ENT.NextEmit = 0
-local matWhite = Material("models/debug/debugwhite")
+
 function ENT:DrawTranslucent()
-	local curtime = CurTime()
-	local rise = self:GetRise() ^ 2
-	local normal = self:GetUp()
-	local openedpercent = self:GetOpenedPercent()
+    local ct = CurTime()
+    local openPercent = self:GetOpenedPercent()    -- 开门进度
+    local risePercent = self:GetRise()             -- 出生渐显
+	local center = self:GetPos() + PORTAL_OFFSET
 
-	local dlight = DynamicLight(self:EntIndex())
-	if dlight then
-		local size = 100 + openedpercent * 200
-		size = size * (1 + math.sin(curtime * math.pi) * 0.075)
+    -- 最终透明度：出生渐显 + 开门变亮
+    local alpha = 120 * risePercent + 175 * openPercent
+    alpha = math.Clamp(alpha, 0, 255)
 
-		dlight.Pos = self:LocalToWorld(Vector(-24, 0, 40))
-		dlight.r = 180
-		dlight.g = 200
-		dlight.b = 255
-		dlight.Brightness = 1 + openedpercent * 4
-		dlight.Size = size
-		dlight.Decay = size * 2
-		dlight.DieTime = curtime + 1
-	end
+    -- 动态光
+    local dlight = DynamicLight(self:EntIndex())
+    if dlight then
+		local lightSize = 160 + openPercent * 200
+        dlight.Pos = center
+        dlight.r = 160
+        dlight.g = 200
+        dlight.b = 255
+        dlight.Brightness = 1 + openPercent * 3
+        dlight.Size = lightSize
+        dlight.Decay = lightSize * 2
+        dlight.DieTime = ct + 1
+    end
 
-	render.EnableClipping(true)
-	render.PushCustomClipPlane(normal, normal:Dot(self:GetPos()))
+    -- 中心扭曲
+    if render.SupportsPixelShaders_2_0() then
+        render.UpdateRefractTexture()
+        render.SetMaterial(MAT_REFRACT)
+        render.DrawSprite(center, ELLIPSE_RX * 2, ELLIPSE_RY * 2, Color(180, 220, 255, alpha * 0.8))
+    end
 
-	cam.Start3D(EyePos() + Vector(0, 0, (1 - rise) * 150), EyeAngles())
-		self.Door:SetPos(self:LocalToWorld(Vector(0, 0, 52)))
-		self.Door:SetAngles(self:LocalToWorldAngles(Angle(0, openedpercent * 80, 0)))
-		self.Door:DrawModel()
+    -- 环绕光圈
+    render.SetMaterial(MAT_RING)
+    local ringsize = 28 + 28 * openPercent
+    for i = 0, RING_SPRITES - 1 do
+        local a = (i / RING_SPRITES) * math.pi * 2 + ct * 0.8
+        local x = math.cos(a) * ELLIPSE_RX
+        local y = math.sin(a) * ELLIPSE_RY
+        local pos = center + self:GetRight() * x + self:GetUp() * y
+        render.DrawSprite(pos, ringsize, ringsize, Color(180, 210, 255, alpha))
+    end
 
-		self.LeftBoard:DrawModel()
-		self.RightBoard:DrawModel()
-		self.TopBoard:DrawModel()
-	cam.End3D()
+    -- 石头
+    for i, rock in ipairs(self.Rocks or {}) do
+        if IsValid(rock) then
+            local base_angle = (360 / #self.Rocks) * i
+            local current_angle = ct * 40 + base_angle
+            local x = math.cos(math.rad(current_angle)) * ELLIPSE_RX
+            local y = math.sin(math.rad(current_angle)) * ELLIPSE_RY
+            local pos = center + self:GetRight() * x + self:GetUp() * y
 
-	if openedpercent > 0 then
-		--[[normal = normal * -1
-		render.PushCustomClipPlane(normal, normal:Dot(self.TopBoard:GetPos()))
+            rock:SetPos(pos)
+            rock:SetAngles(Angle(ct * 80, ct * 80, ct * 80))
 
-		normal = self:GetForward()
-		render.PushCustomClipPlane(normal, normal:Dot(self.RightBoard:GetPos()))
+            render.SuppressEngineLighting(true)
+            render.SetColorModulation(0.65, 0.8, 1)
+            rock:DrawModel()
+            render.SetColorModulation(1, 1, 1)
+            render.SuppressEngineLighting(false)
 
-		normal = normal * -1
-		render.PushCustomClipPlane(normal, normal:Dot(self.LeftBoard:GetPos()))]]
+            render.SetMaterial(MAT_GLOW)
+            render.DrawSprite(pos, 14, 14, Color(200, 230, 255, alpha * 0.5))
+        end
+    end
 
-		local brightness = openedpercent ^ 0.4
-		render.SuppressEngineLighting(true)
-		render.SetColorModulation(brightness, brightness, brightness)
-		render.ModelMaterialOverride(matWhite)
+    -- 粒子效果
+    if ct >= (self.NextEmit or 0) and alpha > 0 then
+        self.NextEmit = ct + 0.02 + (1 - openPercent) * 0.12
 
-		self.Rift:DrawModel()
-
-		render.ModelMaterialOverride()
-		render.SetColorModulation(1, 1, 1)
-		render.SuppressEngineLighting(false)
-
-		--[[render.PopCustomClipPlane()
-		render.PopCustomClipPlane()
-		render.PopCustomClipPlane()]]
-	end
-
-	render.PopCustomClipPlane()
-	render.EnableClipping(false)
-
-	if curtime < self.NextEmit or openedpercent == 0 then return end
-	self.NextEmit = curtime + 0.01 + (1 - openedpercent) * 0.15
-
-	local dir = self:GetRight() * 2 + VectorRand()
-	dir:Normalize()
-	local startpos = self:LocalToWorld(Vector(-24, 0, 48))
-
-	local emitter = ParticleEmitter(startpos)
-	emitter:SetNearClip(24, 32)
-
-	for i=1, 4 do
-		dir = dir * -1
-
-		local particle = emitter:Add("sprites/glow04_noz", startpos + dir * 180)
-		particle:SetDieTime(0.5)
-		particle:SetVelocity(dir * -360)
-		particle:SetStartAlpha(0)
-		particle:SetEndAlpha(255 * openedpercent)
-		particle:SetStartSize(math.Rand(2, 5) * openedpercent)
-		particle:SetEndSize(0)
-		if math.random(2) == 2 then
-			particle:SetColor(220, 240, 255)
-		end
-		particle:SetRoll(math.Rand(0, 360))
-		particle:SetRollDelta(math.Rand(-5, 5))
-	end
-
-	emitter:Finish() emitter = nil collectgarbage("step", 64)
+        local emitter = ParticleEmitter(center)
+        emitter:SetNearClip(24, 48)
+        for i = 1, 6 do
+            local dir = VectorRand():GetNormalized()
+            local p = emitter:Add("sprites/glow04_noz", center + dir * 60)
+            if p then
+                p:SetDieTime(0.6 + math.Rand(0, 0.4))
+                p:SetVelocity(dir * -200)
+                p:SetStartAlpha(0)
+                p:SetEndAlpha(alpha)
+                p:SetStartSize(math.Rand(4, 8))
+                p:SetEndSize(0)
+                p:SetColor(200, 230, 255)
+                p:SetRoll(math.Rand(0, 360))
+                p:SetRollDelta(math.Rand(-4, 4))
+            end
+        end
+        emitter:Finish()
+    end
 end

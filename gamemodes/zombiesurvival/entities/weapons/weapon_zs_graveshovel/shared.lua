@@ -26,6 +26,7 @@ SWEP.SwingRotation = Angle(0, -90, -60)
 SWEP.SwingOffset = Vector(0, 30, -40)
 SWEP.SwingTime = 0.65
 SWEP.SwingHoldType = "melee"
+--[[
 -- 删除 DrawMeleeHud 函数，添加以下配置
 SWEP.PrimaryIcon = Material("materials/horderally.png") -- 自定义主攻击图标
 
@@ -78,7 +79,7 @@ function SWEP:DrawCustomHUD(owner, scrW, scrH)
         draw.SimpleText("燃烧时间 Burning: " .. string.format("%.1f", timeLeft) .. "s", "DermaDefault", x, y + 40, Color(170, 20, 20), TEXT_ALIGN_CENTER)
     end
 end
-
+]]
 SWEP.Tier = 3
 
 SWEP.AllowQualityWeapons = true
