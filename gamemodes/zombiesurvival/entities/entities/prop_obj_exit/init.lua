@@ -22,7 +22,7 @@ function ENT:Initialize()
 
 	local ent = ents.Create("point_worldhint")
 	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(-24, 0, 2)))
+		ent:SetPos(self:LocalToWorld(Vector(0, 0, 65)))
 		ent:SetParent(self)
 		ent:Spawn()
 		ent:SetViewable(TEAM_HUMAN)
@@ -33,7 +33,7 @@ function ENT:Initialize()
 
 	ent = ents.Create("point_worldhint")
 	if ent:IsValid() then
-		ent:SetPos(self:LocalToWorld(Vector(-24, 0, 2)))
+		ent:SetPos(self:LocalToWorld(Vector(0, 0, 65)))
 		ent:SetParent(self)
 		ent:Spawn()
 		ent:SetViewable(TEAM_UNDEAD)
@@ -41,22 +41,6 @@ function ENT:Initialize()
 		ent:SetTranslated(true)
 		ent:SetHint("prop_obj_exit_z")
 	end
-
-	--[[ent = ents.Create("env_projectedtexture")
-	if ent:IsValid() then
-		ent:SetPos(self:GetPos() + self:GetUp() * 8)
-		ent:SetAngles(self:GetRight():Angle())
-		ent:SetKeyValue("enableshadows", 0)
-		ent:SetKeyValue("farz", 600)
-		ent:SetKeyValue("nearz", 2)
-		ent:SetKeyValue("lightfov", 70)
-		ent:SetKeyValue("lightcolor", "220 240 255 255")
-		ent:SetKeyValue("appearance", 5)
-		ent:SetParent(self)
-		ent:Spawn()
-		ent:Input("SpotlightTexture", NULL, NULL, "effects/flashlight001")
-		self.SpotLight = ent
-	end]]
 end
 
 function ENT:Use(activator)
@@ -68,7 +52,9 @@ function ENT:StartTouch(ent)
 end
 
 function ENT:OnUse(activator)
-	if activator:IsPlayer() and activator:Alive() and activator:Team() == TEAM_HUMAN and self:GetOpenStartTime() == 0 and self:GetRise() == 1 then
+    -- 修正这里的逻辑：删除了 self:GetOpenedPercent() == 1 的判断
+    -- 现在只要玩家是人类、活着、且传送门尚未开始开启，就会触发开门
+	if activator:IsPlayer() and activator:Alive() and activator:Team() == TEAM_HUMAN and self:GetOpenStartTime() == 0 then
 		self:SetOpenStartTime(CurTime())
 		self:EmitSound("plats/hall_elev_door.wav")
 	end
@@ -88,7 +74,7 @@ function ENT:Touch(ent)
 
 		gamemode.Call("OnPlayerWin", ent)
 
-		--ent:PrintMessage(HUD_PRINTTALK, "You've managed to survive! Waiting for other survivors...")
+		ent:PrintMessage(HUD_PRINTTALK, "You've managed to survive! Waiting for other survivors...")
 		net.Start("zs_survivor")
 			net.WriteEntity(ent)
 		net.Broadcast()
