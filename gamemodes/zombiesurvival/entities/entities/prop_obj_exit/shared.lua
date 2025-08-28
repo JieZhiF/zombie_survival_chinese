@@ -5,7 +5,7 @@ ENT.NoNails = true
 
 -- ENT.RiseTime = 4 -- 删除 RiseTime
 
-ENT.OpenTime = 8	
+ENT.OpenTime = 9	
 
 AccessorFuncDT(ENT, "OpenStartTime", "Float", 0)
 AccessorFuncDT(ENT, "CreationTime", "Float", 1) -- 保留 CreationTime 用于其他可能的计时，但不再用于门户“升起”

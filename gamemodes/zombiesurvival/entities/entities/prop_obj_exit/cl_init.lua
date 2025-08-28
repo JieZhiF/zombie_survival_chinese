@@ -12,10 +12,10 @@ local MIN_RADIUS       = 5        -- 石头初始半径
 local FINAL_RADIUS_X   = 45       -- X方向最终半径
 local FINAL_RADIUS_Y   = 60       -- Y方向最终半径
 
-local MAX_ROT_SPEED    = 80       -- 最大自转速度
+local MAX_ROT_SPEED    = 120       -- 最大自转速度
 local MIN_ROT_SPEED    = 30       -- 最低自转速度
 
-local MAX_ORBIT_SPEED  = 80      -- 最大公转速度
+local MAX_ORBIT_SPEED  = 120          -- 最大公转速度
 local MIN_ORBIT_SPEED  = 30       -- 最低公转速度
 
 
@@ -25,12 +25,18 @@ local MAT_REFRACT  = Material("sprites/heatwave")
 local PORTAL_OFFSET = Vector(0, 0, 65)
 
 local PORTAL_COLOR = Color(180, 220, 255) -- 整体颜色，可统一调整
-
+local ROCK_COLOR = Color(25,180,255) --25,180,255
 function ENT:Initialize()
     self:SetRenderBounds(Vector(-256, -256, -256), Vector(256, 256, 256))
 
     self.currentOrbitAngle = 0
 
+    -- "ambient/energy/force_field_loop1.wav"
+    -- "ambient/levels/citadel/portal_beam_loop1.wav"
+    self.AmbientSound_Open = CreateSound(self, "ambient/levels/citadel/portal_open1_adpcm.wav")
+    self.AmbientSound_Open:SetSoundLevel(80) -- 设置声音的可听范围，数值越大传得越远
+    self.AmbientSound_Loop = CreateSound(self, "ambient/energy/force_field_loop1.wav")
+    self.AmbientSound_Loop:SetSoundLevel(60) -- 设置声音的可听范围，数值越大传得越远
     self.Rocks = {}
     for i = 1, NUM_ROCKS do
         local rock = ClientsideModel(ROCK_MODEL, RENDERGROUP_OPAQUE)
@@ -51,6 +57,9 @@ function ENT:Initialize()
 end
 
 function ENT:OnRemove()
+    if self.AmbientSound then
+        self.AmbientSound:Stop()
+    end
     for _, rockData in ipairs(self.Rocks or {}) do
         if IsValid(rockData.ent) then rockData.ent:Remove() end
     end
@@ -68,7 +77,14 @@ function ENT:DrawTranslucent()
     -- 透明度
     local alpha = 120 + 175 * openPercent
     alpha = math.Clamp(alpha, 0, 255)
-
+    if openPercent  < 1 then -- 只要传送门不是完全开启状态
+        -- 使用 PlayEx(音量, 音高) 来播放
+        -- 我们将音量与传送门的打开程度关联，可以实现声音渐入渐出的效果
+        self.AmbientSound_Open:PlayEx(openPercent, 100)
+    else
+        self.AmbientSound_Open:Stop()
+        self.AmbientSound_Loop:PlayEx(0.7,100)
+    end
     -- 动态光...
     local dlight = DynamicLight(self:EntIndex())
     if dlight then
@@ -121,7 +137,7 @@ function ENT:DrawTranslucent()
             
             -- 2. 使用 SetColorModulation 来“染上”我们想要的颜色
             --    (注意：这里的颜色值需要是 0-1 的范围，所以要除以 255)
-            render.SetColorModulation(PORTAL_COLOR.r / 255, PORTAL_COLOR.g / 255, PORTAL_COLOR.b / 255)
+            render.SetColorModulation(ROCK_COLOR.r / 255, ROCK_COLOR.g / 255, ROCK_COLOR.b / 255)
             
             render.SuppressEngineLighting(true)
             rock:DrawModel()
@@ -133,7 +149,7 @@ function ENT:DrawTranslucent()
 
             -- 发光...
             render.SetMaterial(MAT_GLOW)
-            render.DrawSprite(pos, 14, 14, Color(PORTAL_COLOR.r, PORTAL_COLOR.g, PORTAL_COLOR.b, alpha * 0.5))
+            render.DrawSprite(pos, 14, 14, Color(ROCK_COLOR.r, ROCK_COLOR.g, ROCK_COLOR.b, alpha * 0.5))
         end
     end
 
