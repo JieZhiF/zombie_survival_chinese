@@ -3,10 +3,13 @@ DEFINE_BASECLASS("weapon_zs_base")
 
 SWEP.PrintName = "'迷你超载' 马格南"
 SWEP.Description = "迷你的超载马格南，但伤害略微降低了."
-SWEP.Slot = 1
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
+SWEP.WeaponType = "pistol"
+	SWEP.SlotGroup = WEPSELECT_PISTOL
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 

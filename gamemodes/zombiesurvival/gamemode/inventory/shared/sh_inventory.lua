@@ -63,6 +63,7 @@ GM:AddWeaponBreakdownRecipe("weapon_zs_onyx",								"comp_precision")
 GM:AddWeaponBreakdownRecipe("weapon_zs_minelayer",							"comp_launcher")
 GM:AddWeaponBreakdownRecipe("weapon_zs_fracture",							"comp_linearactuator")
 GM:AddWeaponBreakdownRecipe("weapon_zs_harpoon",							"comp_metalpole")
+GM:AddWeaponBreakdownRecipe("weapon_zs_frotchet",							"comp_frostaxe")
 
 -- Assemblies (Assembly, Component, Weapon)
 GM.Assemblies["weapon_zs_waraxe"] 								= {"comp_modbarrel", 		"weapon_zs_glock3"}
@@ -87,6 +88,7 @@ GM.Assemblies["weapon_zs_gladiator"] 							= {"trinket_ammovestiii",	"weapon_zs
 GM.Assemblies["weapon_zs_ripper"]								= {"comp_sawblade",			"weapon_zs_zeus"}
 GM.Assemblies["weapon_zs_avelyn"]								= {"trinket_ammovestiii",	"weapon_zs_charon"}
 GM.Assemblies["weapon_zs_asmd"]									= {"comp_precision",		"weapon_zs_quasar"}
+GM.Assemblies["weapon_zs_frotkatana"]							= {"comp_frostaxe",			"weapon_zs_katana"}
 GM.Assemblies["weapon_zs_enkindler"]							= {"comp_launcher",			"weapon_zs_cinderrod"}
 GM.Assemblies["weapon_zs_proliferator"]							= {"comp_linearactuator",	"weapon_zs_galestorm"}
 GM.Assemblies["trinket_electromagnet"]							= {"comp_electrobattery",	"trinket_magnet"}
@@ -126,6 +128,7 @@ GM:AddInventoryItemData("comp_pulsespool", ""..translate.Get("Inventory_comp_pul
 GM:AddInventoryItemData("comp_flak", ""..translate.Get("Inventory_comp_flak"), ""..translate.Get("Inventory_comp_flak_desc"), "models/weapons/w_rocket_launcher.mdl")
 
 GM:AddInventoryItemData("comp_precision",		""..translate.Get("Inventory_comp_precision"),		""..translate.Get("Inventory_comp_precision_desc"),									"models/Items/combine_rifle_cartridge01.mdl")
+GM:AddInventoryItemData("comp_frostaxe",		""..translate.Get("Inventory_comp_frostaxe"),		""..translate.Get("Inventory_comp_frostaxe_desc"),									"models/Items/combine_rifle_cartridge01.mdl")
 
 -- Trinkets
 local trinket, description, trinketwep

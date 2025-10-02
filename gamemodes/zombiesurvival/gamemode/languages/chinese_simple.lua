@@ -1229,6 +1229,8 @@ LANGUAGE.weapon_zs_hammerdown = "'撼地者'XM1014自动霰弹枪"
 LANGUAGE.weapon_zs_hammerdown_desc = "轻量化高威力霰弹武器，单次击发可释放8枚弹丸，每枚弹丸造成16.5点基础伤害。\n按下右键启用撼地模式：瞬间发射弹仓内全部弹药（可配合XM战术跳跃使用）。\n长按装填键执行快速单发装弹。\n特殊弹丸可引发生物体溶解效应。"
 LANGUAGE.weapon_zs_katana = "'刽子手' 武士刀"
 LANGUAGE.weapon_zs_katana_desc = "削掉他们的头！"
+LANGUAGE.weapon_zs_frotkatana = "霜冻-冰刃"
+LANGUAGE.weapon_zs_frotkatana_description = "一把由冰霜制成的刀。副攻击会释放出强力挥击，击打地面或者人时会产生冰冻爆炸，减缓僵尸的移动和攻击速度。（可由冰斧+武士刀合成）"
 LANGUAGE.weapon_zs_pomendao = "大哥の刀"
 LANGUAGE.meleehud_lmb = "左键"
 LANGUAGE.meleehud_rmb = "右键"
@@ -2047,17 +2049,38 @@ LANGUAGE.Option_zsw_enable_hud= "近战显示"
 LANGUAGE.Option_zsw_rts_hud= "显示格挡图标和近战HUD"
 LANGUAGE.Option_zsw_crosshair_mode = "近战准星模式"
 
-
+------ F4的武器设置 ------
+LANGUAGE.Category_WeaponSlot = "武器插槽设置"
+LANGUAGE.Option_wepslot_unarmed = "赤手空拳"
+LANGUAGE.Option_wepslot_melee = "近战武器"
+LANGUAGE.Option_wepslot_repairtools = "修理工具"
+LANGUAGE.Option_wepslot_pistols = "手枪"
+LANGUAGE.Option_wepslot_smgs = "冲锋枪"
+LANGUAGE.Option_wepslot_assaultrifles = "突击步枪"
+LANGUAGE.Option_wepslot_rifles = "狙击枪"
+LANGUAGE.Option_wepslot_shotguns = "霰弹枪"
+LANGUAGE.Option_wepslot_bolt = "栓动步枪/弩"
+LANGUAGE.Option_wepslot_explosives = "爆炸物"
+LANGUAGE.Option_wepslot_medicaltools = "医疗工具"
+LANGUAGE.Option_wepslot_medkits = "急救包"
+LANGUAGE.Option_wepslot_trinkets = "饰品"
+LANGUAGE.Option_wepslot_flasks = "药水瓶"
+LANGUAGE.Option_wepslot_deployables = "可部署物品"
+LANGUAGE.Option_wepslot_misctools = "杂项工具"
+LANGUAGE.Option_wepslot_food = "食物"
+LANGUAGE.Option_wepslot_conoffensive = "消耗品-进攻性"
+LANGUAGE.Option_wepslot_consupportive = "消耗品-支持性"
+LANGUAGE.Option_wepslot_potions = "消耗品-药水"
 
 LANGUAGE.Option_HumanHealthIndicatorHigh = "人类健康指示器 - 高健康"
 LANGUAGE.Option_HumanHealthIndicatorLow = "人类健康指示器 - 低健康"
--- language_chinese.lua
+
 LANGUAGE.Option_ReflectObjects = "物体高光 (关闭可提升性能)"
 LANGUAGE.Option_CharacterEyes = "渲染角色眼睛"
 LANGUAGE.Option_FixCharacterEyes = "角色眼睛转动"
 LANGUAGE.Option_ShowOwnShadow = "显示自身阴影 (第一人称)"
 LANGUAGE.Option_ReduceEffects = "降低粒子效果 (显著提升性能)"
-LANGUAGE.Option_ShowFog = "手动覆盖地图雾气"
+
 LANGUAGE.Option_ShowWaterReflection = "水面反射 (影响性能)"
 LANGUAGE.Option_ShowWaterRefraction = "水面折射 (影响性能)"
 LANGUAGE.Option_ShowZombieBlood = "显示僵尸血液"
@@ -2360,6 +2383,10 @@ LANGUAGE.Inventory_comp_pulsespool_desc = "用于为系统注入更多脉冲能�
 
 LANGUAGE.Inventory_comp_flak = "高射炮舱"
 LANGUAGE.Inventory_comp_flak_desc = "用于发射加热零件的内部舱室。"
+
+LANGUAGE.Inventory_comp_frostaxe = "冰斧头"
+LANGUAGE.Inventory_comp_frostaxe_desc = "冰斧的头"
+
 LANGUAGE.Inventory_Trinket_HealthPackage = "健康包"
 LANGUAGE.Inventory_Trinket_HealthPackage_desc = "+10 最大生命值\n+5% 治疗效果"
 

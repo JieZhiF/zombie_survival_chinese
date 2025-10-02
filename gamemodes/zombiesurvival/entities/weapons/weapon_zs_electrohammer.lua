@@ -3,7 +3,8 @@ AddCSLuaFile()
 SWEP.PrintName = ""..translate.Get("weapon_zs_electrohammer")
 
 if CLIENT then
-
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRepairTools")
+	SWEP.SlotGroup = WEPSELECT_REPAIR_TOOL
 	SWEP.VElements = {
 		["base2"] = { type = "Model", model = "models/props_lab/teleportring.mdl", bone = "ValveBiped.Bip01", rel = "base", pos = Vector(0, 0, 0), angle = Angle(0, 180, 0), size = Vector(0.08, 0.08, 0.08), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
 		["base"] = { type = "Model", model = "models/props_lab/powerbox02d.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(-0.9, 4.975, -8.412), angle = Angle(5.961, 270, 16.764), size = Vector(0.25, 0.25, 0.25), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },

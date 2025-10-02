@@ -1985,13 +1985,13 @@ LANGUAGE.Option_CrosshairAuxiliaryColor = "Crosshair Auxiliary Color"
 LANGUAGE.Option_HumanHealthIndicatorHigh = "Human Health Indicator - High Health"
 LANGUAGE.Option_HumanHealthIndicatorLow = "Human Health Indicator - Low Health"
 -- Performance & Quality
--- language_english.lua
+
 LANGUAGE.Option_ReflectObjects = "Specular Highlight (Disabling may improve performance)"
 LANGUAGE.Option_CharacterEyes = "Render Character Eyes"
 LANGUAGE.Option_FixCharacterEyes = "Character Eye Movement"
 LANGUAGE.Option_ShowOwnShadow = "Draw Own Shadow (First-person)"
 LANGUAGE.Option_ReduceEffects = "Reduce Particle Effects (Improves performance)"
-LANGUAGE.Option_ShowFog = "Override Map Fog"
+
 LANGUAGE.Option_ShowWaterReflection = "Water Reflections (Affects performance)"
 LANGUAGE.Option_ShowWaterRefraction = "Water Refractions (Affects performance)"
 LANGUAGE.Option_ShowZombieBlood = "Show Zombie Blood"
@@ -1999,6 +1999,29 @@ LANGUAGE.Option_ShowZombieSkull = "Show Zombie Gibs" -- "Gibs" is the standard t
 LANGUAGE.Option_ShowHumanBlood = "Show Human Blood"
 LANGUAGE.Option_ShowHumanSkull = "Show Human Gibs"
 LANGUAGE.Option_ModelDetailLevel = "Model Detail Level (Lower value = higher detail)"
+
+------- F4 WEAPON SETTINGS -------
+LANGUAGE.Option_wepslot_unarmed = "Unarmed  "
+LANGUAGE.Option_wepslot_melee = "Melee Weapon"
+LANGUAGE.Option_wepslot_repairtools = "Repair Tools"
+LANGUAGE.Option_wepslot_pistols = "Pistols"
+LANGUAGE.Option_wepslot_smgs = "SMGs"
+LANGUAGE.Option_wepslot_assaultrifles = "Assault Rifles"
+LANGUAGE.Option_wepslot_rifles = "Sniper Rifles"
+LANGUAGE.Option_wepslot_shotguns = "Shotguns"
+LANGUAGE.Option_wepslot_bolt = "Bolt Action Rifles/Crossbows"
+LANGUAGE.Option_wepslot_explosives = "Explosives"
+LANGUAGE.Option_wepslot_medicaltools = "Medical Tools"
+LANGUAGE.Option_wepslot_medkits = "Medkits"
+LANGUAGE.Option_wepslot_trinkets = "Trinkets"
+LANGUAGE.Option_wepslot_flasks = "Flasks"
+LANGUAGE.Option_wepslot_deployables = "Deployables"
+LANGUAGE.Option_wepslot_misctools = "Misc Tools"
+LANGUAGE.Option_wepslot_food = "Food"
+LANGUAGE.Option_wepslot_conoffensive = "Consumables - Offensive"
+LANGUAGE.Option_wepslot_consupportive = "Consumables - Supportive"
+LANGUAGE.Option_wepslot_potions = "Consumables - Potions"
+
 
 LANGUAGE.option_speed_Normal = "Normal"
 LANGUAGE.option_speed_VerySlow = "Very Slow"
@@ -2019,6 +2042,7 @@ LANGUAGE.option_weapon_MinSpread = "Min Spread"
 LANGUAGE.option_weapon_MaxSpread = "Max Spread"
 LANGUAGE.option_weapon_MoveSpeed = "Move Speed"
 
+--
 
 
 -----------Mutation Shop-----------

@@ -4,10 +4,14 @@ DEFINE_BASECLASS("weapon_zs_base")
 SWEP.PrintName = ""..translate.Get("weapon_zs_pulserifle")
 SWEP.Description = ""..translate.Get("weapon_zs_pulserifle_description")
 
-SWEP.Slot = 2
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+SWEP.WeaponType = "rifle"
+    SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 
@@ -35,6 +39,7 @@ SWEP.Primary.Delay = 0.2
 SWEP.Primary.ClipSize = 20
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 GAMEMODE:SetupDefaultClip(SWEP.Primary)
 
 SWEP.ConeMax = 3

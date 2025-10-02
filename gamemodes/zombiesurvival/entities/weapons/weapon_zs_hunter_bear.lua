@@ -2,10 +2,12 @@ AddCSLuaFile()
 
 SWEP.PrintName = "'棕熊' AWP"
 SWEP.Description = "聪明且充满野性的力量."
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 

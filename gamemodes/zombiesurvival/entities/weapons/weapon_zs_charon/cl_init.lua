@@ -36,7 +36,8 @@ SWEP.ViewModelFlip = false
 SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 
-SWEP.Slot = 3
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.SlotPos = 0
 
 function SWEP:PostDrawViewModel(vm, pl, wep)

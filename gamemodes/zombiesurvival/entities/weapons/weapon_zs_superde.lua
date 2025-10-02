@@ -2,10 +2,14 @@ AddCSLuaFile()
 
 SWEP.PrintName = "“起源”沙漠之鹰"
 SWEP.Description = "继续加油吧"
-SWEP.Slot = 1
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
+SWEP.WeaponType = "pistol"
+	SWEP.SlotGroup = WEPSELECT_PISTOL
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 65
 

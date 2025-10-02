@@ -41,7 +41,7 @@ GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.125)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_DAMAGE, 9)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, "魔狱", "基础伤害提高，攻击范围较小，攻击附加持久烈焰", function(wept)
     -- 改造路线的武器伤害倍率 默认为1，若小于等于1则降低伤害。反之则增加伤害
-    wept.MeleeDamage = wept.MeleeDamage * 1.1  
+    wept.MeleeDamage = wept.MeleeDamage * 0.9 
 	local BaseMeleeHit = wept.MeleeHitEntity
     -- 近战命中回调
     function wept:MeleeHitEntity(tr, hitent, damagemultiplier, damage)
@@ -52,7 +52,7 @@ GAMEMODE:AddNewRemantleBranch(SWEP, 1, "魔狱", "基础伤害提高，攻击范
 		-- 添加火焰效果
 		if SERVER and hitent:IsValidLivingZombie() then
 			local attacker = self:GetOwner()
-			local fireduration = 20
+			local fireduration = 8
 			hitent:Ignite(fireduration)
 			hitent:SetNWFloat("FireDieTime", CurTime() + fireduration)
 			-- 设置火焰所有权

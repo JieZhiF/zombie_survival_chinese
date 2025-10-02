@@ -17,12 +17,13 @@ SWEP.CSMuzzleFlashes = false
 
 SWEP.Primary.Sound = Sound("Weapon_357.Single")
 SWEP.Primary.Damage = 17.5
-SWEP.Primary.NumShots = 4
-SWEP.Primary.Delay = 0.85
+SWEP.Primary.NumShots = 5
+SWEP.Primary.Delay = 0.65
 
 SWEP.Primary.ClipSize = 18
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 18
 
 SWEP.RequiredClip = 3
@@ -38,9 +39,9 @@ SWEP.IronSightsAng = Vector(0, 0, 1)
 SWEP.Tier = 4
 
 SWEP.ReloadSpeed = 0.2
-SWEP.FireAnimSpeed = 0.35
+SWEP.FireAnimSpeed = 0.45
 SWEP.MaxCharge = 3
-SWEP.ChargeTime = 0.6
+SWEP.ChargeTime = 0.4
 
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_RELOAD_SPEED, 0.02)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, ""..translate.Get("weapon_zs_tithonus_r1"), ""..translate.Get("weapon_zs_tithonus_r1_description"), function(wept)

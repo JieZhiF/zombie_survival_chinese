@@ -4,7 +4,8 @@ SWEP.PrintName = "'"..translate.Get("weapon_zs_oberon")
 SWEP.Description = ""..translate.Get("weapon_zs_oberon_description")
 
 if CLIENT then
-	SWEP.Slot = 3
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
 	SWEP.SlotPos = 0
 
 	SWEP.ViewModelFlip = false
@@ -59,6 +60,7 @@ SWEP.FireAnimSpeed = 0.55
 SWEP.Primary.ClipSize = 7
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 30
 
 SWEP.ConeMax = 7.5

@@ -24,7 +24,8 @@ SWEP.WElements = {
 SWEP.ViewModelFOV = 65
 SWEP.ViewModelFlip = false
 
-SWEP.Slot = 3
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.SlotPos = 0
 
 function SWEP:ShootBullets(damage, numshots, cone)

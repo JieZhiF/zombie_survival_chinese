@@ -4,7 +4,9 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_hurricane")
 SWEP.Description = ""..translate.Get("weapon_zs_hurricane_description")
 
 if CLIENT then
-	SWEP.Slot = 2
+
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotSMGs")
+	SWEP.SlotGroup = WEPSELECT_SMG	
 	SWEP.SlotPos = 0
 
 	SWEP.HUD3DBone = "ValveBiped.base"
@@ -60,6 +62,7 @@ SWEP.Primary.Delay = 0.12
 SWEP.Primary.ClipSize = 35
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 GAMEMODE:SetupDefaultClip(SWEP.Primary)
 
 SWEP.TracerName = "AR2Tracer"

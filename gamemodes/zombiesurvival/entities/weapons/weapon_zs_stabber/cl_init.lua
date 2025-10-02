@@ -1,14 +1,21 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"
+SWEP.SlotGroup = WEPSELECT_RIFLE
 SWEP.ViewModelFlip = false
-SWEP.ShowViewModel = false
-SWEP.ShowWorldModel = false
-SWEP.ViewModelFOV = 48
-
+SWEP.ShowViewModel = true
+SWEP.ShowWorldModel = true
+SWEP.ViewModelFOV = 75
+SWEP.HUD3DBone = "ValveBiped.garand_base"
+SWEP.HUD3DPos = Vector(-2.79, -1.361, 5.834)
+SWEP.HUD3DAng = Angle(180, 90, 0)
+SWEP.HUD3DScale = 0.022
+--[[
 SWEP.HUD3DBone = "v_weapon.g3sg1_Parent"
 SWEP.HUD3DPos = Vector(-1.5, -5.5, -5)
 SWEP.HUD3DAng = Angle(0, 0, 0)
 SWEP.HUD3DScale = 0.015
+
 
 SWEP.VElements = {
 	["base+++"] = { type = "Model", model = "models/props_c17/utilityconnecter005.mdl", bone = "v_weapon.g3sg1_Parent", rel = "base", pos = Vector(0, -0.431, 9.47), angle = Angle(0, 90, 90), size = Vector(0.453, 0.247, 0.291), color = Color(130, 158, 180, 255), surpresslightning = false, material = "models/props_pipes/guttermetal01a", skin = 0, bodygroup = {} },
@@ -40,13 +47,40 @@ SWEP.WElements = {
 	["base++++++++++"] = { type = "Model", model = "models/gibs/helicopter_brokenpiece_03.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(0.116, 3.184, 23.489), angle = Angle(96.251, -87.704, -53.169), size = Vector(0.159, 0.119, 0.119), color = Color(165, 100, 0, 255), surpresslightning = false, material = "models/props_wasteland/wood_fence01a", skin = 0, bodygroup = {} },
 	["base++++++++"] = { type = "Model", model = "models/items/ar2_grenade.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(-0.151, 1.45, -15.332), angle = Angle(-90, 88.5, 90), size = Vector(1.707, 0.69, 0.129), color = Color(180, 180, 200, 255), surpresslightning = false, material = "models/props_pipes/pipemetal004a", skin = 0, bodygroup = {} }
 }
-
+]]
 SWEP.ViewModelBoneMods = {
 	["ValveBiped.Bip01_L_UpperArm"] = { scale = Vector(1, 1, 1), pos = Vector(0, 0, 0), angle = Angle(2.371, 2.433, 0) },
 	["ValveBiped.Bip01_R_Forearm"] = { scale = Vector(1, 1, 1), pos = Vector(0, 0, 0), angle = Angle(-6.566, -10.653, 3.877) },
 	["ValveBiped.Bip01_R_UpperArm"] = { scale = Vector(1, 1, 1), pos = Vector(0, 0, 0), angle = Angle(19.531, 0.202, -5.178) },
 	["ValveBiped.Bip01_R_Hand"] = { scale = Vector(1, 1, 1), pos = Vector(0, 0, 0), angle = Angle(-32.656, -1.759, -3.086) }
 }
+
+SWEP.VElements = {
+	["bayonet"] = { type = "Model", model = "models/hunter/triangles/1x1.mdl", bone = "ValveBiped", rel = "bayonet_blade", pos = Vector(-0.289, -3.672, 0), angle = Angle(0, -90, 180), size = Vector(0.02, 0.012, 0.029), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete0", skin = 0, bodygroup = {} },
+	["bayonet+"] = { type = "Model", model = "models/hunter/triangles/1x1.mdl", bone = "ValveBiped", rel = "bayonet_blade", pos = Vector(0.28, -3.68, 0), angle = Angle(0, -90, 0), size = Vector(0.02, 0.012, 0.029), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete0", skin = 0, bodygroup = {} },
+	["bayonet_base_circle"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "ValveBiped", rel = "bayonet_inside_base", pos = Vector(0, 0, -0.08), angle = Angle(0, 0, 0), size = Vector(0.051, 0.051, 0.051), color = Color(114, 114, 114, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle+++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped", rel = "bayonet_inside_base", pos = Vector(0.014, 0.002, 4.262), angle = Angle(0, 0, 0), size = Vector(0.033, 0.033, 0.008), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle++++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped", rel = "bayonet_inside_base", pos = Vector(0.67, 0.001, 4.265), angle = Angle(0, 0, 0), size = Vector(0.04, 0.035, 0.007), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle+++++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped", rel = "bayonet_inside_base", pos = Vector(0.014, 0.002, 3.291), angle = Angle(0, 0, 0), size = Vector(0.033, 0.033, 0.008), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle++++++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped", rel = "bayonet_inside_base", pos = Vector(0.014, 0.002, 2.331), angle = Angle(0, 0, 0), size = Vector(0.033, 0.033, 0.008), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_blade"] = { type = "Model", model = "models/hunter/plates/plate1x3.mdl", bone = "ValveBiped.garand_base", rel = "", pos = Vector(-1.265, 0.6, 35.756), angle = Angle(0, 0, 90), size = Vector(0.025, 0.045, 0.025), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete0", skin = 0, bodygroup = {} },
+	["bayonet_inside_base"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "ValveBiped.garand_base", rel = "", pos = Vector(-1.274, 0.645, 28.183), angle = Angle(-0.185, 0, 0), size = Vector(0.05, 0.05, 0.102), color = Color(205, 90, 0, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/fender_wood", skin = 0, bodygroup = {} },
+	["charm_behind"] = { type = "Model", model = "models/props_phx/gears/bevel9.mdl", bone = "ValveBiped", rel = "bayonet_base_circle", pos = Vector(0, 0, 0.164), angle = Angle(180, 0, 0), size = Vector(0.102, 0.102, 0.102), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "", skin = 0, bodygroup = {} }
+}
+ 
+SWEP.WElements = {
+	["bayonet"] = { type = "Model", model = "models/hunter/triangles/1x1.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_blade", pos = Vector(-0.289, -3.672, 0), angle = Angle(0, -90, 180), size = Vector(0.02, 0.012, 0.029), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete0", skin = 0, bodygroup = {} },
+	["bayonet+"] = { type = "Model", model = "models/hunter/triangles/1x1.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_blade", pos = Vector(0.28, -3.68, 0), angle = Angle(0, -90, 0), size = Vector(0.02, 0.012, 0.029), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete0", skin = 0, bodygroup = {} },
+	["bayonet_base_circle"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_inside_base", pos = Vector(0, 0, -0.08), angle = Angle(0, 0, 0), size = Vector(0.051, 0.051, 0.051), color = Color(114, 114, 114, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle+++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_inside_base", pos = Vector(0.014, 0.002, 4.262), angle = Angle(0, 0, 0), size = Vector(0.033, 0.033, 0.008), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle++++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_inside_base", pos = Vector(0.67, 0.001, 4.265), angle = Angle(0, 0, 0), size = Vector(0.04, 0.035, 0.007), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle+++++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_inside_base", pos = Vector(0.014, 0.002, 3.291), angle = Angle(0, 0, 0), size = Vector(0.033, 0.033, 0.008), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_base_circle++++++++"] = { type = "Model", model = "models/hunter/tubes/tube1x1x1.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_inside_base", pos = Vector(0.014, 0.002, 2.331), angle = Angle(0, 0, 0), size = Vector(0.033, 0.033, 0.008), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete1", skin = 0, bodygroup = {} },
+	["bayonet_blade"] = { type = "Model", model = "models/hunter/plates/plate1x3.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(35.085, 1.303, -8.181), angle = Angle(-102.036, 0, 90), size = Vector(0.025, 0.045, 0.025), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/concrete0", skin = 0, bodygroup = {} },
+	["bayonet_inside_base"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(28.046, 1.313, -6.659), angle = Angle(77.625, 0, 180), size = Vector(0.05, 0.05, 0.102), color = Color(205, 90, 0, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "phoenix_storms/fender_wood", skin = 0, bodygroup = {} },
+	["charm_behind"] = { type = "Model", model = "models/props_phx/gears/bevel9.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bayonet_base_circle", pos = Vector(0, 0, 0.164), angle = Angle(180, 0, 0), size = Vector(0.102, 0.102, 0.102), color = Color(255, 255, 255, 255), surpresslightning = false, bonemerge = false, highrender = false, nocull = false, material = "", skin = 0, bodygroup = {} }
+}
+
 
 local ghostlerp = 0
 function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)

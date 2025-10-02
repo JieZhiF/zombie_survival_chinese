@@ -1,7 +1,8 @@
 INC_CLIENT()
 
 SWEP.ViewModelFlip = false
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotDeployables")
+SWEP.SlotGroup = WEPSELECT_DEPLOYABLES
 SWEP.HUD3DPos = Vector(4, 0, 15)
 SWEP.HUD3DAng = Angle(0, 180, 180)
 SWEP.HUD3DScale = 0.04

@@ -38,6 +38,7 @@ This was my first ever gamemode. A lot of stuff is from years ago and some stuff
 -- GM:PlayerShouldTakeNailRemovalPenalty 判断玩家移除他人钉子时是否应受到惩罚
 -- GM:PlayerSelectSpawn 为玩家选择最佳出生点的核心逻辑
 -- GM:SpawnBossZombie 将指定玩家生成为Boss僵尸
+-- GM:SpawnMultipleBosses 将指定数量的玩家生成为Boss僵尸
 -- GM:SendZombieVolunteers 向客户端发送当前的僵尸志愿者列表
 -- GM:ZombieSpawnDistanceSort 一个排序函数，用于按与僵尸出生点的距离对玩家进行排序
 -- GM:ZombieSpawnDistanceSortSigils 一个用于印记模式的排序函数，优先选择离印记最远的玩家
@@ -1207,6 +1208,56 @@ local function BossZombieSort(za, zb)
 	return ascore > bscore
 end
 
+
+--[[
+    生成多个BOSS的函数
+    @param amount - 想要生成的BOSS数量
+]]
+function GM:SpawnMultipleBosses(amount)
+    -- 首先，我们需要一个潜在BOSS的候选列表
+    local candidates = {}
+    local zombies = {}
+    for _, ent in pairs(team.GetPlayers(TEAM_UNDEAD)) do
+        -- 筛选出不是BOSS的存活僵尸玩家
+        if not ent:GetZombieClassTable().Boss and ent:Alive() then
+            if ent:GetInfo("zs_nobosspick") == "0" then
+                table.insert(zombies, ent)
+            end
+        end
+    end
+
+    -- 如果没有玩家，则从机器人中选择
+    if #zombies == 0 then
+        for _, ent in pairs(D3bot.GetBots()) do
+            if ent:Team() == TEAM_UNDEAD and not ent:GetZombieClassTable().Boss then
+                table.insert(zombies, ent)
+            end
+        end
+    end
+
+    -- 如果没有候选人，则直接返回
+    if #zombies == 0 then
+        --print("[BOSS] No valid candidates to become a boss.")
+        return
+    end
+
+    -- 对候选人进行排序（使用您游戏中已有的BossZombieSort排序逻辑）
+    table.sort(zombies, BossZombieSort)
+
+    -- 决定实际生成的BOSS数量（不能超过候选人数量）
+    local spawn_count = math.min(amount, #zombies)
+
+    -- 循环生成BOSS
+    --print("[BOSS] Attempting to spawn " .. spawn_count .. " bosses.")
+    for i = 1, spawn_count do
+        local player_to_become_boss = zombies[i]
+        if player_to_become_boss and player_to_become_boss:IsValid() then
+            -- 直接调用现有的单体BOSS生成函数
+            self:SpawnBossZombie(player_to_become_boss, false)
+        end
+    end
+end
+
 function GM:SpawnBossZombie(bossplayer, silent, bossindex, triggerboss)
 	if not bossplayer then
 		bossplayer = self:CalculateNextBoss()
@@ -1340,7 +1391,7 @@ function GM:Think()
 			and self.LastBossZombieSpawned ~= wave and wave > 0 and not self.RoundEnded
 			and (self.BossZombiePlayersRequired <= 0 or #player.GetAll() >= self.BossZombiePlayersRequired) then
 				if self:GetWaveStart() - 5 <= time then
-					self:SpawnBossZombie()
+					self:SpawnMultipleBosses(3) -- 生成3个BOSS
 				else
 					self:CalculateNextBoss()
 				end
@@ -1538,7 +1589,7 @@ function GM:CalculateNextBoss()
 	for _, ent in pairs(team.GetPlayers(TEAM_UNDEAD)) do
 		if ent:GetZombieClassTable().Boss and ent:Alive() then
 			livingbosses = livingbosses + 1
-			if livingbosses >= 3 then return end
+			if livingbosses >= 9 then return end
 		else
 			if ent:GetInfo("zs_nobosspick") == "0" then
 				table.insert(zombies, ent)

@@ -4,10 +4,11 @@ DEFINE_BASECLASS("weapon_zs_base")
 SWEP.PrintName = ""..translate.Get("weapon_zs_stubber")
 SWEP.Description = ""..translate.Get("weapon_zs_stubber_description")
 
-SWEP.Slot = 3
 SWEP.SlotPos = 0
  
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.ViewModelFlip = false
 
 	SWEP.HUD3DBone = "v_weapon.awm_parent"

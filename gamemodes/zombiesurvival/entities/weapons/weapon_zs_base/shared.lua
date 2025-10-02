@@ -58,6 +58,9 @@ SWEP.Recoil_Decay_Rate      = 5    -- 连射时的“压枪”手感
 SWEP.Recoil_Recovery_Time   = 0.15 -- 停火后多久开始恢复
 SWEP.Recoil_Recovery_Speed  = 8    -- 自动恢复的速度
 SWEP.Recoil_Recovery_Percentage = 0.15 
+
+SWEP.CooldownExtraSize = 1
+
 SWEP.Weight = 5
 SWEP.WElements = {}
 SWEP.VElements = {}
@@ -129,7 +132,8 @@ function SWEP:Reload()
 		-- Store whether there's a round chambered before reloading
 		self.HasChamberedRound = self:Clip1() > 0
 		self.HasChamberedRoundSecondary = self:Clip2() > 0
-		
+
+	
 		self.IdleAnimation = CurTime() + self:SequenceDuration()
 		self:SetNextReload(self.IdleAnimation)
 		self:SetReloadStart(CurTime())
@@ -153,7 +157,6 @@ end
 -- Add this new function to handle the chambered round logic
 function SWEP:FinishReload()
 	self:SetReloadFinish(0)
-	
 	local owner = self:GetOwner()
 	
 	-- Handle primary ammo reload
@@ -269,6 +272,7 @@ end
 function SWEP:Deploy()
 	self:SetNextReload(0)
 	self:SetReloadFinish(0)
+
 	self:ResetRecoilState()
 	gamemode.Call("WeaponDeployed", self:GetOwner(), self)
 
@@ -353,20 +357,67 @@ end
 function SWEP:SendReloadAnimation()
 	self:SendWeaponAnim(ACT_VM_RELOAD)
 end
-
+--[[
+ * @description: 获取武器的最终重装速度乘数。
+ * 这个值由多个因素共同决定：
+ * 1. 玩家的基础重装速度加成（可能受特定弹药类型影响）。
+ * 2. 玩家是否处于 "frost" (冰冻) 状态的减益效果。
+ * 3. 在特定条件下（如拥有某饰品、武器等级较低），由武器品质决定的额外加成。
+ * @return {number} 最终的重装速度乘数。
+--]]
 function SWEP:GetReloadSpeedMultiplier()
 	local owner = self:GetOwner()
-	local primstring = self:GetPrimaryAmmoTypeString()
-	local reloadspecmulti = primstring and "ReloadSpeedMultiplier" .. string.upper(primstring) or nil
 
-	local extramulti = 1
-	if owner:HasTrinket("supasm") and (self.Tier or 1) <= 2 and not self.PrimaryRemantleModifier and self.QualityTier then
-		extramulti = GAMEMODE.WeaponQualities[self.QualityTier][2]
+	-- 1. 获取基础和弹药特定的重装速度加成
+	-- -------------------------------------------------------------------
+	local ammoTypeString = self:GetPrimaryAmmoTypeString()
+	local ammoSpecificModifier = nil
+
+	-- 如果武器有主弹药类型，则构建一个针对该弹药的特定加成字符串
+	-- 例如，如果弹药是 "smg_ammo"，则字符串为 "ReloadSpeedMultiplierSMG_AMMO"
+	if ammoTypeString then
+		ammoSpecificModifier = "ReloadSpeedMultiplier" .. string.upper(ammoTypeString)
 	end
 
-	return self:GetOwner():GetTotalAdditiveModifier("ReloadSpeedMultiplier", reloadspecmulti) * (owner:GetStatus("frost") and 0.7 or 1) * extramulti
-end
+	-- 从玩家身上获取总的加成值，这会同时考虑通用加成和特定弹药加成
+	local baseMultiplier = owner:GetTotalAdditiveModifier("ReloadSpeedMultiplier", ammoSpecificModifier)
 
+
+	-- 2. 计算来自状态效果（如冰冻）的乘数
+	-- -------------------------------------------------------------------
+	local frostMultiplier = 1.0 -- 默认为1，即没有影响
+	local fastReloadMultiplier = 1.0 -- 默认为1，即没有影响
+	-- 如果玩家处于 "frost" 状态，则施加 0.7 倍的减速惩罚
+	if owner:GetStatus("frost") then
+		frostMultiplier = 0.7
+	end
+
+	if owner:GetStatus("fastreload") then
+		fastReloadMultiplier = 1.2
+	end
+
+	local statusMultiplier = frostMultiplier * fastReloadMultiplier
+	-- 3. 计算来自武器品质和饰品的特殊乘数
+	-- -------------------------------------------------------------------
+	local qualityMultiplier = 1.0 -- 默认为1，即没有影响
+
+	-- 检查是否满足一系列特殊条件，以激活基于武器品质的加成
+	local hasSuperTrinket = owner:HasTrinket("supasm")
+	local isLowTier = (self.Tier or 1) <= 2
+	local hasNoRemantleMod = not self.PrimaryRemantleModifier
+	local hasQualityTier = self.QualityTier ~= nil
+
+	if hasSuperTrinket and isLowTier and hasNoRemantleMod and hasQualityTier then
+		-- 从全局配置中查找对应品质的加成值
+		qualityMultiplier = GAMEMODE.WeaponQualities[self.QualityTier][2]
+	end
+
+
+	-- 4. 最终计算
+	-- -------------------------------------------------------------------
+	-- 将所有乘数相乘以得到最终结果
+	return baseMultiplier * statusMultiplier * qualityMultiplier
+end
 function SWEP:ProcessReloadEndTime()
 	local reloadspeed = self.ReloadSpeed * self:GetReloadSpeedMultiplier()
 
@@ -377,8 +428,26 @@ function SWEP:ProcessReloadEndTime()
 end
 
 function SWEP:GetFireDelay()
-	local owner = self:GetOwner()
-	return self.Primary.Delay / (owner:GetStatus("frost") and 0.7 or 1)
+    local owner = self:GetOwner()
+    local baseDelay = self.Primary.Delay
+    local currentDelay = baseDelay -- 初始化当前延迟为基础延迟
+
+    -- 处理“霜冻”状态：
+    -- 如果拥有者处于“frost”状态，开火延迟增加30% (乘以1.3)。
+    -- 这将导致武器的射速变慢。
+    if owner:GetStatus("frost") then
+        currentDelay = currentDelay * 1.3
+    end
+
+    -- 处理“fastshoot”状态：
+    -- 如果拥有者拥有“fastshoot”状态，开火延迟减少10% (乘以0.9)。
+    -- 这将导致武器的射速加快。
+    if owner:GetStatus("fastshoot") then
+        currentDelay = currentDelay * 0.9
+    end
+
+    -- 返回最终修正后的开火延迟
+    return currentDelay
 end
 
 -- 这是一个辅助函数，用于在开火时施加后坐力

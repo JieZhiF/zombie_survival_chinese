@@ -2,7 +2,9 @@ INC_CLIENT()
 
 SWEP.DrawCrosshair = false
 
-SWEP.Slot = 4
+
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
+SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
 SWEP.SlotPos = 0
 
 function SWEP:Deploy()

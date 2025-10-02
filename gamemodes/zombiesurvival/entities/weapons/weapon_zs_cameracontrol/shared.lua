@@ -3,7 +3,7 @@ AddCSLuaFile()
 SWEP.Base = "weapon_zs_base"
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_cameracontrol")
-SWEP.Slot = 4
+
 SWEP.SlotPos = 0
 
 SWEP.ViewModel = "models/weapons/c_slam.mdl"

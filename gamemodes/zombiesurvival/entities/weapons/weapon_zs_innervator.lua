@@ -5,7 +5,8 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_innervator")
 SWEP.Description = ""..translate.Get("weapon_zs_innervator_description")
 
 if CLIENT then
-	SWEP.Slot = 3
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
 	SWEP.SlotPos = 0
 
 	SWEP.ViewModelFlip = false
@@ -67,6 +68,7 @@ SWEP.Primary.BurstShots = 5
 SWEP.Primary.ClipSize = 30
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 GAMEMODE:SetupDefaultClip(SWEP.Primary)
 
 SWEP.ReloadSpeed = 0.33

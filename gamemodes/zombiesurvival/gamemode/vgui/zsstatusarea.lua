@@ -83,6 +83,13 @@ local statusdisplays = {
 		Icon = Material("zombiesurvival/dim_vision.png")
 	},
 	{
+		Color = Color(120, 120, 120),
+		Name = "混乱",--translate.Get("Status_DimVision"),
+		ValFunc = statusValueFunction("chaos"),
+		Max = 12,
+		Icon = Material("zombiesurvival/chaos.png")
+	},
+	{
 		Color = Color(100, 180, 100),
 		Name = translate.Get("Status_Slow"),
 		ValFunc = statusValueFunction("slow"),
@@ -111,11 +118,25 @@ local statusdisplays = {
 		Icon = Material("zombiesurvival/sickness.png")
 	},
 	{
+		Color = Color(255, 140, 50),
+		Name = "快速换弹",
+		ValFunc = statusValueFunction("fastreload"),
+		Max = 15,
+		Icon = Material("zombiesurvival/fastreload.png")
+	},
+	{
 		Color = Color(180, 100, 50),
 		Name = translate.Get("Status_KnockDown"),
 		ValFunc = statusValueFunction("knockdown"),
 		Max = 5,
 		Icon = Material("zombiesurvival/knock_down.png")
+	},
+	{
+		Color = Color(255, 60, 0),
+		Name = "快速射击",--translate.Get("Status_Strength"),
+		ValFunc = statusValueFunction("fastshoot"),
+		Max = 10,
+		Icon = Material("zombiesurvival/fastshoot.png")
 	},
 	{
 		Color = Color(220, 120, 110),
@@ -152,6 +173,15 @@ local statusdisplays = {
 		Max = 14,
 		Icon = Material("zombiesurvival/reaper.png")
 	},
+	--[[[
+	{
+		Color = Color(0, 160, 255),
+		Name = "电击",--translate.Get("Status_Reaper"),
+		ValFunc = statusValueFunction("electricity"),
+		Max = 14,
+		Icon = Material("zombiesurvival/electricity.png")
+	},
+	]]
 	{
 		Color = Color(235, 160, 40),
 		Name = translate.Get("Status_Renegade"),
@@ -160,7 +190,7 @@ local statusdisplays = {
 		Icon = Material("zombiesurvival/headshot_stacks.png")
 	}
 }
-local statustall = 40 //状态栏的高度
+local statustall = 44 //状态栏的高度
 local spacing = 6 //间距
 -- The main container for all our status panels.
 local PANEL = {}
@@ -181,7 +211,7 @@ function PANEL:Init()
 		status.Icon = statusdisp.Icon
 		status:Dock(TOP)
 		-- We add a small margin between panels for a cleaner look.
-        status:DockMargin(0, 4, 0, 0)
+        status:DockMargin(0, spacing, 0, 0)
 		table.insert(self.StatusPanels, status)
 	end
 

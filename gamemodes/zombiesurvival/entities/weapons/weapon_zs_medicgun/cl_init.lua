@@ -1,7 +1,8 @@
 INC_CLIENT()
 
 DEFINE_BASECLASS("weapon_zs_baseproj")
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotMedicalTools")
+SWEP.SlotGroup = WEPSELECT_MEDICAL_TOOL
 SWEP.ViewModelFlip = false
 SWEP.ViewModelFOV = 60
 
@@ -51,4 +52,38 @@ function SWEP:Draw3DHUD(vm, pos, ang)
 	cam.Start3D2D(pos, ang, self.HUD3DScale / 2)
 		draw.SimpleTextBlurry(text, "ZS3D2DFontSmall", x, y, text ~= "No Target" and COLOR_LIMEGREEN or COLOR_RED, TEXT_ALIGN_CENTER)
 	cam.End3D2D()
+end
+function SWEP:DrawCooldowns()
+	local cooldownIcon = self:GetCooldownIcon()
+    local coneGap = self:GetCone() / 2
+    local betterscale = BetterScreenScale()
+    local remaining = self:CooldownRingBinding()
+    local maximum = self:CooldownRingMaximumBinding()
+    local ringSize = math.Clamp(CrosshairCoolPrimaryCircleSize, 0.5, 16) * 2
+    local ringSpacing = math.Clamp(CrosshairCoolPrimaryCircleSize, 0, 16) * 2
+    local ringColor = Color(40, 255, 40, 255)
+    local backgroundColor = Color(12, 12, 12, 30)
+
+    if remaining > 0 and maximum > 0 and remaining ~= math.huge and maximum ~= math.huge then
+        local centerX, centerY = ScrW() * 0.5, ScrH() * 0.5
+
+        if CurTime() >= self:GetReloadStart() and CurTime() <= self:GetReloadFinish() then
+            local innerRadius = (ringSpacing) * 10 * betterscale
+            draw.HollowCircle(centerX, centerY, innerRadius, 2 * ringSize, 270, 270 + 360 * remaining / maximum, ringColor)
+            draw.HollowCircle(centerX, centerY, innerRadius, 2 * ringSize, 270, 270 + 360, backgroundColor)
+            draw.SimpleTextBlurry(math.Round(remaining, 1), "RemingtonNoiseless", centerX - innerRadius * 2, centerY,ringColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+            local iw, ih = cooldownIcon:Width(), cooldownIcon:Height()
+            if iw == 0 or ih == 0 then iw, ih = 64, 64 end
+            local pad = math.max(2, ringSize * 0.8)
+            local iconMax = (innerRadius - pad) * 2
+            local s = math.min(iconMax / iw, iconMax / ih)
+            local w, h = math.floor(iw * s), math.floor(ih * s)
+            local rotation = CurTime() * 90
+
+            surface.SetMaterial(cooldownIcon)
+            surface.SetDrawColor(ringColor)
+            surface.DrawTexturedRectRotated(centerX, centerY, w, h, rotation)
+        end
+    end
 end

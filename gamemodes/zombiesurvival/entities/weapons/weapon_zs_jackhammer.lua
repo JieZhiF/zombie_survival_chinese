@@ -4,7 +4,8 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_jackhammer")
 SWEP.Description = ""..translate.Get("weapon_zs_jackhammer_description")
 
 if CLIENT then
-	SWEP.Slot = 3
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
 	SWEP.SlotPos = 0
 
 	SWEP.ViewModelFlip = false

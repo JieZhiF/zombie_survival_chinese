@@ -1,5 +1,6 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRepairTools")
+SWEP.SlotGroup = WEPSELECT_REPAIR_TOOL
 SWEP.ViewModelFOV = 75
 
 function SWEP:DrawHUD()

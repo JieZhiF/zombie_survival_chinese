@@ -1,9 +1,11 @@
 AddCSLuaFile()
 
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
     SWEP.ViewModelFOV = 60
     SWEP.ViewModelFlip = false
     SWEP.PrintName = ""..translate.Get("weapon_zs_hammerdown")

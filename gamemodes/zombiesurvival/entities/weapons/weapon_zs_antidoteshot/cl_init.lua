@@ -1,7 +1,8 @@
 INC_CLIENT()
 
 DEFINE_BASECLASS("weapon_zs_baseproj")
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotMedicalTools")
+SWEP.SlotGroup = WEPSELECT_MEDICAL_TOOL
 SWEP.ViewModelFlip = false
 SWEP.ViewModelFOV = 56
 

@@ -3,10 +3,12 @@ AddCSLuaFile()
 SWEP.PrintName = ""..translate.Get("weapon_zs_reaper")
 SWEP.Description = ""..translate.Get("weapon_zs_reaper_description")
 
-SWEP.Slot = 2
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotSMGs")
+	SWEP.SlotGroup = WEPSELECT_SMG
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 70
 	SWEP.ShowViewModel = true
@@ -202,6 +204,7 @@ end
 
 function SWEP.BulletCallback(attacker, tr)
 	local hitent = tr.Entity
+	--
 	if hitent:IsValidLivingZombie() and hitent:Health() <= hitent:GetMaxHealthEx() * 0.04 and gamemode.Call("PlayerShouldTakeDamage", hitent, attacker) then
 		if SERVER then
 			hitent:SetWasHitInHead()
@@ -209,8 +212,11 @@ function SWEP.BulletCallback(attacker, tr)
 		hitent:TakeSpecialDamage(hitent:Health(), DMG_DIRECT, attacker, attacker:GetActiveWeapon(), tr.HitPos)
 		hitent:EmitSound("npc/roller/blade_out.wav", 80, 125)
 	end
+	--attacker:GiveStatus("fastreload",10)
+	--attacker:GiveStatus("fastshoot",10)
+	--attacker:GiveStatus("chaos",5)
 end
---[[
+
 function SWEP:ShootBullets(dmg, numbul, cone)
 	local owner = self:GetOwner()
 	owner:DoAttackEvent()
@@ -227,7 +233,7 @@ function SWEP:ShootBullets(dmg, numbul, cone)
 		POINTSMULTIPLIER = nil
 	end
 end
-]]
+
 if not CLIENT then return end
 
 function SWEP:Draw3DHUD(vm, pos, ang)

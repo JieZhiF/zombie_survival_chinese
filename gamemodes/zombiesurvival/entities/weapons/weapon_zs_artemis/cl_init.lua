@@ -1,5 +1,6 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.HUD3DBone = "v_weapon.slide_right"
 SWEP.HUD3DPos = Vector(1, 0.1, -1)
 SWEP.HUD3DScale = 0.015

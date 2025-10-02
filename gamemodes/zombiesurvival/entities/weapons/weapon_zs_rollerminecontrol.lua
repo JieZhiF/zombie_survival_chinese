@@ -9,7 +9,9 @@ if CLIENT then
 	SWEP.BobScale = 0.5
 	SWEP.SwayScale = 0.5
 
-	SWEP.Slot = 4
+
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotDeployables")
+	SWEP.SlotGroup = WEPSELECT_DEPLOYABLES	
 	SWEP.SlotPos = 0
 end
 

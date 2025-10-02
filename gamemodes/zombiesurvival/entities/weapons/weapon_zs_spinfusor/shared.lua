@@ -1,7 +1,7 @@
 SWEP.PrintName = ""..translate.Get("weapon_zs_spinfusor")
 SWEP.Description = ""..translate.Get("weapon_zs_spinfusor_description")
 
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 SWEP.ShowViewModel = false
@@ -31,6 +31,7 @@ SWEP.Primary.Damage = 86
 SWEP.Primary.Delay = 1.2
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.Sound = Sound("Weapon_Slayer.Single")
 
 SWEP.Primary.ClipSize = 7

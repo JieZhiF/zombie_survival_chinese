@@ -153,42 +153,54 @@ end
 function SWEP:DrawCooldowns()
 	local V=math.max(ScrH() / 1080, 0.851) * 1
 	--Primary Attack
-	local ab=self:CooldownRingBinding()
-	local ac=self:CooldownRingMaximumBinding()
+	local attackCd=self:CooldownRingBinding()
+    local attackMax = self:CooldownRingMaximumBinding()
 	--Block Cooldown
-	local ab2=self:CooldownRingBinding2()
-	local ac2=self:CooldownRingMaximumBinding2()
+	local blockCd = self:CooldownRingBinding2()
+	local blockMax = self:CooldownRingMaximumBinding2()
 
-	local CooldownRingSize=math.Clamp(tonumber(f) or 1,0.5,1.5)
-	local CooldownRingSpacing=math.Clamp(tonumber(f)or 1,0,1)
-	local a6=Color(220,0,0,100)
-	local a4=Color(0,220,0,100)
-	local H=ScrW()*0.5
-	local I=ScrH()*0.5
-	if ab>0 and ac>0 and ab~=math.huge and ac~=math.huge then
+	local CooldownRingSize = math.Clamp(tonumber(f) or 1, 0.5, 1.5)
+	local CooldownRingSpacing = math.Clamp(tonumber(f) or 1, 0, 1)
+	local a6 = Color(220, 0, 0, 100)
+	local blockcolor = Color(0, 220, 0, 100)
+
+	local attackColor = Color(255, 80, 80, 180)  -- 红色 - 攻击
+	local bgColor = Color(12, 12, 12, 50)
+	local H = ScrW() * 0.5
+	local I = ScrH()*0.5
+    local font = "ZSM_Coolvetica" or "DefaultFont"
+    local fontblur = "ZSM_CoolveticaBlur" or font
+
+	if attackCd>0 and attackMax>0 and attackCd~=math.huge and attackMax~=math.huge then
 	-- Primary Attack
-	draw.SimpleText(math.Round(ab,1), font ,H-(2)*30*V,I+(5),a6,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
-	draw.SimpleText(math.Round(ab,1), fontblur ,H-(2)*30*V,I+(5),a6,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+	--draw.SimpleText(math.Round(attackCd,1), font ,H-(2)*30*V,I+(5),a6,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+	--draw.SimpleText(math.Round(attackCd,1), fontblur ,H-(2)*30*V,I+(5),a6,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 
-	if not self:IsBlocking() then
-		draw.HollowCircle(H,I,(1+CooldownRingSpacing)*9*V,3*CooldownRingSize,270,270+360*ab/ac,a6)
-		draw.HollowCircle(H,I,(1+CooldownRingSpacing)*9*V,3*CooldownRingSize,270,270+360,Color(12,12,12,30)) 
+    -- 绘制攻击冷却
+    if self:IsValidCooldown(attackCd, attackMax) then
+        -- 冷却时间文字
+        draw.SimpleText(math.Round(attackCd, 1), fontblur, H +30 * V, I + 20, attackColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        draw.SimpleText(math.Round(attackCd, 1), font, H + 30 * V, I + 20, attackColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        
+        -- 冷却圆环
+        local progress = attackCd / attackMax
+        draw.HollowCircle(H, I, 12 * V, 4 * CooldownRingSize, 270, 270 + 360 * progress, attackColor)
+        draw.HollowCircle(H, I, 12 * V, 4 * CooldownRingSize, 270, 270 + 360, bgColor)
+    end
 	end
-	end
-	if ab2>0 and ac2>0 and ab2~=math.huge and ac2~=math.huge then
+	if blockCd>0 and blockMax>0 and blockCd~=math.huge and blockMax~=math.huge then
 		-- Block Cooldown
-		draw.SimpleText(math.Round(ab2,1),font,H+(55)*V,I+(5),a4,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
-		draw.SimpleText(math.Round(ab2,1),fontblur,H+(55)*V,I+(5),a4,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+		draw.SimpleText(math.Round(blockCd,1),font,H+(55)*V,I+(5),blockcolor,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+		draw.SimpleText(math.Round(blockCd,1),fontblur,H+(55)*V,I+(5),blockcolor,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 
 		if not self:IsBlocking() then
-			draw.HollowCircle(H,I,(1+CooldownRingSpacing)*2*V,3*CooldownRingSize,270,270+360*ab2/ac2,a4)
-			draw.HollowCircle(H,I,(1+CooldownRingSpacing)*2*V,3*CooldownRingSize,270,270+360,Color(12,12,12,30))
+			draw.HollowCircle(H,I,(1+CooldownRingSpacing)*2*V,3*CooldownRingSize,270,270+360*blockCd/blockMax,blockcolor)
+			draw.HollowCircle(H,I,(1+CooldownRingSpacing)*2*V,3*CooldownRingSize,270,270+360,bgColor)
 		end
 
 	end
 
 end
-
 -- 添加辅助方法检查冷却时间有效性
 function SWEP:IsValidCooldown(current, max)
     return current > 0 and max > 0 and current ~= math.huge and max ~= math.huge

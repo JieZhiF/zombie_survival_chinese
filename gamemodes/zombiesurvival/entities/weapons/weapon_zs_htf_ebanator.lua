@@ -3,12 +3,14 @@ DEFINE_BASECLASS("weapon_zs_base")
 SWEP.PrintName = "Ebanator-1000"
 SWEP.Description = "Heavy rifle used by Kargen operators"
 
-SWEP.Slot = 2
+
 SWEP.SlotPos = 0
 
 
 if CLIENT then
-
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+SWEP.WeaponType = "rifle"
+	SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
 	SWEP.ViewModelFOV = 70
 	SWEP.ViewModelFlip = false
 
@@ -107,7 +109,7 @@ sound.Add( {
 	pitch = 210,//{80,85},
 	sound = "weapons/ar2/npc_ar2_altfire.wav"
 } )
-
+SWEP.WeaponType = "rifle"
 SWEP.Primary.Sound = Sound("Weapon_enamtpr.Silende")
 SWEP.Primary.Damage = 21.75
 SWEP.Primary.NumShots = 1

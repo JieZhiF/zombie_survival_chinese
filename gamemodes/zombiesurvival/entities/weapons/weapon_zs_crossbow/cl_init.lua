@@ -7,7 +7,8 @@ SWEP.HUD3DScale = 0.025
 SWEP.ViewModelFOV = 60
 SWEP.ViewModelFlip = false
 
-SWEP.Slot = 3
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.SlotPos = 0
 
 SWEP.IronsightsMultiplier = 0.25

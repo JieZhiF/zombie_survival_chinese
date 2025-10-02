@@ -8,5 +8,6 @@ SWEP.UseHands = true
 
 SWEP.ConeMax = 2
 SWEP.ConeMin = 1
+SWEP.CooldownExtraSize = 1
 
 SWEP.Primary.ProjVelocity = 3200

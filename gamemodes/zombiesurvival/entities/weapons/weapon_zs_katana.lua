@@ -76,7 +76,7 @@ end
 
 function SWEP:Deploy()
 
-	self.Weapon:EmitSound("weapons/katana/draw.wav", 100, math.random(95,110))
+	--self.Weapon:EmitSound("weapons/katana/draw.wav", 100, math.random(95,110))
 
 	return true
 end

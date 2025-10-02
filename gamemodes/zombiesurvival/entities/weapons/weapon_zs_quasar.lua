@@ -5,7 +5,9 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_quasar")
 SWEP.Description = ""..translate.Get("weapon_zs_quasar_description")
 
 if CLIENT then
-	SWEP.Slot = 3
+
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.SlotPos = 0
 
 	SWEP.ViewModelFlip = false
@@ -66,6 +68,7 @@ SWEP.RequiredClip = 4
 SWEP.Primary.ClipSize = 24
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 25
 
 SWEP.Primary.Gesture = ACT_HL2MP_GESTURE_RANGE_ATTACK_CROSSBOW

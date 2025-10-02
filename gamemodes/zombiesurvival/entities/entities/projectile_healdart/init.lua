@@ -123,14 +123,20 @@ function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)//命中目标
 	self:SetAngles(vOldVelocity:Angle())
 
 	local effectdata = EffectData()
-		effectdata:SetOrigin(vHitPos)
-		effectdata:SetNormal(vHitNormal)
-		if eHitEntity:IsValid() then
-			effectdata:SetEntity(eHitEntity)
-		else
-			effectdata:SetEntity(NULL)
+	effectdata:SetOrigin(vHitPos)
+	effectdata:SetNormal(vHitNormal)
+	effectdata:SetMagnitude(0)
+	if eHitEntity:IsValid() then
+		effectdata:SetEntity(eHitEntity)
+	else
+		effectdata:SetEntity(NULL)
+	end
+	util.Effect("hit_medicaldart", effectdata)
+		if eHitEntity:IsValid() and eHitEntity:IsPlayer() or eHitEntity:IsNPC() then
+		if eHitEntity:Health() <= 0 then
+			self:Remove()
 		end
-	util.Effect("hit_healdart", effectdata)
+	end
 end
 
 function ENT:PhysicsCollide(data, phys)

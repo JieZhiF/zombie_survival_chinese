@@ -4,10 +4,12 @@ DEFINE_BASECLASS("weapon_zs_base")
 SWEP.PrintName = ""..translate.Get("weapon_zs_tosser")
 SWEP.Description = ""..translate.Get("weapon_zs_tosser_description")
 
-SWEP.Slot = 2
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotSMGs")
+	SWEP.SlotGroup = WEPSELECT_SMG
 	SWEP.HUD3DBone = "ValveBiped.base"
 	SWEP.HUD3DPos = Vector(1.5, 0.25, -2)
 	SWEP.HUD3DScale = 0.02

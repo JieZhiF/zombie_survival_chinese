@@ -4,10 +4,12 @@ DEFINE_BASECLASS("weapon_zs_base")
 SWEP.PrintName = ""..translate.Get("weapon_zs_renegade")
 SWEP.Description = ""..translate.Get("weapon_zs_renegade_description")
 
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 63.70351758794
 

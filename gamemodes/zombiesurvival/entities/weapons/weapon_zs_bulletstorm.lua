@@ -3,10 +3,12 @@ DEFINE_BASECLASS("weapon_zs_base")
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_bulletstorm")
 SWEP.Description = ""..translate.Get("weapon_zs_bulletstorm_description")
-SWEP.Slot = 2
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotSMGs")
+	SWEP.SlotGroup = WEPSELECT_SMG
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 50
 

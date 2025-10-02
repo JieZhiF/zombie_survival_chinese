@@ -1,7 +1,6 @@
 SWEP.PrintName = ""..translate.Get("weapon_zs_artemis")
 SWEP.Description = ""..translate.Get("weapon_zs_artemis_description")
 
-SWEP.Slot = 3
 SWEP.SlotPos = 0
 
 SWEP.Base = "weapon_zs_baseproj"

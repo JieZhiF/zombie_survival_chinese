@@ -1,10 +1,13 @@
 AddCSLuaFile()
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_waraxe")
-SWEP.Slot = 1
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
+SWEP.WeaponType = "pistol"
+	SWEP.SlotGroup = WEPSELECT_PISTOL
 	SWEP.ViewModelFOV = 50
 	SWEP.ViewModelFlip = false
 

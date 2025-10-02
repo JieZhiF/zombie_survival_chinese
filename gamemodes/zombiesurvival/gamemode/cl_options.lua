@@ -368,4 +368,475 @@ CreateClientConVar("zsw_enable_rts_hud", 1, true, false, "Enable or disable the 
 CreateClientConVar("zsw_crosshair_mode", 1, true, false, "Select the crosshair mode: 0 for Classic, 1 for Remastered")
 
 -- Define the client CVAR for font choice
+
+-- Melee Cooldown Primary Size
+CreateClientConVar("zsw_cooldown_primary_size", "2.0", true, false, "Cooldown Primary Attack (RMB) Circle Size")
+
+-- Melee Cooldown Secondary Size
+CreateClientConVar("zsw_cooldown_secondary_size", "0.8", true, false, "Cooldown Secondary Attack (LMB) Circle Size")
+
+-- Melee Cooldown Tertiary Size
+CreateClientConVar("zsw_cooldown_tertiary_size", "1.0", true, false, "Cooldown tertiary/block (RELOAD) Circle Size")
+
+
 CreateClientConVar("zsw_font_choice", "1", true, false, "Choose the font to use: 1 = ZSM_Coolvetica (default), 2 = Remington Noiseless, 3 = Typenoksidi, 4 = Ghoulish Fright AOE")
+
+
+CrosshairCoolPrimaryCircleSize = math.Clamp(GetConVar("zsw_cooldown_primary_size"):GetFloat(), 1, 16)
+cvars.AddChangeCallback("zsw_cooldown_primary_size", function(cvar, old, new)
+    CrosshairCoolPrimaryCircleSize = math.Clamp(tonumber(new), 1, 16)
+end, "CrosshairPrimaryCooldown_cv")
+
+CrosshairCoolSecondaryCircleSize = math.Clamp(GetConVar("zsw_cooldown_secondary_size"):GetFloat(), 1, 16)
+cvars.AddChangeCallback("zsw_cooldown_secondary_size", function(cvar, old, new)
+    CrosshairCoolSecondaryCircleSize = math.Clamp(tonumber(new), 1, 16)
+end, "CrosshairSecondaryCooldown_cv")
+
+CrosshairCoolTertiaryCircleSize = math.Clamp(GetConVar("zsw_cooldown_tertiary_size"):GetFloat(), 1, 16)
+cvars.AddChangeCallback("zsw_cooldown_tertiary_size", function(cvar, old, new)
+    CrosshairCoolTertiaryCircleSize = math.Clamp(tonumber(new), 1, 16)
+end, "CrosshairTertiaryCooldown_cv")
+
+-- =================================================================
+--      客户端 ConVar 与武器组（SlotGroup）中文类别对应表
+-- =================================================================
+-- 本注释用于清晰地展示每个控制台变量（ConVar）所控制的武器类别。
+-- 格式: ConVar -> 中文武器类别
+--
+-- ConVar: "zs_wepslot_unarmed"        -> 武器类别: 赤手空拳
+-- ConVar: "zs_wepslot_melee"          -> 武器类别: 近战武器
+-- ConVar: "zs_wepslot_repairtools"    -> 武器类别: 维修工具
+--
+-- ConVar: "zs_wepslot_pistols"        -> 武器类别: 手枪
+--
+-- ConVar: "zs_wepslot_smgs"           -> 武器类别: 冲锋枪
+-- ConVar: "zs_wepslot_assaultrifles"  -> 武器类别: 突击步枪
+--
+-- ConVar: "zs_wepslot_rifles"         -> 武器类别: 步枪
+-- ConVar: "zs_wepslot_shotguns"       -> 武器类别: 霰弹枪
+-- ConVar: "zs_wepslot_bolt"           -> 武器类别: 栓动步枪/弩
+-- ConVar: "zs_wepslot_medicaltools"   -> 武器类别: 医疗工具
+--
+-- ConVar: "zs_wepslot_medkits"        -> 武器类别: 医疗包
+-- ConVar: "zs_wepslot_trinkets"       -> 武器类别: 饰品/小配件
+-- ConVar: "zs_wepslot_flasks"         -> 武器类别: 药水瓶/烧瓶
+-- ConVar: "zs_wepslot_deployables"    -> 武器类别: 可部署物品
+-- ConVar: "zs_wepslot_misctools"      -> 武器类别: 杂项工具
+-- ConVar: "zs_wepslot_conoffensive"   -> 武器类别: 消耗品-进攻型
+-- ConVar: "zs_wepslot_explosives"     -> 武器类别: 爆炸物
+--
+-- ConVar: "zs_wepslot_food"           -> 武器类别: 食物
+-- ConVar: "zs_wepslot_potions"        -> 武器类别: 药剂
+-- ConVar: "zs_wepslot_consupportive"  -> 武器类别: 消耗品-支援型
+-- 描述：这些变量是用的是sunrust同样的名字，因此可以通用（为了方便）
+-- =================================================================
+
+-- 1. 为突击步枪创建 ConVar 并设置初始插槽值。
+--    该值被限制在 0 (隐藏) 到 6 (最大插槽) 之间。
+GM.WeaponSelectSlotAssaultRifles = math.Clamp(CreateClientConVar("zs_wepslot_assaultrifles", 3, true, false):GetInt(), 0, 6)
+
+-- 2. 添加一个回调函数，当 ConVar 的值改变时运行。
+cvars.AddChangeCallback("zs_wepslot_assaultrifles", function(convar_name, old_value, new_value)
+    -- 使用新的、被限制过的值更新全局变量。
+    GAMEMODE.WeaponSelectSlotAssaultRifles = math.Clamp(tonumber(new_value) or 3, 0, 6)
+
+    local new_slot = GAMEMODE.WeaponSelectSlotAssaultRifles
+
+    -- 遍历所有已注册的武器，找到属于这个组的武器。
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_ASSAULT_RIFLE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                -- 如果新插槽为 0，则隐藏武器 (-2)，否则设置为新插槽减 1 (因为插槽索引从0开始)。
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Rifles Slot
+-- =================================================================
+
+GM.WeaponSelectSlotRifles = math.Clamp(CreateClientConVar("zs_wepslot_rifles", 4, true, false):GetInt(), 0, 6)
+
+-- 为步枪 ConVar 添加相应的回调。
+cvars.AddChangeCallback("zs_wepslot_rifles", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotRifles = math.Clamp(tonumber(new_value) or 4, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotRifles
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        -- 注意: 请确保你已经定义了 'WEPSELECT_RIFLE' 这个常量。
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_RIFLE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Shotguns Slot
+-- =================================================================
+
+GM.WeaponSelectSlotShotguns = math.Clamp(CreateClientConVar("zs_wepslot_shotguns", 4, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_shotguns", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotShotguns = math.Clamp(tonumber(new_value) or 4, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotShotguns
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_SHOTGUN then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- SMGs Slot
+-- =================================================================
+
+GM.WeaponSelectSlotSMGs = math.Clamp(CreateClientConVar("zs_wepslot_smgs", 3, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_smgs", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotSMGs = math.Clamp(tonumber(new_value) or 3, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotSMGs
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_SMG then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Pistols Slot
+-- =================================================================
+
+GM.WeaponSelectSlotPistols = math.Clamp(CreateClientConVar("zs_wepslot_pistols", 2, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_pistols", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotPistols = math.Clamp(tonumber(new_value) or 2, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotPistols
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_PISTOL then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Unarmed Slot
+-- =================================================================
+
+GM.WeaponSelectSlotUnarmed = math.Clamp(CreateClientConVar("zs_wepslot_unarmed", 1, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_unarmed", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotUnarmed = math.Clamp(tonumber(new_value) or 1, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotUnarmed
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_UNARMED then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Melee Slot
+-- =================================================================
+
+GM.WeaponSelectSlotMelee = math.Clamp(CreateClientConVar("zs_wepslot_melee", 1, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_melee", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotMelee = math.Clamp(tonumber(new_value) or 1, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotMelee
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MELEE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Medkits Slot
+-- =================================================================
+
+GM.WeaponSelectSlotMedkits = math.Clamp(CreateClientConVar("zs_wepslot_medkits", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_medkits", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotMedkits = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotMedkits
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MEDKIT then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Trinkets Slot
+-- =================================================================
+
+GM.WeaponSelectSlotTrinkets = math.Clamp(CreateClientConVar("zs_wepslot_trinkets", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_trinkets", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotTrinkets = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotTrinkets
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_TRINKET then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+
+-- ... (为列表中的其余所有武器类别重复此模式) ...
+
+
+-- 例如，为 "Food" 添加:
+-- =================================================================
+-- Food Slot
+-- =================================================================
+
+GM.WeaponSelectSlotFood = math.Clamp(CreateClientConVar("zs_wepslot_food", 6, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_food", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotFood = math.Clamp(tonumber(new_value) or 6, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotFood
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_FOOD then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Flasks Slot
+-- =================================================================
+
+GM.WeaponSelectSlotFlasks = math.Clamp(CreateClientConVar("zs_wepslot_flasks", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_flasks", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotFlasks = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotFlasks
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_FLASK then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Deployables Slot
+-- =================================================================
+
+GM.WeaponSelectSlotDeployables = math.Clamp(CreateClientConVar("zs_wepslot_deployables", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_deployables", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotDeployables = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotDeployables
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_DEPLOYABLE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Misc Tools Slot
+-- =================================================================
+
+GM.WeaponSelectSlotMiscTools = math.Clamp(CreateClientConVar("zs_wepslot_misctools", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_misctools", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotMiscTools = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotMiscTools
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MISCTOOL then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Repair Tools Slot
+-- =================================================================
+
+GM.WeaponSelectSlotRepairTools = math.Clamp(CreateClientConVar("zs_wepslot_repairtools", 1, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_repairtools", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotRepairTools = math.Clamp(tonumber(new_value) or 1, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotRepairTools
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_REPAIRTOOL then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Medical Tools Slot
+-- =================================================================
+
+GM.WeaponSelectSlotMedicalTools = math.Clamp(CreateClientConVar("zs_wepslot_medicaltools", 4, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_medicaltools", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotMedicalTools = math.Clamp(tonumber(new_value) or 4, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotMedicalTools
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MEDICALTOOL then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Consumable Supportive Slot
+-- =================================================================
+
+GM.WeaponSelectSlotConSupportive = math.Clamp(CreateClientConVar("zs_wepslot_consupportive", 6, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_consupportive", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotConSupportive = math.Clamp(tonumber(new_value) or 6, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotConSupportive
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_CONSUMABLE_SUPPORTIVE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Consumable Offensive Slot
+-- =================================================================
+
+GM.WeaponSelectSlotConOffensive = math.Clamp(CreateClientConVar("zs_wepslot_conoffensive", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_conoffensive", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotConOffensive = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotConOffensive
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_CONSUMABLE_OFFENSIVE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Explosives Slot
+-- =================================================================
+
+GM.WeaponSelectSlotExplosives = math.Clamp(CreateClientConVar("zs_wepslot_explosives", 5, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_explosives", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotExplosives = math.Clamp(tonumber(new_value) or 5, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotExplosives
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_EXPLOSIVE then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Bolt-Action / Crossbow Slot
+-- =================================================================
+
+GM.WeaponSelectSlotBolt = math.Clamp(CreateClientConVar("zs_wepslot_bolt", 4, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_bolt", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotBolt = math.Clamp(tonumber(new_value) or 4, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotBolt
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_BOLT then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)
+
+-- =================================================================
+-- Potions Slot
+-- =================================================================
+
+GM.WeaponSelectSlotPotions = math.Clamp(CreateClientConVar("zs_wepslot_potions", 6, true, false):GetInt(), 0, 6)
+
+cvars.AddChangeCallback("zs_wepslot_potions", function(convar_name, old_value, new_value)
+    GAMEMODE.WeaponSelectSlotPotions = math.Clamp(tonumber(new_value) or 6, 0, 6)
+    local new_slot = GAMEMODE.WeaponSelectSlotPotions
+
+    for _, wep_data in pairs(weapons.GetList()) do
+        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_POTION then
+            local stored_wep = weapons.GetStored(wep_data.ClassName)
+            if stored_wep then
+                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+            end
+        end
+    end
+end)

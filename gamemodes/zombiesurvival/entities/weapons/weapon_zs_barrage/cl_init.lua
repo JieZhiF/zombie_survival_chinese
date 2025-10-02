@@ -10,7 +10,8 @@ SWEP.ShowWorldModel = false
 SWEP.ViewModelFOV = 50
 SWEP.ViewModelFlip = false
 
-SWEP.Slot = 4
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
+SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
 SWEP.SlotPos = 0
 
 SWEP.VElements = {

@@ -1,6 +1,7 @@
 INC_CLIENT()
 
-SWEP.Slot = 3
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+SWEP.SlotGroup = WEPSELECT_SHOTGUN
 SWEP.SlotPos = 0
 
 SWEP.ViewModelFlip = false

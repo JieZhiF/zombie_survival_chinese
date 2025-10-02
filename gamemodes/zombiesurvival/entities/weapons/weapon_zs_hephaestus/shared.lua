@@ -19,6 +19,7 @@ SWEP.Primary.Delay = 0.2
 SWEP.Primary.ClipSize = 30
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 30
 
 SWEP.ConeMax = 3

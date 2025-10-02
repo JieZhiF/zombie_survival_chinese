@@ -1,7 +1,7 @@
 INC_CLIENT()
 
 SWEP.ViewModelFlip = false
-
+SWEP.WeaponType = "projectile"
 function SWEP:ShootBullets(damage, numshots, cone)
 	local owner = self:GetOwner()
 	self:SendWeaponAnimation()

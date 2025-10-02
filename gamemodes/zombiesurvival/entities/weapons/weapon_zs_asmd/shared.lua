@@ -2,7 +2,7 @@ DEFINE_BASECLASS("weapon_zs_base")
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_asmd")
 
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 SWEP.Base = "weapon_zs_base"
@@ -20,6 +20,7 @@ SWEP.Primary.Delay = 0.45
 SWEP.Primary.ClipSize = 28
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 25
 
 SWEP.ConeMax = 0.65

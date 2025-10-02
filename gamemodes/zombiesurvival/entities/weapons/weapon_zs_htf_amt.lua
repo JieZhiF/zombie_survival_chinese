@@ -3,10 +3,13 @@ DEFINE_BASECLASS("weapon_zs_base")
 
 SWEP.PrintName = "Aldarhtf"
 SWEP.Description = "Magnum pistol from famous action movie"
-SWEP.Slot = 1
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
+SWEP.WeaponType = "pistol"
+	SWEP.SlotGroup = WEPSELECT_PISTOL
 	SWEP.ViewModelFOV = 60
 	SWEP.ViewModelFlip = false
 

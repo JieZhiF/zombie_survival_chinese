@@ -96,11 +96,14 @@ local quadVerts = {{}, {}, {}, {}}
 -- 绘制任意四边形（使用 DrawPoly）
 -- x1~y4 -> 四个顶点坐标
 ----------------------------------------------------
-function surface.DrawQuad(x1, y1, x2, y2, x3, y3, x4, y4)
+function surface.DrawQuad(x1, y1, x2, y2, x3, y3, x4, y4,color)
     quadVerts[1].x, quadVerts[1].y = x1, y1
     quadVerts[2].x, quadVerts[2].y = x2, y2
     quadVerts[3].x, quadVerts[3].y = x3, y3
     quadVerts[4].x, quadVerts[4].y = x4, y4
+    --surface.DrawPoly(quadVerts)
+    
+    surface.SetDrawColor(color.r, color.g, color.b, color.a)
     surface.DrawPoly(quadVerts)
 end
 
@@ -117,7 +120,7 @@ local drawQuad = surface.DrawQuad
 -- endAngle          -> 结束角度（度）
 -- segments          -> 圆弧分段数量，越多越平滑
 ----------------------------------------------------
-function surface.DrawArc(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle, segments)
+function surface.DrawArc(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle, segments,color)
     startAngle, endAngle = startAngle * degToRad, endAngle * degToRad
     local angleStep = (endAngle - startAngle) / segments
     local prevX, prevY = math.cos(startAngle), math.sin(startAngle)
@@ -132,14 +135,22 @@ function surface.DrawArc(centerX, centerY, innerRadius, outerRadius, startAngle,
             centerX + currX * innerRadius, centerY + currY * innerRadius,
             centerX + currX * outerRadius, centerY + currY * outerRadius,
             centerX + prevX * outerRadius, centerY + prevY * outerRadius,
-            centerX + prevX * innerRadius, centerY + prevY * innerRadius
+            centerX + prevX * innerRadius, centerY + prevY * innerRadius,
+            color
         )
     end
 end
 
 -- 用于 HollowCircle 背景
-local alphaBackTexture = surface.GetTextureID("vgui/alpha-back")
+--local alphaBackTexture = surface.GetTextureID("vgui/alpha-back")
+-- Required dummy texture to render arcs with alpha correctly
+local alphaBackTexture = surface.GetTextureID("vgui/white")
 
+-- Convenience wrapper for drawing arc segments
+function DrawArcSegment(centerX, centerY, innerR, outerR, startAng, endAng, color, segments)
+    surface.SetTexture(alphaBackTexture)
+    surface.DrawArc(centerX, centerY, innerR, outerR, startAng, endAng, segments, color)
+end
 ----------------------------------------------------
 -- 画一个空心圆弧（Hollow Circle）
 -- centerX, centerY -> 圆心坐标
@@ -149,12 +160,10 @@ local alphaBackTexture = surface.GetTextureID("vgui/alpha-back")
 -- endAngle         -> 结束角度（度）
 -- color            -> 颜色
 ----------------------------------------------------
-function draw.HollowCircle(centerX, centerY, radius, thickness, startAngle, endAngle, color)
+function draw.HollowCircle(centerX, centerY, radius, thickness, startAngle, endAngle, color, linesTable)
     surface.SetTexture(alphaBackTexture)
-    surface.SetDrawColor(color)
-    surface.DrawArc(centerX, centerY, radius, radius + thickness, startAngle, endAngle, 36)
+    surface.DrawArc(centerX, centerY, radius, radius + thickness, startAngle, endAngle, 36, color)
 end
-
 ----------------------------------------------------
 -- 余弦插值函数（平滑动画用）
 -- y1, y2 -> 起点和终点

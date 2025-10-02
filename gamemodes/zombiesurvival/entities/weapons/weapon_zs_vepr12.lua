@@ -3,10 +3,11 @@ AddCSLuaFile()
 SWEP.PrintName = "VEPR12"
 SWEP.Description = "一柱擎天！."
 
-SWEP.Slot = 3
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 

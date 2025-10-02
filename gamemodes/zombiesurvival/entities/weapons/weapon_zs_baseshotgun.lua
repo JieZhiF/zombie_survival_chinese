@@ -1,9 +1,11 @@
 AddCSLuaFile()
 
-SWEP.Slot = 3
 SWEP.SlotPos = 0
 
 if CLIENT then
+
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
 	SWEP.ViewModelFlip = false
 end
 
@@ -16,7 +18,7 @@ SWEP.WorldModel = "models/weapons/w_shotgun.mdl"
 SWEP.UseHands = true
 
 SWEP.ReloadDelay = 0.45
-
+SWEP.WeaponType = "shotgun"
 SWEP.Primary.Sound = Sound("Weapon_M3.Single")
 SWEP.Primary.Damage = 8
 SWEP.Primary.NumShots = 6
@@ -176,6 +178,43 @@ SWEP.Crosshair_OverallScale        = 1.0 -- 全局最终微调
 SWEP.Crosshair_Smoothing           = 15
 SWEP.Crosshair_ConeMultiplier      = 0.0003125
 
+function SWEP:DrawCooldowns()
+	local cooldownIcon = self:GetCooldownIcon()
+    local clip = self:Clip1()
+    local maxClip = self.Primary.ClipSize
+    if not self:IsReloading() or clip > maxClip then return end
+
+    local scale = math.max(ScrH() / 1080, 0.851)
+    local coneGap = self:GetCone() / 2
+    local centerX, centerY = ScrW() * 0.5, ScrH() * 0.5
+
+    local radius = (1 + coneGap) * 10 * scale
+    local thickness = 4 * (1 + coneGap)
+
+    local fillColor = Color(40, 255, 40, 255)
+    local emptyColor = Color(100, 100, 100, 150)
+
+    for i = 1, maxClip do
+        local startAng = 270 + (360 / maxClip) * (i - 1) + coneGap / 2
+        local endAng = 270 + (360 / maxClip) * i - coneGap / 2
+        if endAng <= startAng then endAng = startAng + 1 end
+
+        DrawArcSegment(centerX, centerY, radius, radius + thickness, startAng, endAng, i <= clip and fillColor or emptyColor, maxClip)
+    end
+
+    draw.SimpleTextBlurry(clip .. " / " .. maxClip,"RemingtonNoiseless",centerX - (coneGap + 1.5) * 30 * scale,centerY + 5,fillColor,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+
+    local iw, ih = cooldownIcon:Width(), cooldownIcon:Height()
+    if iw == 0 or ih == 0 then iw, ih = 32, 32 end
+    local pad = math.max(2, thickness * 0.8)
+    local iconMax = (radius - pad) * 2
+    local s = math.min(iconMax / iw, iconMax / ih)
+
+    surface.SetMaterial(cooldownIcon)
+    surface.SetDrawColor(fillColor)
+    surface.DrawTexturedRectRotated(centerX, centerY, iw * s, ih * s, CurTime() * 90)
+end
+
 function SWEP:DrawHUD()
     -- 直接在DrawHUD中获取最新的ConVar值
     if GetConVar("zs_crosshair_cicrle"):GetBool() then
@@ -187,5 +226,7 @@ function SWEP:DrawHUD()
     
     if GAMEMODE:ShouldDraw2DWeaponHUD() then
         self:Draw2DHUD()
+		self:DrawCooldowns()
     end
 end
+

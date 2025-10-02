@@ -1,5 +1,6 @@
 INC_SERVER()
-
+SWEP.VMPos = Vector(0,0,0)
+SWEP.VMAng = Vector(0,0,0)
 local BaseClassMelee = baseclass.Get("weapon_zs_basemelee") -- Don't swap these two around. The order matters...but only in this file. For some reason.
 DEFINE_BASECLASS("weapon_zs_base")
 

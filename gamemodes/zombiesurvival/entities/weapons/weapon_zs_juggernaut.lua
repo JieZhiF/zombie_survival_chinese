@@ -3,10 +3,14 @@ AddCSLuaFile()
 SWEP.PrintName = ""..translate.Get("weapon_zs_juggernaut")
 SWEP.Description = ""..translate.Get("weapon_zs_juggernaut_description")
 
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+SWEP.WeaponType = "rifle"
+	SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
+
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 

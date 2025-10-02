@@ -336,4 +336,15 @@ GM.ValidBeaconMessages = {
 	"message_beacon_25"
 }
 
+WeaponMaterials = {
+    pistol = Material("zombiesurvival/bullet_pistol.png", "smooth"),
+    magnum = Material("zombiesurvival/bullet_magnum.png", "smooth"),
+    shotgun = Material("zombiesurvival/bullet_shell.png", "smooth"),
+    pulse = Material("zombiesurvival/bullet_pulse.png", "smooth"),
+    rifle = Material("zombiesurvival/bullet_rifle.png", "smooth"),
+    medical = Material("zombiesurvival/bullet_medical2.png", "smooth"),
+    explosive = Material("zombiesurvival/bullet_explosive2.png", "smooth"),
+    projectile = Material("zombiesurvival/bullet_bolt.png", "smooth")
+}
+
 GM.LabourTime = 1

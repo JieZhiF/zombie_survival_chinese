@@ -1,25 +1,3 @@
---[[
-    优化说明:
-    1.  数据驱动:
-        - 所有UI选项都被移至 `PANEL:PopulateOptionsData()` 中的 `self.OptionsData` 表。
-        - 若要添加新选项，只需在此表中添加一行数据，无需修改UI创建逻辑。
-        - 这极大地简化了 `UpdateContent` 函数，消除了巨大的 if/elseif 结构。
-
-    2.  代码复用:
-        - 创建了 `AddCheckbox`, `AddSlider`, `AddColorMixer`, `AddComboBox` 等辅助函数。
-        - 这些函数封装了创建和配置VGUI控件的重复代码，使主逻辑更简洁。
-
-    3.  UI/UX 改进:
-        - 使用了更柔和的背景色和圆角矩形 (`draw.RoundedBox`)。
-        - 左侧分类列表有了更清晰的选中和悬停效果 (左侧蓝色指示条)。
-        - 控件之间有统一的间距和边距，布局更整洁。
-        - 将颜色、字体等常量集中定义，方便全局调整。
-
-    4.  结构清晰:
-        - `PANEL:Init` 函数现在只负责调用各个初始化函数，逻辑一目了然。
-        - UI创建被分解为 `CreateCategoryList` 和 `CreateContentPanel` 等部分。
-]]
-
 local PANEL = {}
 
 -- 定义常量以便于统一修改样式
@@ -27,32 +5,32 @@ local COLOR_BG = Color(45, 45, 55, 240)
 local COLOR_BG_INNER = Color(35, 35, 45, 220)
 local COLOR_ACCENT = Color(40, 155, 255)
 local COLOR_TEXT = Color(248, 248, 248, 240)
-local FONT_CATEGORY = "ZS2DFontHarmony" //分类标签的字体
+local FONT_TOP_CATEGORY = "ZS2DFontHarmony" //顶部大类标签的字体
+local FONT_SUB_CATEGORY = "ZS2DFontHarmony" //左侧次一级分类标签的字体
 local FONT_LABEL = "ZS2DFontHarmonySmall"
 local FONT_LABEL_SMALL = "DermaDefaultSmall"
+local FirstOpen = true --记录首次打开，以此来屏蔽掉首次打开时的声音
 function PANEL:Init()
     -- 1. 基本框架设置
     local scale = BetterScreenScale and BetterScreenScale() or 1
-    self:SetSize(ScrW() * 0.45 * scale, ScrH() * 0.6 * scale)
+    self:SetSize(ScrW() * 0.45 * scale, ScrH() * 0.55 * scale)
     self:Center()
     self:SetTitle("")
     self:MakePopup()
     self:SetDraggable(true)
-    --self:SetAlpha(0)
 
     -- 填充所有选项数据
     self:PopulateOptionsData()
 
     -- 2. 创建UI布局
     self:CreateLayout()
-    --self:AlphaTo(255,1)
-    -- 3. 默认加载第一个分类
-    local initialCategory = self.CategoryData[1]
-    if initialCategory then
-        self:UpdateContent(initialCategory.name)
-        -- 让第一个按钮被默认选中
-        if IsValid(self.CategoryList) and #self.CategoryList:GetChildren() > 0 then
-            self.CategoryList:GetChildren()[1]:SetSelected(true)
+    if not IsValid(self) or not IsValid(self.TopCategoryBar) then return end
+    -- 查找第一个DButton并模拟点击
+-- 查找第一个DButton并模拟点击，不播放声音
+    for _, child in ipairs(self.TopCategoryBar:GetChildren()) do
+        if IsValid(child) and isfunction(child.DoClick) then
+            child:DoClick(false) -- 传递 false 来静音
+            break -- 找到并点击第一个后就退出循环
         end
     end
 end
@@ -61,26 +39,54 @@ function PANEL:Paint(w, h)
     draw.RoundedBox(8, 0, 0, w, h, COLOR_BG)
 end
 
-
 function PANEL:CreateLayout()
-    self:CreateCategoryList()
-    self.ContentPanel = vgui.Create("DPanel", self)
+    -- 1. 创建顶部主分类栏
+    self:CreateTopCategoryBar()
+
+    -- 2. 创建一个主内容容器，位于顶部栏下方
+    local mainArea = vgui.Create("DPanel", self)
+    mainArea:Dock(FILL)
+    mainArea:DockMargin(0, 8, 0, 0) -- 与顶部分割线留出间距
+    mainArea.Paint = function() end -- 透明背景
+
+    -- 3. 创建左侧的次级分类列表
+    local sub_category_width = self:GetWide() * 0.15
+    self.SubCategoryList = vgui.Create("DScrollPanel", mainArea)
+    self.SubCategoryList:SetWide(sub_category_width)
+    self.SubCategoryList:Dock(LEFT)
+    self.SubCategoryList:DockMargin(8, 0, 4, 8)
+
+    -- 4. 创建右侧的内容面板
+    self.ContentPanel = vgui.Create("DPanel", mainArea)
     self.ContentPanel:Dock(FILL)
+    self.ContentPanel:DockMargin(4, 0, 8, 8)
     self.ContentPanel.Paint = function(pnl, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, COLOR_BG_INNER, false, true, false, true)
+        draw.RoundedBox(8, 0, 0, w, h, COLOR_BG_INNER)
     end
 end
 
 function PANEL:PopulateOptionsData()
-    self.CategoryData = {
-        {name = "HUD", text = translate.Get("Category_HUD")},
-        {name = "Environment", text = translate.Get("Category_Environment")},
-        {name = "Crosshair", text = translate.Get("Category_Crosshair")},
-        {name = "Color", text = translate.Get("Category_Color")},
-        {name = "Effect", text = translate.Get("Category_Effect")},
-        {name = "Other", text = translate.Get("Category_Other")},
+    -- 大类和次一级的结构定义
+    self.SettingsData = {
+        { name = "Interface", text = "界面和HUD", subCategories = {
+            {name = "HUD", text = translate.Get("Category_HUD")},
+            {name = "Crosshair", text = translate.Get("Category_Crosshair")},
+            {name = "Color", text = translate.Get("Category_Color")},
+        }},
+        { name = "Gameplay", text = "游戏性", subCategories = {
+            {name = "Other", text = translate.Get("Category_Other")},
+        }},
+        { name = "Visuals", text = "环境与效果", subCategories = {
+            {name = "Environment", text = translate.Get("Category_Environment")},
+            {name = "Effect", text = translate.Get("Category_Effect")},
+        }},
+        { name = "Weapon", text = "武器设置", subCategories = {
+            {name = "WeaponSlot", text = translate.Get("Category_WeaponSlot")},
+        }},
+
     }
 
+    -- 具体的设置项
     self.OptionsData = {
         HUD = {
             { type = "checkbox", label = "Option_AlwaysShowNailHealth", convar = "zs_alwaysshownails" },
@@ -119,12 +125,12 @@ function PANEL:PopulateOptionsData()
             { type = "checkbox", label = "Option_EnableAmbientMusic", convar = "zs_beats" },
             { type = "checkbox", label = "Option_EnableLastManMusic", convar = "zs_playmusic" },
             { type = "slider", label = "Option_MusicVolume", convar = "zs_beatsvolume", min = 0, max = 100, decimals = 0 },
-            -- Human beat set
             {
                 type = "combobox",
                 label = "Option_HumanAmbientMusic",
                 choices = (function()
                     local t = {}
+                    if not GAMEMODE or not GAMEMODE.Beats then return t end
                     for setname in pairs(GAMEMODE.Beats) do
                         if setname ~= GAMEMODE.BeatSetHumanDefault then
                             table.insert(t, { text = setname, value = setname })
@@ -138,17 +144,17 @@ function PANEL:PopulateOptionsData()
                     RunConsoleCommand("zs_beatset_human", value)
                 end,
                 getdefault = function()
+                    if not GAMEMODE then return "default" end
                     local current = GAMEMODE.BeatSetHuman
                     return current == GAMEMODE.BeatSetHumanDefault and "default" or current
                 end
             },
-
-            -- Zombie beat set
             {
                 type = "combobox",
                 label = "Option_ZombieAmbientMusic",
                 choices = (function()
                     local t = {}
+                    if not GAMEMODE or not GAMEMODE.Beats then return t end
                     for setname in pairs(GAMEMODE.Beats) do
                         if setname ~= GAMEMODE.BeatSetZombieDefault then
                             table.insert(t, { text = setname, value = setname })
@@ -162,27 +168,23 @@ function PANEL:PopulateOptionsData()
                     RunConsoleCommand("zs_beatset_zombie", value)
                 end,
                 getdefault = function()
+                    if not GAMEMODE then return "default" end
                     local current = GAMEMODE.BeatSetZombie
                     return current == GAMEMODE.BeatSetZombieDefault and "default" or current
                 end
             },
-
         },
         Crosshair = {
             { type = "checkbox", label = "Option_DrawCrosshairOnAim", convar = "zs_ironsightscrosshair" },
             { type = "checkbox", label = "Option_DisableCrosshairRotate", convar = "zs_nocrosshairrotate" },
             { type = "checkbox", label = "Option_Usecirclecrosshair", convar = "zs_crosshair_cicrle" },
-
             { type = "checkbox", label = "Option_zsw_Cooldown_Enable", convar = "zsw_enable_cooldown" },
             { type = "checkbox", label = "Option_zsw_enable_hud", convar = "zsw_enable_hud" },
             { type = "checkbox", label = "Option_zsw_rts_hud", convar = "zsw_enable_rts_hud" },
             { type = "checkbox", label = "Option_zsw_crosshair_mode", convar = "zsw_crosshair_mode" },
-
             { type = "slider", label = "Option_CrosshairLineCount", convar = "zs_crosshairlines", min = 2, max = 8, decimals = 0 },
             { type = "slider", label = "Option_CrosshairAngleOffset", convar = "zs_crosshairoffset", min = 0, max = 90, decimals = 0 },
             { type = "slider", label = "Option_CrosshairThickness", convar = "zs_crosshairthickness", min = 0.5, max = 2, decimals = 1 },
-            { type = "color", label = "Option_CrosshairColor", r = "zs_crosshair_colr", g = "zs_crosshair_colg", b = "zs_crosshair_colb", a = "zs_crosshair_cola" },
-            { type = "color", label = "Option_CrosshairAuxiliaryColor", r = "zs_crosshair_colr2", g = "zs_crosshair_colg2", b = "zs_crosshair_colb2", a = "zs_crosshair_cola2" },
         },
         Color = {
             { type = "color", label = "Option_CrosshairColor", r = "zs_crosshair_colr", g = "zs_crosshair_colg", b = "zs_crosshair_colb", a = "zs_crosshair_cola" },
@@ -196,7 +198,6 @@ function PANEL:PopulateOptionsData()
             { type = "checkbox", label = "Option_FixCharacterEyes", convar = "r_eyemove" },
             { type = "checkbox", label = "Option_ShowOwnShadow", convar = "cl_drawownshadow" },
             { type = "checkbox", label = "Option_ReduceEffects", convar = "mat_reduceparticles" },
-            { type = "checkbox", label = "Option_ShowFog", convar = "fog_override" },
             { type = "checkbox", label = "Option_ShowWaterReflection", convar = "r_WaterDrawReflection" },
             { type = "checkbox", label = "Option_ShowWaterRefraction", convar = "r_WaterDrawRefraction" },
             { type = "checkbox", label = "Option_ShowZombieBlood", convar = "violence_ablood" },
@@ -214,7 +215,6 @@ function PANEL:PopulateOptionsData()
             { type = "checkbox", label = "Option_DisableAmmoFromBoxes", convar = "zs_nousetodeposit" },
             { type = "checkbox", label = "Option_DisablePropPickup", convar = "zs_nopickupprops" },
             { type = "checkbox", label = "Option_DisableIronSights", convar = "zs_noironsights" },
-
             { type = "checkbox", label = "Option_DisableScopes", convar = "zs_disablescopes" },
             { type = "checkbox", label = "Option_PreventBossPick", convar = "zs_nobosspick" },
             { type = "checkbox", label = "Option_OneClickUnluck", convar = "zs_one_click_unlock" },
@@ -228,85 +228,172 @@ function PANEL:PopulateOptionsData()
                 { text = translate.Get("Option_PropRotationAngle_30"), value = 30 },
                 { text = translate.Get("Option_PropRotationAngle_45"), value = 45 },
             }, onselect = function(index, value) RunConsoleCommand("zs_proprotationsnap", value) end, getdefault = function() return GetConVarNumber("zs_proprotationsnap") end },
+        },
+        WeaponSlot = {
+            {type = "slider", label = "Option_wepslot_unarmed", convar = "zs_wepslot_unarmed", min = 0, max = 6, decimals = 0},
+            { type = "slider", label = "Option_wepslot_melee", convar = "zs_wepslot_melee", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_repairtools", convar = "zs_wepslot_repairtools", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_pistols", convar = "zs_wepslot_pistols", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_smgs", convar = "zs_wepslot_smgs", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_assaultrifles", convar = "zs_wepslot_assaultrifles", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_rifles", convar = "zs_wepslot_rifles", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_shotguns", convar = "zs_wepslot_shotguns", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_bolt", convar = "zs_wepslot_bolt", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_medicaltools", convar = "zs_wepslot_medicaltools", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_medkits", convar = "zs_wepslot_medkits", min = 0, max = 6, decimals = 0 },
+            --{ type = "slider", label = "Option_wepslot_trinkets", convar = "zs_wepslot_trinkets",min = 0, max = 6, decimals = 0 },
+            --{ type = "slider", label = "Option_wepslot_flasks", convar = "zs_wepslot_flasks",min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_deployables", convar = "zs_wepslot_deployables", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_misctools", convar = "zs_wepslot_misctools", min = 0, max = 6, decimals = 0 },
+          --  { type = "slider", label = "Option_wepslot_conoffensive", convar = "zs_wepslot_conoffensive" },
+            { type = "slider", label = "Option_wepslot_explosives", convar = "zs_wepslot_explosives", min = 0, max = 6, decimals = 0 },
+            { type = "slider", label = "Option_wepslot_food", convar = "zs_wepslot_food", min = 0, max = 6, decimals = 0 },
+            --{ type = "slider", label = "Option_wepslot_potions", convar = "zs_wepslot_potions", min = 0, max = 6, decimals = 0 },
+            --{ type = "slider", label = "Option_wepslot_consupportive", convar = "zs_wepslot_consupportive",min = 0, max = 6, decimals = 0 },
         }
     }
 end
- local math_sin = math.sin
-function PANEL:CreateCategoryList()
-    local w, h = self:GetSize()
-    local category_width = math.min(200, w * 0.25)
 
-    self.CategoryList = vgui.Create("DScrollPanel", self)
-    self.CategoryList:SetWide(category_width)
-    self.CategoryList:Dock(LEFT)
-    self.CategoryList:DockMargin(8, 8, 4, 8)
+function PANEL:CreateTopCategoryBar()
+    self.TopCategoryBar = vgui.Create("DPanel", self)
+    self.TopCategoryBar:Dock(TOP)
+    self.TopCategoryBar:SetTall(50)
+    self.TopCategoryBar:DockMargin(8, 8, 8, 0)
+
+    self.TopCategoryBar.PerformLayout = function(pnl, w, h)
+        local buttons = {}
+        for _, child in ipairs(pnl:GetChildren()) do
+           -- if IsValid(child) and child:GetClass() == "DButton" then table.insert(buttons, child) end
+           table.insert(buttons, child) 
+        end
+        if #buttons == 0 then return end
+
+        local buttonMargin = 4
+        local totalButtonWidth = 0
+        for _, btn in ipairs(buttons) do
+            totalButtonWidth = totalButtonWidth + btn:GetWide()
+        end
+        totalButtonWidth = totalButtonWidth + buttonMargin * (#buttons - 1)
+
+        local currentX = (w - totalButtonWidth) / 2
+        local buttonY = (h - buttons[1]:GetTall() - 2) / 2
+
+        for _, btn in ipairs(buttons) do
+            btn:SetPos(currentX, buttonY)
+            currentX = currentX + btn:GetWide() + buttonMargin
+        end
+    end
     
-    -- *** FIX 1: 保存主面板的引用 ***
+    self.TopCategoryBar.Paint = function(pnl, w, h)
+        surface.SetDrawColor(COLOR_BG_INNER)
+        surface.DrawRect(0, h - 2, w, 2)
+    end
+
     local rootPanel = self
 
-    for i, cat in ipairs(self.CategoryData) do
-        local btn = vgui.Create("DButton", self.CategoryList)
+    for _, catData in ipairs(self.SettingsData) do
+        local btn = vgui.Create("DButton", self.TopCategoryBar)
+        btn:SetText(catData.text)
+        btn:SetTextColor(COLOR_TEXT)
+        btn:SetFont(FONT_TOP_CATEGORY)
+        btn:SetContentAlignment(5)
+        btn:SetSize(140, 35)
+        btn.subCategories = catData.subCategories
+        btn.isSelected = false
+
+        function btn:SetSelected(b) self.isSelected = b end
+
+        function btn:Paint(w, h)
+            local bgColor = Color(0,0,0,0)
+            if self.isSelected then
+                bgColor = COLOR_ACCENT
+            elseif self:IsHovered() then
+                bgColor = ColorAlpha(COLOR_ACCENT, 100)
+            end
+            draw.RoundedBox(4, 0, 0, w, h, bgColor)
+        end
+
+        function btn:DoClick(play_sound)
+            for _, child in ipairs(self:GetParent():GetChildren()) do
+                if IsValid(child) and child.SetSelected then child:SetSelected(false) end
+            end
+            self:SetSelected(true)
+            rootPanel:UpdateSubCategoryList(self.subCategories)
+            -- 自动点击第一个子分类，并且明确不播放声音
+            timer.Simple(0, function()
+                if not IsValid(rootPanel) then return end
+                local subCategoryList = rootPanel.SubCategoryList
+                -- 依然使用修复后的代码来获取正确的按钮
+                if IsValid(subCategoryList) and IsValid(subCategoryList:GetCanvas()) then
+                    local children = subCategoryList:GetCanvas():GetChildren()
+                    if #children > 0 then
+                        local firstBtn = children[1]
+                        if IsValid(firstBtn) and isfunction(firstBtn.DoClick) then
+                            firstBtn:DoClick(false) -- 传递 false 来静音
+                        end
+                    end
+                end
+            end)
+            -- 只有在 play_sound 不为 false 时才播放声音 (玩家手动点击时 play_sound 为 nil)
+            if play_sound ~= false then
+                surface.PlaySound("ui/buttonclick.wav")
+            end
+        end
+    end
+end
+
+function PANEL:UpdateSubCategoryList(subCategories)
+    if not IsValid(self.SubCategoryList) then return end
+    self.SubCategoryList:Clear()
+
+    local rootPanel = self
+
+    for _, cat in ipairs(subCategories) do
+        local btn = vgui.Create("DButton", self.SubCategoryList)
         btn:SetText(cat.text)
         btn:SetTextColor(COLOR_TEXT)
-        btn:SetFont(FONT_CATEGORY)
+        btn:SetFont(FONT_SUB_CATEGORY)
         btn:SetContentAlignment(5)
         btn:Dock(TOP)
-        btn:SetTall(75)
+        btn:SetTall(50)
         btn:DockMargin(0, 0, 0, 4)
         btn.categoryName = cat.name
         btn.isSelected = false
-
-        -- 新增：动画属性 --
-        btn.animStartTime = 0  -- 动画开始的时间
-        btn.animDuration = 0.2 -- 动画持续时间（秒）
+        btn.animStartTime = 0
+        btn.animDuration = 0.2
 
         function btn:SetSelected(b)
-            -- 仅当选择状态实际改变时才执行，避免重复触发
             if self.isSelected ~= b then
                 self.isSelected = b
-
-                -- 如果按钮被选中，记录当前时间以启动动画
-                if b then
-                    self.animStartTime = CurTime()
-                end
+                if b then self.animStartTime = CurTime() end
             end
         end
 
-        -- 重写：Paint 函数以实现动画效果 --
         function btn:Paint(w, h)
-            local bgColor = COLOR_BG -- 默认背景颜色
-            local hovercolor = COLOR_ACCENT
+            local bgColor = COLOR_BG
             if self.isSelected then
-                -- 如果按钮被选中，则执行渐变动画
-                -- 1. 计算动画进度（一个从 0.0 到 1.0 的值）
                 local progress = math.Clamp((CurTime() - self.animStartTime) / self.animDuration, 0, 1)
-
-                -- 2. 使用 Lerp 函数根据进度计算当前的透明度
-                --    这里我们让透明度从 40 渐变到 255，实现从浅到深的效果
                 local animatedAlpha = Lerp(progress, 40, 240)
-                
-                -- 3. 将带有动画透明度的颜色作为背景色
                 bgColor = ColorAlpha(COLOR_ACCENT, animatedAlpha)
             elseif self:IsHovered() then
-                draw.RoundedBox(4, 0, 0, w, h, hovercolor)
+                 draw.RoundedBox(4, 0, 0, w, h, ColorAlpha(COLOR_ACCENT, 100))
             end
-            -- 绘制最终的背景
             draw.RoundedBox(4, 0, 0, w, h, bgColor)
-            
         end
 
-        function btn:DoClick()
+        function btn:DoClick(play_sound)
             for _, child in ipairs(self:GetParent():GetChildren()) do
                 if child.SetSelected and child != self then
                     child:SetSelected(false)
                 end
             end
             self:SetSelected(true)
-            
-            -- *** FIX 1: 使用保存的引用来调用 UpdateContent ***
             rootPanel:UpdateContent(self.categoryName)
-            
-            surface.PlaySound("ui/buttonclick.wav")
+
+            -- 只有在 play_sound 不为 false 时才播放声音
+            if play_sound ~= false then
+                surface.PlaySound("ui/buttonclick.wav")
+            end
         end
     end
 end
@@ -336,81 +423,90 @@ function PANEL:UpdateContent(category)
         end
     end
 end
-
 ---------------------------------------------------------------------------
--- 辅助函数 (用于创建UI控件，避免代码重复)
+-- 辅助函数 (创建UI控件) - 新的简约高级感样式
 ---------------------------------------------------------------------------
 function PANEL:AddCheckbox(parent, data)
-    -- 1. 创建容器 DPanel, 它将作为我们布局的上下文
     local container = vgui.Create("DPanel", parent)
-    container:SetTall(30) -- 设置整行的高度
-    container:SetPaintBackground(false) -- 关闭容器自身的背景绘制
+    container:SetTall(30)
+    container:SetPaintBackground(false)
+    parent:AddItem(container)
 
-    -- 2. 创建 DCheckBox (开关)
     local checkbox = vgui.Create("DCheckBox", container)
-    checkbox:SetSize(70, 29) -- 首先定义好开关本身的大小
-    checkbox:Dock(LEFT) -- 【核心】让开关停靠在容器的左侧
-    -- 设置停靠边距: 在开关的右侧留出 8px 的间隙
-    -- 参数顺序: 上, 右, 下, 左
-    checkbox:DockMargin(0, 0,12, 0)
+    checkbox:SetSize(90, 30) -- 调整了尺寸比例
+    checkbox:Dock(LEFT)
+    checkbox:DockMargin(0, 2, 0, 0)
     checkbox:SetConVar(data.convar)
 
-    checkbox.Paint = function (self,w,h)
-        -- 根据轨道高度动态计算旋钮大小和边距
-        local padding = math.max(1, math.floor(h * 0.1)) -- 10% 的内边距
-        local knobSize = h - (padding * 2)
-        -- 计算Y轴位置
-        local trackY = 0 -- 轨道从顶部开始
-        local knobY = padding
-        local bgColor, knobColor, knobX
-        if (checkbox:GetChecked()) then
-            -- "On" 状态
-            bgColor = Color(255, 255, 255, 200)
-            knobColor = Color(50, 50, 50, 255)
-            -- 将旋钮定位到右侧
-            knobX = w - knobSize - padding
-        else
-            -- "Off" 状态
-            bgColor = Color(50, 50, 50, 200)
-            knobColor = Color(255, 255, 255, 255)
-            -- 将旋钮定位到左侧
-            knobX = padding
-        end
-        if (checkbox.Hovered) then
-            bgColor.r = math.min(255, bgColor.r + 20)
-            bgColor.g = math.min(255, bgColor.g + 20)
-            bgColor.b = math.min(255, bgColor.b + 20)
-        end
+    -- 手动同步初始状态，防止首次加载时显示不正确
+    local convar_state = GetConVar(data.convar):GetBool()
+    checkbox:SetValue(convar_state)
+
+    -- 用于动画的变量
+    checkbox.animProgress = checkbox:GetChecked() and 1 or 0
+    checkbox.lastAnimTime = CurTime()
+
+    checkbox.Paint = function(self, w, h)
+        local checked = self:GetChecked()
+
+        -- 平滑动画计算
+        local targetProgress = checked and 1 or 0
+        local deltaTime = CurTime() - self.lastAnimTime
+        self.lastAnimTime = CurTime()
+        -- 使用 Lerp 函数让动画过渡更平滑
+        self.animProgress = Lerp(deltaTime * 12, self.animProgress, targetProgress)
+
+        local padding = 3
+        local knobSize = h - padding * 2
+
+        -- 定义颜色
+        local COLOR_TRACK_OFF = Color(80, 85, 95, 255)
+        local COLOR_KNOB_OFF = Color(180, 185, 195, 255)
+        local COLOR_KNOB_ON = Color(255, 255, 255, 255)
         
-        -- 绘制背景
-        surface.SetDrawColor(bgColor)
-        surface.DrawRect(0, trackY, w, h)
+        -- 根据动画进度动态计算背景色和滑块颜色
+        local trackColor = Color(
+            Lerp(self.animProgress, COLOR_TRACK_OFF.r, COLOR_ACCENT.r),
+            Lerp(self.animProgress, COLOR_TRACK_OFF.g, COLOR_ACCENT.g),
+            Lerp(self.animProgress, COLOR_TRACK_OFF.b, COLOR_ACCENT.b)
+        )
+        local knobColor = Color(
+            Lerp(self.animProgress, COLOR_KNOB_OFF.r, COLOR_KNOB_ON.r),
+            Lerp(self.animProgress, COLOR_KNOB_OFF.g, COLOR_KNOB_ON.g),
+            Lerp(self.animProgress, COLOR_KNOB_OFF.b, COLOR_KNOB_ON.b)
+        )
         
-        -- 绘制旋钮
-        surface.SetDrawColor(knobColor)
-        surface.DrawRect(knobX, knobY, knobSize, knobSize)
+        -- 鼠标悬停时的微妙反馈：让整体变亮一点
+        if self:IsHovered() then
+            trackColor.r = math.min(255, trackColor.r + 20)
+            trackColor.g = math.min(255, trackColor.g + 20)
+            trackColor.b = math.min(255, trackColor.b + 20)
+        end
+
+        -- 根据动画进度计算滑块位置
+        local startX = padding
+        local endX = w - knobSize - padding
+        local knobX = Lerp(self.animProgress, startX, endX)
+        
+        -- 绘制轨道（背景）
+        draw.RoundedBoxEx(h / 2, 0, 0, w, h, trackColor)
+        -- 绘制滑块
+        draw.RoundedBoxEx(knobSize / 2, knobX, padding, knobSize, knobSize, knobColor)
     end
-    -- 3. 创建 DLabel (文字标签)
+    
     local label = vgui.Create("DLabel", container)
-    label:Dock(FILL) -- 【核心】让标签填充容器中所有剩余的空间！
+    label:Dock(FILL)
     label:SetMouseInputEnabled(true)
     label:SetFont(FONT_LABEL)
     label:SetText(translate.Get(data.label) or data.label)
     label:SetTextColor(COLOR_TEXT)
-
-    -- 让文字在标签自己的区域内垂直居中
     label:SetContentAlignment(4)
+    label:DockMargin(10, 0, 0, 0) -- 给标签和开关之间增加一点间距
     
-    -- 4. (可选但推荐) 让点击标签也能触发开关
     label.DoClick = function()
         checkbox:SetValue(not checkbox:GetValue())
-        checkbox:OnChange()
     end
-    
-    -- 将我们精心布局好的容器添加到列表中
-    parent:AddItem(container)
 end
-
 function PANEL:AddSlider(parent, data)
     local slider = vgui.Create("DNumSlider")
     slider:SetText(translate.Get(data.label) or data.label)
@@ -422,7 +518,6 @@ function PANEL:AddSlider(parent, data)
     slider.Label:SetFont(FONT_LABEL)
     slider.Label:SetTextColor(COLOR_TEXT)
     
-    -- *** FIX 2: 将 NumDisplay 修改为正确的 NumEntry ***
     if IsValid(slider.NumEntry) then
         slider.NumEntry:SetFont(FONT_LABEL)
     end

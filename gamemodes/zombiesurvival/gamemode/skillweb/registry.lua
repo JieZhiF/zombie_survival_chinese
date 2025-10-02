@@ -260,7 +260,10 @@ SKILL_HANDY6 = 157
 SKILL_HANDY7 = 158
 SKILL_HANDYSP_01 = 159
 SKILL_BATTLERSP_114514 = 160
-
+SKILL_COMBOKNUCKLESP01 = 161
+SKILL_COMBOKNUCKLESP02 = 162
+SKILL_COMBOKNUCKLESP03 = 163
+SKILL_FIELDAMPSP01 = 164
 
 SKILLMOD_HEALTH = 1
 SKILLMOD_SPEED = 2
@@ -804,8 +807,14 @@ GM:AddSkill(SKILL_BATTLERSP07, "重斩", GOOD.."+20% 近战伤害\n"..BAD.."+8% 
 																6,			7,					{SKILL_BATTLERSP06}, TREE_MELEETREE)
 GM:AddSkill(SKILL_BATTLERSP_114514, "究极天赋：良缘的庇佑", GOOD.."近战攻击时附加30%真实伤害\n"..GOOD.."空中攻击时.攻速增加300%且会每次攻击会滞留一段时间\n"..GOOD.."势不可挡:霸体",
 																3,			9,					{}, TREE_MELEETREE)
-
-
+GM:AddSkill(SKILL_COMBOKNUCKLESP01, "基头四", GOOD.."-5% 拳头攻击间隔\n"..GOOD.."+4 最大生命值\nY~M~C~A一轮强劲的音乐响起.唏 YOUNG MAN!.站在你门前的是！四个穿着很少布的大只佬!\n咸湿的眼神~淫贱的笑意~讨人厌的动作!",
+																8,			-4,					{SKILL_COMBOKNUCKLE}, TREE_MELEETREE)
+GM:AddSkill(SKILL_COMBOKNUCKLESP02, "海虎爆破钳", GOOD.."-5% 拳头攻击间隔\n"..GOOD.."+15% 拳头伤害\n让我找找秘密武器~",
+																9,			-4,					{SKILL_COMBOKNUCKLESP01}, TREE_MELEETREE)
+GM:AddSkill(SKILL_COMBOKNUCKLESP03, "次男道", GOOD.."-8% 拳头攻击间隔\n"..GOOD.."+20% 拳头伤害\n二十万匹力量！",
+																10,			-4,					{SKILL_COMBOKNUCKLESP02}, TREE_MELEETREE)
+GM:AddSkill(SKILL_FIELDAMPSP01,"连携作战", GOOD.."-10% 电塔与维修立场攻击延迟\n"..GOOD.."+10% 电塔和维修立场攻击范围\n"..BAD.."-12 移动速度\n血肉苦痛，机械飞升！",
+																7,			4,					{SKILL_FIELDAMP}, TREE_BUILDINGTREE)
 GM:SetSkillModifierFunction(SKILLMOD_SPEED, function(pl, amount)
 	pl.SkillSpeedAdd = amount
 end)
@@ -1433,3 +1442,13 @@ GM:AddSkillModifier(SKILL_HANDY6, SKILLMOD_REPAIRRATE_MUL, 0.09)
 GM:AddSkillModifier(SKILL_HANDY7, SKILLMOD_REPAIRRATE_MUL, 0.1)
 GM:AddSkillModifier(SKILL_HANDYSP_01, SKILLMOD_REPAIRRATE_MUL, 0.15)
 
+GM:AddSkillModifier(SKILL_COMBOKNUCKLESP01, SKILLMOD_UNARMED_SWING_DELAY_MUL, -0.05) --拳头攻击间隔，若为正数则增加攻击间隔，反之则降低
+GM:AddSkillModifier(SKILL_COMBOKNUCKLESP01, SKILLMOD_HEALTH, 4)
+
+GM:AddSkillModifier(SKILL_COMBOKNUCKLESP02, SKILLMOD_UNARMED_SWING_DELAY_MUL, -0.05)
+GM:AddSkillModifier(SKILL_COMBOKNUCKLESP02, SKILLMOD_UNARMED_DAMAGE_MUL, 0.15) ---拳头伤害
+
+GM:AddSkillModifier(SKILL_COMBOKNUCKLESP03, SKILLMOD_UNARMED_SWING_DELAY_MUL, -0.08)
+GM:AddSkillModifier(SKILL_COMBOKNUCKLESP03, SKILLMOD_UNARMED_DAMAGE_MUL, 0.2)
+
+GM:AddSkillModifier(SKILL_FIELDAMPSP01, SKILLMOD_SPEED, -12)

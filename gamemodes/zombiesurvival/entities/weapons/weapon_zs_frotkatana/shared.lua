@@ -1,5 +1,5 @@
-SWEP.PrintName = ""..translate.Get("weapon_zs_frotchet")
-SWEP.Description = ""..translate.Get("weapon_zs_frotchet_description")
+SWEP.PrintName = ""..translate.Get("weapon_zs_frotkatana")
+SWEP.Description = ""..translate.Get("weapon_zs_frotkatana_description")
 
 SWEP.Base = "weapon_zs_basemelee"
 
@@ -9,16 +9,15 @@ SWEP.UseHands = true
 
 SWEP.HoldType = "melee2"
 
-SWEP.MeleeDamage = 142
-SWEP.MeleeRange = 100
+SWEP.MeleeDamage = 88
+SWEP.MeleeRange = 88
 SWEP.MeleeSize = 3
-SWEP.MeleeKnockBack = 240
+SWEP.MeleeKnockBack = 70
 
-SWEP.MeleeDamageSecondaryMul = 1.2273
-SWEP.MeleeKnockBackSecondaryMul = 1.25
 
-SWEP.Primary.Delay = 1.4
-SWEP.Secondary.Delay = SWEP.Primary.Delay * 1.75
+
+SWEP.Primary.Delay = 1
+SWEP.Secondary.Delay = SWEP.Primary.Delay * 1.2
 
 SWEP.WalkSpeed = SPEED_SLOWER
 
@@ -26,22 +25,22 @@ SWEP.HitAnim = ACT_VM_MISSCENTER
  
 SWEP.SwingRotation = Angle(60, 0, -80)
 SWEP.SwingOffset = Vector(0, -30, 0)
-SWEP.SwingTime = 0.62
+SWEP.SwingTime = 0.7
 SWEP.SwingHoldType = "melee"
 
-SWEP.SwingTimeSecondary = 0.85
-SWEP.MeleeDamageSecondaryMul = 1.2273
-SWEP.MeleeKnockBackSecondaryMul = 1.25
+SWEP.SwingTimeSecondary = 1
+SWEP.MeleeDamageSecondaryMul = 0.75
+SWEP.MeleeKnockBackSecondaryMul = 0.4
 SWEP.BlockPos = Vector(-22.19, -5.29, 9.319)
 SWEP.BlockAng = Angle(0.732, -14.687, -66.086)
 
 SWEP.BlockSoundPitch  = 75
-SWEP.Tier = 5
+SWEP.Tier = 6
 SWEP.MaxStock = 2
 
 SWEP.AllowQualityWeapons = true
 
-GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.14)
+GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.06)
 
 function SWEP:Initialize()
 	self.BaseClass.Initialize(self)

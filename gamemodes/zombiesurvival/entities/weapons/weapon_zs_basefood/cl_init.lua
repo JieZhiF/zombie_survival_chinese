@@ -1,5 +1,6 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotFood")
+SWEP.SlotGroup = WEPSELECT_FOOD
 SWEP.ViewModelFOV = 60
 SWEP.ViewModelFlip = false
 

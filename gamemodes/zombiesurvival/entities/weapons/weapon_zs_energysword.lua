@@ -36,6 +36,7 @@ SWEP.MeleeSize = 2
 SWEP.Tier = 4
 SWEP.MaxStock = 3
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Secondary.Ammo = "pulse"
 
 SWEP.AllowQualityWeapons = true

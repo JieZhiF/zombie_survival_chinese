@@ -1,5 +1,6 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
+SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
 SWEP.ViewModelFOV = 45
 SWEP.ViewModelFlip = false
 

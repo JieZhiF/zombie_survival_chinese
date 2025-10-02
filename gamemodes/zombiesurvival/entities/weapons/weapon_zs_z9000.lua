@@ -2,10 +2,13 @@ AddCSLuaFile()
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_z9000")
 SWEP.Description = ""..translate.Get("weapon_zs_z9000_description")
-SWEP.Slot = 1
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
+SWEP.WeaponType = "pistol"
+	SWEP.SlotGroup = WEPSELECT_PISTOL
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 
@@ -39,6 +42,7 @@ SWEP.Primary.Delay = 0.2
 SWEP.Primary.ClipSize = 10
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 50
 
 SWEP.ConeMax = 2

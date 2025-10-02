@@ -15,7 +15,7 @@ SWEP.ShowWorldModelOriginal = false -- 自定义变量避免覆盖
 SWEP.VElements={
 	["1"]={type="Model",model="models/props_foliage/driftwood_01a.mdl",bone="ValveBiped.Bip01_R_Hand",rel="",pos=Vector(2.674,2.345,1.289),angle=Angle(-100.454,180,88.791),size=Vector(0.019,0.054,0.043),color=Color(100,100,100,255),surpresslightning=false,material="models/shadertest/shader2",skin=0,bodygroup={}},
 	["2"]={type="Model",model="models/XQM/cylinderx1.mdl",bone="ValveBiped.Bip01_Spine4",rel="1",pos=Vector(4.008,0,0.763),angle=Angle(0,0,0),size=Vector(0.045,0.4,0.3),color=Color(178,151,0,255),surpresslightning=false,material="models/player/shared/gold_player",skin=0,bodygroup={}},
-	["2++"]={type="Model",model="models/hunter/tubes/circle2x2d.mdl",bone="ValveBiped.Bip01_Spine4",rel="1",pos=Vector(3.9,-0.713,0.769),angle=Angle(0,90,0),size=Vector(0.029,0.949,0.15),color=Color(50,135,255),surpresslightning=false,material="models/props/cs_office/snowmana",skin=0,bodygroup={}},
+	["2++"]={type="Model",model="models/hunter/tubes/circle2x2d.mdl",bone="ValveBiped.Bip01_Spine4",rel="1",pos=Vector(3.9,-0.713,0.769),angle=Angle(0,90,0),size=Vector(0.029,0.949,0.15),color=Color(50,106,255),surpresslightning=false,material="models/props/cs_office/snowmana",skin=0,bodygroup={}},
 	["2+++"]={type="Model",model="models/hunter/plates/plate05x1.mdl",bone="ValveBiped.Bip01_Spine4",rel="1",pos=Vector(4.61,0,0.763),angle=Angle(90,-90,0.5),size=Vector(0.026,0.025,0.5),color=Color(178,151,0,255),surpresslightning=false,material="models/player/shared/gold_player",skin=0,bodygroup={}},
 	["2++++"]={type="Model",model="models/hunter/misc/sphere1x1.mdl",bone="ValveBiped.Bip01_Spine4",rel="1",pos=Vector(-3.658,0,0.779),angle=Angle(90,-90,90),size=Vector(0.045,0.054,0.019),color=Color(178,151,0,255),surpresslightning=false,material="models/player/shared/gold_player",skin=0,bodygroup={}}
 }
@@ -97,21 +97,22 @@ end
 
 function SWEP:PreDrawViewModel(vm)
 	self.BaseClass.PreDrawViewModel(self, vm)
-
+	--[[
 	for mdl, tab in pairs(self.VElements) do
 		tab.material = self:IsCharging() and "models/shiny" or self.DVElements[mdl].material
 		tab.color = self:IsCharging() and Color(255, 255, 255, 255) or self.DVElements[mdl].color
 	end
+	]]
 end
 
 function SWEP:DrawWorldModel()
 	self.BaseClass.DrawWorldModel(self)
-
+	--[[
 	for mdl, tab in pairs(self.WElements) do
-		tab.material = self:IsCharging() and "models/shiny" or self.DWElements[mdl].material
-		tab.color = self:IsCharging() and Color(255, 255, 255, 255) or self.DWElements[mdl].color
+		--tab.material = self:IsCharging() and "models/shiny" or self.DWElements[mdl].material
+		--tab.color = self:IsCharging() and Color(255, 255, 255, 255) or self.DWElements[mdl].color
 	end
-
+	]]
 	local owner = self:GetOwner()
 	if owner:IsValid() and not owner.ShadowMan then
 
@@ -119,26 +120,27 @@ function SWEP:DrawWorldModel()
 		if boneindex then
 			local pos, ang = owner:GetBonePosition(boneindex)
 			if pos then
-				if self:IsCharging() then
+				if self:IsValid() then
 					local rdelta = math.min(0.5, CurTime() - self:GetCharge())
 
-					local force = rdelta * 140
+					local force = rdelta * 120
 					local resist = force * 0.5
-
-					pos = pos + ang:Up() * -32
+					--pos = pos + ang:Forward() * 15
+					pos = pos + ang:Right() * 4
+					pos = pos + ang:Up() * math.Rand(-10,-30)
 
 					local curvel = owner:GetVelocity() * 0.5
 					local emitter = ParticleEmitter(pos)
 					emitter:SetNearClip(24, 48)
 
-					for i=1, math.min(16, math.ceil(FrameTime() * 200)) do
+					for i=1, math.min(6, math.ceil(FrameTime() * 100)) do
 						local particle = emitter:Add("particle/snow", pos)
 						particle:SetVelocity(curvel + VectorRand():GetNormalized() * force)
-						particle:SetDieTime(0.5)
+						particle:SetDieTime(0.35)
 						particle:SetStartAlpha(rdelta * 125 + 15)
 						particle:SetEndAlpha(0)
 						particle:SetStartSize(1)
-						particle:SetEndSize(rdelta * 10 + 4)
+						particle:SetEndSize(rdelta * 5 + 4)
 						particle:SetAirResistance(resist)
 					end
 					emitter:Finish() emitter = nil collectgarbage("step", 64)

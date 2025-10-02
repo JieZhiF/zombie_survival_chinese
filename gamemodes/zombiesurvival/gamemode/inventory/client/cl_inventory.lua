@@ -200,7 +200,7 @@ function GM:CreateInventoryElements()
         craftbtns[i] = { craftb, namelab }
     end
     viewer.m_CraftBtns = craftbtns
-    local craftwith = EasyLabel( viewer, "Craft With...", "ZSBodyTextFontBig", COLOR_WHITE )
+    local craftwith = EasyLabel( viewer, ""..translate.Get("Inventory_CraftWith"), "ZSBodyTextFontBig", COLOR_WHITE )
     craftwith:SetSize( viewer:GetWide() / 1.15, 27 * screenscale )
     craftwith:SetVisible( false )
     viewer.m_CraftWith = craftwith

@@ -9,6 +9,7 @@
 -- BaseDrawWeaponSelection 在武器选择菜单中绘制武器的图标、名称和弹药信息。
 -- HideWorldModel 通过重写绘制函数来隐藏武器的世界模型（即其他玩家看到的模型）。
 -- HideViewModel 通过修改视图模型的位置函数来隐藏武器的视图模型（即玩家自己看到的模型）。
+-- GetCooldownIcon 根据武器类型返回对应的冷却图标材质。
 local meta = FindMetaTable("Weapon")
 
 function meta:DrawWeaponCrosshair()
@@ -309,3 +310,9 @@ end
 function meta:HideViewModel()
 	self.GetViewModelPosition = HiddenViewModel
 end
+
+function meta:GetCooldownIcon()
+    local wType = self.WeaponType or "pistol"
+    return WeaponMaterials[wType] or WeaponMaterials["pistol"]
+end
+

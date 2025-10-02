@@ -1,5 +1,6 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotDeployables")
+SWEP.SlotGroup = WEPSELECT_DEPLOYABLES
 SWEP.DrawCrosshair = false
 
 function SWEP:Deploy()

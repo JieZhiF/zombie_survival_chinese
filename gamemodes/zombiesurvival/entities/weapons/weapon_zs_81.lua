@@ -3,10 +3,12 @@ AddCSLuaFile()
 SWEP.PrintName = "'81式' 试用形"
 SWEP.Description = "按 Shift 切换形态，右键进行紧急射击（消耗手枪弹药）。"
 
-SWEP.Slot = 2
 SWEP.SlotPos = 0
 
 if CLIENT then
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+    SWEP.WeaponType = "rifle"
+    SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
     SWEP.ViewModelFlip = false
     SWEP.ViewModelFOV = 50
 

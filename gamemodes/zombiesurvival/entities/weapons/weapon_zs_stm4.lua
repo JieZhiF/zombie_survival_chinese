@@ -3,7 +3,7 @@ AddCSLuaFile()
 DEFINE_BASECLASS("weapon_zs_base")
 SWEP.PrintName = "'究极武器'SR-47"
 SWEP.Description = "加油吧"
-SWEP.Slot = 2
+
 SWEP.SlotPos = 0
 
 SWEP.Primary.BaseDamage = 25
@@ -66,6 +66,9 @@ SWEP.WElements = {
 
 if CLIENT then
 
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+SWEP.WeaponType = "rifle"
+    SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
     SWEP.HoldType = "ar2"
 	SWEP.HUD3DBone = "v_weapon.m4_Parent"
 	SWEP.HoldType = "ar2"

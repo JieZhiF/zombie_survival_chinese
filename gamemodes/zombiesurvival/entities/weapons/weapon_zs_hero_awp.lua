@@ -2,10 +2,12 @@ AddCSLuaFile()
 
 SWEP.PrintName = "'英雄' AWP"
 SWEP.Description = "仅英雄使用，属于非法武器之一."
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 

@@ -1,6 +1,6 @@
 SWEP.PrintName = ""..translate.Get("weapon_zs_barricadekit")
 SWEP.Description = ""..translate.Get("weapon_zs_barricadekit_description")
-SWEP.Slot = 4
+
 SWEP.SlotPos = 0
 
 SWEP.ViewModel = "models/weapons/c_rpg.mdl"

@@ -1,8 +1,9 @@
 INC_CLIENT()
 
 SWEP.DrawCrosshair = false
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotDeployables")
+SWEP.SlotGroup = WEPSELECT_DEPLOYABLES
 
-SWEP.Slot = 4
 SWEP.SlotPos = 0
 
 function SWEP:DrawHUD()

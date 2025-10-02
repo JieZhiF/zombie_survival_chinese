@@ -4,7 +4,8 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_colossus")
 SWEP.Description = ""..translate.Get("weapon_zs_colossus_description")
 
 if CLIENT then
-	SWEP.Slot = 3
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
+SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.SlotPos = 0
 
 	SWEP.ViewModelFlip = false

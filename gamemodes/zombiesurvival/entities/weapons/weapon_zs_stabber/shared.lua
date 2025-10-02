@@ -3,15 +3,15 @@ local BaseClassMelee = baseclass.Get("weapon_zs_basemelee")
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_stabber")
 
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 SWEP.Base = "weapon_zs_base"
 
 SWEP.HoldType = "ar2"
 
-SWEP.ViewModel = "models/weapons/cstrike/c_snip_g3sg1.mdl"
-SWEP.WorldModel = "models/weapons/w_snip_scout.mdl"
+SWEP.ViewModel = "models/weapons/tfa_dods/c_garand.mdl"
+SWEP.WorldModel = "models/weapons/w_garand.mdl"
 SWEP.UseHands = true
 
 SWEP.Primary.Damage = 65
@@ -44,6 +44,42 @@ SWEP.ConeMin = 1.25
 
 SWEP.WalkSpeed = SPEED_SLOW
 
+sound.Add( {
+	name = "Weapon_Garand.BoltForward",
+	channel = CHAN_STATIC,
+	volume = 1.0,
+	level = 80,
+	pitch = {100},
+	sound = "weapons/weapon_zs_garand/garand_boltforward.wav"
+} )
+
+sound.Add( {
+	name = "Weapon_Garand.ClipIn1",
+	channel = CHAN_STATIC,
+	volume = 1.0,
+	level = 80,
+	pitch = {95, 110},
+	sound = "weapons/weapon_zs_garand/garand_clipin1.wav"
+} )
+
+sound.Add( {
+	name = "Weapon_Garand.ClipIn2",
+	channel = CHAN_STATIC,
+	volume = 1.0,
+	level = 80,
+	pitch = {95, 110},
+	sound = "weapons/weapon_zs_garand/garand_clipin2.wav"
+} )
+
+sound.Add( {
+	name = "Weapon_Garand.Draw",
+	channel = CHAN_STATIC,
+	volume = 1.0,
+	level = 80,
+	pitch = {100},
+	sound = "weapons/draw_rifle.wav"
+} )
+
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.03, 1)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MAX_SPREAD, -0.5, 1)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, ""..translate.Get("weapon_zs_stabber_r1"),""..translate.Get("weapon_zs_stabber_r1_description"),function(wept)
@@ -64,6 +100,7 @@ SWEP.ReloadSpeed = 1.3
 SWEP.MeleeFlagged = true
 
 SWEP.Tier = 2
+
 
 function SWEP:EmitFireSound()
 	self:EmitSound("weapons/ak47/ak47-1.wav", 75, 76, 0.53)
@@ -86,11 +123,17 @@ function SWEP:PlayHitFleshSound()
 end
 
 function SWEP:ShootBullets(dmg, numbul, cone)
+	--[[
 	if self:Clip1() == 0 then
 		self:EmitSound("npc/roller/blade_out.wav", 70, math.random(80, 84), 0.5, CHAN_AUTO+21)
 		self:EmitSound("physics/metal/metal_solid_impact_bullet4.wav", 70, 100, 0.5, CHAN_AUTO+22)
 	end
-
+	]]
+		if self:Clip1() == 0 then
+		self:EmitSound("npc/roller/blade_out.wav", 70, math.random(80, 84), 0.5)
+		self:EmitSound("weapons/weapon_zs_garand/garand_clipding.wav", 70, 100, 0.5, CHAN_AUTO+21)
+	end
+	
 	BaseClass.ShootBullets(self, dmg, numbul, cone)
 end
 

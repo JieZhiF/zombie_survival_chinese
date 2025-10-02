@@ -75,7 +75,7 @@ function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)
 	end
 
 	self:SetAngles(vOldVelocity:Angle())
-
+	--[[]
 	local effectdata = EffectData()
 		effectdata:SetOrigin(vHitPos)
 		effectdata:SetNormal(vHitNormal)
@@ -84,5 +84,9 @@ function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)
 		else
 			effectdata:SetEntity(NULL)
 		end
-	util.Effect(alt and "hit_strengthdart" or "hit_healdart2", effectdata)
+		]]
+	local effectdata = EffectData()
+    effectdata:SetOrigin(vHitPos)
+    effectdata:SetNormal(vHitNormal)
+	util.Effect(alt and "hit_strengthdart" or "hit_medicaldart2", effectdata)
 end

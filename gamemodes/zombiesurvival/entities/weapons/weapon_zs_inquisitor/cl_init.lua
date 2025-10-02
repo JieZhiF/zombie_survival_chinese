@@ -7,7 +7,8 @@ SWEP.HUD3DAng = Angle(90, 0, -10)
 SWEP.ViewModelFOV = 49
 SWEP.ViewModelFlip = false
 
-SWEP.Slot = 3
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.SlotPos = 0
 
 SWEP.VElements = {

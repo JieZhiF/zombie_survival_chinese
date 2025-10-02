@@ -1415,6 +1415,7 @@ end
 
 local fontfamily = "Ghoulish Fright AOE"
 local fontfamilysm = "Remington Noiseless"
+local fontfamilynoksidi = "typenoksidi"
 local fontfamily3d = "hidden"
 local fontsizeadd = 8
 local fontweight = 0
@@ -1443,6 +1444,13 @@ function GM:Create3DFonts()
 	surface.CreateLegacyFont(fontfamilysm, 14 + fontsizeadd3D, fontweight3D, false, false,  "ZS3D2DUnstyleTiny", false, true)
 	surface.CreateLegacyFont(fontfamilysm, 24 + fontsizeadd3D, fontweight3D, false, false,  "ZS3D2DUnstyleSmallest", false, true)
 	surface.CreateLegacyFont(fontfamilysm, 36 + fontsizeadd3D, fontweight3D, false, false,  "ZS3D2DUnstyleSmaller", false, true)
+
+	surface.CreateFont("3D2D_Typenoksidi",{font=fontfamilynoksidi,extended=false,size=128,shadow=true,outline=true})
+	surface.CreateFont("3D2D_TypenoksidiBlur",{font=fontfamilynoksidi,blursize=4,extended=false,size=128,shadow=true,outline=true})
+	surface.CreateFont("3D2D_Typenoksidi_Small",{font=fontfamilynoksidi,extended=false,size=80,shadow=true,outline=true})
+	surface.CreateFont("3D2D_Typenoksidi_SmallBlur",{font=fontfamilynoksidi,blursize=4,extended=false,size=80,shadow=true,outline=true})
+	surface.CreateFont("3D2D_Typenoksidi_Smallest",{font=fontfamilynoksidi,extended=false,size=60,shadow=true,outline=true})
+	surface.CreateFont("3D2D_Typenoksidi_SmallestBlur",{font=fontfamilynoksidi,blursize=4,extended=false,size=60,shadow=true,outline=true})
 end
 
 function GM:CreateNonScaleFonts()
@@ -1459,32 +1467,59 @@ function GM:CreateNonScaleFonts()
 	surface.CreateFont("DefaultFontLargeAA", {font = "tahoma", size = 16, weight = 0, antialias = true})
 	surface.CreateFont("DefaultFontLargest", {font = "tahoma", size = 22, weight = 0, antialias = false})
 	surface.CreateFont("DefaultFontLargestAA", {font = "tahoma", size = 22, weight = 0, antialias = true})
-	surface.CreateFont("ZS2DFontHarmonySmall", {font = "Harmony OS Sans Regular 3500",size=24,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("ZS2DFontHarmony", {font = "Harmony OS Sans Regular 3500",size=28,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("ZS2DFontHarmonyMiddle", {font = "Harmony OS Sans Regular 3500",size=34,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("ZS2DFontHarmonyBig", {font = "Harmony OS Sans Regular 3500",size=50,weight = 200 ,extended = true,antialias = true})
 	surface.CreateFont("ZSA_HUD_Name", {font = "Trebuchet24", size = 24, weight = 500, extended = true})
 	surface.CreateFont("ZSA_HUD_Clip", {font = "Trebuchet24", size = 32, weight = 500, extended = true})
 	surface.CreateFont("ZSA_HUD_Ammo", {font = "Trebuchet24", size = 20, weight = 500, extended = true})
+	surface.CreateFont("RemingtonNoiseless_Big",{font=fontfamilyRemington,extended=false,size=40,shadow=true,outline=true})
+	surface.CreateFont("RemingtonNoiseless_BigBlur",{font=fontfamilyRemington,extended=false,size=40,shadow=true,outline=true,blursize=4})
+	surface.CreateFont("RemingtonNoiseless",{font=fontfamilyRemington,extended=false,size=22,shadow=true,outline=true})
+	surface.CreateFont("RemingtonNoiselessBlur",{font=fontfamilyRemington,extended=false,size=22,shadow=true,outline=true,blursize=4})
+
+	surface.CreateFont("ZS2DFontHarmonySmall", {font = "Harmony OS Sans SC",size=24,weight = 500 ,extended = true,antialias = true})
+	surface.CreateFont("ZS2DFontHarmony", {font = "Harmony OS Sans SC",size=28,weight = 500 ,extended = true,antialias = true})
+	surface.CreateFont("ZS2DFontHarmonyMiddle", {font = "Harmony OS Sans SC",size=34,weight = 500 ,extended = true,antialias = true})
+	surface.CreateFont("ZS2DFontHarmonyBig", {font = "Harmony OS Sans SC",size=50,weight = 200 ,extended = true,antialias = true})
 end
---[[
-function GM:FontDLC()
-	local checkpath = "materials/zombiesurvival/mark/fontmark_a.vmt"
-	if file.Exists(checkpath,"GAME") then
+
+function GM:FontDLC() //检测字体扩展包
+
+	local checkpath = "materials/zombiesurvival/mark/fontmark_a.vmt" --检测文件路径
+	if file.Exists(checkpath,"GAME") then --检测文件是否存在
 		print("已安装字体扩展包")
-		self:CreateExtendFonts()
+		self:CreateExtendFonts() --创建扩展字体
 	else
-		print("未安装字体扩展包")
+		print("未安装字体扩展包") --未安装字体扩展包
 		return
 	end
 end
+--这个createfont的完整中文示例
+--[[
 
-function GM:CreateExtendFonts()
-	surface.CreateFont("ZS2DFontHarmony_a", {font = "Harmony OS Sans Regular 3500",size=28,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("ZS2DFontHarmonyMiddle_a", {font = "Harmony OS Sans Regular 3500",size=34,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("ZS2DFontHarmonyBig_a", {font = "Harmony OS Sans Regular 3500",size=50,weight = 200 ,extended = true,antialias = true})
-end
+surface.CreateFont("TextName",){
+	font = "FontName", --字体名称
+	size = 28, --字体大小
+	weight = 500, --字体粗细(100-1000)
+	antialias = true, --是否抗锯齿
+	extended = true, --是否支持更多字符集
+	shadow = false, --是否有阴影
+	outline = false, --是否有描边
+	blursize = 0, --描边宽度
+	scanlines = 0, --扫描线宽度
+	additive = false, --是否使用加法混合
+	italic = false, --是否斜体
+	strikeout = false, --是否删除线
+	underline = false, --是否下划线
+	--等等更多参数可以查阅wiki
+}
 ]]
+function GM:CreateExtendFonts()
+	surface.CreateFont("HarmonyOS_Sans_Naskh_Arabic_Regular", {font = "HarmonyOS Sans Naskh Arabic",size=28,weight = 500 ,extended = true,antialias = true})
+	surface.CreateFont("HarmonyOS_Sans_SC_Regular", {font = "Harmony OS Sans SC",size=34,weight = 500 ,extended = true,antialias = true})
+	surface.CreateFont("NotoSansSC-Regular", {font = "Noto Sans SC",size=50,weight = 200 ,extended = true,antialias = true})
+	surface.CreateFont("SourceSans_Pro_Regular", {font = "Source Sans Pro",size=28,weight = 500 ,extended = true,antialias = true})
+	surface.CreateFont("SourceSans_Pro_Semibold", {font = "Source Sans Pro Semibold",size=34,weight = 500 ,extended = true,antialias = true})
+end
+
 function GM:CreateScalingFonts()
 	local fontaa = true
 	local fontshadow = false
@@ -1547,7 +1582,7 @@ function GM:CreateFonts()
 	self:Create3DFonts() //3D字体
 	self:CreateNonScaleFonts() //非缩放字体
 	self:CreateScalingFonts() //缩放字体
-	--self:FontDLC()
+	self:FontDLC()
 end
 
 function GM:EvaluateFilmMode()
@@ -2391,4 +2426,25 @@ end
 
 function PlayMenuCloseSound()
 	MySelf:EmitSound("buttons/lightswitch2.wav", 100, 20)
+end
+
+-- =================================================================
+--      获取武器插槽的辅助函数 (建议放在 gamemode/shared.lua 中)
+-- =================================================================
+
+---
+-- 根据存储在GAMEMODE表中的变量名，获取Garry's Mod内部使用的武器插槽索引。
+-- @param slotVarName string - 存储插槽编号的GAMEMODE变量的名称 (例如 "WeaponSelectSlotAssaultRifles")
+-- @return number - 返回Garry's Mod内部使用的插槽索引 (-2 表示隐藏, 0-5 对应插槽 1-6)
+--
+function GM:GetWeaponSlot(slotVarName)
+    -- 1. 从 GAMEMODE 表中读取插槽值。self[slotVarName] 等同于 GAMEMODE[slotVarName]。
+    --    如果该变量不存在 (例如脚本加载顺序问题)，则默认值为 1 (第一个插槽)。
+    local slotValue = self[slotVarName] or 1
+
+    -- 2. 转换插槽值：
+    --    - 如果玩家在设置中选择 "0" (隐藏)，则返回 -2。
+    --    - 否则，返回 插槽值 - 1 (因为GMod的插槽是从0开始计数的, 即插槽1=索引0, 插槽2=索引1, ...)。
+    --    这是一个简写的 if/else 语句。
+    return (slotValue == 0) and -2 or (slotValue - 1)
 end

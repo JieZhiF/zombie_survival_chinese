@@ -2,10 +2,11 @@ AddCSLuaFile()
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_detpackremote")
 SWEP.Description = ""..translate.Get("weapon_zs_detpackremote_description")
-SWEP.Slot = 4
-SWEP.SlotPos = 0
+
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotDeployables")
+	SWEP.SlotGroup = WEPSELECT_DEPLOYABLES
 	SWEP.ViewModelFOV = 50
 	SWEP.BobScale = 0.5
 	SWEP.SwayScale = 0.5

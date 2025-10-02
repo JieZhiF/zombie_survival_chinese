@@ -3,10 +3,13 @@ DEFINE_BASECLASS("weapon_zs_base")
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_eraser")
 SWEP.Description = ""..translate.Get("weapon_zs_eraser_description")
-SWEP.Slot = 1
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
+SWEP.WeaponType = "pistol"
+	SWEP.SlotGroup = WEPSELECT_PISTOL
 	SWEP.ViewModelFOV = 60
 	SWEP.ViewModelFlip = false
 

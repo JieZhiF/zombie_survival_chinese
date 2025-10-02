@@ -6,6 +6,10 @@ AddCSLuaFile()
 -- 仅在客户端设置的信息
 if CLIENT then
    SWEP.PrintName = "'青峰'电子加速器" -- 武器在菜单中显示的名称
+   
+    SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+SWEP.WeaponType = "rifle"
+    SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
 end
 SWEP.Description = "瞄准状态下，E键可以特殊射击子弹" -- 武器的描述
 
@@ -13,7 +17,7 @@ SWEP.Description = "瞄准状态下，E键可以特殊射击子弹" -- 武器的
 SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 
-SWEP.Slot = 2 -- 武器在武器栏中的位置 (3号槽)
+
 SWEP.Base = "weapon_zs_base" -- 继承自 'weapon_zs_base' 基础武器，会获得其所有功能
 
 -- [[ 自定义模型组件 (VElements & WElements) ]] --
@@ -75,7 +79,8 @@ SWEP.Primary.Delay = 0.092 -- 射击间隔（秒），决定了实际射速 (60 
 SWEP.Primary.Cone = 0.018 -- 基础精准度（圆锥扩散范围）
 SWEP.Primary.Automatic = true -- 是否为全自动
 SWEP.Primary.DefaultClip = 240 -- 默认备弹量
-SWEP.Primary.Ammo = "pulse" -- 使用的弹药类型
+SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse" -- 使用的弹药类型
 
 -- 次要攻击（右键/特殊攻击）设置
 SWEP.Secondary.ClipSize = 1 -- 设置为-1以使用主弹药

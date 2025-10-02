@@ -29,13 +29,15 @@ SWEP.Base					= "weapon_zs_base"
 
 SWEP.ShowWorldModel         = false
 SWEP.UseHands = true
-SWEP.Slot					= 2
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
 SWEP.SlotPos				= 1
 
 SWEP.ViewModel 				= "models/weapons/cstrike/c_rif_famas.mdl"
 SWEP.WorldModel				= "models/weapons/w_rif_famas.mdl"
 SWEP.ViewModelFlip 			= false
 SWEP.HoldType				= "ar2"
+SWEP.WeaponType = "rifle"
 
 SWEP.Primary.Damage			= 20
 SWEP.Primary.NumShots		= 1

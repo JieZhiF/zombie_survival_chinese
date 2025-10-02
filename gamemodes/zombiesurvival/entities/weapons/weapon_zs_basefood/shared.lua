@@ -1,7 +1,7 @@
 SWEP.Base = "weapon_zs_basemelee"
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_basefood")
-SWEP.Slot = 4
+
 SWEP.SlotPos = 0
 
 SWEP.ViewModel = "models/weapons/c_grenade.mdl"

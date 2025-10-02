@@ -1,5 +1,6 @@
 INC_CLIENT()
-
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.HUD3DBone = "ValveBiped.Crossbow_base"
 SWEP.HUD3DPos = Vector(-0.3, -1, -4.54)
 SWEP.HUD3DScale = 0.035

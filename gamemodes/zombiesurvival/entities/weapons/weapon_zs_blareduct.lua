@@ -1,10 +1,12 @@
 AddCSLuaFile()
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_blareduct")
-SWEP.Slot = 3
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotShotguns")
+	SWEP.SlotGroup = WEPSELECT_SHOTGUN
 	SWEP.HUD3DBone = "ValveBiped.Gun"
 	SWEP.HUD3DPos = Vector(1.65, 0, -8)
 	SWEP.HUD3DScale = 0.025

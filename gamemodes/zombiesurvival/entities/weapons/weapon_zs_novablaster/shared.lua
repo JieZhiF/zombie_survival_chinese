@@ -21,6 +21,7 @@ SWEP.Primary.NumShots = 1
 SWEP.Primary.ClipSize = 27
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pulse"
+SWEP.WeaponType = "pulse"
 SWEP.Primary.DefaultClip = 27
 
 SWEP.RequiredClip = 3

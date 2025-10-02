@@ -2,10 +2,12 @@ AddCSLuaFile()
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_medicalkit")
 SWEP.Description = ""..translate.Get("weapon_zs_medicalkit_description")
-SWEP.Slot = 4
+
 SWEP.SlotPos = 0
 
 if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotMedkits")
+	SWEP.SlotGroup = WEPSELECT_MEDICAL_KIT
 	SWEP.ViewModelFOV = 57
 	SWEP.ViewModelFlip = false
 
@@ -43,6 +45,7 @@ SWEP.NoMagazine = true
 SWEP.AllowQualityWeapons = true
 
 SWEP.HoldType = "slam"
+
 
 GAMEMODE:SetPrimaryWeaponModifier(SWEP, WEAPON_MODIFIER_HEALCOOLDOWN, -0.8)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_HEALRANGE, 4, 1)
@@ -87,6 +90,12 @@ function SWEP:PrimaryAttack()
 	local healed = owner:HealPlayer(ent, math.min(self:GetCombinedPrimaryAmmo(), self.Heal))
 	local totake = self.FixUsage and 15 or math.ceil(healed / multiplier)
 
+	local effect = EffectData()
+	effect:SetStart(ent:GetPos())
+	effect:SetOrigin(ent:GetPos() + Vector(0,0,40))
+	effect:SetEntity(ent)
+
+	util.Effect("hit_medical", effect)
 	if totake > 0 then
 		self:SetNextCharge(CurTime() + self.Primary.Delay * math.min(1, healed / self.Heal) * cooldownmultiplier)
 		owner.NextMedKitUse = self:GetNextCharge()
@@ -111,6 +120,13 @@ function SWEP:SecondaryAttack()
 	local healed = owner:HealPlayer(owner, math.min(self:GetCombinedPrimaryAmmo(), self.Heal * self.Secondary.HealMul))
 	local totake = self.FixUsage and 10 or math.ceil(healed / multiplier)
 
+
+	local effect = EffectData()
+	effect:SetStart(owner:GetPos())
+	effect:SetOrigin(self:GetPos() + Vector(0,0,10))
+	effect:SetEntity(owner)
+
+	util.Effect("hit_medical", effect)
 	if totake > 0 then
 		self:SetNextCharge(CurTime() + self.Primary.Delay * self.Secondary.DelayMul * math.min(1, healed / self.Heal * self.Secondary.HealMul) * cooldownmultiplier)
 		owner.NextMedKitUse = self:GetNextCharge()
@@ -187,35 +203,108 @@ function SWEP:DrawWeaponSelection(x, y, w, h, alpha)
 end
 
 local texGradDown = surface.GetTextureID("VGUI/gradient_down")
+local SpriteGlow   = Material("sprites/glow04_noz")
+local HealthSprite = Material("zombiesurvival/killicons/medpower_ammo_icon", "noclamp smooth")
+
 function SWEP:DrawHUD()
-	local wid, hei = 384, 16
-	local x, y = ScrW() - wid - 32, ScrH() - hei - 72
-	local texty = y - 4 - draw.GetFontHeight("ZSHUDFontSmall")
-	local owner = self:GetOwner()
+    local owner = self:GetOwner()
+    if not IsValid(owner) then return end
 
-	local timeleft = (owner.NextMedKitUse or self:GetNextCharge()) - CurTime()
-	if 0 < timeleft then
-		surface.SetDrawColor(5, 5, 5, 180)
-		surface.DrawRect(x, y, wid, hei)
+    local scale = BetterScreenScale()
+    local wid, hei = 384 * scale, 16 * scale
+    local x, y = ScrW() - wid - 32 * scale, ScrH() - hei - 72 * scale
+    local texty = y - 4 - draw.GetFontHeight("Typenoksidi")
 
-		surface.SetDrawColor(50, 255, 50, 180)
-		surface.SetTexture(texGradDown)
-		surface.DrawTexturedRect(x, y, math.min(1, timeleft / math.max(self.Primary.Delay, self.Primary.Delay * self.Secondary.DelayMul)) * wid, hei)
+    -- Cooldown real
+    local nextCharge = owner.NextMedKitUse or self:GetNextCharge()
+    local timeleft = nextCharge - CurTime()
+    local startTime = self.LastChargeStart or (CurTime() - math.max(timeleft, 0))
+    local cooldownTotal = math.max(nextCharge - startTime, 0)
+    local fraction = math.Clamp(timeleft / cooldownTotal, 0, 1)
 
-		surface.SetDrawColor(50, 255, 50, 180)
-		surface.DrawOutlinedRect(x, y, wid, hei)
-	end
+    local iconSize = 45 * scale
+    surface.SetMaterial(HealthSprite)
 
-	draw.SimpleText(self.PrintName, "ZSHUDFontSmall", x, texty, COLOR_GREEN, TEXT_ALIGN_LEFT)
+    if timeleft <= 0 then
+        surface.SetDrawColor(0, 255, 0, 255)
+    else
+        surface.SetDrawColor(math.min(255, 50 * timeleft), 0, 0, 255)
+    end
+    surface.DrawTexturedRect(x, y - 150 * scale, iconSize, iconSize)
 
-	local charges = self:GetPrimaryAmmoCount()
-	if charges > 0 then
-		draw.SimpleText(charges, "ZSHUDFontSmall", x + wid, texty, COLOR_GREEN, TEXT_ALIGN_RIGHT)
-	else
-		draw.SimpleText(charges, "ZSHUDFontSmall", x + wid, texty, COLOR_DARKRED, TEXT_ALIGN_RIGHT)
-	end
+    if timeleft > 0 then
+        surface.SetDrawColor(5, 5, 5, 180)
+        surface.DrawRect(x, y, wid, hei)
 
-	if GetConVar("crosshair"):GetInt() == 1 then
-		self:DrawCrosshairDot()
-	end
+        local barWidth = fraction * wid
+
+        surface.SetDrawColor(50, 255, 50, 180)
+        surface.SetTexture(texGradDown)
+        surface.DrawTexturedRect(x, y, barWidth, hei)
+
+        surface.SetDrawColor(50, 255, 50, 180)
+        surface.DrawOutlinedRect(x, y, wid, hei)
+
+        surface.SetMaterial(SpriteGlow)
+        surface.SetDrawColor(255, 255, 255, 200)
+        surface.DrawTexturedRect(x + math.max(0, barWidth - 6), y + 1 - hei / 2, 6, hei * 2)
+
+        draw.SimpleText(math.Round(fraction * 100) .. "%", "Typenoksidi", x - 64 * scale, texty + hei * 1.75, COLOR_GREEN, TEXT_ALIGN_LEFT)
+    end
+
+    draw.SimpleText("Heal Potency: " .. self.Heal, "Typenoksidi", x, texty - 40 * scale, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+    draw.SimpleText(self.PrintName, "Typenoksidi", x, texty, COLOR_GREEN, TEXT_ALIGN_LEFT)
+
+    local charges = self:GetPrimaryAmmoCount()
+    local chargeColor = charges > 0 and COLOR_GREEN or COLOR_DARKRED
+    draw.SimpleText(charges, "Typenoksidi", x + wid, texty, chargeColor, TEXT_ALIGN_RIGHT)
+
+    if GetConVar("crosshair"):GetInt() == 1 then
+        self:DrawCrosshairDot()
+    end
+    self:DrawCooldowns()
+end
+
+function SWEP:CooldownRingBinding()
+    return math.max(0, self:GetNextCharge() - CurTime())
+end
+
+function SWEP:CooldownRingMaximumBinding()
+    return math.max(self.Primary.Delay, self:GetNextCharge() - (self.LastChargeStart or CurTime()))
+end
+
+function SWEP:DrawCooldowns()
+    if self:GetPrimaryAmmoCount() <= 0 then return end
+
+    local cooldownIcon = self:GetCooldownIcon()
+    local betterscale = BetterScreenScale()
+    local remaining = self:CooldownRingBinding()
+    local maximum = self:CooldownRingMaximumBinding()
+    local ringSize = math.Clamp(CrosshairCoolPrimaryCircleSize, 0.5, 16)
+    local ringSpacing = ringSize + (self.CooldownExtraSize or 0)
+    local ringColor = Color(40, 255, 40, 255)
+    local backgroundColor = Color(12, 12, 12, 30)
+
+    if remaining > 0 and maximum > 0 then
+        local centerX, centerY = ScrW() * 0.5, ScrH() * 0.5
+        local fraction = remaining / maximum
+        local innerRadius = ringSpacing * 10 * betterscale
+
+        draw.HollowCircle(centerX, centerY, innerRadius, 2 * ringSize, 270, 270 + 360, backgroundColor)
+        draw.HollowCircle(centerX, centerY, innerRadius, 2 * ringSize, 270, 270 + 360 * fraction, ringColor)
+
+        draw.SimpleTextBlurry(math.Round(remaining, 1), "RemingtonNoiseless", centerX - innerRadius * 2, centerY, ringColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+        local iw, ih = cooldownIcon:Width(), cooldownIcon:Height()
+        if iw == 0 or ih == 0 then iw, ih = 64, 64 end
+        local pad = math.max(2, ringSize * 0.8)
+        local iconMax = (innerRadius - pad) * 2
+        local s = math.min(iconMax / iw, iconMax / ih)
+        local w, h = math.floor(iw * s), math.floor(ih * s)
+        local rotation = CurTime() * 90
+
+        surface.SetMaterial(cooldownIcon)
+        surface.SetDrawColor(ringColor)
+        surface.DrawTexturedRectRotated(centerX, centerY, w, h, rotation)
+    end
 end
