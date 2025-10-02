@@ -45,7 +45,7 @@ SWEP.NoMagazine = true
 SWEP.AllowQualityWeapons = true
 
 SWEP.HoldType = "slam"
-
+SWEP.WeaponType = "medical"
 
 GAMEMODE:SetPrimaryWeaponModifier(SWEP, WEAPON_MODIFIER_HEALCOOLDOWN, -0.8)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_HEALRANGE, 4, 1)
@@ -96,6 +96,7 @@ function SWEP:PrimaryAttack()
 	effect:SetEntity(ent)
 
 	util.Effect("hit_medical", effect)
+	self.LastChargeStart = CurTime()
 	if totake > 0 then
 		self:SetNextCharge(CurTime() + self.Primary.Delay * math.min(1, healed / self.Heal) * cooldownmultiplier)
 		owner.NextMedKitUse = self:GetNextCharge()
@@ -120,13 +121,14 @@ function SWEP:SecondaryAttack()
 	local healed = owner:HealPlayer(owner, math.min(self:GetCombinedPrimaryAmmo(), self.Heal * self.Secondary.HealMul))
 	local totake = self.FixUsage and 10 or math.ceil(healed / multiplier)
 
-
 	local effect = EffectData()
 	effect:SetStart(owner:GetPos())
 	effect:SetOrigin(self:GetPos() + Vector(0,0,10))
 	effect:SetEntity(owner)
 
 	util.Effect("hit_medical", effect)
+	self.LastChargeStart = CurTime()
+
 	if totake > 0 then
 		self:SetNextCharge(CurTime() + self.Primary.Delay * self.Secondary.DelayMul * math.min(1, healed / self.Heal * self.Secondary.HealMul) * cooldownmultiplier)
 		owner.NextMedKitUse = self:GetNextCharge()
@@ -218,6 +220,7 @@ function SWEP:DrawHUD()
     -- Cooldown real
     local nextCharge = owner.NextMedKitUse or self:GetNextCharge()
     local timeleft = nextCharge - CurTime()
+
     local startTime = self.LastChargeStart or (CurTime() - math.max(timeleft, 0))
     local cooldownTotal = math.max(nextCharge - startTime, 0)
     local fraction = math.Clamp(timeleft / cooldownTotal, 0, 1)

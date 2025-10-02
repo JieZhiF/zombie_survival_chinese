@@ -2,6 +2,7 @@ INC_CLIENT()
 
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
 SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
+SWEP.WeaponType = "explosive"
 SWEP.SlotPos = 0
 
 SWEP.HUD3DBone = "v_weapon.p90_Parent"

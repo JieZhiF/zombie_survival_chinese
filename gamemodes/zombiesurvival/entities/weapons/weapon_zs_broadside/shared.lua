@@ -7,7 +7,7 @@ SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 
 SWEP.Base = "weapon_zs_baseproj"
-
+SWEP.WeaponType = "explosive"
 SWEP.HoldType = "rpg"
 
 SWEP.ViewModel = "models/weapons/c_rpg.mdl"

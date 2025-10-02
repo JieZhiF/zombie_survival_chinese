@@ -9,7 +9,7 @@ SWEP.ViewModel = "models/weapons/c_357.mdl"
 SWEP.WorldModel = "models/weapons/w_357.mdl"
 SWEP.UseHands = true
 SWEP.HoldType = "revolver"
-
+SWEP.WeaponType = "explosive"
 SWEP.ShowViewModel = true
 SWEP.ShowWorldModel = false
 SWEP.ViewModelBoneMods = {

@@ -12,6 +12,7 @@ SWEP.ViewModelFlip = false
 
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
 SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
+SWEP.WeaponType = "explosive"
 SWEP.SlotPos = 0
 
 SWEP.VElements = {

@@ -39,7 +39,7 @@ SWEP.Tier = 2
 SWEP.AllowQualityWeapons = true
 
 SWEP.Heal = 10
-
+SWEP.WeaponType = "medical"
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_BUFF_DURATION, 3)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_HEALING, 1.1)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, "'Invigorator' Strength Rifle", "Strength boost instead of defence, and makes zombies more vulnerable to damage instead", function(wept)

@@ -38,11 +38,11 @@ SWEP.IronSightsAng = Vector(-0.15, -1, 2)
 SWEP.AllowQualityWeapons = true
 
 SWEP.Heal = 5.1
-
+SWEP.WeaponType = "medical"
 GAMEMODE:SetPrimaryWeaponModifier(SWEP, WEAPON_MODIFIER_CLIP_SIZE, 5)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_BUFF_DURATION, 2)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_HEALING, 0.6)
-SWEP.WeaponType = "medical"
+
 function SWEP:EmitFireSound()
 	self:EmitSound("weapons/pistol/pistol_fire2.wav", 70, math.random(137, 143), 0.85)
 	self:EmitSound("weapons/ar2/fire1.wav", 70, math.random(105, 115), 0.85, CHAN_WEAPON + 20)
