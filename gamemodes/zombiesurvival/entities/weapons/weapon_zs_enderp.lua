@@ -29,8 +29,11 @@ SWEP.Base					= "weapon_zs_base"
 
 SWEP.ShowWorldModel         = false
 SWEP.UseHands = true
-SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
-SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
+if CLIENT then
+	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
+	SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
+	SWEP.WeaponType = "rifle"
+end
 SWEP.SlotPos				= 1
 
 SWEP.ViewModel 				= "models/weapons/cstrike/c_rif_famas.mdl"

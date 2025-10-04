@@ -149,6 +149,7 @@ AddCSLuaFile("sh_serialization.lua")
 AddCSLuaFile("sh_globals.lua")
 AddCSLuaFile("sh_util.lua")
 AddCSLuaFile("sh_options.lua")
+AddCSLuaFile("sh_zombieshop.lua")
 AddCSLuaFile("sh_zombieclasses.lua")
 AddCSLuaFile("sh_animations.lua")
 AddCSLuaFile("sh_sigils.lua")
@@ -713,7 +714,7 @@ function GM:ShowTeam(pl)//和上面的一样，不过你可以直接把整个函
 	if pl:Team() == TEAM_HUMAN and not self.ZombieEscape then
 		pl:SendLua(self:GetWave() > 0 and "GAMEMODE:OpenArsenalMenu()" or "MakepWorth()")
 	elseif pl:Team() == TEAM_UNDEAD and not self.ZombieEscape then
-		pl:SendLua("MakepMutationShop()")
+		pl:SendLua("OpenMutationShop()")
 	end
     --[[
     if pl:Team() == TEAM_UNDEAD and not self.ZombieEscape then //标记
@@ -1391,7 +1392,7 @@ function GM:Think()
 			and self.LastBossZombieSpawned ~= wave and wave > 0 and not self.RoundEnded
 			and (self.BossZombiePlayersRequired <= 0 or #player.GetAll() >= self.BossZombiePlayersRequired) then
 				if self:GetWaveStart() - 5 <= time then
-					self:SpawnMultipleBosses(3) -- 生成3个BOSS
+					self:SpawnMultipleBosses(2) -- 生成3个BOSS
 				else
 					self:CalculateNextBoss()
 				end
@@ -2441,12 +2442,14 @@ function GM:PlayerInitialSpawnRound(pl)
 	pl.NestSpawns = 0
 	pl.LastRevive = 0
 
+	--僵尸突变的设置⬇-----
     pl.m_Zombie_Moan = nil
 	pl.m_Zombie_MoanGuard = nil
 	pl.m_Zombie_Health = nil
 	pl.m_Zombie_Damage1 = nil
 	-- Boss Mutations (Z-Shop)
 	pl.m_Shade_Force = nil
+
 	pl.ZSInventory = {}
 
 	--local nosend = not pl.DidInitPostEntity
@@ -4340,7 +4343,7 @@ function GM:PlayerSpawn(pl)
 
 		pl:SetViewOffset(DEFAULT_VIEW_OFFSET)
 		pl:SetViewOffsetDucked(DEFAULT_VIEW_OFFSET_DUCKED)
-
+		
 		if self.ZombieEscape then
 			-- 给予固定的近战和投掷武器
 			pl:Give("weapon_zs_zeknife")
@@ -4360,7 +4363,7 @@ function GM:PlayerSpawn(pl)
 			-- 在给予所有武器后，统一为玩家补充弹药
 			-- 这种做法更为高效，可以遍历玩家的所有武器并为其补充弹药
 			for _, wep in pairs(pl:GetWeapons()) do
-				if wep.Primary and wep.Primary.Ammo and wep.Primary.Ammo ~= "none" then
+				if wep.Primary and wep.Primary.Ammo and wep.Primary.Ammo ~= "none" and wep:GetClass() ~= "weapon_zs_zegrenade" then
 					-- 给予一个非常大的弹药数量，以达到“无限”后备弹药的效果
 					pl:GiveAmmo(99999, wep.Primary.Ammo, true) 
 				end
@@ -4389,7 +4392,7 @@ function GM:PlayerSpawn(pl)
 				end
 			end
 		end
-
+		
 		local oldhands = pl:GetHands()
 		if IsValid(oldhands) then
 			oldhands:Remove()

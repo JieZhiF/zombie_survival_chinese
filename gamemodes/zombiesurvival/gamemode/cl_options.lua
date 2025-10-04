@@ -51,9 +51,7 @@ GM.ItemCategoryIcons = {
 	[ITEMCAT_DEPLOYABLES] = "icon16/package.png",
 	[ITEMCAT_OTHER] = "icon16/world.png",
 	[ITEMCAT_TRINKETS] = "icon16/ruby.png",
-	[ITEMCAT_MUTATIONS] = "icon16/pill.png",--主要添加这个
-	[ITEMCAT_MUTATIONS_BOSS] = "icon16/pill_add.png",--[[,
-	[ITEMCAT_RETURNS] = "icon16/user_delete.png"]]
+	--[ITEMCAT_RETURNS] = "icon16/user_delete.png"
 }
 
 GM.RemortColors = {

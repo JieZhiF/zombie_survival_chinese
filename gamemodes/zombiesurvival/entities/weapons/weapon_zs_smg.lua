@@ -154,6 +154,7 @@ SWEP.Tier = 3
 
 SWEP.IronSightsPos = Vector(-5.338, -4.637, 1.48)
 SWEP.IronSightsAng = Vector(0, 0, 0)
+--[[
 function SWEP:Think()
 	self.BaseClass.Think(self)
 	if CLIENT then
@@ -162,6 +163,7 @@ function SWEP:Think()
 		end
 	end
 end
+]]
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_RELOAD_SPEED, 0.1)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, ""..translate.Get("weapon_zs_smg_r1"), ""..translate.Get("weapon_zs_smg_r1_description"), function(wept)
 	wept.Primary.Delay = 0.15

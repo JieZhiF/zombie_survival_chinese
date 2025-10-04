@@ -649,10 +649,10 @@ concommand.Add("zs_shitmap_tomover", function(sender, command, arguments)
 	end
 end)
 
-//随便放
+-- 用这段代码完整替换你原来的 concommand.Add("zs_mutationshop_click", ...) 函数
 concommand.Add("zs_mutationshop_click", function(sender, command, arguments)
 	if not (sender:IsValid() and sender:IsConnected()) or #arguments == 0 then return end
-
+	sender.UsedMutations = sender.UsedMutations or {}
 	--[[for _, pl in pairs(player.GetAll(TEAM_HUMAN)) do
 		if LASTHUMAN then
 		sender:CenterNotify(COLOR_RED, translate.ClientGet(sender, "cant_buy_mutations"))
@@ -673,23 +673,38 @@ concommand.Add("zs_mutationshop_click", function(sender, command, arguments)
 
 	for _, id in pairs(arguments) do
 		local tab = FindMutation(id)
+		
 		if tab and not hasalready[id] then
-			if tab.Worth and tab.Callback then
-				cost = tab.Worth
+			-- 修复 #1: 必须使用大写的 'Price'，因为在 AddMutation 函数中定义的是 'Price'
+			print("Received zs_mutationshop_click concommand from")
+			if tab.Price and tab.Callback then
+				-- 修复 #2: 同样，这里也必须使用大写的 'Price'
+				cost = tab.Price
 				hasalready[id] = true
-				tab.Callback(sender)
-				sender:TakeTokens(cost)
-				sender:PrintTranslatedMessage(HUD_PRINTTALK, "purchased_x_for_y_btokens", tab.Name, cost )
-				sender:SendLua("surface.PlaySound(\"ambient/levels/labs/coinslot1.wav\")")
-				sender.UsedMutations = sender.UsedMutations or { }
-				table.insert( sender.UsedMutations, tab.Signature )
-				--print( sender.UsedMutations, tab.Signature ) --DEBUG
-				--print( cost ) --DEBUG
+				
+				-- 增加一层保护：确保玩家有足够的钱再执行购买逻辑
+				if tokens >= cost then
+
+					tab.Callback(sender)
+					sender:TakeTokens(cost)
+					sender:PrintTranslatedMessage(HUD_PRINTTALK, "purchased_x_for_y_btokens", tab.Name, cost)
+					sender:SendLua("surface.PlaySound(\"ambient/levels/labs/coinslot1.wav\")")
+					sender.UsedMutations = sender.UsedMutations or {}
+					table.insert(sender.UsedMutations, tab.Signature)
+
+				else
+					-- 如果钱不够，可以给玩家一个提示
+					sender:CenterNotify(COLOR_RED, translate.ClientGet(sender, "you_dont_have_enough_btokens"))
+					sender:SendLua("surface.PlaySound(\"buttons/button10.wav\")")
+					-- 钱不够时，直接跳出循环，不再尝试购买后续物品
+					break 
+				end
 			end
 		end
 	end
 
-	if cost > tokens then return end
+	-- 这一行现在已经不是必需的了，因为检查已经移到循环内部，但保留也无妨
+	if cost and cost > tokens then return end
 	
 	local itemtab
 	local id = arguments[1]

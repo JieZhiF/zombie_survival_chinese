@@ -1,3 +1,4 @@
+-- 将基础控件从 DFrame 更换为 DPanel
 local PANEL = {}
 
 -- 定义常量以便于统一修改样式
@@ -5,28 +6,33 @@ local COLOR_BG = Color(45, 45, 55, 240)
 local COLOR_BG_INNER = Color(35, 35, 45, 220)
 local COLOR_ACCENT = Color(40, 155, 255)
 local COLOR_TEXT = Color(248, 248, 248, 240)
-local FONT_TOP_CATEGORY = "ZS2DFontHarmony" //顶部大类标签的字体
-local FONT_SUB_CATEGORY = "ZS2DFontHarmony" //左侧次一级分类标签的字体
+local FONT_TOP_CATEGORY = "ZS2DFontHarmony" --顶部大类标签的字体
+local FONT_SUB_CATEGORY = "ZS2DFontHarmony" --左侧次一级分类标签的字体
 local FONT_LABEL = "ZS2DFontHarmonySmall"
 local FONT_LABEL_SMALL = "DermaDefaultSmall"
-local FirstOpen = true --记录首次打开，以此来屏蔽掉首次打开时的声音
+
 function PANEL:Init()
     -- 1. 基本框架设置
     local scale = BetterScreenScale and BetterScreenScale() or 1
     self:SetSize(ScrW() * 0.45 * scale, ScrH() * 0.55 * scale)
     self:Center()
-    self:SetTitle("")
     self:MakePopup()
-    self:SetDraggable(true)
+
+    -- DPanel 没有这些 DFrame 的函数，所以移除它们
+    -- self:SetTitle("")
+    -- self:ShowCloseButton(false)
+    -- self:SetDraggable(true)
 
     -- 填充所有选项数据
     self:PopulateOptionsData()
 
     -- 2. 创建UI布局
     self:CreateLayout()
+    -- 3. 创建自定义关闭按钮 (在布局创建后，确保它在顶层)
+    self:CreateCloseButton()
+
     if not IsValid(self) or not IsValid(self.TopCategoryBar) then return end
-    -- 查找第一个DButton并模拟点击
--- 查找第一个DButton并模拟点击，不播放声音
+    -- 查找第一个DButton并模拟点击，不播放声音
     for _, child in ipairs(self.TopCategoryBar:GetChildren()) do
         if IsValid(child) and isfunction(child.DoClick) then
             child:DoClick(false) -- 传递 false 来静音
@@ -62,6 +68,29 @@ function PANEL:CreateLayout()
     self.ContentPanel:DockMargin(4, 0, 8, 8)
     self.ContentPanel.Paint = function(pnl, w, h)
         draw.RoundedBox(8, 0, 0, w, h, COLOR_BG_INNER)
+    end
+end
+
+function PANEL:CreateCloseButton()
+    local closeBtn = vgui.Create("DButton", self)
+    closeBtn:SetSize(50, 50)
+    closeBtn:SetPos(self:GetWide() - 75, 0)
+    closeBtn:SetZPos(1) -- 确保按钮在顶部类别栏之上
+    closeBtn:SetText("×")
+    closeBtn:SetFont("ZS3D2DFontSmall")
+    closeBtn:SetTextColor(COLOR_TEXT)
+    closeBtn:SetContentAlignment(5)
+
+    closeBtn.Paint = function(pnl, w, h)
+        if pnl:IsHovered() then
+            draw.RoundedBox(6, 0, 0, w, h, Color(220, 50, 50, 230))
+        else
+            draw.RoundedBox(6, 0, 0, w, h, Color(0, 0, 0, 0))
+        end
+    end
+
+    closeBtn.DoClick = function()
+        self:Remove()
     end
 end
 
@@ -258,13 +287,41 @@ function PANEL:CreateTopCategoryBar()
     self.TopCategoryBar = vgui.Create("DPanel", self)
     self.TopCategoryBar:Dock(TOP)
     self.TopCategoryBar:SetTall(50)
-    self.TopCategoryBar:DockMargin(8, 8, 8, 0)
+    self.TopCategoryBar:DockMargin(0, 0, 0, 0)
+
+    --[[-------------------------------------------------------------------------
+        新增: 为顶部大类栏添加拖拽功能
+    ---------------------------------------------------------------------------]]
+    self.TopCategoryBar.m_bDragging = false
+    self.TopCategoryBar.m_DragStart = {}
+    self.TopCategoryBar.OnMousePressed = function( pnl, mcode )
+        if mcode == MOUSE_LEFT then
+            pnl.m_bDragging = true
+            -- self 指向的是 PANEL, 即我们的主窗口
+            pnl.m_DragStart = { gui.MouseX() - self.x, gui.MouseY() - self.y }
+        end
+    end
+    self.TopCategoryBar.OnMouseReleased = function( pnl, mcode )
+        if mcode == MOUSE_LEFT then
+            pnl.m_bDragging = false
+        end
+    end
+    self.TopCategoryBar.Think = function( pnl )
+        if pnl.m_bDragging then
+            -- 检查鼠标左键是否仍然被按下
+            if input.IsMouseDown( MOUSE_LEFT ) then
+                self:SetPos( gui.MouseX() - pnl.m_DragStart[1], gui.MouseY() - pnl.m_DragStart[2] )
+            else
+                -- 如果鼠标被释放了（例如在窗口外），则停止拖动
+                pnl.m_bDragging = false
+            end
+        end
+    end
 
     self.TopCategoryBar.PerformLayout = function(pnl, w, h)
         local buttons = {}
         for _, child in ipairs(pnl:GetChildren()) do
-           -- if IsValid(child) and child:GetClass() == "DButton" then table.insert(buttons, child) end
-           table.insert(buttons, child) 
+           table.insert(buttons, child)
         end
         if #buttons == 0 then return end
 
@@ -283,7 +340,7 @@ function PANEL:CreateTopCategoryBar()
             currentX = currentX + btn:GetWide() + buttonMargin
         end
     end
-    
+
     self.TopCategoryBar.Paint = function(pnl, w, h)
         surface.SetDrawColor(COLOR_BG_INNER)
         surface.DrawRect(0, h - 2, w, 2)
@@ -319,22 +376,20 @@ function PANEL:CreateTopCategoryBar()
             end
             self:SetSelected(true)
             rootPanel:UpdateSubCategoryList(self.subCategories)
-            -- 自动点击第一个子分类，并且明确不播放声音
+            -- 自动点击第一个子分类
             timer.Simple(0, function()
                 if not IsValid(rootPanel) then return end
                 local subCategoryList = rootPanel.SubCategoryList
-                -- 依然使用修复后的代码来获取正确的按钮
                 if IsValid(subCategoryList) and IsValid(subCategoryList:GetCanvas()) then
                     local children = subCategoryList:GetCanvas():GetChildren()
                     if #children > 0 then
                         local firstBtn = children[1]
                         if IsValid(firstBtn) and isfunction(firstBtn.DoClick) then
-                            firstBtn:DoClick(false) -- 传递 false 来静音
+                            firstBtn:DoClick(false)
                         end
                     end
                 end
             end)
-            -- 只有在 play_sound 不为 false 时才播放声音 (玩家手动点击时 play_sound 为 nil)
             if play_sound ~= false then
                 surface.PlaySound("ui/buttonclick.wav")
             end
@@ -390,7 +445,6 @@ function PANEL:UpdateSubCategoryList(subCategories)
             self:SetSelected(true)
             rootPanel:UpdateContent(self.categoryName)
 
-            -- 只有在 play_sound 不为 false 时才播放声音
             if play_sound ~= false then
                 surface.PlaySound("ui/buttonclick.wav")
             end
@@ -433,38 +487,31 @@ function PANEL:AddCheckbox(parent, data)
     parent:AddItem(container)
 
     local checkbox = vgui.Create("DCheckBox", container)
-    checkbox:SetSize(90, 30) -- 调整了尺寸比例
+    checkbox:SetSize(90, 30)
     checkbox:Dock(LEFT)
     checkbox:DockMargin(0, 2, 0, 0)
     checkbox:SetConVar(data.convar)
 
-    -- 手动同步初始状态，防止首次加载时显示不正确
     local convar_state = GetConVar(data.convar):GetBool()
     checkbox:SetValue(convar_state)
 
-    -- 用于动画的变量
     checkbox.animProgress = checkbox:GetChecked() and 1 or 0
     checkbox.lastAnimTime = CurTime()
 
     checkbox.Paint = function(self, w, h)
         local checked = self:GetChecked()
-
-        -- 平滑动画计算
         local targetProgress = checked and 1 or 0
         local deltaTime = CurTime() - self.lastAnimTime
         self.lastAnimTime = CurTime()
-        -- 使用 Lerp 函数让动画过渡更平滑
         self.animProgress = Lerp(deltaTime * 12, self.animProgress, targetProgress)
 
         local padding = 3
         local knobSize = h - padding * 2
 
-        -- 定义颜色
         local COLOR_TRACK_OFF = Color(80, 85, 95, 255)
         local COLOR_KNOB_OFF = Color(180, 185, 195, 255)
         local COLOR_KNOB_ON = Color(255, 255, 255, 255)
-        
-        -- 根据动画进度动态计算背景色和滑块颜色
+
         local trackColor = Color(
             Lerp(self.animProgress, COLOR_TRACK_OFF.r, COLOR_ACCENT.r),
             Lerp(self.animProgress, COLOR_TRACK_OFF.g, COLOR_ACCENT.g),
@@ -475,25 +522,21 @@ function PANEL:AddCheckbox(parent, data)
             Lerp(self.animProgress, COLOR_KNOB_OFF.g, COLOR_KNOB_ON.g),
             Lerp(self.animProgress, COLOR_KNOB_OFF.b, COLOR_KNOB_ON.b)
         )
-        
-        -- 鼠标悬停时的微妙反馈：让整体变亮一点
+
         if self:IsHovered() then
             trackColor.r = math.min(255, trackColor.r + 20)
             trackColor.g = math.min(255, trackColor.g + 20)
             trackColor.b = math.min(255, trackColor.b + 20)
         end
 
-        -- 根据动画进度计算滑块位置
         local startX = padding
         local endX = w - knobSize - padding
         local knobX = Lerp(self.animProgress, startX, endX)
-        
-        -- 绘制轨道（背景）
+
         draw.RoundedBoxEx(h / 2, 0, 0, w, h, trackColor)
-        -- 绘制滑块
         draw.RoundedBoxEx(knobSize / 2, knobX, padding, knobSize, knobSize, knobColor)
     end
-    
+
     local label = vgui.Create("DLabel", container)
     label:Dock(FILL)
     label:SetMouseInputEnabled(true)
@@ -501,8 +544,8 @@ function PANEL:AddCheckbox(parent, data)
     label:SetText(translate.Get(data.label) or data.label)
     label:SetTextColor(COLOR_TEXT)
     label:SetContentAlignment(4)
-    label:DockMargin(10, 0, 0, 0) -- 给标签和开关之间增加一点间距
-    
+    label:DockMargin(10, 0, 0, 0)
+
     label.DoClick = function()
         checkbox:SetValue(not checkbox:GetValue())
     end
@@ -517,11 +560,11 @@ function PANEL:AddSlider(parent, data)
     slider:SetDark(true)
     slider.Label:SetFont(FONT_LABEL)
     slider.Label:SetTextColor(COLOR_TEXT)
-    
+
     if IsValid(slider.NumEntry) then
         slider.NumEntry:SetFont(FONT_LABEL)
     end
-    
+
     parent:AddItem(slider)
 end
 
@@ -572,7 +615,8 @@ function PANEL:AddComboBox(parent, data)
     parent:AddItem(combo)
 end
 
-vgui.Register("ZSOptions", PANEL, "DFrame")
+-- 确保这里使用的是 DPanel
+vgui.Register("ZSOptions", PANEL, "DPanel")
 
 local WindowInstance = nil
 function MakepOptions()
@@ -583,5 +627,4 @@ function MakepOptions()
     WindowInstance = vgui.Create("ZSOptions")
     WindowInstance:SetAlpha(0)
     WindowInstance:AlphaTo(255, 0.2)
-
 end

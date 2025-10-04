@@ -1,345 +1,407 @@
-//僵尸突变商店的界面
-local TokensRemaining = 0//剩余的突变点数
-local MutationButtons = {}//突变按钮
-local function Checkout(tobuy)//购买突变
-	if tobuy and #tobuy > 0 then//如果要购买的突变存在且数量大于0
-		RunConsoleCommand("zs_mutationshop_click", unpack(tobuy))//发送购买突变的命令
-		if pMutation and pMutation:Valid() then
-			pMutation:Close()
-		end
-	else
-		surface.PlaySound("buttons/combine_button_locked.wav")//播放按钮被锁定的音效
-	end
-end
+-- ============================================================================
+-- 商店配置 (Shop Configuration) - (原版设计 + 价格 + 快速动画)
+-- ============================================================================
+local ShopConfig = {
+    Title = ""..translate.Get("mutation_MutationShop").."",
+    WindowWidthScale = 0.48,
+    WindowHeightScale = 0.6,
+    TitleBarHeight = 50,
+    CategoryBarHeight = 50,
 
+    ItemRowHeight = 85,
+    ItemIconSize = 56,
+    ItemButtonWidth = 80,
+    ItemButtonHeight = 60,
 
-local function CheckoutDoClick(self)//购买按钮的点击事件
-	draw.SimpleText(translate.Get("mutation_Purchase"), "ZSHUDFontSmall", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-
-	local tobuy = {}//要购买的突变
-
-	for _, btn in pairs(MutationButtons) do//遍历突变按钮
-		if btn and btn.On and btn.ID then//如果突变按钮存在且被选中
-			table.insert(tobuy, btn.ID)//将突变按钮的ID加入要购买的突变
-		end
-	end//遍历结束
-	Checkout(tobuy)//购买突变
-end
-
-function MakepMutationShop(used)
-	if pMutation and pMutation:Valid() then//如果突变商店存在
-		pMutation:Remove()//移除突变商店
-		pMutation = nil
-	end
-	local BetterScreenScale = BetterScreenScale()//获取比例
-	local maxtokens = math.floor(MySelf:GetTokens())//最大突变点数
-
-	TokensRemaining = maxtokens
-	local wid, hei = ScrW() * 0.61 * BetterScreenScale, ScrH() * 0.68 * BetterScreenScale//突变商店的宽度和高度
-
-	local frame = vgui.Create("DFrame")//创建窗口
-	pMutation = frame//设置突变商店的窗口
-	frame:SetSize(wid, hei)//设置窗口的大小
-	frame:SetDraggable(false)//禁用拖动窗口
-	frame:SetDeleteOnClose(true)//关闭窗口时删除窗口
-	frame:SetKeyboardInputEnabled(false)//禁用键盘输入
-	frame:SetTitle("")//设置窗口的标题
-	frame.Paint = function() draw.RoundedBox( 15, 0, 0, wid, hei, Color( 0, 0, 0, 150) ) end//绘制窗口的背景
-
-
-	local title = EasyLabel(frame, translate.Get("mutation_MutationShop"), "ZSHUDFontSmaller", COLOR_WHITE) // 创建标题
-	title:CenterHorizontal()
-	local subtitle = EasyLabel(frame, translate.Get("mutation_ZombiesGetStronger"), "ZSHUDFontSmaller", COLOR_WHITE) // 创建副标题
-	
-	subtitle:CenterHorizontal()//设置副标题居中
-	subtitle:MoveBelow(title, 4)//设置副标题在标题下方4像素
-	local propertysheet = vgui.Create("DPropertySheet", frame)//创建属性表
-	propertysheet:StretchToParent(4, 60, 450, 50)//设置属性表的位置
-	--propertysheet:StretchToParent(4, 24, 4, 50)//设置属性表的位置
-	propertysheet.Paint = function() end//绘制属性表的背景
-
-	local panfont = "ZSHUDFontSmall"//字体
-	local panhei = 40//高度
-	
-	for catid, catname in ipairs(GAMEMODE.ItemCategories) do//遍历物品分类
-		local hasitems = false//是否有物品
-		for i, tab in ipairs(GAMEMODE.Mutations) do//遍历突变
-			if tab.Category == catid and tab.MutationShop then//如果突变的分类与当前分类相同且突变商店存在
-				hasitems = true//有物品
-				break//跳出循环
-			end
-		end
-
-		if hasitems then//如果有物品
-			local list = vgui.Create("DPanelList", propertysheet)//创建列表
-			list:SetPaintBackground(false)//绘制背景
-			propertysheet:AddSheet(catname, list, GAMEMODE.ItemCategoryIcons[catid], false, false)//添加标签
-			list:EnableVerticalScrollbar(true)//启用垂直滚动条
-			list:SetWide(propertysheet:GetWide() - 16)//设置列表的宽度
-			list:SetSpacing(2)//设置列表的间距
-			list:SetPadding(2)//设置列表的填充
-
-			for i, tab in ipairs(GAMEMODE.Mutations) do//遍历突变
-				if tab.Category == catid and tab.MutationShop then//如果突变的分类与当前分类相同且突变商店存在
-					local button = vgui.Create("ZSMutationButton")//创建突变按钮
-					button:SetMutationID(i)//设置突变ID
-					list:AddItem(button)//添加突变按钮
-					MutationButtons[i] = button//设置突变按钮
-					
-				end
-			end
-		end
-	end	
-
-
-
-	local worthlab = EasyLabel(frame, translate.Get("mutationsdamagetokens")..": "..tostring(TokensRemaining), "ZSHUDFontSmall", COLOR_LIMEGREEN)//创建突变点数标签
-	worthlab:SetPos(8, frame:GetTall() - worthlab:GetTall() - 8)//设置突变点数标签的位置
-	frame.WorthLab = worthlab
-
-	-- 创建一个容器
-	local container = vgui.Create("DPanel", frame)
-	container:SetName("containerName")
-	container:SetSize(frame:GetWide() * 0.15 *BetterScreenScale, frame:GetTall() * 0.69 *BetterScreenScale)  -- 调整容器的大小以适应竖直排列
-	container:SetPos(frame:GetWide() * 0.59 * BetterScreenScale, frame:GetTall() * 0.05 * BetterScreenScale)  -- 设置容器的位置
-	container.Paint = function(self, w, h)  -- 设置容器的背景为黑色透明
-		draw.RoundedBox(10, 0, 0, w, h, Color(0, 0, 0, 130))  -- 可以调整最后一个参数来改变透明度
-	end
-
-		
-	local BuyFreame = vgui.Create("DPanel", container)//创建购买预览背景
-	BuyFreame:SetSize(300, 50)//设置购买预览背景的大小
-	BuyFreame:SetPos(container:GetWide() * 0.1*BetterScreenScale,container:GetTall()* 0.68 * BetterScreenScale)//设置购买预览背景的位置
-	BuyFreame.Paint = function ()
-		surface.SetDrawColor(0,0,0,190)
-		surface.DrawOutlinedRect(0,0,BuyFreame:GetWide() * BetterScreenScale,BuyFreame:GetTall() * BetterScreenScale,1)
-	end
-
-	--BuyFreame:SetVisible(false)//隐藏购买预览背景
-
-	local checkout = vgui.Create("DButton", BuyFreame)
-	checkout:SetFont("ZSHUDFontSmall")
-	checkout:SetText("")
-	checkout:SizeToContents()
-	checkout:SetSize(299, 48)
-	checkout:SetPos((BuyFreame:GetWide() - checkout:GetWide()) / 2, (BuyFreame:GetTall() - checkout:GetTall()) / 2)  -- 设置购买按钮的位置在购买预览背景的中间
-	checkout.Paint = function(self, w, h)
-		surface.SetDrawColor(0, 0, 0, 150)
-		surface.DrawRect(0, 0, w, h)
-		draw.SimpleText(""..translate.Get("mutation_Purchase"), "ZSHUDFontSmall", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-	end
-	checkout.DoClick = CheckoutDoClick
-
-	local BuyIcon = vgui.Create("DImage", checkout)//创建购买图标
-	BuyIcon:SetImage("zombiesurvival/zombieshopcart.png")//设置购买图标的图片
-	BuyIcon:SetSize(64, 64)//设置购买图标的大小
-	local IconWide,IconTall = BuyIcon:GetWide(),BuyIcon:GetTall()//获取购买图标的大小
-	BuyIcon:SetPos(0 , -5)//设置购买图标的位置
-
-	local viewname = vgui.Create("DLabel", container)
-	viewname:SetName("viewname")
-	viewname:SetFont("ZSHUDFontSmaller")
-	viewname:SetWide(150 * BetterScreenScale)
-	viewname:SetTall(70 * BetterScreenScale)
-	viewname:SetTextColor(COLOR_WHITE)
-	viewname:SetText("")
-	local xPos = math.Round((container:GetWide() / 2) - (viewname:GetWide() / 2))
-	viewname:CenterHorizontal(0.5)
-	viewname:CenterVertical(0.5)
-	viewname:SetPos(xPos, 0)
-	
-
-	-- 创建 itemDescription，并将其父级设置为容器
-	local itemDescription = vgui.Create("DLabel", container)
-	itemDescription:SetName("itemDescription")
-	itemDescription:SetFont("ZSHUDFontSmallest")
-	itemDescription:SetTextColor(COLOR_GRAY)
-	itemDescription:SetMultiline(true)
-	itemDescription:SetWrap(true)
-	itemDescription:SetAutoStretchVertical(true)
-	itemDescription:SetWide(300 * BetterScreenScale)
-	itemDescription:SetTall(340 * BetterScreenScale)
-	itemDescription:SetPos(0, 70)  -- 设置 itemDescription 的位置紧跟在 viewname 下面
-	itemDescription:SetText("")
-
-
-	frame:Center()//设置突变商店的位置
-	frame:SetAlpha(0)//设置突变商店的透明度
-	frame:AlphaTo(255, 0.5, 0)//设置突变商店的透明度,持续时间,延迟时间
-	frame:MakePopup()//设置突变商店为弹出窗口
-	return frame
-end
-
-function SetItemDescription(itemname, itemDescription)
-    local ItemName = tostring(itemname)
-    local ItemDescription = tostring(itemDescription)
-    local container = nil
-    -- 遍历 frame 的所有子级来找到 container
-    for _, v in ipairs(pMutation:GetChildren()) do
-        if v:GetName() == "containerName" then  -- 确保这里的 "containerName" 与你创建 container 时设置的名称相匹配
-            container = v
-            break
-        end
-    end
+    ContentPadding = 10,
     
-	if container then
-		-- 遍历 container 的所有子级
-		for _, v in ipairs(container:GetChildren()) do
-			if v:GetName() == "viewname" then
-				v:SetText(ItemName)
-			elseif v:GetName() == "itemDescription" then
-				v:SetText("" .. ItemDescription)  -- 在描述文本前添加两个空格
-			end
-		end
-	end
+    AnimationSpeed = 10, -- [[ MODIFIED ]] -- 动画速度乘数 (原为8)
+
+    Fonts = {
+        Title = "ZSHUDFontSmall",
+        Tab = "ZSHUDFontSmall",
+        ItemName = "ZSHUDFontSmall",
+        ItemDesc = "ZSHUDFontTiny",
+        Button = "ZSHUDFontTiny",
+        CloseButton = "ZSHUDFontSmall",
+        ItemPrice = "ZSHUDFontSmall" -- [[ NEW ]] -- 价格字体
+    },
+
+    Colors = {
+        Background = Color(40, 42, 48, 245),
+        TitleBar = Color(50, 52, 58, 255),
+        CategoryBar = Color(45, 47, 53, 255),
+        TextPrimary = Color(220, 221, 222),
+        TextSecondary = Color(150, 152, 155),
+        TextTitle = Color(200, 220, 255),
+        TextPrice = Color(255, 199, 71), -- [[ NEW ]] -- 价格颜色 (金色)
+        Accent = Color(35, 180, 220),
+        ButtonBuy = Color(40, 160, 90),
+        ButtonBuyHover = Color(60, 190, 110),
+        ButtonOwned = Color(180, 70, 70),
+        ButtonDisabled = Color(100, 100, 100),
+        CloseButtonHover = Color(220, 50, 50),
+        ListItem = Color(255, 255, 255, 8),
+        ListItemHover = Color(255, 255, 255, 16),
+        ScrollbarGrip = Color(255, 255, 255, 60),
+        ScrollbarTrack = Color(0, 0, 0, 50)
+    }
+}
+
+-- 辅助函数：动画颜色
+local function LerpColor(fraction, from, to)
+    local r = Lerp(fraction, from.r, to.r)
+    local g = Lerp(fraction, from.g, to.g)
+    local b = Lerp(fraction, from.b, to.b)
+    local a = Lerp(fraction, from.a, to.a)
+    return Color(r, g, b, a)
 end
-	
+
+-- 辅助函数：绘制垂直线性渐变
+local function DrawVerticalGradient(x, y, w, h, startColor, endColor)
+    for i = 0, h - 1 do
+        local frac = (h == 1) and 0 or (i / (h - 1))
+        local r = Lerp(frac, startColor.r, endColor.r)
+        local g = Lerp(frac, startColor.g, endColor.g)
+        local b = Lerp(frac, startColor.b, endColor.b)
+        local a = Lerp(frac, startColor.a, endColor.a)
+        surface.SetDrawColor(r, g, b, a)
+        surface.DrawRect(x, y + i, w, 1)
+    end
+end
 
 
+-- ============================================================================
+-- VGUI 面板: 单个突变项目行 (ZSMutationItemRow)
+-- ============================================================================
 local PANEL = {}
-PANEL.m_ItemID = 0
-PANEL.RefreshTime = 1
-PANEL.NextRefresh = 0
 
 function PANEL:Init()
-	self:SetFont("DefaultFontSmall")
+    self:SetTall(ShopConfig.ItemRowHeight)
+    self:Dock(TOP)
+    self:DockMargin(0, 0, 0, 5)
+
+    self.Icon = vgui.Create("DImage", self)
+    self.Icon:SetSize(ShopConfig.ItemIconSize, ShopConfig.ItemIconSize)
+    
+    self.NameLabel = vgui.Create("DLabel", self)
+    self.NameLabel:SetFont(ShopConfig.Fonts.ItemName)
+    self.NameLabel:SetTextColor(ShopConfig.Colors.TextPrimary)
+    self.NameLabel:SetWrap(true)
+    self.NameLabel:SetAutoStretchVertical(true)
+
+    self.DescLabel = vgui.Create("DLabel", self)
+    self.DescLabel:SetFont(ShopConfig.Fonts.ItemDesc)
+    self.DescLabel:SetTextColor(ShopConfig.Colors.TextSecondary)
+    self.DescLabel:SetWrap(true)
+    self.DescLabel:SetAutoStretchVertical(true)
+    
+    -- [[ NEW ]] -- 创建价格标签
+    self.PriceLabel = vgui.Create("DLabel", self)
+    self.PriceLabel:SetFont(ShopConfig.Fonts.ItemPrice)
+    self.PriceLabel:SetTextColor(ShopConfig.Colors.TextPrice)
+    self.PriceLabel:SetContentAlignment(5) -- 居中对齐
+
+    self.PurchaseButton = vgui.Create("DButton", self)
+    self.PurchaseButton:SetText(translate.Get("mutation_Purchase"))
+    self.PurchaseButton:SetFont(ShopConfig.Fonts.Button)
+    self.PurchaseButton:SetSize(ShopConfig.ItemButtonWidth, ShopConfig.ItemButtonHeight)
+    self.PurchaseButton:SetTextColor(color_white)
+    self.PurchaseButton.DoClick = function() self:Purchase() end
+    
+    self.PurchaseButton.CurrentColor = ShopConfig.Colors.ButtonBuy
+    self.PurchaseButton.Paint = function(btn, w, h)
+        local targetColor = btn:IsHovered() and ShopConfig.Colors.ButtonBuyHover or ShopConfig.Colors.ButtonBuy
+        btn.CurrentColor = LerpColor(FrameTime() * ShopConfig.AnimationSpeed, btn.CurrentColor, targetColor)
+        draw.RoundedBox(8, 0, 0, w, h, btn.CurrentColor)
+        DrawVerticalGradient(0, 0, w, h * 0.5, Color(255, 255, 255, 20), Color(255, 255, 255, 0))
+    end
+
+    self.CurrentBGColor = ShopConfig.Colors.ListItem
 end
 
-function PANEL:Think()
-	if CurTime() >= self.NextRefresh then
-		self.NextRefresh = CurTime() + self.RefreshTime
-		self:Refresh()
-	end
-end
+function PANEL:PerformLayout(w, h)
+    local iconMargin = (h - ShopConfig.ItemIconSize) / 2
+    self.Icon:SetPos(10, iconMargin)
 
-function PANEL:Refresh()
-	local count = GAMEMODE:GetCurrentEquipmentCount(self:GetItemID())
-	if count == 0 then
-		self:SetText(" ")
-	else
-		self:SetText(count)
-	end
-	self:SizeToContents()
-end
+    self.PurchaseButton:SetPos(w - ShopConfig.ItemButtonWidth - 10, (h - ShopConfig.ItemButtonHeight) / 2)
+    
+    -- [[ MODIFIED ]] -- 布局价格标签
+    self.PriceLabel:SizeToContents()
+    self.PriceLabel:SetPos(self.PurchaseButton.x - self.PriceLabel:GetWide() - 10, 0)
+    self.PriceLabel:SetTall(h)
 
-function PANEL:SetItemID(id) self.m_ItemID = id end
-function PANEL:GetItemID() return self.m_ItemID end
-
-vgui.Register("ItemAmountCounter", PANEL, "DLabel")
-
-PANEL = {}
-
-function PANEL:Init()
-    self:SetText("")
-    self:DockPadding(4, 4, 4, 4)
-    self:SetTall(48)
-
-    self.NameLabel = EasyLabel(self, "", "ZSHUDFontSmall")
-    self.NameLabel:SetContentAlignment(4)
-    self.NameLabel:Dock(FILL)
-    self.NameLabel:DockMargin(4, 0, 0, 0)  -- 减小左边距
-
-    self.PriceLabel = EasyLabel(self, "", "ZSHUDFontTiny")
-    self.PriceLabel:SetWide(220 * BetterScreenScale())
-    self.PriceLabel:SetContentAlignment(6)
-    self.PriceLabel:Dock(RIGHT)
-    self.PriceLabel:DockMargin(4, 0, 4, 0)  -- 减小左边距
-
-    self:SetMutationID(nil)
-end
-
-function PANEL:SetMutationID(id)//设置突变ID
-	self.ID = id
-
-	local tab = FindMutation(id)//根据突变ID获取突变
-
-	if not tab then//如果突变不存在
-		self.NameLabel:SetText("")//设置突变名称为空
-		return
-	end
-	
-	for k,v in pairs(UsedMutations) do//遍历已经购买的突变
-		if v == tab.Signature then//如果已经购买的突变的签名与当前突变的签名相同
-			self.NameLabel:SetTextColor(COLOR_RED)//设置突变名称的颜色为红色
-		end//结束判断
-	end
-
-	local mdl = tab.Model or (weapons.GetStored(tab.SWEP) or tab).WorldModel
-
-
-	if tab.Worth then
-		self.PriceLabel:SetText(tostring(tab.Worth).." "..translate.Get("mutationstokens"))
-	else
-		self.PriceLabel:SetText("")
-	end
-
-	self.NameLabel:SetText(tab.Name or "")
+    local textStartX = self.Icon.x + self.Icon:GetWide() + 15
+    local textMaxWidth = self.PriceLabel.x - textStartX - 15 -- 调整文本宽度以避免与价格重叠
+    
+    self.NameLabel:SetWide(textMaxWidth)
+    self.DescLabel:SetWide(textMaxWidth)
+    
+    local nameHeight = self.NameLabel:GetTall()
+    local descHeight = self.DescLabel:GetTall()
+    local textBlockHeight = nameHeight + descHeight + 4
+    local textBlockStartY = (h - textBlockHeight) / 2
+    
+    self.NameLabel:SetPos(textStartX, textBlockStartY)
+    self.DescLabel:SetPos(textStartX, textBlockStartY + nameHeight + 4)
 end
 
 function PANEL:Paint(w, h)
-	local outline
-	
-	if self.Hovered then
-		outline = self.On and COLOR_GREEN or COLOR_GRAY
-	else
-		outline = self.On and COLOR_DARKGREEN or COLOR_DARKGRAY
-	end
-
-	draw.RoundedBox(8, 0, 0, w, h, outline)
-	draw.RoundedBox(4, 4, 4, w - 8, h - 8, color_black)
+    local targetColor = self:IsHovered() and ShopConfig.Colors.ListItemHover or ShopConfig.Colors.ListItem
+    self.CurrentBGColor = LerpColor(FrameTime() * ShopConfig.AnimationSpeed, self.CurrentBGColor, targetColor)
+    draw.RoundedBox(4, 0, 0, w, h, self.CurrentBGColor)
 end
 
-function PANEL:DoClick(silent, force)
-	local id = self.ID
-	local tab = FindMutation(id)
-	if not tab then return end
-	
-	if self.On then
-		self.On = nil
-		if not silent then
-			surface.PlaySound("buttons/button18.wav")
-		end
-		TokensRemaining = TokensRemaining + tab.Worth
-	else
-		itemname = tab.Name
-		itemDescription = tab.Description
-		SetItemDescription(itemname,itemDescription)
-		
-		for k,v in pairs(UsedMutations) do
-			if v == tab.Signature then
-				surface.PlaySound("buttons/button8.wav")
-				return
-			end
-
-		end
-
-		
-		
-		if TokensRemaining < tab.Worth and not force then
-			surface.PlaySound("buttons/button8.wav")
-			return
-		end
-		
-		
-		self.On = true
-		if not silent then
-			surface.PlaySound("buttons/button17.wav")
-		end
-		TokensRemaining = TokensRemaining - tab.Worth
-	end
-
-	pMutation.WorthLab:SetText(translate.Get("mutationsdamagetokens")..": ".. TokensRemaining)
-	if TokensRemaining <= 0 then
-		pMutation.WorthLab:SetTextColor(COLOR_RED)
-		pMutation.WorthLab:InvalidateLayout()
-	elseif TokensRemaining <= MySelf:GetTokens() * 0.25 then
-		pMutation.WorthLab:SetTextColor(COLOR_YELLOW)
-		pMutation.WorthLab:InvalidateLayout()
-	else
-		pMutation.WorthLab:SetTextColor(COLOR_LIMEGREEN)
-		pMutation.WorthLab:InvalidateLayout()
-	end
-	pMutation.WorthLab:SizeToContents()
+function PANEL:SetMutation(mutationData)
+    self.Data = mutationData
+    if not self.Data then return end
+    
+    self.Data.Name = self.Data.Name or "未设置名字"
+    self.Data.Description = self.Data.Description or "未设置描述"
+   
+    self.NameLabel:SetText(self.Data.Name)
+    self.DescLabel:SetText(self.Data.Description)
+    
+    -- [[ NEW ]] -- 设置价格文本
+    self.PriceLabel:SetText(self.Data.Price or "??")
+    
+    self.Icon:SetVisible(true)
+    if not self.Data.Icon then
+        self.Icon:SetVisible(false)
+    end
+    self.Data.Icon = self.Data.Icon or "icon16/package.png"
+    self.Icon:SetImage(self.Data.Icon) 
+    
+    self:InvalidateLayout(true)
+    local isOwned = false
+    for _, sig in pairs(UsedMutations or {}) do
+        if sig == self.Data.Signature then isOwned = true; break end
+    end
+    if isOwned then
+        self.PriceLabel:SetVisible(false) -- 如果已拥有，则隐藏价格
+        self.PurchaseButton:SetText("已拥有")
+        self.PurchaseButton:SetEnabled(false)
+        self.PurchaseButton.Paint = function(btn, w, h) draw.RoundedBox(8, 0, 0, w, h, ShopConfig.Colors.ButtonOwned) end
+    end
 end
 
-vgui.Register("ZSMutationButton", PANEL, "DButton")
+function PANEL:Purchase()
+    if not self.Data then return end
+    local myTokens = LocalPlayer():GetTokens() or 0
+    local CanPurchase = gamemode.Call("ZombieCanPurchase", LocalPlayer())
+    RunConsoleCommand("zs_mutationshop_click", self.Data.Signature)
+    if myTokens >= self.Data.Price and CanPurchase then
+        --surface.PlaySound("buttons/button17.wav")
+        table.insert(UsedMutations, self.Data.Signature)
+        self:SetMutation(self.Data)
+    end
+end
+vgui.Register("ZSMutationItemRow", PANEL, "DPanel")
+
+
+-- ============================================================================
+-- VGUI 面板: 商店主窗口 (MutationShopFrame)
+-- ============================================================================
+local pMutationShop
+function OpenMutationShop(used)
+    if IsValid(pMutationShop) then pMutationShop:Remove() end
+    -- [[ FIX START ]] --
+    -- 仅当传入新的 `used` 数据时才更新全局列表。
+    -- 这可以防止在没有新数据的情况下打开商店时（例如通过按键绑定）重置玩家的已拥有物品列表。
+    if used then
+        UsedMutations = used
+    end
+
+    -- 确保 `UsedMutations` 至少被初始化为一个空表，以防万一。
+    UsedMutations = UsedMutations or {}
+    -- [[ FIX END ]] --
+
+    pMutationShop = vgui.Create("MutationShopFrame")
+end
+
+PANEL = {}
+PANEL.TitleBarHeight = ShopConfig.TitleBarHeight
+PANEL.CategoryBarHeight = ShopConfig.CategoryBarHeight
+
+function PANEL:GetSortedCategories()
+    local sortable = {}
+    for id, data in pairs(GAMEMODE.ZombieShopCategories) do
+        table.insert(sortable, {id = id, order = data.Order or 999})
+    end
+    table.sort(sortable, function(a, b) return a.order < b.order end)
+    local sortedIDs = {}
+    for _, item in ipairs(sortable) do table.insert(sortedIDs, item.id) end
+    return sortedIDs
+end
+
+function PANEL:Init()
+    local BetterScreenScale = BetterScreenScale and BetterScreenScale() or 1
+    local wid, hei = ScrW() * ShopConfig.WindowWidthScale * BetterScreenScale, ScrH() * ShopConfig.WindowHeightScale * BetterScreenScale
+    self:SetSize(wid, hei)
+    self:SetTitle("")
+    self:SetDraggable(true)
+    self:SetDeleteOnClose(true)
+    self:ShowCloseButton(false)
+    self:MakePopup()
+    self.m_bFirstThink = true
+    self.CategoryTabs = {}
+    self.ActiveCategory = nil
+
+    self.TitleLabel = vgui.Create("DLabel", self)
+    self.TitleLabel:SetText(ShopConfig.Title)
+    self.TitleLabel:SetFont(ShopConfig.Fonts.Title)
+    self.TitleLabel:SetTextColor(ShopConfig.Colors.TextTitle)
+    self.TitleLabel:SetContentAlignment(5)
+
+    self.MutationPointsLabel = vgui.Create("DLabel", self)
+    self.MutationPointsLabel:SetFont(ShopConfig.Fonts.Title)
+    self.MutationPointsLabel:SetTextColor(ShopConfig.Colors.TextPrimary)
+
+    self.CloseButton = vgui.Create("DButton", self)
+    self.CloseButton:SetText("X")
+    self.CloseButton:SetFont(ShopConfig.Fonts.CloseButton)
+    self.CloseButton:SetTextColor(color_white)
+    self.CloseButton.DoClick = function() self:Close() end
+    
+    self.CloseButton.CurrentBGColor = Color(0, 0, 0, 0)
+    self.CloseButton.Paint = function(btn, w, h)
+        local targetColor = btn:IsHovered() and ShopConfig.Colors.CloseButtonHover or Color(0, 0, 0, 0)
+        btn.CurrentBGColor = LerpColor(FrameTime() * ShopConfig.AnimationSpeed, btn.CurrentBGColor, targetColor)
+        draw.RoundedBox(0, 0, 0, w, h, btn.CurrentBGColor)
+    end
+
+    self.TabsContainer = vgui.Create("DPanel", self)
+    self.TabsContainer:SetPaintBackground(false)
+    self.TabsContainer.PerformLayout = function(container, w, h)
+        local inner = container:GetChildren()[1]
+        if not IsValid(inner) then return end; local tabs = inner:GetChildren()
+        if #tabs == 0 then return end; local defaultHPadding, minHPadding, tabMargin = 15, 5, 5
+        local textWidths, totalTextW = {}, 0; for i, tab in ipairs(tabs) do
+        tab:SizeToContents(); textWidths[i] = tab:GetWide(); totalTextW = totalTextW + textWidths[i] end
+        local totalDefaultPaddingW = #tabs * defaultHPadding * 2; local totalMarginW = #tabs * tabMargin * 2
+        local totalIdealW = totalTextW + totalDefaultPaddingW + totalMarginW; local finalHPadding = defaultHPadding
+        if totalIdealW > w then local availableSpaceForPadding = w - totalTextW - totalMarginW
+        if availableSpaceForPadding > 0 then finalHPadding = math.max(minHPadding, math.floor((availableSpaceForPadding / #tabs) / 2))
+        else finalHPadding = minHPadding end end; local currentX = 0
+        for i, tab in ipairs(tabs) do local tabW = textWidths[i] + (finalHPadding * 2); local tabY = 5
+        local tabH = h - 10; tab:SetSize(tabW, tabH); tab:SetPos(currentX + tabMargin, tabY)
+        currentX = currentX + tabW + (tabMargin * 2) end; inner:SetSize(currentX, h); inner:Center()
+    end
+
+    self.ItemList = vgui.Create("DScrollPanel", self)
+    local pad = ShopConfig.ContentPadding
+    self.ItemList:GetCanvas():DockPadding(pad, pad, pad, pad)
+    self:StyleScrollbar()
+    
+    local sortedKeys = self:GetSortedCategories()
+    if sortedKeys[1] then self.ActiveCategory = sortedKeys[1] end
+    
+    self:CreateCategoryTabs()
+    self:Center()
+
+    -- [[ MODIFIED ]] -- 窗口出现动画时间改为0.1秒
+    self:SetAlpha(0)
+    self:AlphaTo(255, 0.1, 0)
+end
+
+function PANEL:Think()
+    local Tokens = math.floor(LocalPlayer():GetTokens() or 0)
+    self.MutationPointsLabel:SetText(translate.Get("mutation_MutationPoints").. Tokens)
+
+    if self.m_bFirstThink then
+        self.m_bFirstThink = false
+        if self.ActiveCategory then self:SwitchCategory(self.ActiveCategory, true) end
+    end
+end
+
+function PANEL:Paint(w, h)
+    draw.RoundedBox(12, 0, 0, w, h, ShopConfig.Colors.Background)
+    DrawVerticalGradient(0, 0, w, self.TitleBarHeight, ShopConfig.Colors.TitleBar, ShopConfig.Colors.CategoryBar)
+    surface.SetDrawColor(ShopConfig.Colors.Accent)
+    surface.DrawRect(0, self.TitleBarHeight + self.CategoryBarHeight, w, 1)
+end
+
+function PANEL:PerformLayout(w, h)
+    self.CloseButton:SetSize(self.TitleBarHeight, self.TitleBarHeight)
+    self.CloseButton:SetPos(w - self.TitleBarHeight, 0)
+    local pointsMargin = 15
+    self.MutationPointsLabel:SetPos(pointsMargin, 0)
+    self.MutationPointsLabel:SetTall(self.TitleBarHeight)
+    self.MutationPointsLabel:SizeToContentsX()
+    self.MutationPointsLabel:SetContentAlignment(6)
+    self.TitleLabel:SetPos(0, 0)
+    self.TitleLabel:SetSize(w, self.TitleBarHeight)
+    self.TitleLabel:SetContentAlignment(5)
+    self.TabsContainer:SetPos(0, self.TitleBarHeight); self.TabsContainer:SetSize(w, self.CategoryBarHeight)
+    local contentY = self.TitleBarHeight + self.CategoryBarHeight + 1
+    self.ItemList:SetPos(0, contentY)
+    self.ItemList:SetSize(w, h - contentY)
+end
+
+function PANEL:CreateCategoryTabs()
+    local sortedKeys = self:GetSortedCategories()
+    local innerContainer = vgui.Create("DPanel", self.TabsContainer)
+    innerContainer:SetPaintBackground(false)
+
+    for _, categoryID in ipairs(sortedKeys) do
+        local data = GAMEMODE.ZombieShopCategories[categoryID]
+        local tab = vgui.Create("DButton", innerContainer)
+        tab:SetText(data.Name)
+        tab:SetFont(ShopConfig.Fonts.Tab)
+        tab:SetTextColor(ShopConfig.Colors.TextPrimary)
+        tab.CategoryID = categoryID
+        tab.DoClick = function(btn) self:SwitchCategory(btn.CategoryID) end
+
+        tab.IndicatorColor = Color(0,0,0,0)
+        tab.Paint = function(btn, w, h)
+            if btn:IsHovered() and self.ActiveCategory ~= btn.CategoryID then
+                draw.RoundedBox(4, 0, 0, w, h, Color(255, 255, 255, 20))
+            end
+            local targetColor = (self.ActiveCategory == btn.CategoryID) and ShopConfig.Colors.Accent or Color(0, 0, 0, 0)
+            btn.IndicatorColor = LerpColor(FrameTime() * ShopConfig.AnimationSpeed, btn.IndicatorColor, targetColor)
+            surface.SetDrawColor(btn.IndicatorColor)
+            surface.DrawRect(0, h - 3, w, 3)
+        end
+        self.CategoryTabs[categoryID] = tab
+    end
+end
+
+function PANEL:SwitchCategory(categoryID, bForce)
+    if not bForce and self.ActiveCategory == categoryID then return end
+    self.ActiveCategory = categoryID
+    surface.PlaySound("ui/buttonclick.wav")
+    for _, tab in pairs(self.CategoryTabs) do if IsValid(tab) and tab.Invalidate then tab:Invalidate(true) end end
+    self:PopulateItemList()
+end
+
+function PANEL:PopulateItemList()
+    self.ItemList:Clear()
+    if not self.ActiveCategory then return end
+    local activeCategoryData = GAMEMODE.ZombieShopCategories[self.ActiveCategory]
+    if not activeCategoryData then return end
+    for _, mutationData in ipairs(GAMEMODE.Mutations) do
+        if mutationData.Category == activeCategoryData then
+            local itemRow = vgui.Create("ZSMutationItemRow", self.ItemList:GetCanvas())
+            itemRow:SetMutation(mutationData)
+        end
+    end
+    self.ItemList:InvalidateLayout(true)
+end
+
+function PANEL:StyleScrollbar()
+    local scrollBar = self.ItemList:GetVBar()
+    scrollBar.Paint = function(pnl, w, h) draw.RoundedBox(4, 0, 0, w, h, ShopConfig.Colors.ScrollbarTrack) end
+    scrollBar.btnGrip.Paint = function(pnl, w, h)
+        local margin = 2
+        draw.RoundedBox(4, margin, 0, w - (margin * 2), h, ShopConfig.Colors.ScrollbarGrip)
+    end
+    scrollBar.btnUp.Paint = function() end
+    scrollBar.btnDown.Paint = function() end
+end
+
+function PANEL:Close()
+    -- [[ MODIFIED ]] -- 窗口关闭动画时间改为0.1秒
+    self:AlphaTo(0, 0.15, 0, function() self:Remove() end)
+end
+
+vgui.Register("MutationShopFrame", PANEL, "DFrame")

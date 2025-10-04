@@ -31,8 +31,6 @@ ITEMCAT_TOOLS = 4
 ITEMCAT_DEPLOYABLES = 5
 ITEMCAT_TRINKETS = 6
 ITEMCAT_OTHER = 7
-ITEMCAT_MUTATIONS = 8 --后面添加这两个
-ITEMCAT_MUTATIONS_BOSS = 9 --后面添加这两个，数字要改成按顺序的
 
 ITEMSUBCAT_TRINKETS_DEFENSIVE = 1
 ITEMSUBCAT_TRINKETS_OFFENSIVE = 2
@@ -48,9 +46,7 @@ GM.ItemCategories = { --找到同名表，复制覆盖，或者只添加有标�
     [ITEMCAT_TOOLS] = ""..translate.Get("arsenal_itemcat_Tools"),
     [ITEMCAT_DEPLOYABLES] = ""..translate.Get("arsenal_itemcat_Deployables"),
     [ITEMCAT_TRINKETS] = ""..translate.Get("arsenal_itemcat_Trinkets"),
-    [ITEMCAT_OTHER] = ""..translate.Get("arsenal_itemcat_Other"),
-    [ITEMCAT_MUTATIONS] = ""..translate.Get("arsenal_itemcat_Mutations"), --标记
-    [ITEMCAT_MUTATIONS_BOSS] = ""..translate.Get("arsenal_itemcat_MutationsBoss"), --标记
+    [ITEMCAT_OTHER] = ""..translate.Get("arsenal_itemcat_Other")
 }
 
 
@@ -95,18 +91,6 @@ function GM:AddPointShopItem(signature, category, price, swep, name, desc, model
 	item.PointShop = true
 
 	return item
-end
-
-GM.Mutations = {}
-function GM:AddMutation(signature, name, desc, category, worth, swep, callback, model, worthshop, mutationshop)
-	local tab = {Signature = signature, Name = name, Description = desc, Category = category, Worth = worth or 0, SWEP = swep, Callback = callback, Model = model, WorthShop = worthshop, MutationShop = mutationshop}
-	self.Mutations[#self.Mutations + 1] = tab
-
-	return tab
-end
-
-function GM:AddMutationItem(signature, name, desc, category, brains, worth, callback, model)
-	return self:AddMutation(signature, name, desc, category, brains, worth, callback, model, false, true)
 end
 
 -- Weapons are registered after the gamemode.
@@ -721,15 +705,6 @@ item.SkillRequirement = SKILL_U_MEDICCLOUD
 item =
 GM:AddPointShopItem("nanitecloud",		ITEMCAT_OTHER,			25,				"weapon_zs_nanitecloudbomb")--维修雷
 item.SkillRequirement = SKILL_U_NANITECLOUD
-
-
-GM:AddMutationItem("m_zombie_health", ""..translate.Get("zshop_alphazomb"), ""..translate.Get("zshop_alphazomb2"), ITEMCAT_MUTATIONS, 50, nil, function(pl) pl.m_Zombie_Health = true end, "models/items/healthkit.mdl")    
-GM:AddMutationItem("m_zombie_moan", ""..translate.Get("zshop_zombsprint"), ""..translate.Get("zshop_zombsprint2"), ITEMCAT_MUTATIONS, 15, nil, function(pl) pl.m_Zombie_Moan = true end, "models/player/zombie_classic.mdl")
-GM:AddMutationItem("m_zombie_moanguard", ""..translate.Get("zshop_zombguard"), ""..translate.Get("zshop_zombguard2"), ITEMCAT_MUTATIONS, 80, nil, function(pl) pl.m_Zombie_MoanGuard = true end, "models/player/zombie_classic.mdl")
-GM:AddMutationItem("m_zombie_damage_1", translate.Get("zshop_mutation_damage_1"), translate.Get("zshop_mutation_increase_damage_7"), ITEMCAT_MUTATIONS, 100, nil, function(pl) pl.m_Zombie_Damage1 = true end, "models/player/zombie_classic.mdl")
-
--- Boss Mutations
-GM:AddMutationItem("m_shade_damage", ""..translate.Get("zshop_bossphysicshazard"), ""..translate.Get("zshop_bossphysicshazard2"), ITEMCAT_MUTATIONS_BOSS, 550, nil, function(pl) pl.m_Shade_Force = true end, "models/player/zombie_classic.mdl")
 
 local function genericcallback(pl, magnitude) return pl:Name(), magnitude end
 GM.HonorableMentions = {}

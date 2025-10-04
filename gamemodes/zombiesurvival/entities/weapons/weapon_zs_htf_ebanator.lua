@@ -9,7 +9,7 @@ SWEP.SlotPos = 0
 
 if CLIENT then
 	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
-SWEP.WeaponType = "rifle"
+	SWEP.WeaponType = "rifle"
 	SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
 	SWEP.ViewModelFOV = 70
 	SWEP.ViewModelFlip = false

@@ -169,6 +169,7 @@ include("sh_util.lua")
 include("skillweb/sh_skillweb.lua")
 
 include("sh_options.lua")
+include("sh_zombieshop.lua")
 include("sh_zombieclasses.lua")
 include("sh_animations.lua")
 include("sh_sigils.lua")

@@ -96,7 +96,7 @@ function FindMutation(id)
 		end
 	end
 
-	if t and t.MutationShop then return t end
+	if t then return t end
 end
 
 -- DEPRECATED behavior. CachedInvisibleEntities and filter tables is nonsense. Move to using functions.

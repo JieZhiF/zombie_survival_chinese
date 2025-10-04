@@ -2111,26 +2111,41 @@ LANGUAGE.option_weapon_MoveSpeed = "移动速度"
 ----------- Mutation Shop -----------
 LANGUAGE.mutation_Purchase = "购买"
 LANGUAGE.mutation_MutationShop = "突变商店"
-LANGUAGE.mutation_ZombiesGetStronger = "每一分钟，僵尸都在变强！"
+LANGUAGE.mutation_MutationPoints = "突变点数："
+--LANGUAGE.mutation_ZombiesGetStronger = "每一分钟，僵尸都在变强！"
 
 LANGUAGE.title_classm = "常规突变"
 LANGUAGE.title_bossm = "Boss突变"
 
+LANGUAGE.zshop_category_offensive = "攻击"
+LANGUAGE.zshop_category_defensive = "防御"
+LANGUAGE.zshop_category_utility = "实用"
+LANGUAGE.zshop_category_zombieupgrades = "升级僵尸"
+LANGUAGE.zshop_category_miniboss = "迷你BOSS"
+
+-- 攻击突变
+LANGUAGE.zshop_mutation_damage_1 = "僵尸伤害突变 I"
+LANGUAGE.zshop_mutation_increase_damage_1 = "增加7%伤害"
+
+LANGUAGE.zshop_bossphysicshazard = "物理危害"
+LANGUAGE.zshop_bossphysicshazard2 = "作为阴影，物理强度三倍，造成终极屠戮。"
+
+--防御突变
 LANGUAGE.zshop_alphazomb = "阿尔法僵尸"
 LANGUAGE.zshop_alphazomb2 = "通过增加50点最大生命值来提高生存能力。"
 
+--实用突变
 LANGUAGE.zshop_zombsprint = "僵尸冲刺"
 LANGUAGE.zshop_zombsprint2 = "按R键开始冲刺。"
 
 LANGUAGE.zshop_zombguard = "僵尸守卫"
 LANGUAGE.zshop_zombguard2 = "作为僵尸，冲刺时受到伤害不再减速。"
 
-LANGUAGE.zshop_mutation_damage_1 = "僵尸伤害突变 I"
-LANGUAGE.zshop_mutation_increase_damage_7 = "增加7%伤害"
+--升级僵尸
 
--- Boss Mutations
-LANGUAGE.zshop_bossphysicshazard = "物理危害"
-LANGUAGE.zshop_bossphysicshazard2 = "作为阴影，物理强度三倍，造成终极屠戮。"
+--迷你BOSS
+
+
 -------- 主菜单 --------
 LANGUAGE.mainmenu_ChangedPlayerModel = "你已将所选玩家模型更改为 %s"
 LANGUAGE.mainmenu_PlayerModelSelection = "玩家模型选择"
@@ -2179,8 +2194,7 @@ LANGUAGE.arsenal_itemcat_Tools = "工具"
 LANGUAGE.arsenal_itemcat_Deployables = "可部署物品"
 LANGUAGE.arsenal_itemcat_Trinkets = "饰品"
 LANGUAGE.arsenal_itemcat_Other = "其他"
-LANGUAGE.arsenal_itemcat_Mutations = "变异"
-LANGUAGE.arsenal_itemcat_MutationsBoss = "变异 (BOSS)"
+
 LANGUAGE.arsenal_itemsubcat_Defensive = "防御"
 LANGUAGE.arsenal_itemsubcat_Offensive = "进攻"
 LANGUAGE.arsenal_itemsubcat_Melee = "近战"

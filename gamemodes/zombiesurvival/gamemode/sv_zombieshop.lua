@@ -12,7 +12,7 @@ hook.Add("PostEntityTakeDamage", "OnEntityDamaged", function(ent, dmginfo)
                 if weapon.MeleeDamageVsProps then 
                     damage = weapon.MeleeDamageVsProps
                 end
-                local adddmg = damage * 0.3
+                local adddmg = damage * 0.35
                 -- Give the player the amount of tokens equal to the damage attribute
                 dmginfo:GetAttacker():AddTokens(adddmg)
             end
