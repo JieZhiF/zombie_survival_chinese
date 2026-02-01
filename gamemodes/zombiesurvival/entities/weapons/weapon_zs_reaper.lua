@@ -189,7 +189,6 @@ SWEP.IronSightsPos = Vector(-8.641, -14, 2.4)
 SWEP.IronSightsAng = Vector(0, 0, -2.429)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_CLIP_SIZE, 2)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.004)
-
 function SWEP:OnZombieKilled()
 	local killer = self:GetOwner()
 
@@ -204,33 +203,12 @@ end
 
 function SWEP.BulletCallback(attacker, tr)
 	local hitent = tr.Entity
-	--
 	if hitent:IsValidLivingZombie() and hitent:Health() <= hitent:GetMaxHealthEx() * 0.04 and gamemode.Call("PlayerShouldTakeDamage", hitent, attacker) then
 		if SERVER then
 			hitent:SetWasHitInHead()
 		end
 		hitent:TakeSpecialDamage(hitent:Health(), DMG_DIRECT, attacker, attacker:GetActiveWeapon(), tr.HitPos)
 		hitent:EmitSound("npc/roller/blade_out.wav", 80, 125)
-	end
-	--attacker:GiveStatus("fastreload",10)
-	--attacker:GiveStatus("fastshoot",10)
-	--attacker:GiveStatus("chaos",5)
-end
-
-function SWEP:ShootBullets(dmg, numbul, cone)
-	local owner = self:GetOwner()
-	owner:DoAttackEvent()
-
-	if self.PointsMultiplier then
-		POINTSMULTIPLIER = self.PointsMultiplier
-	end
-
-	owner:LagCompensation(true)
-	owner:FireBulletsLua(owner:GetShootPos(), owner:GetAimVector(), cone, numbul, dmg, nil, self.Primary.KnockbackScale, self.TracerName, self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
-	owner:LagCompensation(false)
-
-	if self.PointsMultiplier then
-		POINTSMULTIPLIER = nil
 	end
 end
 
@@ -254,4 +232,3 @@ function SWEP:Draw3DHUD(vm, pos, ang)
 		end
 	cam.End3D2D()
 end
-

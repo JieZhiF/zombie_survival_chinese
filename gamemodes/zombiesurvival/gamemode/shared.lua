@@ -591,7 +591,6 @@ function GM:PrecacheResources()
 	end
 
 	game.AddParticles("particles/vman_explosion.pcf")
-	game.AddParticles( "particles/neon_rifle_tracer.pcf" )
 	PrecacheParticleSystem("dusty_explosion_rockets")
 end
 
@@ -952,12 +951,26 @@ function GM:IsSpecialPerson(pl, image)
 		tooltip = "管理员"
 	elseif pl:IsNoxSupporter() then
 		img = "noxiousnet/noxicon.png"
-		tooltip = "Nox Supporter"
+		tooltip = "No supporter"
 	elseif pl:IsUserGroup("Good user") then
 	    img = "icon16/package_green.png"
 	    tooltip = "优秀的玩家"
 	end
-
+	--[[
+	elseif pl:Isbuilder() then
+	    img = "icon16/wrench_orange.png"
+	    tooltip = "建筑师"
+	elseif pl:Issponsor() then
+	    img = "icon16/ruby.png"
+	    tooltip = "赞助玩家，感谢此玩家为服务器提供了赞助"
+	elseif pl:Issuperadmin() then
+	    img = "icon16/shield.png"
+	    tooltip = "超级管理员"
+	elseif pl:SteamID() == "STEAM_0:0:158504149" then
+	    img = "icon16/award_star_add.png"
+	    tooltip = "良缘管理员"
+	end
+    --]]
 	if img then
 		if CLIENT then
 			image:SetImage(img)

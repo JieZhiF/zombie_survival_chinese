@@ -7,7 +7,7 @@ CLASS.Boss = true
 
 CLASS.KnockbackScale = 0
 
-CLASS.Health = 2600
+CLASS.Health = 3000
 CLASS.Speed = 270
 
 CLASS.CanTaunt = true
@@ -119,7 +119,7 @@ if SERVER then
 		if ent:IsValid() then
 			ent:SetPos(pos)
 			ent:SetAngles(AngleRand())
-			ent:SetWeaponType("weapon_zs_butcherknife_boss")
+			ent:SetWeaponType("weapon_zs_box") --weapon_zs_butcherknife_boss
 			ent:Spawn()
 
 			local phys = ent:GetPhysicsObject()

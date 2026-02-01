@@ -7,7 +7,7 @@ CLASS.Help = "controls_frostshade"
 
 CLASS.Boss = true
 
-CLASS.Health = 1500
+CLASS.Health = 2400
 CLASS.Speed = 170
 
 CLASS.Points = 30
@@ -111,6 +111,94 @@ CLASS.IconColor = Color(0, 190, 255)
 local nodraw = false
 local matWhite = Material("models/debug/debugwhite")
 local matRefract = Material("models/spawn_effect")
+
+--------------------------------------------------------------------------
+--  PreRenderEffects
+--------------------------------------------------------------------------
+function CLASS:PreRenderEffects(pl)
+    if render.SupportsVertexShaders_2_0() then
+        local normal = pl:GetUp()
+        render.EnableClipping(true)
+        render.PushCustomClipPlane(normal, normal:Dot(pl:GetPos() + normal * 16))
+    end
+
+    if nodraw then return end
+
+    local red = 0
+    local status = pl.status_frostshadeambience
+    if status and status:IsValid() then
+        -- 修复 math_Clamp → math.Clamp
+        local t = (CurTime() - status:GetLastDamaged()) * 3
+        local clamped = math.Clamp(t, 0, 1)
+        red = 1 - (clamped ^ 3)
+    end
+
+    -- 修复 math_abs / math_cos
+    render.SetColorModulation(red, 0.7 * (1 - red), 1 - red)
+    render.SetBlend(0.5 + (math.abs(math.cos(CurTime())) ^ 2) * 0.1)
+
+    render.SuppressEngineLighting(true)
+    render.ModelMaterialOverride(matWhite)
+end
+
+--------------------------------------------------------------------------
+--  PostRenderEffects
+--------------------------------------------------------------------------
+function CLASS:PostRenderEffects(pl)
+    if render.SupportsVertexShaders_2_0() then
+        render.PopCustomClipPlane()
+        render.EnableClipping(false)
+    end
+
+    if nodraw then return end
+
+    -- 恢复材质与渲染状态
+    render.SetColorModulation(1, 1, 1)
+    render.SetBlend(1)
+    render.SuppressEngineLighting(false)
+    render.ModelMaterialOverride() -- 正确清除 override
+
+    -- 折射特效
+    if render.SupportsPixelShaders_2_0() then
+        render.UpdateRefractTexture()
+
+        matRefract:SetFloat("$refractamount", 0.01)
+
+        render.ModelMaterialOverride(matRefract)
+        nodraw = true
+        pl:DrawModel()
+        nodraw = false
+
+        render.ModelMaterialOverride()
+    end
+end
+
+--------------------------------------------------------------------------
+--  PrePlayerDraw
+--------------------------------------------------------------------------
+function CLASS:PrePlayerDraw(pl)
+    pl:RemoveAllDecals()
+    self:PreRenderEffects(pl)
+end
+
+--------------------------------------------------------------------------
+--  PostPlayerDraw
+--------------------------------------------------------------------------
+function CLASS:PostPlayerDraw(pl)
+    self:PostRenderEffects(pl)
+end
+
+
+
+--[[
+if not CLIENT then return end
+
+CLASS.Icon = "zombiesurvival/killicons/shadev2"
+CLASS.IconColor = Color(0, 190, 255)
+
+local nodraw = false
+local matWhite = Material("models/debug/debugwhite")
+local matRefract = Material("models/spawn_effect")
 function CLASS:PreRenderEffects(pl)
 	if render.SupportsVertexShaders_2_0() then
 		local normal = pl:GetUp()
@@ -167,3 +255,4 @@ end
 function CLASS:PostPlayerDraw(pl)
 	self:PostRenderEffects(pl)
 end
+]]

@@ -7,6 +7,7 @@
 -- zs_pantsmode 一个特殊的趣味游戏模式。
 -- zs_classicmode 启用经典模式，该模式下没有钉子和职业选择。
 -- zs_babymode 启用婴儿（简单）模式。
+-- zs_lowplayermode 在玩家人数较少时启用，以优化游戏体验。
 -- zs_endwavehealthbonus 人类在每波成功防守后获得的生命值奖励。
 -- zs_giblifetime 设置玩家死亡后身体碎块在被吃掉或销毁前存留的时间。
 -- zs_grief_forgiveness 调整对友方建筑造成伤害的惩罚宽容度，数值越小越宽容。
@@ -61,92 +62,97 @@ GM.StartLoadouts = {
 }
 
 
-GM.BossZombies = CreateConVar("zs_bosszombies", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Summon a boss zombie in the middle of each wave break."):GetBool()
+GM.BossZombies = CreateConVar("zs_bosszombies", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "是否在每波休息期间生成一个BOSS僵尸"):GetBool()
 cvars.AddChangeCallback("zs_bosszombies", function(cvar, oldvalue, newvalue)
 	GAMEMODE.BossZombies = tonumber(newvalue) == 1
 end)
 
-GM.OutnumberedHealthBonus = CreateConVar("zs_outnumberedhealthbonus", "4", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Give zombies some extra maximum health if there are less than or equal to this many zombies. 0 to disable."):GetInt()
+GM.OutnumberedHealthBonus = CreateConVar("zs_outnumberedhealthbonus", "4", FCVAR_ARCHIVE + FCVAR_NOTIFY, "如果僵尸数量少于或等于此数值，给予僵尸额外的最大生命值。设为0禁用"):GetInt()
 cvars.AddChangeCallback("zs_outnumberedhealthbonus", function(cvar, oldvalue, newvalue)
 	GAMEMODE.OutnumberedHealthBonus = tonumber(newvalue) or 0
 end)
 
-GM.PantsMode = CreateConVar("zs_pantsmode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Only the dead can know peace from this evil."):GetBool()
+GM.PantsMode = CreateConVar("zs_pantsmode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "裤子模式：只有死者才能从这种邪恶中得到安息"):GetBool()
 cvars.AddChangeCallback("zs_pantsmode", function(cvar, oldvalue, newvalue)
 	GAMEMODE:SetPantsMode(tonumber(newvalue) == 1)
 end)
 
-GM.ClassicMode = CreateConVar("zs_classicmode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "No nails, no class selection, final destination."):GetBool()
+GM.ClassicMode = CreateConVar("zs_classicmode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "经典模式：无钉子，无职业选择，只有终极目的地"):GetBool()
 cvars.AddChangeCallback("zs_classicmode", function(cvar, oldvalue, newvalue)
 	GAMEMODE:SetClassicMode(tonumber(newvalue) == 1)
 end)
 
-GM.BabyMode = CreateConVar("zs_babymode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Babby mode."):GetBool()
+GM.BabyMode = CreateConVar("zs_babymode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "宝宝模式"):GetBool()
 cvars.AddChangeCallback("zs_babymode", function(cvar, oldvalue, newvalue)
 	GAMEMODE:SetBabyMode(tonumber(newvalue) == 1)
 end)
 
-GM.EndWaveHealthBonus = CreateConVar("zs_endwavehealthbonus", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Humans will get this much health after every wave. 0 to disable."):GetInt()
+GM.LowPlayerMode = CreateConVar("zs_lowplayermode", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "人数低的时候启用，达到最好的游玩效果"):GetBool()
+cvars.AddChangeCallback("zs_lowplayermode", function(cvar, oldvalue, newvalue)
+	GAMEMODE:SetLowPlayerMode(tonumber(newvalue) == 1)
+end)
+
+GM.EndWaveHealthBonus = CreateConVar("zs_endwavehealthbonus", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "每波结束后人类将获得此数值的生命值。设为0禁用"):GetInt()
 cvars.AddChangeCallback("zs_endwavehealthbonus", function(cvar, oldvalue, newvalue)
 	GAMEMODE.EndWaveHealthBonus = tonumber(newvalue) or 0
 end)
 
-GM.GibLifeTime = CreateConVar("zs_giblifetime", "25", FCVAR_ARCHIVE, "Specifies how many seconds player gibs will stay in the world if not eaten or destroyed."):GetFloat()
+GM.GibLifeTime = CreateConVar("zs_giblifetime", "25", FCVAR_ARCHIVE, "指定玩家碎尸(Gibs)在未被食用或破坏的情况下在世界中停留的秒数"):GetFloat()
 cvars.AddChangeCallback("zs_giblifetime", function(cvar, oldvalue, newvalue)
 	GAMEMODE.GibLifeTime = tonumber(newvalue) or 1
 end)
 
-GM.GriefForgiveness = math.ceil(100 * CreateConVar("zs_grief_forgiveness", "0.5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Scales the damage given to griefable objects by this amount. Does not actually prevent damage, it only decides how much of a penalty to give the player. Use smaller values for more forgiving, larger for less forgiving."):GetFloat()) * 0.01
+GM.GriefForgiveness = math.ceil(100 * CreateConVar("zs_grief_forgiveness", "0.5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "按此比例缩放对可破坏物体造成的伤害判定。这并不防止伤害，只决定给予玩家多少惩罚。数值越小越宽容，数值越大越严厉"):GetFloat()) * 0.01
 cvars.AddChangeCallback("zs_grief_forgiveness", function(cvar, oldvalue, newvalue)
 	GAMEMODE.GriefForgiveness = math.ceil(100 * (tonumber(newvalue) or 1)) * 0.01
 end)
 
-GM.GriefStrict = CreateConVar("zs_grief_strict", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Anti-griefing system. Gives points and eventually health penalties to humans who destroy friendly barricades."):GetBool()
+GM.GriefStrict = CreateConVar("zs_grief_strict", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "防恶意破坏系统。给予破坏己方路障的人类扣分，最终给予生命值惩罚"):GetBool()
 cvars.AddChangeCallback("zs_grief_strict", function(cvar, oldvalue, newvalue)
 	GAMEMODE.GriefStrict = tonumber(newvalue) == 1
 end)
 
-GM.GriefMinimumHealth = CreateConVar("zs_grief_minimumhealth", "100", FCVAR_ARCHIVE + FCVAR_NOTIFY, "The minimum health for an object to be considered griefable."):GetInt()
+GM.GriefMinimumHealth = CreateConVar("zs_grief_minimumhealth", "100", FCVAR_ARCHIVE + FCVAR_NOTIFY, "物体被视为可被恶意破坏的最小生命值阈值"):GetInt()
 cvars.AddChangeCallback("zs_grief_minimumhealth", function(cvar, oldvalue, newvalue)
 	GAMEMODE.GriefMinimumHealth = tonumber(newvalue) or 100
 end)
 
-GM.GriefDamageMultiplier = math.ceil(100 * CreateConVar("zs_grief_damagemultiplier", "0.5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Multiplies damage done to griefable objects from humans by this amount."):GetFloat()) * 0.01
+GM.GriefDamageMultiplier = math.ceil(100 * CreateConVar("zs_grief_damagemultiplier", "0.5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "将人类对可破坏物体造成的伤害乘以该数值"):GetFloat()) * 0.01
 cvars.AddChangeCallback("zs_grief_damagemultiplier", function(cvar, oldvalue, newvalue)
 	GAMEMODE.GriefDamageMultiplier = math.ceil(100 * (tonumber(newvalue) or 0.5)) * 0.01
 end)
 
-GM.GriefReflectThreshold = CreateConVar("zs_grief_reflectthreshold", "-5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Start giving damage if the player has less than this many points."):GetInt()
+GM.GriefReflectThreshold = CreateConVar("zs_grief_reflectthreshold", "-5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "如果玩家分数低于此数值，则开始反弹伤害"):GetInt()
 cvars.AddChangeCallback("zs_grief_reflectthreshold", function(cvar, oldvalue, newvalue)
 	GAMEMODE.GriefReflectThreshold = tonumber(newvalue) or -5
 end)
 
-GM.MaxPropsInBarricade = CreateConVar("zs_maxpropsinbarricade", "2", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Limits the amount of props that can be in one 'contraption' of nails."):GetInt()
+GM.MaxPropsInBarricade = CreateConVar("zs_maxpropsinbarricade", "2", FCVAR_ARCHIVE + FCVAR_NOTIFY, "限制一个“钉连装置”中可以包含的道具数量"):GetInt()
 cvars.AddChangeCallback("zs_maxpropsinbarricade", function(cvar, oldvalue, newvalue)
 	GAMEMODE.MaxPropsInBarricade = tonumber(newvalue) or 8
 end)
 
-GM.MaxDroppedItems = 48--[[CreateConVar("zs_maxdroppeditems", "48", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Maximum amount of dropped items. Prevents spam or lag when lots of people die."):GetInt()
+GM.MaxDroppedItems = 48--[[CreateConVar("zs_maxdroppeditems", "48", FCVAR_ARCHIVE + FCVAR_NOTIFY, "掉落物品的最大数量。防止大量玩家死亡时出现刷屏或滞后"):GetInt()
 cvars.AddChangeCallback("zs_maxdroppeditems", function(cvar, oldvalue, newvalue)
 	GAMEMODE.MaxDroppedItems = tonumber(newvalue) or 48
 end)]]
 
-GM.NailHealthPerRepair = CreateConVar("zs_nailhealthperrepair", "10", FCVAR_ARCHIVE + FCVAR_NOTIFY, "How much health a nail gets when being repaired."):GetInt()
+GM.NailHealthPerRepair = CreateConVar("zs_nailhealthperrepair", "10", FCVAR_ARCHIVE + FCVAR_NOTIFY, "钉子被修复时获得的生命值"):GetInt()
 cvars.AddChangeCallback("zs_nailhealthperrepair", function(cvar, oldvalue, newvalue)
 	GAMEMODE.NailHealthPerRepair = tonumber(newvalue) or 1
 end)
 
-GM.NoPropDamageFromHumanMelee = CreateConVar("zs_nopropdamagefromhumanmelee", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Melee from humans doesn't damage props."):GetBool()
+GM.NoPropDamageFromHumanMelee = CreateConVar("zs_nopropdamagefromhumanmelee", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "人类近战攻击不会对道具造成伤害"):GetBool()
 cvars.AddChangeCallback("zs_nopropdamagefromhumanmelee", function(cvar, oldvalue, newvalue)
 	GAMEMODE.NoPropDamageFromHumanMelee = tonumber(newvalue) == 1
 end)
 
-GM.MedkitPointsPerHealth = 3--[[CreateConVar("zs_medkitpointsperhealth", "8", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Specifies the amount of healing for players to be given a point. For use with the medkit and such."):GetInt()
+GM.MedkitPointsPerHealth = 3--[[CreateConVar("zs_medkitpointsperhealth", "8", FCVAR_ARCHIVE + FCVAR_NOTIFY, "指定玩家获得1点积分所需的治疗量。用于医疗包等"):GetInt()
 cvars.AddChangeCallback("zs_medkitpointsperhealth", function(cvar, oldvalue, newvalue)
 	GAMEMODE.MedkitPointsPerHealth = tonumber(newvalue) or 1
 end)]]
 
-GM.RepairPointsPerHealth = CreateConVar("zs_repairpointsperhealth", "25", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Specifies the amount of repairing for players to be given a point. For use with nails and such."):GetInt()
+GM.RepairPointsPerHealth = CreateConVar("zs_repairpointsperhealth", "25", FCVAR_ARCHIVE + FCVAR_NOTIFY, "指定玩家获得1点积分所需的修复量。用于钉子等"):GetInt()
 cvars.AddChangeCallback("zs_repairpointsperhealth", function(cvar, oldvalue, newvalue)
 	GAMEMODE.RepairPointsPerHealth = tonumber(newvalue) or 1
 end)

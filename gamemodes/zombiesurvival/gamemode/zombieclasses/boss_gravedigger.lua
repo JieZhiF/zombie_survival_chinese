@@ -7,7 +7,7 @@ CLASS.Help = "controls_gravedigger"
 
 CLASS.Boss = true
 --CLASS.Hidden = true
-CLASS.Health = 1600
+CLASS.Health = 4500
 CLASS.Speed = 200
 
 CLASS.CanTaunt = true
@@ -57,4 +57,29 @@ function CLASS:PostPlayerDraw(pl)
 			render_DrawSprite(LocalToWorld(vecEyeRight, angle_zero, pos, ang), 4, 4, colGlow)
 		end
 	end
+end
+
+if SERVER then
+    -- 当僵尸被杀死时
+    function CLASS:OnKilled(pl, attacker, inflictor, suicide, headshot, dmginfo)
+
+        -- 掉落武器
+        local pos = pl:LocalToWorld(pl:OBBCenter())
+        local ent = ents.Create("prop_weapon")
+        if IsValid(ent) then
+            ent:SetPos(pos)
+            ent:SetAngles(AngleRand())
+            ent:SetWeaponType("weapon_zs_box")
+            ent:Spawn()
+
+            local phys = ent:GetPhysicsObject()
+            if IsValid(phys) then
+                phys:Wake()
+                phys:SetVelocityInstantaneous(VectorRand():GetNormalized() * math.Rand(24, 100))
+                phys:AddAngleVelocity(VectorRand() * 200)
+            end
+        end
+
+        return true
+    end
 end

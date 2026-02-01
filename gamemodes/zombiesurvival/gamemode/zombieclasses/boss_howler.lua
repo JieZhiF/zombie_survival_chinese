@@ -18,7 +18,7 @@ CLASS.SWEP = "weapon_zs_howler"
 CLASS.Model = Model("models/player/zombie_classic_hbfix.mdl")
 CLASS.OverrideModel = Model("models/player/zombie_lacerator2.mdl")
 
-CLASS.Health = 3000
+CLASS.Health = 3300
 CLASS.Speed = 180
 
 CLASS.VoicePitch = 0.65
@@ -137,6 +137,23 @@ if SERVER then
 		if fakedeath and fakedeath:IsValid() then
 			fakedeath:SetModel(self.OverrideModel)
 		end
+		
+        -- 掉落武器
+        local pos = pl:LocalToWorld(pl:OBBCenter())
+        local ent = ents.Create("prop_weapon")
+        if IsValid(ent) then
+            ent:SetPos(pos)
+            ent:SetAngles(AngleRand())
+            ent:SetWeaponType("weapon_zs_box")
+            ent:Spawn()
+
+            local phys = ent:GetPhysicsObject()
+            if IsValid(phys) then
+                phys:Wake()
+                phys:SetVelocityInstantaneous(VectorRand():GetNormalized() * math.Rand(24, 100))
+                phys:AddAngleVelocity(VectorRand() * 200)
+            end
+        end
 
 		return true
 	end

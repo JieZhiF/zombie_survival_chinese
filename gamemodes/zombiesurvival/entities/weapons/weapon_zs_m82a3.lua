@@ -1,7 +1,7 @@
 AddCSLuaFile()
 DEFINE_BASECLASS("weapon_zs_base")
 
-SWEP.PrintName = "Barrett M82A3 (补给箱)"
+SWEP.PrintName = "Barrett M82A3 (奖励箱)"
 SWEP.Description = "补给箱所获取的特殊武器，非法获取会被封禁."
 
 
@@ -74,9 +74,9 @@ SWEP.WorldModel = "models/weapons/w_snip_sg550.mdl"
 SWEP.UseHands = true
 
 SWEP.Primary.Sound = Sound("Weapon_Renegade.Single")
-SWEP.Primary.Damage = 330
+SWEP.Primary.Damage = 130
 SWEP.Primary.NumShots = 1
-SWEP.Primary.Delay = 0.32
+SWEP.Primary.Delay = 1.5
 
 SWEP.Primary.ClipSize = 15
 SWEP.Primary.Automatic = true

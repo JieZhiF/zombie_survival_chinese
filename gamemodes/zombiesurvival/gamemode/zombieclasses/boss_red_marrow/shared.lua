@@ -127,3 +127,28 @@ function CLASS:ProcessDamage(pl, dmginfo)
 		pl:GodDisable()
 	end
 end
+
+if SERVER then
+    -- 当僵尸被杀死时
+    function CLASS:OnKilled(pl, attacker, inflictor, suicide, headshot, dmginfo)
+
+        -- 掉落武器
+        local pos = pl:LocalToWorld(pl:OBBCenter())
+        local ent = ents.Create("prop_weapon")
+        if IsValid(ent) then
+            ent:SetPos(pos)
+            ent:SetAngles(AngleRand())
+            ent:SetWeaponType("weapon_zs_box")
+            ent:Spawn()
+
+            local phys = ent:GetPhysicsObject()
+            if IsValid(phys) then
+                phys:Wake()
+                phys:SetVelocityInstantaneous(VectorRand():GetNormalized() * math.Rand(24, 100))
+                phys:AddAngleVelocity(VectorRand() * 200)
+            end
+        end
+
+        return true
+    end
+end

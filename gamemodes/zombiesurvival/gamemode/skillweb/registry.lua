@@ -805,8 +805,8 @@ GM:AddSkill(SKILL_BATTLERSP06, "磨炼 V", GOOD.."+2 初始菜单点数\n"..GOOD
 																5,			7,					{SKILL_BATTLERSP05}, TREE_MELEETREE)
 GM:AddSkill(SKILL_BATTLERSP07, "重斩", GOOD.."+20% 近战伤害\n"..BAD.."+8% 近战攻击延迟",
 																6,			7,					{SKILL_BATTLERSP06}, TREE_MELEETREE)
-GM:AddSkill(SKILL_BATTLERSP_114514, "究极天赋：良缘的庇佑", GOOD.."近战攻击时附加30%真实伤害\n"..GOOD.."空中攻击时.攻速增加300%且会每次攻击会滞留一段时间\n"..GOOD.."势不可挡:霸体",
-																3,			9,					{}, TREE_MELEETREE)
+GM:AddSkill(SKILL_BATTLERSP_114514, "究极天赋：良缘的庇佑", GOOD.."近战攻击时追加30%伤害\n"..GOOD.."空中攻击时.攻速增加300%且会每次攻击会滞留一段时间\n"..GOOD.."势不可挡:霸体",
+																3,			9,					{SKILL_BATTLERSP07}, TREE_MELEETREE)
 GM:AddSkill(SKILL_COMBOKNUCKLESP01, "基头四", GOOD.."-5% 拳头攻击间隔\n"..GOOD.."+4 最大生命值\nY~M~C~A一轮强劲的音乐响起.唏 YOUNG MAN!.站在你门前的是！四个穿着很少布的大只佬!\n咸湿的眼神~淫贱的笑意~讨人厌的动作!",
 																8,			-4,					{SKILL_COMBOKNUCKLE}, TREE_MELEETREE)
 GM:AddSkill(SKILL_COMBOKNUCKLESP02, "海虎爆破钳", GOOD.."-5% 拳头攻击间隔\n"..GOOD.."+15% 拳头伤害\n让我找找秘密武器~",
@@ -1435,6 +1435,8 @@ GM:AddSkillModifier(SKILL_BATTLERSP06, SKILLMOD_MELEE_RANGE_MUL, 0.05)
 
 GM:AddSkillModifier(SKILL_BATTLERSP07, SKILLMOD_MELEE_DAMAGE_MUL, 0.2)
 GM:AddSkillModifier(SKILL_BATTLERSP07, SKILLMOD_MELEE_SWING_DELAY_MUL, 0.08)
+
+GM:AddSkillModifier(SKILL_BATTLERSP_114514, SKILLMOD_MELEE_DAMAGE_MUL, 0.3)
 
 GM:AddSkillModifier(SKILL_BARRICADEEXPERT_SP01, SKILLMOD_HAMMER_SWING_DELAY_MUL, -0.12)
 

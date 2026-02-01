@@ -1,6 +1,7 @@
 AddCSLuaFile()
 
 SWEP.PrintName = "碎魂方天戟"
+SWEP.Description = "攻击时对目标附加'流血'层数，流血层数是伤害值的10%"
 
 SWEP.Base = "weapon_zs_harpoon"
 

@@ -312,6 +312,7 @@ item =
 GM:AddStartingItem("nanitecloud",		ITEMCAT_OTHER,			35,				"weapon_zs_nanitecloudbomb")
 item.SkillRequirement = SKILL_U_NANITECLOUD
 GM:AddStartingItem("bloodshot",			ITEMCAT_OTHER,			35,				"weapon_zs_bloodshotbomb")
+GM:AddStartingItem("rewardchest",			ITEMCAT_OTHER,			100,			"weapon_zs_box")
 
 ------------
 -- Points --
@@ -377,6 +378,7 @@ GM:AddPointShopItem("ebanator",			ITEMCAT_GUNS,			115,			"weapon_zs_htf_ebanator
 GM:AddPointShopItem("quasar",			ITEMCAT_GUNS,			100,			"weapon_zs_quasar")
 GM:AddPointShopItem("gluon",			ITEMCAT_GUNS,			100,			"weapon_zs_gluon")
 GM:AddPointShopItem("barrage",			ITEMCAT_GUNS,			100,			"weapon_zs_barrage")
+GM:AddPointShopItem("famass",			ITEMCAT_GUNS,			100,			"weapon_zs_famas_s")
 
 -- Tier 5
 GM:AddPointShopItem("novacolt",			ITEMCAT_GUNS,			175,			"weapon_zs_novacolt")
@@ -518,16 +520,17 @@ GM:AddPointShopItem("kongol",			ITEMCAT_MELEE,			100,			"weapon_zs_kongolaxe")
 GM:AddPointShopItem("scythe",			ITEMCAT_MELEE,			100,			"weapon_zs_scythe")
 GM:AddPointShopItem("powerfists",		ITEMCAT_MELEE,			100,			"weapon_zs_powerfists")
 GM:AddPointShopItem("energysword",		ITEMCAT_MELEE,			100,			"weapon_zs_energysword")
+GM:AddPointShopItem("kongolaxesp",		ITEMCAT_MELEE,			85,		    	"weapon_zs_kongolaxe_sp")
 
-GM:AddPointShopItem("血狱之剑",         ITEMCAT_MELEE,			135,			"weapon_zs_firesword")            --将剑
+GM:AddPointShopItem("血狱之剑",         ITEMCAT_MELEE,			135,			"weapon_zs_firesword")            --血剑
 GM:AddPointShopItem("黄金之剑",         ITEMCAT_MELEE,			135,			"weapon_firesword_x")            --金剑
 -- Tier 5
 GM:AddPointShopItem("frotchet",			ITEMCAT_MELEE,			150,			"weapon_zs_frotchet")
---GM:AddPointShopItem("harpoon_sp",		ITEMCAT_MELEE,			130,			"weapon_zs_harpoon_sp")
+GM:AddPointShopItem("harpoon_sp",		ITEMCAT_MELEE,			125,			"weapon_zs_harpoon_sp")
 GM:AddPointShopItem("telepor",	    	ITEMCAT_MELEE,			160,			"weapon_zs_teleportationdagger")
 
 
-GM:AddPointShopItem("suicideboom",			ITEMCAT_TOOLS,			100,				"weapon_zs_suicidebomb",			nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_suicidebomb") end)
+GM:AddPointShopItem("suicideboom",			ITEMCAT_TOOLS,			75,				"weapon_zs_suicidebomb",			nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_suicidebomb") end)
 
 GM:AddPointShopItem("crphmr_sp",			ITEMCAT_TOOLS,			65,				"weapon_zs_hammer_sp",			nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_hammer_sp") pl:GiveAmmo(5, "GaussEnergy") end)
 
@@ -791,29 +794,29 @@ GM:AddDeployableInfo("prop_tv",                   	"TV",                    	"we
 
 GM.MaxSigils = 3
 
-GM.DefaultRedeem = CreateConVar("zs_redeem", "4", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "The amount of kills a zombie needs to do in order to redeem. Set to 0 to disable."):GetInt()
+GM.DefaultRedeem = CreateConVar("zs_redeem", "4", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "僵尸赎罪（变回人类）所需的击杀数。设为 0 禁用。"):GetInt()
 cvars.AddChangeCallback("zs_redeem", function(cvar, oldvalue, newvalue)
 	GAMEMODE.DefaultRedeem = math.max(0, tonumber(newvalue) or 0)
 end)
 
-GM.WaveOneZombies = 0.11--math.Round(CreateConVar("zs_waveonezombies", "0.1", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "The percentage of players that will start as zombies when the game begins."):GetFloat(), 2)
+GM.WaveOneZombies = 0.11--math.Round(CreateConVar("zs_waveonezombies", "0.1", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "游戏开始时作为僵尸出生的玩家百分比。"):GetFloat(), 2)
 -- cvars.AddChangeCallback("zs_waveonezombies", function(cvar, oldvalue, newvalue)
 -- 	GAMEMODE.WaveOneZombies = math.ceil(100 * (tonumber(newvalue) or 1)) * 0.01
 -- end)
 
--- Game feeling too easy? Just change these values!
-GM.ZombieSpeedMultiplier = math.Round(CreateConVar("zs_zombiespeedmultiplier", "1", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "Zombie running speed will be scaled by this value."):GetFloat(), 2)
+-- 游戏感觉太简单？调整这些数值！
+GM.ZombieSpeedMultiplier = math.Round(CreateConVar("zs_zombiespeedmultiplier", "1", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "僵尸的奔跑速度将按此数值进行缩放。"):GetFloat(), 2)
 cvars.AddChangeCallback("zs_zombiespeedmultiplier", function(cvar, oldvalue, newvalue)
 	GAMEMODE.ZombieSpeedMultiplier = math.ceil(100 * (tonumber(newvalue) or 1)) * 0.01
 end)
 
--- This is a resistance, not for claw damage. 0.5 will make zombies take half damage, 0.25 makes them take 1/4, etc.
-GM.ZombieDamageMultiplier = math.Round(CreateConVar("zs_zombiedamagemultiplier", "1", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "Scales the amount of damage that zombies take. Use higher values for easy zombies, lower for harder."):GetFloat(), 2)
+-- 这是一个抗性系数，不是爪子伤害。0.5 会让僵尸只受到一半伤害，0.25 则是 1/4，以此类推。
+GM.ZombieDamageMultiplier = math.Round(CreateConVar("zs_zombiedamagemultiplier", "1", FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_NOTIFY, "缩放僵尸受到的伤害量。数值越大僵尸越容易打（更脆），数值越小越难打（更肉）。"):GetFloat(), 2)
 cvars.AddChangeCallback("zs_zombiedamagemultiplier", function(cvar, oldvalue, newvalue)
 	GAMEMODE.ZombieDamageMultiplier = math.ceil(100 * (tonumber(newvalue) or 1)) * 0.01
 end)
 
-GM.TimeLimit = CreateConVar("zs_timelimit", "15", FCVAR_ARCHIVE + FCVAR_NOTIFY, "Time in minutes before the game will change maps. It will not change maps if a round is currently in progress but after the current round ends. -1 means never switch maps. 0 means always switch maps."):GetInt() * 60
+GM.TimeLimit = CreateConVar("zs_timelimit", "15", FCVAR_ARCHIVE + FCVAR_NOTIFY, "游戏更换地图前的时间（分钟）。如果当前回合正在进行，不会立即换图，而是等到回合结束后。-1 表示永不换图。0 表示总是换图。"):GetInt() * 60
 cvars.AddChangeCallback("zs_timelimit", function(cvar, oldvalue, newvalue)
 	GAMEMODE.TimeLimit = tonumber(newvalue) or 15
 	if GAMEMODE.TimeLimit ~= -1 then
@@ -821,7 +824,7 @@ cvars.AddChangeCallback("zs_timelimit", function(cvar, oldvalue, newvalue)
 	end
 end)
 
-GM.RoundLimit = CreateConVar("zs_roundlimit", "3", FCVAR_ARCHIVE + FCVAR_NOTIFY, "How many times the game can be played on the same map. -1 means infinite or only use time limit. 0 means once."):GetInt()
+GM.RoundLimit = CreateConVar("zs_roundlimit", "3", FCVAR_ARCHIVE + FCVAR_NOTIFY, "同一张地图可以游玩的回合数。-1 表示无限或仅使用时间限制。0 表示一次。"):GetInt()
 cvars.AddChangeCallback("zs_roundlimit", function(cvar, oldvalue, newvalue)
 	GAMEMODE.RoundLimit = tonumber(newvalue) or 3
 end)

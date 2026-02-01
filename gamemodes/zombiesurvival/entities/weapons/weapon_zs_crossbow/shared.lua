@@ -12,15 +12,17 @@ SWEP.UseHands = true
 SWEP.CSMuzzleFlashes = false
 
 SWEP.Primary.Sound = Sound("Weapon_Crossbow.Single")
-SWEP.Primary.Delay = 2.0
+SWEP.Primary.Delay = 1.1
 SWEP.Primary.Automatic = true
-SWEP.Primary.Damage = 90
+SWEP.Primary.Damage = 180
 
-SWEP.Primary.ClipSize = 1
+SWEP.Primary.ClipSize = 3
 SWEP.Primary.Ammo = "XBowBolt"
 SWEP.Primary.DefaultClip = 15
 
 SWEP.SecondaryDelay = 0.25
+
+SWEP.ReloadSpeed = 3.5
 
 SWEP.WalkSpeed = SPEED_SLOWER
 
@@ -32,7 +34,7 @@ SWEP.ConeMin = 0
 
 SWEP.NextZoom = 0
 
-SWEP.ReloadSpeed = 0.85 -- Since it works with it now.
+--SWEP.ReloadSpeed = 0.85 -- Since it works with it now.
 
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_PROJECTILE_VELOCITY, 100)
 
@@ -45,6 +47,15 @@ end
 
 function SWEP:IsScoped()
 	return self:GetIronsights() and self.fIronTime and self.fIronTime + 0.25 <= CurTime()
+end
+
+function SWEP:ProcessReloadEndTime()
+	local reloadspeed = self.ReloadSpeed * self:GetReloadSpeedMultiplier()
+
+	self:SetReloadFinish(CurTime() + self:SequenceDuration() / reloadspeed)
+	if not self.DontScaleReloadSpeed then
+		self:GetOwner():GetViewModel():SetPlaybackRate(reloadspeed)
+	end
 end
 
 util.PrecacheSound("weapons/crossbow/bolt_load1.wav")

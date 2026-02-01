@@ -9,7 +9,7 @@ CLASS.KnockbackScale = 0
 
 CLASS.FearPerInstance = 1
 
-CLASS.Health = 2750
+CLASS.Health = 3300
 CLASS.SWEP = "weapon_zs_pukepus"
 
 CLASS.Model = Model("models/Zombie/Poison.mdl")
@@ -178,6 +178,25 @@ end
 
 if SERVER then
 	function CLASS:OnKilled(pl, attacker, inflictor, suicide, headshot, dmginfo, assister)
+        -- 掉落武器
+        local pos = pl:LocalToWorld(pl:OBBCenter())
+        local ent = ents.Create("prop_weapon")
+        if IsValid(ent) then
+            ent:SetPos(pos)
+            ent:SetAngles(AngleRand())
+            ent:SetWeaponType("weapon_zs_box")
+            ent:Spawn()
+
+            local phys = ent:GetPhysicsObject()
+            if IsValid(phys) then
+                phys:Wake()
+                phys:SetVelocityInstantaneous(VectorRand():GetNormalized() * math.Rand(24, 100))
+                phys:AddAngleVelocity(VectorRand() * 200)
+            end
+        end
+
+       -- return true
+    --end
 		local pos = pl:WorldToLocal(dmginfo:GetDamagePosition())
 		local norm = dmginfo:GetDamageForce():GetNormalized() * -1
 		timer.Simple(0, function()

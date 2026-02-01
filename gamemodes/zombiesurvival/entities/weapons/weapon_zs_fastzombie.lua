@@ -219,42 +219,46 @@ function SWEP:GetSlowSwingDamage(numplayers, basedamage)
 end
 
 function SWEP:Move(mv)
-    if self:IsPouncing() or self:GetPounceTime() > 0 then
-        mv:SetMaxSpeed(0)
-        mv:SetMaxClientSpeed(0)
-    elseif self:GetClimbing() then
-        mv:SetMaxSpeed(0)
-        mv:SetMaxClientSpeed(0)
+	if self:IsPouncing() or self:GetPounceTime() > 0 then
+		mv:SetMaxSpeed(0)
+		mv:SetMaxClientSpeed(0)
+	elseif self:GetClimbing() then
+		mv:SetMaxSpeed(0)
+		mv:SetMaxClientSpeed(0)
 
-        local owner = self:GetOwner()
-        local tr = self:GetClimbSurface()
-        local angs = owner:SyncAngles()
-        local dir = tr and tr.Hit and (tr.HitNormal.z <= -0.5 and (angs:Forward() * -1) or math.abs(tr.HitNormal.z) < 0.75 and tr.HitNormal:Angle():Up()) or Vector(0, 0, 1)
-        local vel = Vector(0, 0, 4)
+		local owner = self:GetOwner()
+		local tr = self:GetClimbSurface()
+		local angs = owner:SyncAngles()
+		local dir = tr and tr.Hit and (tr.HitNormal.z <= -0.5 and (angs:Forward() * -1) or math.abs(tr.HitNormal.z) < 0.75 and tr.HitNormal:Angle():Up()) or Vector(0, 0, 1)
+		local vel = Vector(0, 0, 4)
 
-        if owner:KeyDown(IN_FORWARD) then
-            owner:SetGroundEntity(nil)
-            vel = vel + dir * 250
-        end
-        if owner:KeyDown(IN_BACK) then
-            vel = vel + dir * -250
-        end
+		if owner:KeyDown(IN_FORWARD) then
+			owner:SetGroundEntity(nil)
+			vel = vel + dir * 250 --160
+		end
+		if owner:KeyDown(IN_BACK) then
+			vel = vel + dir * -250 ---160
+		end
 
-        if vel.z == 4 then
-            if owner:KeyDown(IN_MOVERIGHT) then
-                vel = vel + angs:Right() * 100
-            end
-            if owner:KeyDown(IN_MOVELEFT) then
-                vel = vel + angs:Right() * -100
-            end
-        end
+		if vel.z == 4 then
+			if owner:KeyDown(IN_MOVERIGHT) then
+				vel = vel + angs:Right() * 100 --60
+			end
+			if owner:KeyDown(IN_MOVELEFT) then
+				vel = vel + angs:Right() * -100 ---60
+			end
+		end
 
-        mv:SetVelocity(vel)
-        return true
-    elseif self:IsSlowSwinging() then
-        mv:SetMaxSpeed(mv:GetMaxSpeed() * 0.85)
-        mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * 0.85)
-    end
+		mv:SetVelocity(vel)
+
+		return true
+	elseif self:GetSwinging() then
+		mv:SetMaxSpeed(mv:GetMaxSpeed() * 0.6666)
+		mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * 0.6666)
+	elseif self:IsSlowSwinging() then
+		mv:SetMaxSpeed(mv:GetMaxSpeed() * 0.85)
+		mv:SetMaxClientSpeed(mv:GetMaxClientSpeed() * 0.85)
+	end
 end
 
 function SWEP:MeleeHitEntity(ent, trace, damage, forcescale)
@@ -285,10 +289,36 @@ function SWEP:Swung()
 end
 
 function SWEP:PrimaryAttack()
-    if self:IsSlowSwinging() or self:IsPouncing() or self:GetPounceTime() > 0 then return end
+	if self:IsSlowSwinging() or self:IsPouncing() or self:GetPounceTime() > 0 then return end
 
-    -- 仅启用持续攻击
-    BaseClass.PrimaryAttack(self)
+	local owner = self:GetOwner()
+
+	if self:IsClimbing() or owner:WaterLevel() >= 2 or owner:GetVelocity():LengthSqr() < 64 then
+		BaseClass.PrimaryAttack(self)
+	elseif CurTime() >= self:GetNextPrimaryFire() then
+		local armdelay = owner:GetMeleeSpeedMul()
+
+		self:SetNextPrimaryFire(CurTime() + (self.SlowMeleeDelay + 0.25) * armdelay)
+		self:SetNextSecondaryFire(self:GetNextPrimaryFire() + 0.5)
+
+		self:SetSlowSwingEnd(CurTime() + self.SlowMeleeDelay * armdelay)
+		owner:DoAttackEvent()
+
+		if IsFirstTimePredicted() then
+			self:PlaySlowSwingSound()
+		end
+
+		self:StopSwingingSound()
+		self:SetSwinging(false)
+
+		local trace = self:GetOwner():CompensatedMeleeTrace(self.MeleeReach, self.MeleeSize)
+		if trace.HitNonWorld then
+			trace.IsPreHit = true
+			self.PreHit = trace
+		end
+
+		self.IdleAnimation = CurTime() + self:SequenceDuration() * armdelay
+	end
 end
 
 function SWEP:PlaySlowSwingSound()

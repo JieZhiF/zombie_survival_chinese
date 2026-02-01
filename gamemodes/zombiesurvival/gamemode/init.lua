@@ -109,6 +109,7 @@ This was my first ever gamemode. A lot of stuff is from years ago and some stuff
 -- GM:SetPantsMode 启用或禁用“裤子模式”
 -- GM:SetClassicMode 启用或禁用“经典模式”
 -- GM:SetBabyMode 启用或禁用“婴儿模式”
+-- GM:SetLowPlayerMode 启用或禁用“低人数模式”
 -- GM:SetClosestsToZombie 选择离僵尸出生点最近的玩家成为初始僵尸
 -- GM:AllowPlayerPickup 判断玩家是否可以拾取（+use）实体
 -- GM:PlayerShouldTakeDamage 判断玩家是否应受到来自攻击者的伤害（例如，团队伤害）的核心逻辑
@@ -576,6 +577,7 @@ function GM:Initialize()
 	self:SetPantsMode(self.PantsMode, true)
 	self:SetClassicMode(self:IsClassicMode(), true)
 	self:SetBabyMode(self:IsBabyMode(), true)
+	self:SetLowPlayerMode(self:IsLowPlayerMode(), true)
 	self:SetRedeemBrains(self.DefaultRedeem)
 
 	self:RefreshMapIsObjective()
@@ -690,6 +692,10 @@ end
 
 function GM:IsBabyMode()
 	return self.BabyMode
+end
+
+function GM:IsLowPlayerMode()
+	return self.LowPlayerMode
 end
 
 function GM:CenterNotifyAll(...)
@@ -1392,7 +1398,7 @@ function GM:Think()
 			and self.LastBossZombieSpawned ~= wave and wave > 0 and not self.RoundEnded
 			and (self.BossZombiePlayersRequired <= 0 or #player.GetAll() >= self.BossZombiePlayersRequired) then
 				if self:GetWaveStart() - 5 <= time then
-					self:SpawnMultipleBosses(2) -- 生成3个BOSS
+					self:SpawnMultipleBosses(2)
 				else
 					self:CalculateNextBoss()
 				end
@@ -3481,6 +3487,88 @@ function GM:SetBabyMode(mode)
 	end
 end
 
+function GM:UpdateDifficultyBasedOnPlayers()
+	-- 如果低人数模式没开，直接停止执行
+	if not self.LowPlayerMode then return end
+
+	-- 计算人类玩家数量 (排除Bot)
+	local humanCount = 0
+	for _, pl in ipairs(player.GetAll()) do
+		if IsValid(pl) and not pl:IsBot() then
+			humanCount = humanCount + 1
+		end
+	end
+
+	local targetMult = 1.0
+	local targetHP = 0
+	-- === 阶段判断逻辑 ===
+	if humanCount == 1 then
+		-- 1阶段 (1人)：1.2倍伤害 (最简单)
+		targetMult = 1.2
+		targetHP = 25
+	elseif humanCount >= 2 and humanCount <= 3 then
+		-- 2阶段 (2-3人)：1.1倍伤害
+		targetMult = 1.1
+		targetHP = 15
+	elseif humanCount >= 4 and humanCount <= 5 then
+		-- 3阶段 (4-5人)：1.0倍伤害 (标准)
+		targetMult = 1.0
+		targetHP = 10
+	else
+		-- 4阶段 (6人及以上)：1.0倍伤害 (标准)
+		targetMult = 1.0
+		targetHP = 0
+	end
+	
+	-- 只有当数值不一致时才执行命令，防止控制台刷屏
+	local currentVal = GetConVar("zs_zombiedamagemultiplier"):GetFloat()
+	if math.abs(currentVal - targetMult) > 0.01 then
+		RunConsoleCommand("zs_zombiedamagemultiplier", tostring(targetMult))
+		RunConsoleCommand("zs_endwavehealthbonus", tostring(targetHP))
+		-- 可选：在聊天框提示难度变化
+		PrintMessage(HUD_PRINTTALK, "[低人数模式] 当前人数: " .. humanCount .. "，僵尸受伤倍率调整为: " .. targetMult, "，结束波次生命奖励调整为: " .. targetHP)
+	end
+end
+
+-- === 修改：低人数模式开关 ===
+function GM:SetLowPlayerMode(mode)
+	if self.ZombieEscape then return end
+
+	self.LowPlayerMode = mode
+	--SetGlobalBool("lowplayermode", self.LowPlayerMode)
+	
+	if mode then
+		-- === 开启模式 ===
+		
+		-- 1. 立即执行一次检查
+		self:UpdateDifficultyBasedOnPlayers()
+
+		-- 2. 添加 Hook：当玩家连接或断开时，自动重新计算难度
+		hook.Add("PlayerInitialSpawn", "LowPlayerMode_Check", function() 
+			GAMEMODE:UpdateDifficultyBasedOnPlayers() 
+		end)
+		
+		-- 玩家断开时需要延迟一小会儿，否则 player.GetAll() 还没把人删掉
+		hook.Add("PlayerDisconnected", "LowPlayerMode_Check", function() 
+			timer.Simple(0.5, function() 
+				if GAMEMODE then GAMEMODE:UpdateDifficultyBasedOnPlayers() end 
+			end) 
+		end)
+
+	else
+		-- === 关闭模式 ===
+		
+		-- 1. 移除 Hook (不再自动调整)
+		hook.Remove("PlayerInitialSpawn", "LowPlayerMode_Check")
+		hook.Remove("PlayerDisconnected", "LowPlayerMode_Check")
+
+		-- 2. 恢复默认数值 (通常是 1.0)
+		if GetConVar("zs_zombiedamagemultiplier") then
+			RunConsoleCommand("zs_zombiedamagemultiplier", "1.0")
+			RunConsoleCommand("zs_endwavehealthbonus", "0")
+		end
+	end
+end
 GM.InitialVolunteers = {}
 function GM:SetClosestsToZombie()
 	local allplayers = player.GetAllActive()

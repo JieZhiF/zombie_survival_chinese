@@ -12,23 +12,22 @@ SWEP.WeaponType = "pistol"
 	SWEP.ViewModelFlip = false
 	SWEP.ViewModelFOV = 60
 
-	SWEP.HUD3DBone = "Base"
-	SWEP.HUD3DPos = Vector(1.1,1,1.4)
-	SWEP.HUD3DAng = Angle(180, 0, -120)
-	SWEP.HUD3DScale = 0.013
+	SWEP.HUD3DBone = "ValveBiped.square"
+	SWEP.HUD3DPos = Vector(1.1, 0.25, -2)
+	SWEP.HUD3DScale = 0.015
 end
 
 SWEP.Base = "weapon_zs_base"
 
 SWEP.HoldType = "pistol"
 
-SWEP.ViewModel = "models/weapons/v_pistol_ranim.mdl"
+SWEP.ViewModel = "models/weapons/c_pistol.mdl"
 SWEP.WorldModel = "models/weapons/w_pistol.mdl"
 SWEP.UseHands = true  
 SWEP.ViewModelFOV = 60
 SWEP.CSMuzzleFlashes = false
 
-SWEP.ReloadSound = "weapons/zs_pistol_ranim/pistol_reload7.wav"
+SWEP.ReloadSound = Sound("Weapon_Pistol.Reload")
 SWEP.Primary.Sound = Sound("Weapon_Pistol.NPC_Single")
 SWEP.Primary.Damage = 14.2
 SWEP.Primary.NumShots = 2
@@ -57,16 +56,12 @@ SWEP.Recoil_Decay_Rate      = 5    -- 连射时的“压枪”手感
 SWEP.Recoil_Recovery_Time   = 0.15 -- 停火后多久开始恢复
 SWEP.Recoil_Recovery_Speed  = 8    -- 自动恢复的速度
 SWEP.Recoil_Recovery_Percentage = 0.15 
-SWEP.ReloadSpeed = 1
+SWEP.ReloadSpeed = 0.85
 
 SWEP.IronSightsPos = Vector(-5.401, 0, 2.4)
 
 SWEP.IronSightsAng = Vector(0, 0, 0)
 
-function SWEP:Deploy()
-	self.Weapon:SendWeaponAnim(ACT_VM_DRAW)
-	self:EmitSound("weapons/zs_pistol_ranim/slideback.wav")
-end
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MAX_SPREAD, -0.46, 1)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MIN_SPREAD, -0.22, 1)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.0175, 1)

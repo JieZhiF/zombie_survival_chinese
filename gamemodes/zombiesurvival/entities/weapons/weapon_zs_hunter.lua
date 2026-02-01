@@ -61,7 +61,7 @@ SWEP.WalkSpeed = SPEED_SLOWER
 SWEP.SniperRifle = true
 SWEP.Tier = 3
 
-SWEP.TracerName = "AR2Tracer"
+SWEP.TracerName = "tracer_sniper_big"
 
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_RELOAD_SPEED, 0.1)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, ""..translate.Get("weapon_zs_hunter_r1"), ""..translate.Get("weapon_zs_hunter_r1_description"), function(wept)

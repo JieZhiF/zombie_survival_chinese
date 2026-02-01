@@ -81,6 +81,7 @@ SWEP.Primary.Delay = 1.2
 SWEP.Primary.ClipSize = 6
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "357"
+SWEP.TracerName = "tracer_sniper_big"
 GAMEMODE:SetupDefaultClip(SWEP.Primary)
 
 SWEP.Primary.Gesture = ACT_HL2MP_GESTURE_RANGE_ATTACK_CROSSBOW

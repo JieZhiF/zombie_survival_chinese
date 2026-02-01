@@ -5,13 +5,14 @@ function EFFECT:Init(data)
     self.Position = data:GetStart()
     self.WeaponEnt = data:GetEntity()
     self.Attachment = data:GetAttachment()
-
+    --[[
     if self.WeaponEnt:GetIronsights() then
         self.StartPos = data:GetStart()
     else
         self.StartPos = self:GetTracerShootPos( self.Position, self.WeaponEnt, self.Attachment )
     end
-
+    ]]
+    self.StartPos = self:GetTracerShootPos( self.Position, self.WeaponEnt, self.Attachment )
     self.EndPos = data:GetOrigin()
     self.LifeTime = 1.4
     self.DieTime = CurTime() + self.LifeTime

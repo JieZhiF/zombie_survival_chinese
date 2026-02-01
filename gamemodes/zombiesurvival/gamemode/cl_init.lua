@@ -658,6 +658,9 @@ end
 function GM:IsBabyMode()
 	return GetGlobalBool("babymode", false)
 end
+function GM:IsLowPlayerMode()
+	return GetGlobalBool("lowplayermode", false)
+end
 
 function GM:PostRender()
 end

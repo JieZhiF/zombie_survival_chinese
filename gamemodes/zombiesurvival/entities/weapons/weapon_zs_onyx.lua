@@ -84,7 +84,7 @@ SWEP.IronSightsAng = Vector(0, 0, 0)
 SWEP.WalkSpeed = SPEED_SLOWER
 
 SWEP.Tier = 3
-
+SWEP.TracerName = "tracer_sniper_small"
 SWEP.FireAnimSpeed = 0.6
 
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.1, 1)

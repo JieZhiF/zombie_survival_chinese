@@ -339,6 +339,9 @@ killicon.Add("weapon_zs_graveshovel", "zombiesurvival/killicons/weapon_zs_graves
 killicon.Add("weapon_zs_graveshovelz", "zombiesurvival/killicons/butcher", Color(100, 0, 220)) -- temp killicon
 killicon.Add("weapon_zs_pushbroom", "zombiesurvival/killicons/weapon_zs_broom")
 killicon.Add("weapon_zs_scythe", "zombiesurvival/killicons/weapon_zs_scythe2")
+killicon.Add("weapon_zs_harpoon_sp", "zombiesurvival/killicons/weapon_zs_harpoon2")
+killicon.Add("weapon_zs_kongolaxe_sp", "zombiesurvival/killicons/weapon_zs_kongolaxe2")
+killicon.AddFont("weapon_zs_famas_s", "zsdeathnoticecs", "t")
 
 killicon.Add("weapon_zs_stone", "zombiesurvival/killicons/weapon_zs_stone")
 killicon.Add("projectile_stone", "zombiesurvival/killicons/weapon_zs_stone")

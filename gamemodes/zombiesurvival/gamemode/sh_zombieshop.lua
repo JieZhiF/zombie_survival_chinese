@@ -75,14 +75,14 @@ GM:AddMutationItem(
     GM.ZombieShopCategories["OffensiveMutations"],
     100,
     "icon16/arrow_up.png",
-    function(pl) pl.m_Zombie_Damage1 = true print("Buy mutations") end
+    function(pl) pl.m_Zombie_Damage1 = true end
 )
 
 GM:AddMutationItem(
     "m_shade_damage",
     ""..translate.Get("zshop_bossphysicshazard").."", 
     ""..translate.Get("zshop_bossphysicshazard2").."", 
-    GM.ZombieShopCategories["BossMutations"], 
+    GM.ZombieShopCategories["ZombieUpgrades"], 
     550, 
     "icon16/arrow_up.png", 
     function(pl) pl.m_Shade_Force = true end
