@@ -8,7 +8,7 @@ if CLIENT then
    SWEP.PrintName = "'青峰'电子加速器" -- 武器在菜单中显示的名称
    
     SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
-SWEP.WeaponType = "rifle"
+	SWEP.WeaponType = "rifle"
     SWEP.SlotGroup = WEPSELECT_ASSAULT_RIFLE
 end
 SWEP.Description = "瞄准状态下，E键可以特殊射击子弹" -- 武器的描述
@@ -102,7 +102,9 @@ SWEP.IronSightsHoldType = "ar2" -- 第三人称开镜持枪姿势
 SWEP.WalkSpeed = SPEED_NORMAL -- 手持该武器时的移动速度
 
 -- 瞄准（机瞄）相关设置
-SWEP.IronSpeed = 8.5
+SWEP.IronSpeed = 9
+SWEP.IronPos = Vector(0, 0, 0)            -- (内部使用) 当前的瞄准位置，用于平滑过渡。
+SWEP.IronAng = Angle(0, 0, 0)             -- (内部使用) 当前的瞄准角度，用于平滑过渡。
 SWEP.IronSightPos = Vector(0, -6.75, -1) -- 机瞄时的摄像机位置偏移（此脚本未使用默认机瞄，故此项无效）
 SWEP.IronSightAng = Angle(0, 0, 0) -- 机瞄时的摄像机角度偏移（此脚本未使用默认机瞄，故此项无效）
 
@@ -227,10 +229,10 @@ function SWEP:Think()
 	-- 检测是否按下右键（攻击2）来进行瞄准
 	if self.Owner:KeyDown(IN_ATTACK2) then
 		self.acc = 2 -- 提高精准度（减少后坐力）
-		self.Owner:SetFOV(60, 0.1) -- 缩小FOV，实现缩放效果
+		--self.Owner:SetFOV(60,0.1) -- 缩小FOV，实现缩放效果
 	else
 		self.acc = 1 -- 恢复默认精准度
-		self.Owner:SetFOV(0, 0.1) -- 恢复默认FOV
+		--self.Owner:SetFOV(0, 0.1) -- 恢复默认FOV
 	end
 	-- 在松开左键时播放射击结束音效
 	if self.Owner:KeyReleased(IN_ATTACK) and self:Clip1() > 0 then
@@ -277,7 +279,9 @@ function SWEP:Think()
 		self.lmin = self.deflmin
 	end
 end
-
+SWEP.Breath = 0                           -- (内部使用) 当前的呼吸偏移量。
+SWEP.Breathmult = 10                      -- 呼吸效果的强度乘数，数值越大，效果越微弱。
+SWEP.offset = 0                           -- (用途不明确，可能是旧的或特定的偏移变量)。
 --
 -- 函数: SWEP:SecondaryAttack()
 -- 描述: 处理特殊攻击（默认是E键触发）。
@@ -426,14 +430,14 @@ function SWEP:DrawHUD()
 		self.Sighting = true
 		self.Owner:EmitSound(Sound("weapons/player_archer_ads_up.wav"), 60, 100)
 		-- 使用timer创建平滑的瞄准动画
-		timer.Simple(0.13, function() if IsValid(self) then self.SightOffset = -0.6 end end)
-		timer.Simple(0.32, function() if IsValid(self) then self.SightOffset2 = -9 end end)
+		timer.Simple(0.1, function() if IsValid(self) then self.SightOffset = -0.6 end end)
+		timer.Simple(0.23, function() if IsValid(self) then self.SightOffset2 = -9 end end)
 	end
 	-- 当松开右键且当前处于瞄准状态时，退出瞄准状态
 	if self.Sighting and not self.Owner:KeyDown(IN_ATTACK2) then
 		self.Sighting = false
 		self.Owner:EmitSound(Sound("weapons/player_archer_ads_down.wav"), 60, 100)
-		timer.Simple(0.256, function() if IsValid(self) then self.SightOffset = 0 end end)
+		timer.Simple(0.22, function() if IsValid(self) then self.SightOffset = 0 end end)
 		timer.Simple(0.1, function() if IsValid(self) then self.SightOffset2 = 0 end end)
 	end
 
@@ -497,11 +501,98 @@ function SWEP:DrawHUD()
 		surface.DrawCircle(x, z, 16, Color(50, 255, 50, 130))
 	end
 
-	self:DoAnims()
+	--self:DoAnims()
 	self.offset = Lerp(RealFrameTime() * 10, self.offset, 0)
 	
 	-- 如果需要，可以在非瞄准状态下绘制一个传统的准星
 
 end
-function SWEP:CalcViewModelView()
+---
+-- @function SWEP:DoAnims
+-- @description 动画处理核心函数，应在子武器的 Think hook 中调用。
+--              负责处理机械瞄准、武器检视和呼吸效果。
+--
+SWEP.deploytime = 0
+
+function SWEP:DoAnims()
+	-- 状态判断与动画应用
+	if self.Owner:KeyDown(IN_ATTACK2) and self.IronEnable then
+		-- 状态一: 玩家按下右键进行机械瞄准
+		-- 使用 Lerp 和 LerpAngle 平滑地将视图模型移动到瞄准位置。
+		self.IronPos = LerpVector(RealFrameTime() * self.IronSpeed, self.IronPos, self.IronSightPos)
+		self.IronAng = LerpAngle(RealFrameTime() * self.IronSpeed, self.IronAng, self.IronSightAng)
+		-- 应用更细微的呼吸效果。
+		self.Breath = math.sin(CurTime()) / (self.Breathmult * 80)
+		-- 瞄准时减小模型的晃动和摇摆，以提高稳定性。
+		self.SwayScale = 0.1
+		self.BobScale = 0.1
+	elseif (input.IsKeyDown(KEY_G) or self.deploytime > CurTime()) and not input.IsMouseDown(MOUSE_LEFT) then
+		-- 状态二: 玩家按下 'G' 键或处于部署检视时间内，且未开火
+		-- 应用标准的呼吸效果。
+		self.Breath = math.sin(CurTime()) / (self.Breathmult * 4)
+		-- 调用检视动画处理函数。
+		self:DoInspect()
+	else
+		-- 状态三: 默认持枪状态
+		-- 平滑地将视图模型恢复到默认位置。
+		self.IronPos = LerpVector(RealFrameTime() * self.IronSpeed, self.IronPos, Vector(0, 0, 0))
+		self.IronAng = LerpAngle(RealFrameTime() * self.IronSpeed, self.IronAng, Angle(0, 0, 0))
+		-- 应用标准的呼吸效果。
+		self.Breath = math.sin(CurTime()) / (self.Breathmult * 4)
+		-- 恢复默认的晃动和摇摆幅度。
+		self.SwayScale = 1
+		self.BobScale = 1
+		-- 重置检视动画的状态。
+		keytime = 0
+		key = 1
+	end
+
+end
+function SWEP:TranslateFOV(current_fov)
+    -- 计算目标 FOV
+    self.LerpFOV = self.LerpFOV or current_fov
+    local target = self.Owner:KeyDown(IN_ATTACK2) and 60 or current_fov
+    
+    -- 使用 Lerp 平滑过渡
+    self.LerpFOV = Lerp(FrameTime() * 10, self.LerpFOV, target)
+    
+    return self.LerpFOV
+end
+
+function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
+end
+-- 获取视图模型位置 (最终整合)
+function SWEP:GetViewModelPosition(Pos, Ang)
+    -- 计算弹簧
+    if CLIENT then self:ThinkVisualRecoil() end
+
+    local ang_copy = Angle(Ang.p, Ang.y, Ang.r)
+    
+    -- 1. ZS 原有机瞄旋转
+    ang_copy:RotateAroundAxis(ang_copy:Forward(), self.IronAng.p)
+    ang_copy:RotateAroundAxis(ang_copy:Up(),      self.IronAng.y)
+    ang_copy:RotateAroundAxis(ang_copy:Right(),   self.IronAng.r)
+
+    -- 2. ARC9 视觉后坐力旋转
+    if self.VisRecoilAng then
+        local va = self.VisRecoilAng
+        ang_copy:RotateAroundAxis(ang_copy:Right(),   va.p)
+        ang_copy:RotateAroundAxis(ang_copy:Up(),      va.y)
+        ang_copy:RotateAroundAxis(ang_copy:Forward(), va.r)
+    end
+
+    -- 3. ZS 原有位移计算 (含呼吸与 offset)
+    local finalPos = Pos +
+                     (ang_copy:Forward() * (self.offset + self.IronPos.x)) +
+                     (ang_copy:Right() * self.IronPos.y) +
+                     (ang_copy:Up() * (self.IronPos.z + self.Breath))
+
+    -- 4. ARC9 视觉后坐力位移 (前后冲撞)
+    if self.VisRecoilPos then
+        local vp = self.VisRecoilPos
+        finalPos = finalPos + ang_copy:Forward() * vp.x + ang_copy:Right() * vp.y + ang_copy:Up() * vp.z
+    end
+
+    local finalAng = ang_copy + Angle((self.offset + 10) / 3, 0, 0)
+    return finalPos, finalAng
 end

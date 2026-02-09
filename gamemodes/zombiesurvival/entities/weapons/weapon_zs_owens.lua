@@ -24,7 +24,7 @@ SWEP.HoldType = "pistol"
 SWEP.ViewModel = "models/weapons/c_pistol.mdl"
 SWEP.WorldModel = "models/weapons/w_pistol.mdl"
 SWEP.UseHands = true  
-SWEP.ViewModelFOV = 60
+
 SWEP.CSMuzzleFlashes = false
 
 SWEP.ReloadSound = Sound("Weapon_Pistol.Reload")
@@ -60,7 +60,7 @@ SWEP.ReloadSpeed = 0.85
 
 SWEP.IronSightsPos = Vector(-5.401, 0, 2.4)
 
-SWEP.IronSightsAng = Vector(0, 0, 0)
+SWEP.IronSightsAng = Angle(0, 0, 0)
 
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MAX_SPREAD, -0.46, 1)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MIN_SPREAD, -0.22, 1)

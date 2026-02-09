@@ -9,7 +9,7 @@ local COLOR_TEXT = Color(248, 248, 248, 240)
 local FONT_TOP_CATEGORY = "ZS2DFontHarmony" --顶部大类标签的字体
 local FONT_SUB_CATEGORY = "ZS2DFontHarmony" --左侧次一级分类标签的字体
 local FONT_LABEL = "ZS2DFontHarmonySmall"
-local FONT_LABEL_SMALL = "DermaDefaultSmall"
+local FONT_LABEL_SMALL = "ZS2DFontHarmonySmall"
 
 function PANEL:Init()
     -- 1. 基本框架设置
@@ -101,6 +101,7 @@ function PANEL:PopulateOptionsData()
             {name = "HUD", text = translate.Get("Category_HUD")},
             {name = "Crosshair", text = translate.Get("Category_Crosshair")},
             {name = "Color", text = translate.Get("Category_Color")},
+            {name = "Fonts", text = "字体设置（未完成）"},
         }},
         { name = "Gameplay", text = "游戏性", subCategories = {
             {name = "Other", text = translate.Get("Category_Other")},
@@ -114,7 +115,21 @@ function PANEL:PopulateOptionsData()
         }},
 
     }
-
+    -- 自动生成字体列表数据
+    local fontOptions = {}
+    
+    -- 遍历 ZSFontDLC.FontDefinitions 生成列表
+    for fontID, def in pairs(ZSFontDLC.FontDefinitions) do
+        table.insert(fontOptions, {
+            type = "font_entry", -- 自定义类型
+            label = def.name,    -- 显示用途名称 (例如：武器名字)
+            fontID = fontID,     -- 内部ID (例如：ZS3D2DFont2)
+            default = def.default
+        })
+    end
+    
+    -- 简单的排序，让列表不乱跳
+    table.sort(fontOptions, function(a, b) return a.label < b.label end)
     -- 具体的设置项
     self.OptionsData = {
         HUD = {
@@ -279,7 +294,8 @@ function PANEL:PopulateOptionsData()
             { type = "slider", label = "Option_wepslot_food", convar = "zs_wepslot_food", min = 0, max = 6, decimals = 0 },
             --{ type = "slider", label = "Option_wepslot_potions", convar = "zs_wepslot_potions", min = 0, max = 6, decimals = 0 },
             --{ type = "slider", label = "Option_wepslot_consupportive", convar = "zs_wepslot_consupportive",min = 0, max = 6, decimals = 0 },
-        }
+        },
+        Fonts = fontOptions, -- 将生成的列表放入 Fonts 分类
     }
 end
 
@@ -474,8 +490,11 @@ function PANEL:UpdateContent(category)
             self:AddColorMixer(list, data)
         elseif data.type == "combobox" then
             self:AddComboBox(list, data)
+        elseif data.type == "font_entry" then
+            self:AddFontUsageEntry(list, data) -- 调用下面定义的新函数
         end
     end
+
 end
 ---------------------------------------------------------------------------
 -- 辅助函数 (创建UI控件) - 新的简约高级感样式
@@ -614,8 +633,133 @@ function PANEL:AddComboBox(parent, data)
     end
     parent:AddItem(combo)
 end
+-- [4] 辅助函数：绘制字体设置行 (界面里的一行)
+function PANEL:AddFontUsageEntry(parent, data)
+    local container = vgui.Create("DPanel")
+    container:SetTall(50)
+    container.Paint = function(pnl, w, h)
+        draw.RoundedBox(4, 0, 0, w, h, Color(60, 60, 65, 150))
+        surface.SetDrawColor(COLOR_ACCENT)
+        surface.DrawRect(0, 0, 4, h) -- 左侧装饰条
+    end
 
--- 确保这里使用的是 DPanel
+    local label = vgui.Create("DLabel", container)
+    label:SetText(data.label) -- 显示 "武器名字"
+    label:SetFont("ZS2DFontHarmony")
+    label:SetTextColor(Color(240, 240, 240))
+    label:Dock(LEFT)
+    label:DockMargin(20, 0, 0, 0)
+    label:SetWide(350)
+
+    local btn = vgui.Create("DButton", container)
+    btn:SetText("修改设置")
+    btn:Dock(RIGHT)
+    btn:DockMargin(0, 10, 10, 10)
+    btn:SetWide(100)
+    btn.DoClick = function()
+        -- 点击后打开编辑器
+        self:OpenRealtimeFontEditor(data.fontID, data.label, data.default)
+    end
+
+    parent:AddItem(container)
+end
+
+-- [5] 辅助函数：打开实时编辑器 (弹出窗口)
+function PANEL:OpenRealtimeFontEditor(fontID, friendlyName, defaultData)
+    local currentConfig = ZSFontDLC.GetConfig()[fontID] or defaultData
+    local PREVIEW_FONT_ID = "ZSFontDLC_Temp_Preview"
+
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(900, 600)
+    frame:SetTitle("编辑字体: " .. friendlyName)
+    frame:Center()
+    frame:MakePopup()
+    frame:SetBackgroundBlur(true)
+
+    -- 左侧预览区
+    local leftPnl = vgui.Create("DPanel", frame)
+    leftPnl:Dock(LEFT); leftPnl:SetWide(450); leftPnl:DockMargin(5,5,5,5)
+    leftPnl.Paint = function(s,w,h) draw.RoundedBox(4,0,0,w,h,Color(30,30,30)) end
+
+    local previewLabel = vgui.Create("DLabel", leftPnl)
+    previewLabel:Dock(FILL); previewLabel:SetContentAlignment(5)
+    previewLabel:SetText("预览 Text\n1234567890\n中文测试\nWeapon Name")
+    previewLabel:SetFont(fontID)
+    previewLabel:SetWrap(true)
+
+    -- 右侧设置区
+    local rightPnl = vgui.Create("DScrollPanel", frame)
+    rightPnl:Dock(FILL)
+
+    -- 定义变量
+    local entryFont, sliderSize, sliderWeight, checkAA, checkOutline, checkShadow, entryPreviewText
+
+    -- 实时刷新函数
+    local function UpdateRealtimePreview()
+        local fontName = entryFont:GetValue()
+        if fontName == "" then fontName = "Arial" end
+
+        local newParams = {
+            font = fontName,
+            size = math.Round(sliderSize:GetValue()),
+            weight = math.Round(sliderWeight:GetValue()),
+            antialias = checkAA:GetChecked(),
+            outline = checkOutline:GetChecked(),
+            shadow = checkShadow:GetChecked(),
+            extended = true
+        }
+
+        surface.CreateFont(PREVIEW_FONT_ID, newParams)
+        previewLabel:SetFont(PREVIEW_FONT_ID)
+        previewLabel:SetText(entryPreviewText:GetValue())
+        leftPnl:InvalidateLayout()
+    end
+
+    -- 创建控件 (输入框、滑块等)
+    local function AddLabel(txt) local l = vgui.Create("DLabel", rightPnl); l:SetText(txt); l:Dock(TOP); return l end
+    
+    AddLabel("自定义预览文字:")
+    entryPreviewText = vgui.Create("DTextEntry", rightPnl); entryPreviewText:Dock(TOP); entryPreviewText:SetTall(30); entryPreviewText:SetText("预览 Text\nWeapon Name")
+    entryPreviewText.OnTextChanged = UpdateRealtimePreview
+
+    AddLabel("字体名称 (如: Microsoft YaHei):")
+    entryFont = vgui.Create("DTextEntry", rightPnl); entryFont:Dock(TOP); entryFont:SetTall(30); entryFont:SetText(currentConfig.font)
+    entryFont.OnValueChange = UpdateRealtimePreview
+
+    sliderSize = vgui.Create("DNumSlider", rightPnl); sliderSize:Dock(TOP); sliderSize:SetText("大小"); sliderSize:SetMinMax(10,150); sliderSize:SetValue(currentConfig.size)
+    sliderSize.OnValueChanged = UpdateRealtimePreview
+
+    sliderWeight = vgui.Create("DNumSlider", rightPnl); sliderWeight:Dock(TOP); sliderWeight:SetText("粗细"); sliderWeight:SetMinMax(100,1000); sliderWeight:SetValue(currentConfig.weight)
+    sliderWeight.OnValueChanged = UpdateRealtimePreview
+
+    checkAA = vgui.Create("DCheckBoxLabel", rightPnl); checkAA:Dock(TOP); checkAA:SetText("抗锯齿"); checkAA:SetValue(currentConfig.antialias); checkAA.OnChange = UpdateRealtimePreview
+    checkShadow = vgui.Create("DCheckBoxLabel", rightPnl); checkShadow:Dock(TOP); checkShadow:SetText("阴影"); checkShadow:SetValue(currentConfig.shadow or false); checkShadow.OnChange = UpdateRealtimePreview
+    checkOutline = vgui.Create("DCheckBoxLabel", rightPnl); checkOutline:Dock(TOP); checkOutline:SetText("描边"); checkOutline:SetValue(currentConfig.outline or false); checkOutline.OnChange = UpdateRealtimePreview
+
+    -- 保存按钮
+    local btnSave = vgui.Create("DButton", frame)
+    btnSave:Dock(BOTTOM); btnSave:SetTall(40); btnSave:SetText("保存并应用")
+    btnSave.DoClick = function()
+        local finalData = {
+            font = entryFont:GetValue(),
+            size = math.Round(sliderSize:GetValue()),
+            weight = math.Round(sliderWeight:GetValue()),
+            antialias = checkAA:GetChecked(),
+            shadow = checkShadow:GetChecked(),
+            outline = checkOutline:GetChecked(),
+            extended = true
+        }
+        local allConfig = ZSFontDLC.GetConfig()
+        allConfig[fontID] = finalData
+        ZSFontDLC.SaveConfig(allConfig)
+        surface.CreateFont(fontID, finalData) -- 应用到游戏
+        frame:Close()
+    end
+    
+    UpdateRealtimePreview() -- 初始化预览
+end
+
+-- 注册面板
 vgui.Register("ZSOptions", PANEL, "DPanel")
 
 local WindowInstance = nil

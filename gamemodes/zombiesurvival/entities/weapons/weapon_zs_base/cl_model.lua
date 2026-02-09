@@ -539,3 +539,11 @@ function SWEP:RemoveModels()
 		end
 	end
 end
+
+function SWEP:DrawWorldModel()
+	local owner = self:GetOwner()
+	-- 在特定情况下（如玩家为隐形人或处于出生保护）不绘制世界模型。
+	if owner:IsValid() and (owner.ShadowMan or owner.SpawnProtection) then return end
+
+	self:Anim_DrawWorldModel()
+end

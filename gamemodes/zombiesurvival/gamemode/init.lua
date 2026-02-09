@@ -161,6 +161,7 @@ AddCSLuaFile("vault/shared.lua")
 
 AddCSLuaFile("cl_draw.lua")
 AddCSLuaFile("cl_net.lua")
+AddCSLuaFile("cl_fontdlc.lua")
 AddCSLuaFile("cl_util.lua")
 AddCSLuaFile("cl_options.lua")
 AddCSLuaFile("cl_scoreboard.lua")
@@ -1216,24 +1217,21 @@ local function BossZombieSort(za, zb)
 end
 
 
---[[
-    生成多个BOSS的函数
-    @param amount - 想要生成的BOSS数量
-]]
 function GM:SpawnMultipleBosses(amount)
-    -- 首先，我们需要一个潜在BOSS的候选列表
     local candidates = {}
     local zombies = {}
+    
     for _, ent in pairs(team.GetPlayers(TEAM_UNDEAD)) do
-        -- 筛选出不是BOSS的存活僵尸玩家
-        if not ent:GetZombieClassTable().Boss and ent:Alive() then
+        -- 【修改】删除了 ent:Alive() 检查
+        -- 只要不是 Boss 且开启了 boss 选项的玩家都有资格，无论死活
+        if not ent:GetZombieClassTable().Boss then 
             if ent:GetInfo("zs_nobosspick") == "0" then
                 table.insert(zombies, ent)
             end
         end
     end
 
-    -- 如果没有玩家，则从机器人中选择
+    -- 如果没有玩家，则从机器人中选择 (保持原有逻辑)
     if #zombies == 0 then
         for _, ent in pairs(D3bot.GetBots()) do
             if ent:Team() == TEAM_UNDEAD and not ent:GetZombieClassTable().Boss then
@@ -1242,24 +1240,16 @@ function GM:SpawnMultipleBosses(amount)
         end
     end
 
-    -- 如果没有候选人，则直接返回
-    if #zombies == 0 then
-        --print("[BOSS] No valid candidates to become a boss.")
-        return
-    end
+    if #zombies == 0 then return end
 
-    -- 对候选人进行排序（使用您游戏中已有的BossZombieSort排序逻辑）
+    -- 排序
     table.sort(zombies, BossZombieSort)
 
-    -- 决定实际生成的BOSS数量（不能超过候选人数量）
     local spawn_count = math.min(amount, #zombies)
-
-    -- 循环生成BOSS
-    --print("[BOSS] Attempting to spawn " .. spawn_count .. " bosses.")
     for i = 1, spawn_count do
         local player_to_become_boss = zombies[i]
+        -- 这里依然建议加 isValid 检查，但不需要 Alive
         if player_to_become_boss and player_to_become_boss:IsValid() then
-            -- 直接调用现有的单体BOSS生成函数
             self:SpawnBossZombie(player_to_become_boss, false)
         end
     end
@@ -1591,38 +1581,63 @@ end
 
 GM.LastCalculatedBossTime = 0
 function GM:CalculateNextBoss()
-	local livingbosses = 0
-	local zombies = {}
-	for _, ent in pairs(team.GetPlayers(TEAM_UNDEAD)) do
-		if ent:GetZombieClassTable().Boss and ent:Alive() then
-			livingbosses = livingbosses + 1
-			if livingbosses >= 9 then return end
-		else
-			if ent:GetInfo("zs_nobosspick") == "0" then
-				table.insert(zombies, ent)
-			end
-		end
-	end
-	if #zombies == 0 then
-		for _, ent in pairs(D3bot.GetBots()) do
-			if ent:Team() == TEAM_UNDEAD and not ent:GetZombieClassTable().Boss then
-				table.insert(zombies, ent)
-			end
-		end
-	end
-	table.sort(zombies, BossZombieSort)
-	local newboss = zombies[1]
-	local newbossclass = ""
+    local livingbosses = 0
+    local zombies = {}
 
-	if newboss and newboss:IsValid() then newbossclass = GAMEMODE.ZombieClasses[newboss:GetBossZombieIndex()].Name end
-	net.Start("zs_nextboss")
-	net.WriteEntity(newboss)
-	net.WriteString(newbossclass)
-	net.Broadcast()
+    -- 1. 遍历所有玩家
+    for _, ent in pairs(team.GetPlayers(TEAM_UNDEAD)) do
+        if ent:GetZombieClassTable().Boss then
+            -- 如果是 Boss，我们只统计数量，不加入候选列表
+            if ent:Alive() then
+                livingbosses = livingbosses + 1
+            end
+            -- 注意：这里删除了 "if livingbosses >= 9 then return end"
+            -- 我们希望无论 Boss 有多少，都要算出“如果不满员，下一个该是谁”
+        else
+            -- 如果不是 Boss，检查是否开启了不当 Boss 选项
+            if ent:GetInfo("zs_nobosspick") == "0" then
+                table.insert(zombies, ent)
+            end
+        end
+    end
 
-	return newboss
+    -- 2. 如果没有人类玩家候选，尝试从 BOT 中获取 (保持你原有的逻辑)
+    if #zombies == 0 then
+        for _, ent in pairs(D3bot.GetBots()) do
+            if ent:Team() == TEAM_UNDEAD and not ent:GetZombieClassTable().Boss then
+                table.insert(zombies, ent)
+            end
+        end
+    end
+
+    -- 3. 排序选出分数最高的
+    table.sort(zombies, BossZombieSort)
+    local newboss = zombies[1]
+    local newbossclass = ""
+
+    if newboss and newboss:IsValid() then 
+        newbossclass = GAMEMODE.ZombieClasses[newboss:GetBossZombieIndex()].Name 
+    end
+
+    -- 4. 广播下一个 Boss 是谁 (用于 UI 显示)
+    -- 即使场上 Boss 满了，UI 显示“下一个是你”也是合理的，
+    -- 这样一旦有 Boss 死亡，玩家知道自己是替补。
+    net.Start("zs_nextboss")
+    net.WriteEntity(newboss)
+    net.WriteString(newbossclass)
+    net.Broadcast()
+
+    -- 5. 返回结果
+    -- 如果你确实希望 "场上 Boss >= 9 时绝对不生成新 Boss"
+    -- 你可以在这里加判断，但通常生成限制由 Spawn 函数控制更好。
+    -- 如果这里返回 nil，SpawnBossZombie 就找不到目标了。
+    
+    if livingbosses >= 9 then
+        return nil -- 如果你希望满了就彻底不返回候选人（导致无法自动生成），保留此行。
+    end
+
+    return newboss
 end
-
 function GM:LastBite(victim, attacker)
 	LAST_BITE = attacker
 end

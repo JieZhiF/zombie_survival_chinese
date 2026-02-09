@@ -17,6 +17,7 @@ include("shared.lua")
 include("cl_draw.lua")
 include("cl_util.lua")
 include("cl_options.lua")
+include("cl_fontdlc.lua")
 include("cl_scoreboard.lua")
 include("cl_targetid.lua")
 include("cl_postprocess.lua")
@@ -1484,17 +1485,7 @@ function GM:CreateNonScaleFonts()
 	surface.CreateFont("ZS2DFontHarmonyBig", {font = "Harmony OS Sans SC",size=50,weight = 200 ,extended = true,antialias = true})
 end
 
-function GM:FontDLC() //检测字体扩展包
 
-	local checkpath = "materials/zombiesurvival/mark/fontmark_a.vmt" --检测文件路径
-	if file.Exists(checkpath,"GAME") then --检测文件是否存在
-		print("已安装字体扩展包")
-		self:CreateExtendFonts() --创建扩展字体
-	else
-		print("未安装字体扩展包") --未安装字体扩展包
-		return
-	end
-end
 --这个createfont的完整中文示例
 --[[
 
@@ -1515,13 +1506,7 @@ surface.CreateFont("TextName",){
 	--等等更多参数可以查阅wiki
 }
 ]]
-function GM:CreateExtendFonts()
-	surface.CreateFont("HarmonyOS_Sans_Naskh_Arabic_Regular", {font = "HarmonyOS Sans Naskh Arabic",size=28,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("HarmonyOS_Sans_SC_Regular", {font = "Harmony OS Sans SC",size=34,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("NotoSansSC-Regular", {font = "Noto Sans SC",size=50,weight = 200 ,extended = true,antialias = true})
-	surface.CreateFont("SourceSans_Pro_Regular", {font = "Source Sans Pro",size=28,weight = 500 ,extended = true,antialias = true})
-	surface.CreateFont("SourceSans_Pro_Semibold", {font = "Source Sans Pro Semibold",size=34,weight = 500 ,extended = true,antialias = true})
-end
+
 
 function GM:CreateScalingFonts()
 	local fontaa = true
@@ -1582,12 +1567,15 @@ function GM:CreateScalingFonts()
 end
 
 function GM:CreateFonts()
-	self:Create3DFonts() //3D字体
-	self:CreateNonScaleFonts() //非缩放字体
-	self:CreateScalingFonts() //缩放字体
-	self:FontDLC()
+    self:Create3DFonts()
+    self:CreateNonScaleFonts()
+    self:CreateScalingFonts()
+    
+    -- 调用新模块的初始化函数
+    if ZSFontDLC then
+        ZSFontDLC.Initialize()
+    end
 end
-
 function GM:EvaluateFilmMode()
 	local visible = not self.FilmMode
 

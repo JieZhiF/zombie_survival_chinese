@@ -1,57 +1,62 @@
--- =================================================================
--- == 全局通用后坐力系统 (Universal Recoil System)
--- == 只需一个钩子，即可处理所有启用该系统的武器。
--- =================================================================
+-- cl_recoil_handle.lua
 
-hook.Add("CreateMove", "UniversalRecoilSystem", function(cmd)
+hook.Add("CreateMove", "ARC9_ZS_Camera_System", function(cmd)
     local ply = LocalPlayer()
-    if not IsValid(ply) then return end
-
+    if not IsValid(ply) or not ply:Alive() then return end
     local wep = ply:GetActiveWeapon()
 
-    -- 检查当前武器是否有效，并且是否启用了我们的通用后坐力系统
     if IsValid(wep) and wep.Recoil_Enabled then
-        -- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        -- 如果当前武器启用了后坐力，则执行后坐力计算
-        -- 这段代码与您之前的版本几乎完全相同
-        -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        local curTime = CurTime()
-        local frameTime = FrameTime()
-        local currentAngles = cmd:GetViewAngles()
+        local ft = FrameTime()
+        if ft == 0 then return end
+        local ct = CurTime()
 
-        -- 初始化变量 (如果武器脚本中没有，则使用默认值)
-        wep.current_recoil_offset = wep.current_recoil_offset or Angle(0, 0, 0)
-        wep.last_frame_recoil_offset = wep.last_frame_recoil_offset or Angle(0, 0, 0)
-        wep.recoil_punch = wep.recoil_punch or Angle(0, 0, 0)
-        wep.last_shot_time = wep.last_shot_time or 0
-        wep.recoil_progressive_multiplier = wep.recoil_progressive_multiplier or 1.0
+        -- 初始化变量
+        wep.Recoil_PermanentPool = wep.Recoil_PermanentPool or Angle(0,0,0)
+        wep.Recoil_RecoverPool = wep.Recoil_RecoverPool or Angle(0,0,0)
+        wep.CamRecoilCurrent = wep.CamRecoilCurrent or Angle(0,0,0)
+        wep.CamRecoilTarget = wep.CamRecoilTarget or Angle(0,0,0)
+        wep.CamRecoilRollVal = wep.CamRecoilRollVal or 0
 
-        -- 减去上一帧的后坐力
-        currentAngles = currentAngles - wep.last_frame_recoil_offset
+        -- 1. 回正逻辑 (只针对 RecoverPool 和 Cam 效果)
+        local is_recovering = ct > (wep.last_shot_time + (wep.RecoilResetTime or 0.15))
+        local recovery_speed = is_recovering and (wep.RecoilDissipationRate or 8) or (wep.RecoilAutoControl or 3)
+        
+        local dissipate = recovery_speed * ft * 10
+        -- 恢复池回正
+        wep.Recoil_RecoverPool.p = math.Approach(wep.Recoil_RecoverPool.p, 0, math.abs(wep.Recoil_RecoverPool.p) * dissipate + 0.05 * ft)
+        wep.Recoil_RecoverPool.y = math.Approach(wep.Recoil_RecoverPool.y, 0, math.abs(wep.Recoil_RecoverPool.y) * dissipate + 0.05 * ft)
 
-        -- 后坐力恢复与衰减
-        local targetRecoil = Angle(0, 0, 0)
-        local decayRate = wep.Recoil_Decay_Rate or 5
+        -- 镜头效果回正
+        wep.CamRecoilTarget = LerpAngle(5 * ft, wep.CamRecoilTarget, Angle(0,0,0))
+        wep.CamRecoilRollVal = Lerp(10 * ft, wep.CamRecoilRollVal, 0)
+        wep.CamRecoilCurrent = LerpAngle(20 * ft, wep.CamRecoilCurrent, wep.CamRecoilTarget)
 
-        if curTime > wep.last_shot_time + (wep.Recoil_Recovery_Time or 0.15) then
-            decayRate = wep.Recoil_Recovery_Speed or 8
-
-            if not wep.recovery_target_angle then
-                local recoveryPct = wep.Recoil_Recovery_Percentage or 1.0
-                wep.recovery_target_angle = wep.recoil_punch * (1 - recoveryPct)
-            end
-            targetRecoil = wep.recovery_target_angle
-        else
-            if curTime > wep.last_shot_time + (wep.Recoil_Progressive_Reset_Time or 0.2) then
-                wep.recoil_progressive_multiplier = 1.0
-            end
+        -- 2. 【核心修复：ViewAngle 综合应用】
+        local viewAng = cmd:GetViewAngles()
+        
+        -- 撤销上一帧的应用量 (Anti-Drift)
+        if wep.last_frame_total_offset then
+            viewAng = viewAng - wep.last_frame_total_offset
         end
+        
+        -- 计算当前帧的总后坐力：永久池 + 恢复池 + 视觉镜头偏移
+        local current_offset = Angle(
+            wep.Recoil_PermanentPool.p + wep.Recoil_RecoverPool.p + wep.CamRecoilCurrent.p,
+            wep.Recoil_PermanentPool.y + wep.Recoil_RecoverPool.y + wep.CamRecoilCurrent.y,
+            wep.CamRecoilRollVal -- Roll 推荐全额回复
+        )
 
-        wep.recoil_punch = LerpAngle(frameTime * decayRate, wep.recoil_punch, targetRecoil)
-        wep.current_recoil_offset = LerpAngle(frameTime * (wep.Recoil_Smoothing_Factor or 15), wep.current_recoil_offset, wep.recoil_punch)
-
-        cmd:SetViewAngles(currentAngles + wep.current_recoil_offset)
-        wep.last_frame_recoil_offset = wep.current_recoil_offset
-        ply.LastActiveWeaponForRecoil = wep
+        -- 应用到最终视角
+        cmd:SetViewAngles(viewAng + current_offset)
+        
+        -- 记录这一帧的量，供下一帧撤销
+        wep.last_frame_total_offset = current_offset
+    end
+end)
+hook.Add("CalcView", "ARC9_ZS_FOV_Control", function(ply, pos, ang, fov)
+    local wep = ply:GetActiveWeapon()
+    if IsValid(wep) and wep.Recoil_Enabled and wep.RecoilFOV then
+        wep.RecoilFOV = Lerp(FrameTime() * 10, wep.RecoilFOV, 0)
+        return { origin = pos, angles = ang, fov = fov + wep.RecoilFOV }
     end
 end)
