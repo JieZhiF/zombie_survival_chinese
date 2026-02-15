@@ -18,7 +18,7 @@ function SWEP:Holster()
 	self:RemoveGhost()
 	return true
 end
-
+ 
 function SWEP:SpawnGhost()
 	local owner = self:GetOwner()
 	if owner and owner:IsValid() then

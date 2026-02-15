@@ -53,13 +53,7 @@ SWEP.IronSightsAng = Vector(0, 0, 1)
 
 SWEP.Knockback = 96
 SWEP.Recoil = 0
--- 全局开关
-SWEP.Recoil_Enabled         = true -- 设为 true 来为武器启用此系统
 
--- 基础设置
-SWEP.Recoil_Vertical        = 0.4  -- 基础垂直后坐力
-SWEP.Recoil_Horizontal      = 0.2  -- 基础水平后坐力 (随机范围)
-SWEP.Recoil_Smoothing_Factor = 20   -- 平滑度, 越高越"硬"
 
 local function DoRicochet(attacker, hitpos, hitnormal, normal, damage)
 	local RicoCallback = function(att, tr, dmginfo)

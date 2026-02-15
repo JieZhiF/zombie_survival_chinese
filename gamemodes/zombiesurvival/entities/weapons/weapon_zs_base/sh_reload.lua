@@ -14,14 +14,16 @@ function SWEP:Reload()
 		self.HasChamberedRound = self:Clip1() > 0
 		self.HasChamberedRoundSecondary = self:Clip2() > 0
 
-	
 		self.IdleAnimation = CurTime() + self:SequenceDuration()
 		self:SetNextReload(self.IdleAnimation)
 		self:SetReloadStart(CurTime())
 
 		self:SendReloadAnimation()
 		self:ProcessReloadEndTime()
-
+		self:ResetRecoilState(true)
+		self.last_shot_time = 0 
+		self.ShotCount = 0 -- 连射计数重置
+		self.IsReloadingRecoil = true
 		owner:DoReloadEvent()
 
 		self:EmitReloadSound()

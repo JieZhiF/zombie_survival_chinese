@@ -3,9 +3,9 @@ CLASS.TranslationName = "class_titan" --语言系统中的名字
 CLASS.Description = "description_titan" --语言系统中的角色设定和描述
 CLASS.Help = "controls_titan" --语言系统中的角色教程
 
-CLASS.Health = 2000
+CLASS.Health = 1000
 CLASS.Speed = 120
-CLASS.Points = 5
+CLASS.Points = 25
 
 CLASS.SWEP = "weapon_zs_titan"
 

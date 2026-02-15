@@ -83,10 +83,6 @@ SWEP.WalkSpeed = SPEED_SLOW
 SWEP.ViewModelFOV   = 60
 SWEP.TracerName = "AirboatGunHeavyTracer"
 
-SWEP.Recoil_Enabled         = true -- 设为 true 来为武器启用此系统
-
-SWEP.Recoil_Vertical        = 2  -- 基础垂直后坐力
-SWEP.Recoil_Smoothing_Factor = 25   -- 平滑度, 越高越"硬
 SWEP.FireAnimSpeed = 1.3
 
 SWEP.Tier = 4

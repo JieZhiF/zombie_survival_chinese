@@ -31,7 +31,7 @@ SWEP.ReloadSound = Sound("Weapon_AK47.Clipout")
 SWEP.Primary.Sound = Sound("Weapon_AK47.Single")
 SWEP.Primary.Damage = 21.75
 SWEP.Primary.NumShots = 1
-SWEP.Primary.Delay = 0.08
+SWEP.Primary.Delay = 0.1
 
 SWEP.Primary.ClipSize = 30
 SWEP.Primary.Automatic = true
@@ -48,46 +48,62 @@ SWEP.Tier = 3
 
 SWEP.IronSightsPos = Vector(-6.6, 20, 3.1)
 
--- =============================================================================
--- ARC9 + ZS 核心后坐力配置文件 (参数化)
--- =============================================================================
 SWEP.Recoil_Enabled             = true
+SWEP.Recoil_Enabled = true
 
--- [1. 物理弹道: 影响准星实际落点]
+-- ==========================================
+-- [配置] 1. 核心后坐力参数 (物理弹道/准星移动)
+-- ==========================================
+-- 基础数值
+SWEP.RecoilPerShot      = 1   -- [热度] 每一发子弹增加的"后坐力热度" (Heat)
+SWEP.RecoilMax          = 12    -- [热度] 热度上限 (超过此值后，后坐力不再因连射而增加)
+SWEP.RecoilResetTime    = 0.09  -- [重置] 停火多少秒后，热度开始消散 (ARC9通常很短，0.05-0.1)
+SWEP.RecoilDissipationRate = 15 -- [重置] 热度消散速度 (值越大，停火后准星回复越快)
 
--- 后坐力系统 (Recoil)
-SWEP.Recoil_Enabled = true -- 设为 true 来为武器启用此系统
---SWEP.Recoil = 0
-SWEP.RecoilUp = 0.4 -- 基础垂直后坐力
-SWEP.RecoilSide = 0.2  -- 基础水平后坐力 (随机范围)
-SWEP.RecoilRandomUp = 0.2  -- 垂直后坐力随机范围    
-SWEP.RecoilRandomSide = 0.2  -- 水平后坐力随机范围
-SWEP.RecoilAutoControl = 1  -- 自动压枪控制 (越高越稳)
-SWEP.RecoilResetTime = 0.12   -- 停火后多久重置后坐力计数
-SWEP.RecoilDissipationRate = 1 -- 连续射击时后坐力增加的速度
-SWEP.RecoilRecoveryPercentage = 0.6 -- 连续射击后恢复到原始位置的百分比
+-- 动态倍率 (根据热度调整后坐力)
+SWEP.RecoilModifierCap  = 0.95   -- [倍率] 最大热度时的后坐力倍率 (1.2 = 满热度时后坐力是第一发的1.2倍)
 
--- 视觉后坐力 (镜头与模型)
-SWEP.CamRecoilUp = 0 -- 镜头垂直后坐力
-SWEP.CamRecoilSide = 0 -- 镜头水平后坐力
-SWEP.CamRecoilRoll = 0 -- 镜头滚转后坐力
-SWEP.CamRecoilPunch = 0 -- 镜头后坐力冲击感
-SWEP.CamRecoilFOV = 0   -- 镜头FOV后坐力
+-- 单发后坐力 (ViewAngles 变化)
+SWEP.RecoilUp           = 0.3   -- [垂直] 基础枪口上跳角度
+SWEP.RecoilSide         = 0.15  -- [水平] 基础左右偏转幅度
+SWEP.RecoilRandomUp     = 0.04  -- [随机] 垂直上跳的随机波动量 (+/-)
+SWEP.RecoilRandomSide   = 0.02  -- [随机] 水平偏转的随机波动量 (+/-)
 
----枪模视觉效果: 影响武器模型动作
-SWEP.CustomSightsAttackAnim = true --是否启用模拟开镜开火动画，对于默认开火动画不是很适合开镜射击和没有开镜开火的武器非常有用	
-SWEP.VisualRecoilPunch = 1 -- 视觉后坐力冲击感 (弹簧效果强度)
-SWEP.VisualRecoilUp = 0 -- 视觉后坐力垂直位移
-SWEP.VisualRecoilRoll = 0 -- 视觉后坐力滚转
-SWEP.VisualRecoilStiffness = 80 -- 视觉后坐力弹簧刚度 (越高越“硬”)
-SWEP.VisualRecoilDamping = 10 -- 视觉后坐力弹簧阻尼 (越高越快衰减)
+-- 限制与自动控制
+SWEP.RecoilMaxTotalUp   = 45    -- [上限] 枪口最大抬升角度 (防上天，原值999或5都不合理，45度通常是极限)
+SWEP.RecoilAutoControl  = 15    --自动回正速度
+SWEP.RecoilAutoControlTime = 0.1 --停火后多少秒开始回正
+SWEP.RecoilAutoControl_PerShot = 0.24 -- 每发子弹增加的自动回正速度 (让连射时更稳)
+SWEP.RecoilAutoControl_DontTryToReturnBack = false -- 是否禁用"自动回正" (设为true则像CS，准星不会自动回到原位)
 
--- 状态倍率
-SWEP.RecoilMultSights = 0.5 -- 瞄准时后坐力倍率
-SWEP.RecoilMultCrouch = 0.75 -- 蹲下时后坐力倍率
-SWEP.RecoilMultMidAir = 2.0 -- 半空中时后坐力倍率
-SWEP.RecoilMultMove = 1.3 -- 移动时后坐力倍率
+-- ==========================================
+-- [配置] 2. 镜头效果 (FOV & Camera)
+-- ==========================================
+SWEP.CamRecoilFOV       = 1    -- 射击时 FOV 瞬间拉伸的度数
+SWEP.CamRecoilFOVStiffness = 300 -- FOV 震动的刚度 (越大回弹越快，越脆)
+SWEP.CamRecoilDamping   = 10    -- FOV 震动的阻尼
+SWEP.CamRecoilUp        = 0     -- 镜头上跳
+SWEP.CamRecoilSide      = 0     -- 镜头侧偏
+SWEP.CamRecoilRoll      = 0   -- [重要] 镜头滚转 (ARC9 风格核心，射击时屏幕倾斜)
+SWEP.CamRecoilLerpSpeed = 20
 
+-- ==========================================
+-- [配置] 3. 枪模视觉效果 (Visual Recoil)
+-- ==========================================
+SWEP.UseVisualRecoil    = false
+SWEP.VisualRecoilUp     = -1.5  -- 枪模垂直位移 (负数通常是向上，取决于骨骼)
+SWEP.VisualRecoilPunch  = 1.5   -- 枪模向后撞击力度 (Z轴/后坐力感)
+SWEP.VisualRecoilRoll   = 2.0   -- 枪模滚转力度
+SWEP.VisualRecoilStiffness = 250 -- [刚度] 弹簧回弹速度 (改大可以减少"飘"的感觉)
+SWEP.VisualRecoilDamping   = 25  -- [阻尼] 防止来回晃荡
+SWEP.VisualRecoilCenter = Vector(0, 0, 0) -- 旋转中心偏移
 
+-- ==========================================
+-- [配置] 4. 姿态倍率 (Multipliers)
+-- ==========================================
+SWEP.RecoilMultSights   = 0.5   -- 瞄准时
+SWEP.RecoilMultCrouch   = 0.75  -- 蹲下时
+SWEP.RecoilMultMidAir   = 2.0   -- 空中时
+SWEP.RecoilMultMove     = 1.3   -- 移动时
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MAX_SPREAD, -0.344)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MIN_SPREAD, -0.172)

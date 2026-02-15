@@ -28,7 +28,7 @@ SWEP.Secondary.DefaultClip = 1
 SWEP.Secondary.Automatic = false
 SWEP.Secondary.Ammo = "dummy"
 
-SWEP.CSMuzzleFlashes = false -- 是否使用 Counter-Strike 样式的枪口闪光效果（需要配合模型支持）
+SWEP.CSMuzzleFlashes = true -- 是否使用 Counter-Strike 样式的枪口闪光效果（需要配合模型支持）
 SWEP.EmptyWhenPurchased = true -- 购买时是否空弹夹（需要配合 GAMEMODE:SetupDefaultClip 使用）
 
 SWEP.Undroppable = false --禁止丢弃，true 为禁止丢弃，false 为允许丢弃
@@ -51,7 +51,7 @@ SWEP.FixedAccuracy = false  -- 如果设为 true，则完全忽略玩家状态�
 
 -- 后坐力系统 (Recoil)
 SWEP.Recoil_Enabled = false -- 设为 true 来为武器启用此系统
---SWEP.Recoil = 0
+SWEP.Recoil = 0
 SWEP.RecoilUp = 0.4 -- 基础垂直后坐力
 SWEP.RecoilSide = 0.2  -- 基础水平后坐力 (随机范围)
 SWEP.RecoilRandomUp = 0.2  -- 垂直后坐力随机范围    
@@ -65,7 +65,7 @@ SWEP.RecoilRecoveryPercentage = 0.6 -- 连续射击后恢复到原始位置的�
 SWEP.CamRecoilUp = 0 -- 镜头垂直后坐力
 SWEP.CamRecoilSide = 0 -- 镜头水平后坐力
 SWEP.CamRecoilRoll = 0 -- 镜头滚转后坐力
-SWEP.CamRecoilPunch = 0 -- 镜头后坐力冲击感
+
 SWEP.CamRecoilFOV = 0   -- 镜头FOV后坐力
 
 ---枪模视觉效果: 影响武器模型动作

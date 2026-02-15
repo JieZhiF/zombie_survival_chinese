@@ -3,7 +3,7 @@
 function SWEP:Deploy()
     self:SetNextReload(0)
     self:SetReloadFinish(0)
-    self:ResetRecoilState()
+    self:ResetRecoilState(false)
 
     if GAMEMODE then
         gamemode.Call("WeaponDeployed", self:GetOwner(), self)
@@ -21,6 +21,7 @@ function SWEP:Deploy()
             self.deploytime = 0
         end
     end
+
     --self:CreateModels(self.VElements)
     return true
 end
@@ -29,6 +30,8 @@ function SWEP:Holster()
     if CLIENT then
         self:Anim_Holster()
     end
+    self:ResetRecoilState(false)
+
     return true
 end
 
