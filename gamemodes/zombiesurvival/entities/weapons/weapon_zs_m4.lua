@@ -33,6 +33,9 @@ SWEP.ViewModelBoneMods = {
 	["v_weapon.m4_Parent"] = { scale = Vector(0.009, 0.009, 0.009), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },
 
 }
+---枪模视觉效果: 影响武器模型动作
+SWEP.offset = -1
+SWEP.CustomSightsAttackAnim = true --是否启用模拟开镜开火动画，对于默认开火动画不是很适合开镜射击和没有开镜开火的武器非常有用
 
 SWEP.ViewModelFlip = false
 SWEP.UseHands = true
@@ -337,7 +340,7 @@ SWEP.InspectAng = Vector(24.42, 37.2, 6.224)
 SWEP.RunSightsPos = Vector(-4.415, -6.211, -6.408)
 SWEP.RunSightsAng = Vector(31.179, 1.087, -13.81)
 ]]
-SWEP.IronSightsPos = Vector(-7.63, -2, 1.495)
+SWEP.IronSightsPos = Vector(-7.63, -2, 1.5)
 SWEP.IronSightsAng = Angle( 0, -1.5, -1.23)
 
 sound.Add( {

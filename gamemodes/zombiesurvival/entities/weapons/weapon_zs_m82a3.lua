@@ -74,11 +74,11 @@ SWEP.WorldModel = "models/weapons/w_snip_sg550.mdl"
 SWEP.UseHands = true
 
 SWEP.Primary.Sound = Sound("Weapon_Renegade.Single")
-SWEP.Primary.Damage = 130
+SWEP.Primary.Damage = 255
 SWEP.Primary.NumShots = 1
-SWEP.Primary.Delay = 1.5
+SWEP.Primary.Delay = 1.8
 
-SWEP.Primary.ClipSize = 15
+SWEP.Primary.ClipSize = 5
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "357"
 GAMEMODE:SetupDefaultClip(SWEP.Primary)
@@ -86,15 +86,11 @@ GAMEMODE:SetupDefaultClip(SWEP.Primary)
 SWEP.Primary.Gesture = ACT_HL2MP_GESTURE_RANGE_ATTACK_CROSSBOW
 SWEP.ReloadGesture = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN
 
-SWEP.ConeMax = 1.75
+SWEP.ConeMax = 8.0
 SWEP.ConeMin = 0
 SWEP.HeadshotMulti = 2.45
-SWEP.ReloadSpeed = 1.75
+SWEP.ReloadSpeed = 0.85
 
-SWEP.Undroppable = true
-SWEP.NoPickupNotification = true
-SWEP.NoDismantle = true
-SWEP.NoGlassWeapons = true
 SWEP.SniperRifle = true
 SWEP.IronSightsPos = Vector(11, -9, -2.2)
 SWEP.IronSightsAng = Vector(0, 0, 0)

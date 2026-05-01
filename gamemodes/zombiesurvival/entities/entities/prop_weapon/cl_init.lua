@@ -67,11 +67,13 @@ function ENT:Think()
     self.ShowBaseModel = weptab.ShowWorldModel == nil or weptab.ShowWorldModel
     if weptab.Base == "weapon_zs_basefood" then
         self.IsFood = true
-        self.ShowBaseModel = true 
+        --self.ShowBaseModel = true 
     end
+
     if weptab.WElements then
         self.WElements = table.FullCopy(weptab.WElements)
         self:CreateModels(self.WElements)
+        self.ShowBaseModel = true 
     end
 
     self.ColorModulation = weptab.DroppedColorModulation or self.ColorModulation

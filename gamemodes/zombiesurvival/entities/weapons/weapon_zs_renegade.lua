@@ -9,9 +9,10 @@ SWEP.SlotPos = 0
 
 if CLIENT then
 	SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotRifles")
-SWEP.WeaponType = "rifle"	SWEP.SlotGroup = WEPSELECT_RIFLE
+	SWEP.WeaponType = "rifle"	
+	SWEP.SlotGroup = WEPSELECT_RIFLE
 	SWEP.ViewModelFlip = false
-	SWEP.ViewModelFOV = 63.70351758794
+	SWEP.ViewModelFOV = 64
 
 	SWEP.HUD3DBone = "v_weapon.sg550_Parent"
 	SWEP.HUD3DPos = Vector(-2, -5.2, -2)
@@ -74,12 +75,12 @@ SWEP.WorldModel = "models/weapons/w_snip_sg550.mdl"
 SWEP.UseHands = true
 
 SWEP.Primary.Sound = Sound("Weapon_Renegade.Single")
-SWEP.Primary.Damage = 127
+SWEP.Primary.Damage = 110
 SWEP.Primary.NumShots = 1
-SWEP.Primary.Delay = 1.2
+SWEP.Primary.Delay = 0.25
 
-SWEP.Primary.ClipSize = 6
-SWEP.Primary.Automatic = true
+SWEP.Primary.ClipSize = 10
+SWEP.Primary.Automatic = false 
 SWEP.Primary.Ammo = "357"
 SWEP.TracerName = "tracer_sniper_big"
 GAMEMODE:SetupDefaultClip(SWEP.Primary)
@@ -89,8 +90,8 @@ SWEP.ReloadGesture = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN
 
 SWEP.ConeMax = 6
 SWEP.ConeMin = 0
-SWEP.HeadshotMulti = 2.45
-
+SWEP.HeadshotMulti = 1.85
+SWEP.ReloadSpeed = 1.2
 SWEP.IronSightsPos = Vector(11, -9, -2.2)
 SWEP.IronSightsAng = Vector(0, 0, 0)
 
@@ -98,10 +99,49 @@ SWEP.WalkSpeed = SPEED_SLOWEST
 
 SWEP.Tier = 5
 SWEP.MaxStock = 2
+SWEP.Recoil_Enabled             = true
+SWEP.FireAnimSpeed = 1.2
+-- 基础数值
+SWEP.RecoilPerShot      = 1   -- [热度] 每一发子弹增加的"后坐力热度" (Heat)
+SWEP.RecoilMax          = 4    -- [热度] 热度上限 (超过此值后，后坐力不再因连射而增加)
+SWEP.RecoilResetTime    = 0.35  -- [重置] 停火多少秒后，热度开始消散 (ARC9通常很短，0.05-0.1)
+SWEP.RecoilDissipationRate = 15 -- [重置] 热度消散速度 (值越大，停火后准星回复越快)
 
-SWEP.FireAnimSpeed = 0.5
+-- 动态倍率 (根据热度调整后坐力)
+SWEP.RecoilModifierCap  = 1.2   -- [倍率] 最大热度时的后坐力倍率 (1.2 = 满热度时后坐力是第一发的1.2倍)
 
-GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.13, 1)
+-- 单发后坐力 (ViewAngles 变化)
+SWEP.RecoilUp           = 0.3   -- [垂直] 基础枪口上跳角度
+SWEP.RecoilSide         = 0.15  -- [水平] 基础左右偏转幅度
+SWEP.RecoilRandomUp     = 0.04  -- [随机] 垂直上跳的随机波动量 (+/-)
+SWEP.RecoilRandomSide   = 0.02  -- [随机] 水平偏转的随机波动量 (+/-)
+
+-- 限制与自动控制
+SWEP.RecoilMaxTotalUp   = 45    -- [上限] 枪口最大抬升角度 (防上天，原值999或5都不合理，45度通常是极限)
+SWEP.RecoilAutoControl  = 15    --自动回正速度
+SWEP.RecoilAutoControlTime = 0.1 --停火后多少秒开始回正
+SWEP.RecoilAutoControl_PerShot = 0.24 -- 每发子弹增加的自动回正速度 (让连射时更稳)
+SWEP.RecoilAutoControl_DontTryToReturnBack = false -- 是否禁用"自动回正" (设为true则像CS，准星不会自动回到原位)
+
+-- ==========================================
+-- [配置] 2. 镜头效果 (FOV & Camera)
+-- ==========================================
+SWEP.CamRecoilFOV       = 1    -- 射击时 FOV 瞬间拉伸的度数
+SWEP.CamRecoilFOVStiffness = 300 -- FOV 震动的刚度 (越大回弹越快，越脆)
+SWEP.CamRecoilDamping   = 10    -- FOV 震动的阻尼
+SWEP.CamRecoilUp        = 0     -- 镜头上跳
+SWEP.CamRecoilSide      = 0     -- 镜头侧偏
+SWEP.CamRecoilRoll      = 0   -- [重要] 镜头滚转 (ARC9 风格核心，射击时屏幕倾斜)
+SWEP.CamRecoilLerpSpeed = 20
+
+-- ==========================================
+-- [配置] 4. 姿态倍率 (Multipliers)
+-- ==========================================
+SWEP.RecoilMultSights   = 0.9   -- 瞄准时
+SWEP.RecoilMultCrouch   = 0.8  -- 蹲下时
+SWEP.RecoilMultMidAir   = 2.0   -- 空中时
+SWEP.RecoilMultMove     = 1.1   -- 移动时
+GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.02, 1)
 
 function SWEP:EmitFireSound()
 	self:EmitSound(self.Primary.Sound)
@@ -128,7 +168,7 @@ end
 SWEP.SniperRifle = true
 if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
-
+    --[[
 	function SWEP:GetViewModelPosition(pos, ang)
 		if GAMEMODE.DisableScopes then return end
 
@@ -138,7 +178,7 @@ if CLIENT then
 
 		return BaseClass.GetViewModelPosition(self, pos, ang)
 	end
-
+    ]]
 	function SWEP:DrawHUDBackground()
 		if GAMEMODE.DisableScopes then return end
 

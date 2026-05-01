@@ -49,8 +49,6 @@ SWEP.Tier = 3
 SWEP.IronSightsPos = Vector(-6.6, 20, 3.1)
 
 SWEP.Recoil_Enabled             = true
-SWEP.Recoil_Enabled = true
-
 -- ==========================================
 -- [配置] 1. 核心后坐力参数 (物理弹道/准星移动)
 -- ==========================================
@@ -59,7 +57,7 @@ SWEP.RecoilPerShot      = 1   -- [热度] 每一发子弹增加的"后坐力热�
 SWEP.RecoilMax          = 12    -- [热度] 热度上限 (超过此值后，后坐力不再因连射而增加)
 SWEP.RecoilResetTime    = 0.09  -- [重置] 停火多少秒后，热度开始消散 (ARC9通常很短，0.05-0.1)
 SWEP.RecoilDissipationRate = 15 -- [重置] 热度消散速度 (值越大，停火后准星回复越快)
-
+SWEP.ConeRamp = 2
 -- 动态倍率 (根据热度调整后坐力)
 SWEP.RecoilModifierCap  = 0.95   -- [倍率] 最大热度时的后坐力倍率 (1.2 = 满热度时后坐力是第一发的1.2倍)
 
@@ -85,12 +83,13 @@ SWEP.CamRecoilDamping   = 10    -- FOV 震动的阻尼
 SWEP.CamRecoilUp        = 0     -- 镜头上跳
 SWEP.CamRecoilSide      = 0     -- 镜头侧偏
 SWEP.CamRecoilRoll      = 0   -- [重要] 镜头滚转 (ARC9 风格核心，射击时屏幕倾斜)
-SWEP.CamRecoilLerpSpeed = 20
+SWEP.CamRecoilLerpSpeed = 1
 
 -- ==========================================
 -- [配置] 3. 枪模视觉效果 (Visual Recoil)
 -- ==========================================
 SWEP.UseVisualRecoil    = false
+SWEP.CustomSightsAttackAnim = false
 SWEP.VisualRecoilUp     = -1.5  -- 枪模垂直位移 (负数通常是向上，取决于骨骼)
 SWEP.VisualRecoilPunch  = 1.5   -- 枪模向后撞击力度 (Z轴/后坐力感)
 SWEP.VisualRecoilRoll   = 2.0   -- 枪模滚转力度
