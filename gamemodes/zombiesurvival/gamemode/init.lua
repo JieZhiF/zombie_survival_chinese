@@ -9,7 +9,12 @@ Further credits displayed by pressing F1 in-game.
 This was my first ever gamemode. A lot of stuff is from years ago and some stuff is very recent.
 
 ]]
--- 本文件是 Zombie Survival 游戏模式的核心服务器端脚本，负责处理绝大部分游戏逻辑，包括回合管理、玩家生成、团队变更、伤害计算、游戏状态更新、资源管理以及各种游戏事件的触发。
+-- ============================================================================
+-- 本文件是 Zombie Survival 游戏模式的核心服务器端脚本
+-- 负责处理绝大部分游戏逻辑，包括回合管理、玩家生成、团队变更、伤害计算、
+-- 游戏状态更新、资源管理以及各种游戏事件的触发。
+-- 本文件通过重写 GM（GAMEMODE）表的方法来实现自定义行为。
+-- ============================================================================
 
 -- GM:WorldHint 在世界中向玩家显示提示信息
 -- GM:CreateGibs 在指定位置创建玩家的碎块（尸块）
@@ -278,9 +283,21 @@ local P_Alive = M_Player.Alive
 local player_GetAll = player.GetAll
 local P_GetPhantomHealth = M_Player.GetPhantomHealth
 
+--[[
+	GM:WorldHint（世界提示）
+	在世界中向玩家显示一条3D提示信息，漂浮在指定位置或实体上方。
+	参数：
+		hint - 显示的文本字符串
+		pos - 可选位置（Vector），不传则使用ent的位置
+		ent - 可选实体，提示会跟随实体移动
+		lifetime - 可选显示时间（秒），默认8秒
+		filter - 可选接收玩家，不传则广播给所有人
+	返回值：无
+]]
 function GM:WorldHint(hint, pos, ent, lifetime, filter)
 	net.Start("zs_worldhint")
 		net.WriteString(hint)
+		-- 确定位置：优先pos，其次ent的位置，最后原点
 		net.WriteVector(pos or ent and ent:IsValid() and ent:GetPos() or vector_origin)
 		net.WriteEntity(ent or NULL)
 		net.WriteFloat(lifetime or 8)
@@ -291,6 +308,14 @@ function GM:WorldHint(hint, pos, ent, lifetime, filter)
 	end
 end
 
+--[[
+	GM:CreateGibs（创建尸块）
+	在指定位置创建玩家的尸体碎块（血/肉块效果）。
+	参数：
+		pos - 碎块生成位置
+		headoffset - 可选头部偏移高度，默认0
+	返回值：无
+]]
 function GM:CreateGibs(pos, headoffset)
 	headoffset = headoffset or 0
 
@@ -316,9 +341,22 @@ function GM:CreateGibs(pos, headoffset)
 	end
 end
 
+--[[
+	GM:DisallowHumanPickup（禁止人类拾取钩子）
+	子类可重写此方法以禁止人类拾取特定实体。
+	参数：pl - 玩家，entity - 实体
+	返回值：true表示禁止拾取
+]]
 function GM:DisallowHumanPickup(pl, entity)
 end
 
+--[[
+	GM:TryHumanPickup（尝试拾取物理道具）
+	当玩家对物理道具按下+use键时触发。
+	检查质量/体积限制、钉子状态等条件，然后创建举物状态实体。
+	参数：pl - 玩家，entity - 目标实体
+	返回值：无
+]]
 function GM:TryHumanPickup(pl, entity)
 	if self.ZombieEscape or pl.NoObjectPickup or not pl:Alive() or pl:Team() ~= TEAM_HUMAN or (entity.NoPickupsTime and CurTime() < entity.NoPickupsTime and entity.NoPickupsOwner ~= pl) then return end
 
@@ -350,6 +388,13 @@ function GM:TryHumanPickup(pl, entity)
 	end
 end
 
+--[[
+	GM:AddResources（注册下载资源）
+	将所有自定义文件（字体、材质、模型、声音）加入服务器资源列表，
+	使客户端连接时自动下载。注册的包括字体、材质贴图、击杀图标、
+	僵尸手部模型、武器模型、音效文件等。
+	参数：无；返回值：无
+]]
 function GM:AddResources()
 	resource.AddFile("resource/fonts/typenoksidi.ttf")
 	resource.AddFile("resource/fonts/hidden.ttf")
@@ -564,6 +609,13 @@ function GM:AddResources()
 	resource.AddFile("sound/"..tostring(self.DeathSound))
 end
 
+--[[
+	GM:Initialize（游戏模式初始化）
+	在模式加载时调用，初始化所有子系统：
+	技能连接、资源加载、自定义弹药、武器品质、
+	网络消息、食物系统、模式开关（经典/婴儿/低人数等）。
+	参数：无；返回值：无
+]]
 function GM:Initialize()
 	self:FixSkillConnections()
 	self:RegisterPlayerSpawnEntities()
@@ -588,6 +640,13 @@ function GM:Initialize()
 	game.ConsoleCommand("sv_gravity 600\n")
 end
 
+--[[
+	GM:AddNetworkStrings（注册网络消息）
+	注册所有服务器<->客户端通信的自定义网络消息。
+	涵盖：游戏状态、波数、回合结束、通知、僵尸系统、
+	伤害、背包、技能网、击杀信息、语音等。
+	参数：无；返回值：无
+]]
 function GM:AddNetworkStrings()
 	util.AddNetworkString("zs_gamestate")
 	util.AddNetworkString("zs_wavestart")
@@ -687,18 +746,26 @@ function GM:AddNetworkStrings()
 	util.AddNetworkString("voice_zombiepain")
 end
 
+--[[ GM:IsClassicMode 返回是否经典模式（原始ZS机制）]]
 function GM:IsClassicMode()
 	return self.ClassicMode
 end
 
+--[[ GM:IsBabyMode 返回是否婴儿模式（简化版）]]
 function GM:IsBabyMode()
 	return self.BabyMode
 end
 
+--[[ GM:IsLowPlayerMode 返回是否低人数模式（适合少人游戏）]]
 function GM:IsLowPlayerMode()
 	return self.LowPlayerMode
 end
 
+--[[
+	GM:CenterNotifyAll（屏幕中央通知）
+	向所有玩家屏幕中央显示通知消息。
+	参数：... 可变参数（颜色+文本）
+]]
 function GM:CenterNotifyAll(...)
 	net.Start("zs_centernotify")
 		net.WriteTable({...})
@@ -713,10 +780,16 @@ function GM:TopNotifyAll(...)
 end
 GM.TopNotify = GM.TopNotifyAll
 
+--[[ GM:ShowHelp 向pl显示帮助菜单（客户端Lua）]]
 function GM:ShowHelp(pl)
 	pl:SendLua("GAMEMODE:ShowHelp()")
 end
 
+--[[
+	GM:ShowTeam（团队菜单）
+	人类打开军火库（波数>0）或初始购买菜单；
+	僵尸打开变异商店（仅非ZE模式）。
+]]
 function GM:ShowTeam(pl)//和上面的一样，不过你可以直接把整个函数复制覆盖。如果你有自定义，就只复制有标记的就行。
 	if pl:Team() == TEAM_HUMAN and not self.ZombieEscape then
 		pl:SendLua(self:GetWave() > 0 and "GAMEMODE:OpenArsenalMenu()" or "MakepWorth()")
@@ -731,6 +804,10 @@ function GM:ShowTeam(pl)//和上面的一样，不过你可以直接把整个函
 end
 
 
+--[[
+	GM:ShowSpare1（备用菜单1）
+	僵尸打开职业选择界面；人类打开技能网。
+]]
 function GM:ShowSpare1(pl)
 	if pl:Team() == TEAM_UNDEAD then
 		if self:ShouldUseAlternateDynamicSpawn() then
@@ -743,10 +820,18 @@ function GM:ShowSpare1(pl)
 	end
 end
 
+--[[ GM:ShowSpare2（选项菜单）]]
 function GM:ShowSpare2(pl)
 	pl:SendLua("MakepOptions()")
 end
 
+--[[
+	GM:SetupSpawnPoints（设置出生点）
+	根据地图实体设置人类和僵尸的出生点列表。
+	兼容CS:S/ZS_/DE_/ZM_/ZH_等各类地图，
+	以及GMod9的旧版出生点（gmod_player_start）。
+	参数：无；返回值：无
+]]
 function GM:SetupSpawnPoints()
 	local ztab = ents.FindByClass("info_player_undead")
 	ztab = table.Add(ztab, ents.FindByClass("info_player_zombie"))
@@ -805,9 +890,19 @@ function GM:SetupSpawnPoints()
 	self.BossSpawnPoints = table.Add(ents.FindByClass("info_player_zombie_boss"), ents.FindByClass("info_player_undead_boss"))
 end
 
+--[[
+	GM:PlayerPointsAdded（点数增加钩子）
+	预留钩子，可用于自定义点数增加时的额外逻辑。
+	参数：pl - 玩家，amount - 增加点数
+]]
 function GM:PlayerPointsAdded(pl, amount)
 end
 
+-- ============================================================================
+-- 武器模型->武器类型映射表
+-- 将地图物理道具模型映射到对应的 weapon_zs_* 武器
+-- 由 SetupProps 使用，将地图中放置的道具转换为可拾取武器
+-- ============================================================================
 local weaponmodelstoweapon = {}
 weaponmodelstoweapon["models/props/cs_office/computer_keyboard.mdl"] = "weapon_zs_keyboard"
 weaponmodelstoweapon["models/props_c17/computer01_keyboard.mdl"] = "weapon_zs_keyboard"
@@ -837,14 +932,24 @@ weaponmodelstoweapon["models/props_junk/garbage_milkcarton002a.mdl"] = "weapon_z
 weaponmodelstoweapon["models/props/cs_office/water_bottle.mdl"] = "weapon_zs_f_water"
 weaponmodelstoweapon["models/props_junk/garbage_takeoutcarton001a.mdl"] = "weapon_zs_f_takeout"
 weaponmodelstoweapon["models/props_c17/pushbroom.mdl"] = "weapon_zs_pushbroom"
+--[[
+	GM:InitPostEntity（地图实体初始化）
+	在所有地图实体创建完毕后调用。
+	分配物品属性、修复武器基类、加载地图扩展、
+	设置地图循环文件、检测盗版服务器。
+	参数：无；返回值：无
+]]
 function GM:InitPostEntity()
 	self.DidInitPostEntity = true
 
+	-- 分配物品属性并修复武器基类
 	self:AssignItemProperties()
 	self:FixWeaponBase()
 
+	-- 调用地图初始化扩展
 	gamemode.Call("InitPostEntityMap")
 
+	-- 设置地图循环文件（自动换图用）
 	RunConsoleCommand("mapcyclefile", "mapcycle_zombiesurvival.txt")
 
 	if string.find(string.lower(GetConVar("hostname"):GetString()), "hellsgamers", 1, true) then
@@ -857,6 +962,16 @@ function GM:InitPostEntity()
 	end
 end
 
+--[[
+	GM:SetupProps（设置地图道具）
+	遍历所有prop_physics实体，执行：
+	1. 特定道具加重（炉子设为500kg）
+	2. 移除禁止的道具
+	3. 替换可转为武器的道具（prop_weapon）
+	4. 替换可转为物品的道具（prop_invitem）
+	5. 为无HP道具设置HP（基于模型大小）
+	6. 已有HP的道具HP×3
+]]
 function GM:SetupProps()
 	for _, ent in pairs(ents.FindByClass("prop_physics*")) do
 		local mdl = ent:GetModel()
@@ -908,6 +1023,11 @@ function GM:SetupProps()
 	end
 end
 
+--[[
+	GM:RemoveUnusedEntities（移除无用实体）
+	清理布娃娃（性能）、NPC（防崩溃）、
+	默认弹药箱（使用自定义系统）、护甲/充电器等。
+]]
 function GM:RemoveUnusedEntities()
 	-- Causes a lot of needless lag.
 	util.RemoveAll("prop_ragdoll")
@@ -931,6 +1051,11 @@ function GM:RemoveUnusedEntities()
 	util.RemoveAll("func_recharge")
 end
 
+--[[
+	GM:ReplaceMapWeapons（替换地图武器）
+	将地图默认武器替换为 weapon_zs_* 专属武器。
+	DM/PB地图直接移除所有武器。
+]]
 function GM:ReplaceMapWeapons()
 	local prefix = game.GetMap():lower():sub(1, 3)
 	if prefix == "dm_" or prefix == "pb_" then
@@ -957,6 +1082,9 @@ function GM:ReplaceMapWeapons()
 	end
 end
 
+-- ============================================================================
+-- 弹药替换映射表：将原版弹药拾取物映射到自定义弹药类型
+-- ============================================================================
 local ammoreplacements = {
 	["item_ammo_357"] = "357",
 	["item_ammo_357_large"] = "357",
@@ -971,6 +1099,11 @@ local ammoreplacements = {
 	["item_ammo_smg1_large"] = "smg1",
 	["item_box_buckshot"] = "buckshot"
 }
+--[[
+	GM:ReplaceMapAmmo（替换地图弹药）
+	将原版弹药拾取物换为自定义prop_ammo实体。
+	DM/PB地图移除所有弹药和爆炸油桶。
+]]
 function GM:ReplaceMapAmmo()
 	local prefix = game.GetMap():lower():sub(1, 3)
 	if prefix == "dm_" or prefix == "pb_" then
@@ -1006,10 +1139,16 @@ function GM:ReplaceMapAmmo()
 	util.RemoveAll("item_item_crate")
 end
 
+--[[ GM:ReplaceMapBatteries（移除地图电池，本模式不使用）]]
 function GM:ReplaceMapBatteries()
 	util.RemoveAll("item_battery")
 end
 
+--[[
+	GM:CreateZombieGas（创建僵尸毒气）
+	在僵尸出生点附近创建zombiegasses实体用于视觉标识。
+	限制最多4个，随机分布，避免离人类出生点<300单位。
+]]
 function GM:CreateZombieGas()
 	if NOZOMBIEGASSES then return end
 
@@ -1028,6 +1167,7 @@ function GM:CreateZombieGas()
 
 		local spawnpos = zombie_spawn:GetPos() + Vector(0, 0, 24)
 
+		-- 检查毒气位置是否合理（远离人类出生点和已有毒气）
 		local near = false
 
 		if not self.ZombieEscape then
@@ -1058,6 +1198,13 @@ function GM:CreateZombieGas()
 	end
 end
 
+--[[
+	GM:PlayerShouldTakeNailRemovalPenalty（钉子移除惩罚判定）
+	判断移除他人钉子是否受惩罚：
+	管理员/好友/高路障权限/首钉人不惩罚。
+	参数：pl-移除者，nail-钉子，nailowner-所有者，prop-道具
+	返回值：true应受惩罚
+]]
 function GM:PlayerShouldTakeNailRemovalPenalty(pl, nail, nailowner, prop)
 	if gamemode.Call("PlayerIsAdmin", pl) then return false end
 	if nailowner.ZSFriends[pl] then return false end
@@ -1079,10 +1226,19 @@ function GM:PlayerShouldTakeNailRemovalPenalty(pl, nail, nailowner, prop)
 	return true
 end
 
+-- 玩家碰撞箱尺寸（出生点碰撞检测用）
 local playermins = Vector(-17, -17, 0)
 local playermaxs = Vector(17, 17, 4)
 local LastSpawnPoints = {}
 
+--[[
+	GM:PlayerSelectSpawn（选择出生点）
+	为玩家选择最佳出生点。
+	支持：救赎出生点、Boss出生点、动态生成（巢穴/人类附近）。
+	过滤被阻挡/禁用的点，僵尸可按键选靠近/远离人类。
+	参数：pl - 玩家
+	返回值：Entity - 选中的出生点实体
+]]
 function GM:PlayerSelectSpawn(pl)
 	local spawninplayer = false
 	local teamid = pl:Team()
@@ -1206,6 +1362,12 @@ function GM:PlayerSelectSpawn(pl)
 	return LastSpawnPoints[teamid] or #tab > 0 and table.Random(tab) or pl
 end
 
+--[[
+	BossZombieSort（Boss排序函数）
+	按表现评分（路障伤害×0.05+对人类伤害）降序排列。
+	同分时死亡次数少的优先。
+	参数：za, zb - 两个僵尸玩家，返回值：za是否应排zb前
+]]
 local function BossZombieSort(za, zb)
 	local ascore = za.WaveBarricadeDamage * 0.05 + za.WaveHumanDamage
 	local bscore = zb.WaveBarricadeDamage * 0.05 + zb.WaveHumanDamage
@@ -1217,6 +1379,11 @@ local function BossZombieSort(za, zb)
 end
 
 
+--[[
+	GM:SpawnMultipleBosses（生成多个Boss）
+	按评分排序，将指定数量的僵尸玩家变为Boss。
+	参数：amount - Boss数量
+]]
 function GM:SpawnMultipleBosses(amount)
     local candidates = {}
     local zombies = {}
@@ -1255,6 +1422,11 @@ function GM:SpawnMultipleBosses(amount)
     end
 end
 
+--[[
+	GM:SpawnBossZombie（生成Boss僵尸）
+	将指定玩家变为Boss：保存职业->击杀->设Boss职业->重生->恢复原职业。
+	参数：bossplayer-对象，silent-静默，bossindex-职业索引，triggerboss-触发式
+]]
 function GM:SpawnBossZombie(bossplayer, silent, bossindex, triggerboss)
 	if not bossplayer then
 		bossplayer = self:CalculateNextBoss()
@@ -1292,6 +1464,11 @@ function GM:SpawnBossZombie(bossplayer, silent, bossindex, triggerboss)
 	end
 end
 
+--[[
+	GM:SendZombieVolunteers（发送僵尸志愿者）
+	向客户端广播/发送当前的僵尸志愿者列表。
+	参数：pl-指定玩家，nonemptyonly-列表空时跳过
+]]
 function GM:SendZombieVolunteers(pl, nonemptyonly)
 	if nonemptyonly and #self.ZombieVolunteers == 0 then return end
 
@@ -1307,14 +1484,22 @@ function GM:SendZombieVolunteers(pl, nonemptyonly)
 	end
 end
 
+--[[ GM:ZombieSpawnDistanceSort 按距离升序（近的优先，常规模式）]]
 function GM:ZombieSpawnDistanceSort(other)
 	return self._ZombieSpawnDistance < other._ZombieSpawnDistance
 end
 
+--[[ GM:ZombieSpawnDistanceSortSigils 按距离降序（远的优先，印记模式）]]
 function GM:ZombieSpawnDistanceSortSigils(other)
 	return self._ZombieSpawnDistance > other._ZombieSpawnDistance
 end
 
+--[[
+	GM:SortZombieSpawnDistances（排序僵尸志愿者距离）
+	计算各玩家与出生点/印记的距离并排序。
+	非印记模式：近的优先；印记模式：远的优先。
+	参数：allplayers - 所有玩家列表
+]]
 function GM:SortZombieSpawnDistances(allplayers)
 	local plpos, dist
 
@@ -1349,6 +1534,12 @@ function GM:SortZombieSpawnDistances(allplayers)
 	table.sort(allplayers, sortbysigils and self.ZombieSpawnDistanceSortSigils or self.ZombieSpawnDistanceSort)
 end
 
+--[[
+	GM:ShouldRestartRound（判断是否重启回合）
+	-1表示无限制则始终重启；
+	超时/超回合限制/人类获胜（非ZE）则换地图。
+	ZE模式时间限制×1.5。
+]]
 function GM:ShouldRestartRound()
 	if self.TimeLimit == -1 or self.RoundLimit == -1 then return true end
 
@@ -1371,7 +1562,19 @@ function GM:ShouldRestartRound()
 	return true
 end
 
+-- Think函数每秒执行一次的定时器
 local NextTick = 0
+
+--[[
+	GM:Think（主循环，每帧调用）
+	核心功能：
+	1. 波数计时器管理（开始/结束）
+	2. Boss自动生成（波前5秒生成2个）
+	3. 每帧：退缩、路障幽灵、点数结算、嗜血消耗
+	4. 每秒：AFK检测、溺水、生命恢复（再生者/植入物）、
+	   血甲恢复、强心剂、晚买者提示、自动装填、补给箱
+	5. ZE死亡阶段伤害
+]]
 function GM:Think()
 	local time = CurTime()
 	local wave = self:GetWave()
@@ -1546,6 +1749,10 @@ function GM:Think()
 	end
 end
 
+--[[
+	GM:PlayerSwitchWeapon（切换武器）
+	配合自动装填饰品：记录旧武器，3.95秒后自动装填。
+]]
 function GM:PlayerSwitchWeapon(pl, old, new)
 	if pl:HasTrinket("autoreload") then
 		pl.NextAutomatedReload = CurTime() + 3.95
@@ -1553,7 +1760,10 @@ function GM:PlayerSwitchWeapon(pl, old, new)
 	end
 end
 
--- We calculate the volunteers. If the list changed then broadcast the new list.
+--[[
+	GM:CalculateZombieVolunteers（计算僵尸志愿者）
+	按距离排序选最近N人作为初始僵尸，列表有变则广播。
+]]
 function GM:CalculateZombieVolunteers()
 	local volunteers = {}
 	local allplayers = player_GetAll()
@@ -1580,6 +1790,12 @@ function GM:CalculateZombieVolunteers()
 end
 
 GM.LastCalculatedBossTime = 0
+--[[
+	GM:CalculateNextBoss（计算下个Boss）
+	按评分选最佳候选，广播UI显示。Boss≥9时返回nil。
+	评分：路障伤害×0.05+对人伤害，同分死亡少优先。
+	参数：无；返回值：Player|nil
+]]
 function GM:CalculateNextBoss()
     local livingbosses = 0
     local zombies = {}
@@ -1638,10 +1854,23 @@ function GM:CalculateNextBoss()
 
     return newboss
 end
+--[[
+	GM:LastBite（最后一击）
+	僵尸赢得回合时记录最后一击的攻击者。
+	参数：victim-受害者，attacker-攻击者
+]]
 function GM:LastBite(victim, attacker)
 	LAST_BITE = attacker
 end
 
+--[[
+	GM:CalculateInfliction（计算感染度）
+	感染度=僵尸/(僵尸+人类)。
+	≥100%僵尸获胜，剩1人且僵尸≥2触发最后人类，
+	按感染度解锁僵尸职业，触发逻辑实体。
+	参数：victim-受害者，attacker-攻击者（可选）
+	返回值：number 感染度0~1.0
+]]
 function GM:CalculateInfliction(victim, attacker)
 	if self.RoundEnded or self:GetWave() == 0 then return self.CappedInfliction end
 
@@ -1723,9 +1952,15 @@ function GM:CalculateInfliction(victim, attacker)
 end
 timer.Create("CalculateInfliction", 2, 0, function() gamemode.Call("CalculateInfliction") end)
 
+--[[ GM:OnNPCKilled NPC被杀钩子（PvP模式，预留）]]
 function GM:OnNPCKilled(ent, attacker, inflictor)
 end
 
+--[[
+	GM:LastHuman（最后人类）
+	只剩1人类时广播最后人类消息，触发逻辑实体。
+	参数：pl - 最后的人类玩家
+]]
 function GM:LastHuman(pl)
 	if not LASTHUMAN then
 		net.Start("zs_lasthuman")
@@ -1742,6 +1977,12 @@ function GM:LastHuman(pl)
 	self.TheLastHuman = pl
 end
 
+--[[
+	GM:PlayerHealedTeamMember（治疗队友）
+	给予治疗者点数奖励，发送治疗/被治疗通知。
+	参数：pl-治疗者，other-被治疗者，health-治疗量，
+	wep-武器，pointmul-点数倍率，nobymsg-不通知被治疗者
+]]
 function GM:PlayerHealedTeamMember(pl, other, health, wep, pointmul, nobymsg, floater)//
 	health = health - other:RemoveUselessDamage(health)
 
@@ -1771,9 +2012,15 @@ function GM:PlayerHealedTeamMember(pl, other, health, wep, pointmul, nobymsg, fl
 	end
 end
 
+--[[ GM:ObjectPackedUp 可部署物打包钩子（预留）]]
 function GM:ObjectPackedUp(pack, packer, owner)
 end
 
+--[[
+	GM:PlayerRepairedObject（修理物体）
+	给予修理者点数奖励并发送通知。
+	参数：pl-修理者，other-物体，health-恢复耐久，wep-工具
+]]
 function GM:PlayerRepairedObject(pl, other, health, wep)
 	health = health - other:RemoveUselessDamage(health)
 	if self:GetWave() == 0 or health <= 0 then return end
@@ -1793,6 +2040,11 @@ function GM:PlayerRepairedObject(pl, other, health, wep)
 	net.Send(pl)
 end
 
+--[[
+	GM:CacheHonorableMentions（缓存荣誉提名）
+	遍历HonorableMentions列表，获取玩家并缓存。
+	避免重复计算，结果在回合结束时发送。
+]]
 function GM:CacheHonorableMentions()
 	if self.CachedHMs then return end
 
@@ -1810,6 +2062,11 @@ function GM:CacheHonorableMentions()
 	gamemode.Call("PostDoHonorableMentions")
 end
 
+--[[
+	GM:DoHonorableMentions（发送荣誉提名）
+	向客户端广播/发送荣誉提名数据。
+	参数：filter - 可选指定接收玩家
+]]
 function GM:DoHonorableMentions(filter)
 	self:CacheHonorableMentions()
 
@@ -1826,17 +2083,27 @@ function GM:DoHonorableMentions(filter)
 	end
 end
 
+--[[ GM:PostDoHonorableMentions 荣誉提名处理完毕钩子（预留）]]
 function GM:PostDoHonorableMentions()
 end
 
+--[[
+	GM:PostEndRound（回合结束后续）
+	保存所有玩家的仓库数据。
+	参数：winner - 获胜团队
+]]
 function GM:PostEndRound(winner)
 	self:SaveAllVaults()
 end
 
--- You can override or hook and return false in case you have your own map change system.
+--[[ RealMap 从文件名提取地图名（去.bsp后缀）]]
 local function RealMap(map)
 	return string.match(map, "(.+)%.bsp")
 end
+--[[
+	GM:LoadNextMap（加载下张地图）
+	优先使用mapcyclefile，否则从zs_/ze_/zm_地图中按序循环。
+]]
 function GM:LoadNextMap()
 	-- Just in case.
 	timer.Simple(10, game.LoadNextMap)
@@ -1874,6 +2141,10 @@ function GM:LoadNextMap()
 	end
 end
 
+--[[
+	GM:PreRestartRound（回合重启准备）
+	清除武器、设观察模式、关无敌。
+]]
 function GM:PreRestartRound()
 	for _, pl in pairs(player.GetAll()) do
 		pl:StripWeapons()
@@ -1883,6 +2154,10 @@ function GM:PreRestartRound()
 end
 
 GM.CurrentRound = 1
+--[[
+	GM:RestartRound（重启回合）
+	回合数+1，重置Lua和游戏状态，广播通知。
+]]
 function GM:RestartRound()
 	self.CurrentRound = self.CurrentRound + 1
 
@@ -1898,6 +2173,9 @@ function GM:RestartRound()
 	net.Broadcast()
 end
 
+-- ============================================================================
+-- 回合状态全局变量
+-- ============================================================================
 GM.DynamicSpawning = true
 GM.CappedInfliction = 0
 GM.PeakPopulation = 0
@@ -1906,6 +2184,11 @@ GM.CheckedOut = {}
 GM.PreviouslyDied = {}
 GM.StoredUndeadFrags = {}
 
+--[[
+	GM:RestartLua（重置Lua状态）
+	清除缓存、职业解锁、物品库存、回合标志等。
+	为新回合准备干净的状态环境。
+]]
 function GM:RestartLua()
 	self.CachedHMs = nil
 	self.TheLastHuman = nil
@@ -1956,7 +2239,10 @@ function GM:RestartLua()
 	self:ClearItemStocks(true)
 end
 
--- I don't know.
+--[[
+	CheckBroken（修复状态异常）
+	检查并修复玩家状态异常：活着但HP≤0或在观察模式或碰撞箱异常则强制重生。
+]]
 local function CheckBroken()
 	for _, pl in pairs(player.GetAll()) do
 		if pl:Alive() and (pl:Health() <= 0 or pl:GetObserverMode() ~= OBS_MODE_NONE or pl:OBBMaxs().x ~= 16) then
@@ -1966,6 +2252,11 @@ local function CheckBroken()
 	end
 end
 
+--[[
+	GM:DoRestartGame（执行游戏重启）
+	清除回合结束标记->移除武器/弹药/物品->重置印记/逃跑阶段->
+	设置波数->清理地图->初始化实体->重生所有玩家。
+]]
 function GM:DoRestartGame()
 	self.RoundEnded = nil
 
@@ -2012,6 +2303,10 @@ function GM:DoRestartGame()
 	end
 end
 
+--[[
+	GM:RestartGame（重启游戏包装函数）
+	重置所有玩家状态->移除印记->设置波数->延迟调用DoRestartGame。
+]]
 function GM:RestartGame()
 	for _, pl in pairs(player.GetAll()) do
 		pl:StripWeapons()
@@ -2058,6 +2353,12 @@ function GM:RestartGame()
 	timer.Simple(0.25, function() GAMEMODE:DoRestartGame() end)
 end
 
+--[[
+	GM:InitPostEntityMap（地图实体初始化）
+	加载地图编辑器、设置出生点、移除无用实体、
+	替换武器弹药、创建毒气、设置道具属性、配置阴影。
+	参数：fromze - 是否从ZE模式调用
+]]
 function GM:InitPostEntityMap(fromze)
 	pcall(gamemode.Call, "LoadMapEditorFile")
 
@@ -2103,14 +2404,22 @@ function GM:InitPostEntityMap(fromze)
 	gamemode.Call("CreateSigils")
 end
 
+--[[
+	GM:SetDynamicSpawning（设置动态生成）
+	启用/禁用僵尸动态生成（在人类附近或巢穴生成）。
+	参数：onoff - true启用，false禁用
+]]
 function GM:SetDynamicSpawning(onoff)
 	SetGlobalBool("DynamicSpawningDisabled", not onoff)
 	self.DynamicSpawning = onoff
 end
 
+-- 结束回合后：只有僵尸可受到玩家伤害（无敌保护）
 local function EndRoundPlayerShouldTakeDamage(pl, attacker) return pl:Team() == TEAM_UNDEAD or not attacker:IsPlayer() end
+-- 结束回合后：只有僵尸可自杀
 local function EndRoundPlayerCanSuicide(pl) return pl:Team() == TEAM_UNDEAD end
 
+-- 结束回合后：添加最后人类位置的PVS以便观战
 local function EndRoundSetupPlayerVisibility(pl)
 	if GAMEMODE.LastHumanPosition and GAMEMODE.RoundEnded then
 		AddOriginToPVS(GAMEMODE.LastHumanPosition)
@@ -2119,6 +2428,11 @@ local function EndRoundSetupPlayerVisibility(pl)
 	end
 end
 
+--[[
+	GM:OnPlayerWin（玩家胜利奖励）
+	根据玩家数计算经验值，有上下限，ZE模式减半。
+	参数：pl - 获胜玩家
+]]
 function GM:OnPlayerWin(pl)
     local player_count = #player.GetAll()
     local base_multiplier = 150  -- 原为6，提高基础倍率
@@ -2134,6 +2448,11 @@ function GM:OnPlayerWin(pl)
     pl:AddZSXP(xp)
 end
 
+--[[
+	GM:OnPlayerLose（玩家失败奖励）
+	失败奖励低于胜利，基于玩家数计算，有下限保障。
+	参数：pl - 失败玩家
+]]
 function GM:OnPlayerLose(pl)
     local player_count = #player.GetAll()
     local lose_multiplier = 100   -- 失败奖励的基础倍率
@@ -2148,6 +2467,12 @@ function GM:OnPlayerLose(pl)
     
     pl:AddZSXP(math.max(xp, 10))  -- 确保至少获得10XP
 end
+--[[
+	GM:EndRound（结束回合）
+	设置慢动作、无敌/视野钩子、决定重启或换图、
+	清理环境、奖励经验值、发送结束消息、触发逻辑实体。
+	参数：winner - TEAM_HUMAN或TEAM_UNDEAD
+]]
 function GM:EndRound(winner)
 	if self.RoundEnded then return end
 	self.RoundEnded = true
@@ -2224,6 +2549,12 @@ function GM:EndRound(winner)
 	self:SetWaveStart(CurTime() + 9999)
 end
 
+--[[
+	GM:ScalePlayerDamage（缩放伤害）
+	爆头×HeadshotMulti倍，腿部÷4（防蹲跳时除外），
+	累计腿部伤害用于破腿效果。调用僵尸职业的自定义逻辑。
+	参数：pl-目标，hitgroup-部位，dmginfo-伤害信息
+]]
 function GM:ScalePlayerDamage(pl, hitgroup, dmginfo)
 	local attacker = dmginfo:GetAttacker()
 	local inflictor = dmginfo:GetInflictor()
@@ -2259,6 +2590,11 @@ function GM:ScalePlayerDamage(pl, hitgroup, dmginfo)
 	end
 end
 
+--[[
+	GM:PlayerReady（玩家就绪）
+	玩家完全加载后调用：初始化声望和回合状态。
+	参数：pl - 就绪玩家
+]]
 function GM:PlayerReady(pl)
 	gamemode.Call("PlayerReadyRound", pl)
 
@@ -2267,6 +2603,12 @@ function GM:PlayerReady(pl)
 	pl.PlayerReady = true
 end
 
+--[[
+	GM:PlayerReadyRound（玩家回合就绪）
+	发送游戏状态、更新职业、设碰撞箱、
+	发初始菜单或默认装备、检查回合结束状态。
+	参数：pl - 玩家
+]]
 function GM:PlayerReadyRound(pl)
 	if not pl:IsValid() then return end
 
@@ -2318,6 +2660,11 @@ function GM:PlayerReadyRound(pl)
 	self:ClassUnlocksUpdate(pl)
 end
 
+--[[
+	GM:FullGameUpdate（完整游戏状态更新）
+	向玩家发送波数、计时器等完整游戏状态。
+	参数：pl - 指定玩家（不传则广播）
+]]
 function GM:FullGameUpdate(pl)
 	net.Start("zs_gamestate")
 		net.WriteInt(self:GetWave(), 16)
@@ -2330,6 +2677,7 @@ function GM:FullGameUpdate(pl)
 	end
 end
 
+-- 客户端初始化后触发的控制台命令，标记玩家完成初始加载
 concommand.Add("initpostentity", function(sender, command, arguments)
 	if not sender.DidInitPostEntity then
 		sender.DidInitPostEntity = true
@@ -2339,9 +2687,17 @@ concommand.Add("initpostentity", function(sender, command, arguments)
 end)
 
 local playerheight = Vector(0, 0, 72)
+-- 团队分组排序：人多的组优先
 local function groupsort(ga, gb)
 	return #ga > #gb
 end
+--[[
+	GM:AttemptHumanDynamicSpawn（人类动态出生）
+	尝试在队友附近找安全位置生成（离僵尸>256单位）。
+	优先使用未被污染的印记位置。
+	参数：pl - 玩家
+	返回值：boolean - 是否成功
+]]
 function GM:AttemptHumanDynamicSpawn(pl)
 	if not self.DynamicSpawning or not pl:IsValidLivingHuman() then return false end
 
@@ -2386,6 +2742,11 @@ function GM:AttemptHumanDynamicSpawn(pl)
 	return false
 end
 
+--[[
+	GM:PlayerInitialSpawn（玩家初始生成）
+	初始化玩家状态变量：血甲上限（ZE为0）、音效冷却、闪光弹切换等。
+	参数：pl - 首次加入的玩家
+]]
 function GM:PlayerInitialSpawn(pl)
 	pl.MaxBloodArmor = GAMEMODE.ZombieEscape and 0 or 10
 	pl.NextFlashlightSwitch = 0
@@ -2402,6 +2763,12 @@ function GM:PlayerInitialSpawn(pl)
 	self.PeakPopulation = math.max(self.PeakPopulation, #player.GetAll())
 end
 
+--[[
+	函数名: GM:PlayerInitialSpawnRound (玩家首次生成回合)
+	功能: 玩家在一回合内首次生成时的全量数据初始化
+	参数: pl - 玩家对象
+	说明: 初始化统计计数器、标志状态、分配队伍
+--]]
 function GM:PlayerInitialSpawnRound(pl)
 	pl:SprintDisable()
 	if pl:KeyDown(IN_WALK) then
@@ -2526,16 +2893,23 @@ function GM:PlayerInitialSpawnRound(pl)
 	end
 end
 
+-- 返回当前是否启用动态生成
 function GM:GetDynamicSpawning()
 	return self.DynamicSpawning
 end
 
+-- 玩家被救赎前的钩子
 function GM:PrePlayerRedeemed(pl, silent, noequip)
 end
 
+-- 玩家被救赎后的钩子
 function GM:PostPlayerRedeemed(pl, silent, noequip)
 end
 
+--[[
+	函数名: GM:PlayerDisconnected (玩家断线处理)
+	功能: 保存玩家数据、清理状态、计算感染度
+--]]
 function GM:PlayerDisconnected(pl)
 	pl.Disconnecting = true
 
@@ -2563,10 +2937,12 @@ function GM:PlayerDisconnected(pl)
 	gamemode.Call("CalculateInfliction")
 end
 
+-- 判断是否可以对钉子造成伤害（仅僵尸或非玩家可）
 function GM:CanDamageNail(ent, attacker, inflictor, damage, dmginfo)
 	return not attacker:IsPlayer() or attacker:Team() == TEAM_UNDEAD
 end
 
+-- 判断是否可以放置钉子（检查专家保护）
 function GM:CanPlaceNail(pl, tr)
 	if tr and not pl:HasBarricadeExpert() and tr.Entity.ExpertProtection and tr.Entity.ExpertProtection > CurTime() then
 		return false
@@ -2575,10 +2951,12 @@ function GM:CanPlaceNail(pl, tr)
 	return true
 end
 
+-- 判断是否可以移除钉子（检查不可移除标记）
 function GM:CanRemoveNail(pl, nail)
 	return not nail.m_NailUnremovable
 end
 
+-- 判断能否移除他人钉子（管理员/好友/路障等级比较）
 function GM:CanRemoveOthersNail(pl, nailowner, ent)
 	-- obsolete
 	--[[local plpoints = pl:Frags()
@@ -2596,11 +2974,16 @@ function GM:CanRemoveOthersNail(pl, nailowner, ent)
 	return true
 end
 
+-- 设置全局赎回大脑数
 function GM:SetRedeemBrains(amount)
 	SetGlobalInt("redeembrains", amount)
 end
 
--- Reevaluates a prop and its constraint system (or all props if no arguments) to determine if they should be frozen or not from nails.
+--[[
+	函数名: GM:EvaluatePropFreeze (评估道具冻结)
+	功能: 递归检查钉子系统，决定道具是否应被冻结/解冻
+	参数: ent - 实体(nil则检查全部)
+--]]
 function GM:EvaluatePropFreeze(ent, neighbors)
 	if not ent then
 		for _, e in pairs(ents.GetAll()) do
@@ -2637,16 +3020,20 @@ function GM:EvaluatePropFreeze(ent, neighbors)
 	end
 end
 
--- A nail takes some damage. isdead is true if the damage is enough to remove the nail. The nail is invalid after this function call if it dies.
+-- 钉子受伤害钩子
 function GM:OnNailDamaged(ent, attacker, inflictor, damage, dmginfo)
 end
 
--- A nail is removed between two entities. The nail is no longer considered valid right after this function and is not in the entities' Nails tables. remover may not be nil if it was removed with the hammer's unnail ability.
+--[[
+	局部函数: evalfreeze (延迟评估冻结)
+	说明: 在钉子移除/创建后延迟调用EvaluatePropFreeze
+--]]
 local function evalfreeze(ent)
 	if ent and ent:IsValid() then
 		gamemode.Call("EvaluatePropFreeze", ent)
 	end
 end
+-- 钉子被移除时延迟评估冻结并通知所有者
 function GM:OnNailRemoved(nail, ent1, ent2, remover)
 	if ent1 and ent1:IsValid() and not ent1:IsWorld() then
 		timer.Simple(0, function() evalfreeze(ent1) end)
@@ -2680,6 +3067,7 @@ function GM:OnNailRemoved(nail, ent1, ent2, remover)
 end
 
 -- A nail is created between two entities.
+-- 钉子创建时延迟评估两个实体的冻结状态
 function GM:OnNailCreated(ent1, ent2, nail)
 	if ent1 and ent1:IsValid() and not ent1:IsWorld() then
 		timer.Simple(0, function() evalfreeze(ent1) end)
@@ -2689,6 +3077,10 @@ function GM:OnNailCreated(ent1, ent2, nail)
 	end
 end
 
+--[[
+	函数名: GM:RemoveDuplicateAmmo (移除重复弹药)
+	功能: 当玩家有多把同弹药类型武器时，移除多余弹药防止双倍资源
+--]]
 function GM:RemoveDuplicateAmmo(pl)//初始菜单的武器给予弹药
 	local AmmoCounts = {}
 	local WepAmmos = {}
@@ -2731,12 +3123,14 @@ function GM:RemoveDuplicateAmmo(pl)//初始菜单的武器给予弹药
 	end
 end
 
+-- 超时回调：初始菜单超时后给予随机装备
 local function TimedOut(pl)
 	if pl:IsValid() and pl:Team() == TEAM_HUMAN and pl:Alive() and not GAMEMODE.CheckedOut[pl:SteamID64()] then
 		gamemode.Call("GiveRandomEquipment", pl)
 	end
 end
 
+-- 给予默认或随机初始装备
 function GM:GiveDefaultOrRandomEquipment(pl)
 	if not self.CheckedOut[pl:SteamID64()] and not self.ZombieEscape then
 		if self.StartingLoadout then
@@ -2750,6 +3144,7 @@ function GM:GiveDefaultOrRandomEquipment(pl)
 	end
 end
 
+-- 给予服务器预设的初始装备
 function GM:GiveStartingLoadout(pl)
 	if self.CheckedOut[pl:SteamID64()] then return end
 	self.CheckedOut[pl:SteamID64()] = true
@@ -2763,6 +3158,7 @@ function GM:GiveStartingLoadout(pl)
 	end
 end
 
+-- 从装备库随机选择一套给予玩家
 function GM:GiveRandomEquipment(pl)
 	if self.CheckedOut[pl:SteamID64()] or self.ZombieEscape then return end
 	self.CheckedOut[pl:SteamID64()] = true
@@ -2771,7 +3167,7 @@ function GM:GiveRandomEquipment(pl)
 		self:GiveStartingLoadout(pl)
 	elseif GAMEMODE.OverrideStartingWorth then
 		pl:Give("weapon_zs_swissarmyknife")
-	elseif #self.StartLoadouts >= 1 then
+	elseif self.StartLoadouts and #self.StartLoadouts >= 1 then
 		for _, id in pairs(self.StartLoadouts[math.random(#self.StartLoadouts)]) do
 			local tab = FindStartingItem(id)
 			if tab then
@@ -2790,10 +3186,15 @@ function GM:GiveRandomEquipment(pl)
 	end
 end
 
+-- 检查玩家能否在初始菜单结账
 function GM:PlayerCanCheckout(pl)
 	return pl:IsValid() and pl:Team() == TEAM_HUMAN and pl:Alive() and not self.CheckedOut[pl:SteamID64()] and not self.StartingLoadout and not self.ZombieEscape and self.StartingWorth > 0 and self:GetWave() < 2
 end
 
+--[[
+	函数名: GM:PlayerDeathThink (死亡玩家每帧处理)
+	功能: 处理观战切换、重生计时、乌鸦形态
+--]]
 function GM:PlayerDeathThink(pl)
 	if self.RoundEnded or pl.Revive or self:GetWave() == 0 then return end
 
@@ -2869,10 +3270,12 @@ function GM:PlayerDeathThink(pl)
 	end
 end
 
+-- 判断是否应触发反恶意破坏机制
 function GM:ShouldAntiGrief(ent, attacker, dmginfo, health)
 	return ent.m_AntiGrief and self.GriefMinimumHealth <= health and attacker:IsPlayer() and attacker:Team() == TEAM_HUMAN and not dmginfo:IsExplosionDamage()
 end
 
+-- 道具被破坏时转发到 PropBroken
 function GM:PropBreak(attacker, ent)
 	gamemode.Call("PropBroken", ent, attacker)
 end
@@ -2910,6 +3313,11 @@ local function FormatPosition(pos)
     return "坐标无效"
 end
 
+--[[
+	函数名: GM:PropBroken (道具被破坏)
+	功能: 人类破坏道具时向所有人类发送警告并记录日志
+	说明: 反恶意破坏监控系统
+--]]
 function GM:PropBroken(ent, attacker)
     if IsValid(ent) and IsValid(attacker) and not ent._PROPBROKEN and attacker:IsPlayer() and attacker:Team() == TEAM_HUMAN then
         ent._PROPBROKEN = true
@@ -2961,6 +3369,14 @@ function GM:NestDestroyed(ent, attacker)
     end
 end
 
+--[[
+	函数名: GM:EntityTakeDamage (实体受伤害主处理)
+	功能: 核心伤害处理函数，处理所有实体受到的伤害
+	参数: ent - 受伤害实体, dmginfo - 伤害信息
+	说明: 处理投射物修正、道具3倍伤害、防团队误伤、波次0保护、
+	      钉子转发、玩家得分统计、可破坏道具颜色变化/破坏逻辑、
+	      浮动伤害显示等
+--]]
 function GM:EntityTakeDamage(ent, dmginfo)
 	local attacker, inflictor = dmginfo:GetAttacker(), dmginfo:GetInflictor()
 
@@ -3305,6 +3721,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	end
 end
 
+-- 向攻击者显示浮动伤害数字
 function GM:DamageFloater(attacker, victim, dmgpos, dmg, definiteply)
 	if attacker == victim then return end
 	if dmgpos == vector_origin then dmgpos = victim:NearestPoint(attacker:EyePos()) end
@@ -3320,6 +3737,7 @@ function GM:DamageFloater(attacker, victim, dmgpos, dmg, definiteply)
 	net.Send(attacker)
 end
 
+-- 从人类中随机选一名变为初始僵尸
 function GM:SetRandomToZombie()
 	local plays = team.GetPlayers(TEAM_HUMAN)
 	local pl = plays[math.random(#plays)]
@@ -3337,12 +3755,17 @@ function GM:SetRandomToZombie()
 	return pl
 end
 
+-- 玩家变队前钩子（空实现）
 function GM:PreOnPlayerChangedTeam(pl, oldteam, newteam)
 	--[[if oldteam == TEAM_HUMAN then
 		self:SaveVault(pl)
 	end]]
 end
 
+--[[
+	函数名: GM:OnPlayerChangedTeam (玩家队伍变更)
+	功能: 处理点数重置、保险库恢复、技能移除等
+--]]
 function GM:OnPlayerChangedTeam(pl, oldteam, newteam)
 	if newteam == TEAM_UNDEAD then
 		pl:SetPoints(0)
@@ -3381,6 +3804,7 @@ function GM:OnPlayerChangedTeam(pl, oldteam, newteam)
 	timer.Simple(0, function() gamemode.Call("CalculateInfliction") end)
 end
 
+-- 强制玩家设为默认僵尸职业
 function GM:SetToDefaultZombieClass(pl)
 	if pl:Team() == TEAM_UNDEAD then
 		pl:KillSilent()
@@ -3391,6 +3815,7 @@ function GM:SetToDefaultZombieClass(pl)
 	end
 end
 
+-- 启用/禁用裤子模式（强制所有僵尸为Zombie Legs）
 function GM:SetPantsMode(mode)
 	if self.ZombieEscape then return end
 
@@ -3426,6 +3851,7 @@ function GM:SetPantsMode(mode)
 	end
 end
 
+-- 启用/禁用经典模式（强制所有僵尸为Classic Zombie）
 function GM:SetClassicMode(mode)
 	if self.ZombieEscape then return end
 
@@ -3465,6 +3891,10 @@ function GM:SetClassicMode(mode)
 	end
 end
 
+--[[
+	函数名: GM:SetBabyMode (设置婴儿模式)
+	功能: 启用/禁用婴儿模式，所有僵尸强制使用Gore Child职业
+--]]
 function GM:SetBabyMode(mode)
 	if self.ZombieEscape then return end
 
@@ -3502,6 +3932,7 @@ function GM:SetBabyMode(mode)
 	end
 end
 
+-- 根据玩家人数自动调整难度（低人数模式下）
 function GM:UpdateDifficultyBasedOnPlayers()
 	-- 如果低人数模式没开，直接停止执行
 	if not self.LowPlayerMode then return end
@@ -3545,7 +3976,10 @@ function GM:UpdateDifficultyBasedOnPlayers()
 	end
 end
 
--- === 修改：低人数模式开关 ===
+--[[
+	函数名: GM:SetLowPlayerMode (低人数模式开关)
+	功能: 根据在线玩家人数量动态调整僵尸伤害倍率
+--]]
 function GM:SetLowPlayerMode(mode)
 	if self.ZombieEscape then return end
 
@@ -3584,7 +4018,12 @@ function GM:SetLowPlayerMode(mode)
 		end
 	end
 end
+-- 记录初始自愿者
 GM.InitialVolunteers = {}
+--[[
+	函数名: GM:SetClosestsToZombie (设置最近玩家为初始僵尸)
+	功能: 根据与僵尸出生点的距离选择最近的玩家作为初始僵尸
+--]]
 function GM:SetClosestsToZombie()
 	local allplayers = player.GetAllActive()
 	local numplayers = #allplayers
@@ -3639,10 +4078,15 @@ function GM:SetClosestsToZombie()
 	end
 end
 
+-- 禁止普通拾取（使用自定义 TryHumanPickup）
 function GM:AllowPlayerPickup(pl, ent)
 	return false
 end
 
+--[[
+	函数名: GM:PlayerShouldTakeDamage (玩家是否应受伤害)
+	功能: 判断玩家是否应受到攻击者的伤害，防止团队误伤
+--]]
 function GM:PlayerShouldTakeDamage(pl, attacker)
 	if attacker.PBAttacker and attacker.PBAttacker:IsValid() and CurTime() < attacker.NPBAttacker then -- Protection against prop_physbox team killing. physboxes don't respond to SetPhysicsAttacker()
 		attacker = attacker.PBAttacker
@@ -3653,6 +4097,10 @@ function GM:PlayerShouldTakeDamage(pl, attacker)
 	return true
 end
 
+--[[
+	函数名: GM:PlayerHurt (玩家受伤处理)
+	功能: 玩家受到伤害但未死亡时调用，处理疼痛音效和饰品触发
+--]]
 function GM:PlayerHurt(victim, attacker, healthremaining, damage)
 	if healthremaining < 1 then return end
 
@@ -3676,6 +4124,10 @@ function GM:PlayerHurt(victim, attacker, healthremaining, damage)
 	end
 end
 
+--[[
+	函数名: GM:WeaponDeployed (武器部署)
+	功能: 武器切换后处理速度变化，防止切枪后立即加速逃跑
+--]]
 function GM:WeaponDeployed(pl, wep)
 	self:DoChangeDeploySpeed(wep)
 
@@ -3693,6 +4145,10 @@ function GM:WeaponDeployed(pl, wep)
 	end
 end
 
+--[[
+	函数名: GM:KeyPress (按键处理)
+	功能: 处理E键(使用/拾取)、Shift键(加速/技能)、Z键(幽灵模式)的自定义逻辑
+--]]
 function GM:KeyPress(pl, key)
 	if key == IN_USE then
 		if pl:Team() == TEAM_HUMAN and pl:Alive() then
@@ -3749,6 +4205,7 @@ function GM:KeyPress(pl, key)
 	end
 end
 
+-- 查找离指定位置最近的某团队出生点
 function GM:GetNearestSpawn(pos, teamid)
 	local nearest = NULL
 
@@ -3766,6 +4223,7 @@ function GM:GetNearestSpawn(pos, teamid)
 	return nearest
 end
 
+-- 检查实体是否挡住了僵尸出生点
 function GM:EntityWouldBlockSpawn(ent)
 	local spawnpoint = self:GetNearestSpawn(ent:GetPos(), TEAM_UNDEAD)
 
@@ -3777,6 +4235,7 @@ function GM:EntityWouldBlockSpawn(ent)
 	return false
 end
 
+-- 获取到最近出生点的距离
 function GM:GetNearestSpawnDistance(pos, teamid)
 	local nearest = self:GetNearestSpawn(pos, teamid)
 	if nearest:IsValid() then
@@ -3786,10 +4245,15 @@ function GM:GetNearestSpawnDistance(pos, teamid)
 	return -1
 end
 
+-- 服务器关闭时保存所有保险库
 function GM:ShutDown()
 	self:SaveAllVaults()
 end
 
+--[[
+	函数名: GM:PlayerUse (玩家使用实体)
+	功能: 处理玩家对实体按E键的逻辑，包括开门、回血、拾取道具
+--]]
 function GM:PlayerUse(pl, ent)
 	if not pl:Alive() or pl:Team() == TEAM_UNDEAD and pl:GetZombieClassTable().NoUse or pl:GetBarricadeGhosting() then return false end
 
@@ -3814,16 +4278,23 @@ function GM:PlayerUse(pl, ent)
 	return true
 end
 
+-- 玩家死亡钩子（主逻辑在DoPlayerDeath中）
 function GM:PlayerDeath(pl, inflictor, attacker)
 end
 
+-- 播放默认死亡音效
 function GM:PlayerDeathSound()
 	return true
 end
 
+-- 按距离排序的辅助函数
 local function SortDist(pa, pb)
 	return pa._temp < pb._temp
 end
+--[[
+	函数名: GM:CanPlayerSuicide (玩家能否自杀)
+	功能: 判断玩家是否允许自杀，处理自杀归属判定
+--]]
 function GM:CanPlayerSuicide(pl)
 	if self.RoundEnded or pl:HasWon() then return false end
 
@@ -3861,6 +4332,7 @@ function GM:CanPlayerSuicide(pl)
 	return pl:GetObserverMode() == OBS_MODE_NONE and pl:Alive() and (not pl.SpawnNoSuicide or pl.SpawnNoSuicide < CurTime())
 end
 
+-- 僵尸默认复活：给予2秒复活状态
 function GM:DefaultRevive(pl)
 	local status = pl:GiveStatus("revive")
 	if status and status:IsValid() then
@@ -3868,6 +4340,11 @@ function GM:DefaultRevive(pl)
 	end
 end
 
+--[[
+	函数名: GM:HumanKilledZombie (人类击杀僵尸)
+	功能: 处理得分分配、辅助击杀判定、特殊武器效果
+	返回值: 辅助击杀者（如有）
+--]]
 function GM:HumanKilledZombie(pl, attacker, inflictor, dmginfo, headshot, suicide)
 	if (pl:GetZombieClassTable().Points or 0) == 0 or self.RoundEnded then return end
 
@@ -3933,9 +4410,14 @@ function GM:HumanKilledZombie(pl, attacker, inflictor, dmginfo, headshot, suicid
 	return mostdamager
 end
 
+-- 人类击杀僵尸后的钩子
 function GM:PostHumanKilledZombie(pl, attacker, inflictor, dmginfo, assistpl, assistamount, headshot)
 end
 
+--[[
+	函数名: GM:ZombieKilledHuman (僵尸击杀人类)
+	功能: 僵尸吃脑、经验奖励、人类变为僵尸
+--]]
 function GM:ZombieKilledHuman(pl, attacker, inflictor, dmginfo, headshot, suicide)
 	if self.RoundEnded then return end
 
@@ -3971,9 +4453,11 @@ function GM:ZombieKilledHuman(pl, attacker, inflictor, dmginfo, headshot, suicid
 	return attacker:Frags()
 end
 
+-- 僵尸击杀人类后的钩子
 function GM:PostZombieKilledHuman(pl, attacker, inflictor, dmginfo, headshot, suicide)
 end
 
+-- 延迟变僵尸：防止人类死亡时爆炸连锁误伤队友
 local function DelayedChangeToZombie(pl)
 	if pl:IsValid() then
 		if pl.ChangeTeamFrags then
@@ -3984,6 +4468,10 @@ local function DelayedChangeToZombie(pl)
 		pl:ChangeTeam(TEAM_UNDEAD)
 	end
 end
+--[[
+	函数名: GM:DoPlayerDeath (玩家死亡主处理)
+	功能: 处理所有玩家死亡逻辑：布娃娃、团队变更、击杀广播、复活机制
+--]]
 function GM:DoPlayerDeath(pl, attacker, dmginfo)
 	pl:RemoveEphemeralStatuses()
 	pl:Extinguish()
@@ -4177,15 +4665,21 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 	end
 end
 
+-- 武器装备时处理部署速度
 function GM:WeaponEquip(wep)
 	if wep.m_WeaponDeploySpeed then
 		timer.Simple(0, function() GAMEMODE:DoChangeDeploySpeed(wep) end)
 	end
 end
 
+-- 玩家被玩家击杀的钩子
 function GM:PlayerKilledByPlayer(pl, attacker, inflictor, headshot, dmginfo, is_assistant)
 end
 
+--[[
+	函数名: GM:PlayerCanPickupWeapon (玩家能否拾取武器)
+	功能: 判断玩家是否可以拾取特定武器（僵尸只能拾取职业武器）
+--]]
 function GM:PlayerCanPickupWeapon(pl, ent)
 	if pl:IsSpectator() then return false end
 
@@ -4194,6 +4688,7 @@ function GM:PlayerCanPickupWeapon(pl, ent)
 	return not ent.ZombieOnly
 end
 
+-- 判断玩家能否拾取物品（虚弱技能限制）
 function GM:PlayerCanPickupItem(pl, ent)
 	if pl:IsSkillActive(SKILL_D_FRAIL) then
 		local class = ent:GetClass()
@@ -4210,14 +4705,16 @@ end
 
 -- This function is only for footsteps for players not in the local player's pvs or something.
 -- The cl_init.lua version usually overrides this number so I just set it to a static number to save cycles.
+-- 脚步声时间间隔（固定值节省性能，客户端可覆盖）
 function GM:PlayerStepSoundTime(pl, iType, bWalking)
 	return 350
 end
 
--- Again, don't bother overriding anything due to above.
+-- 脚步声钩子（服务器端不处理，由客户端覆盖）
 function GM:PlayerFootstep(pl, vPos, iFoot, strSoundName, fVolume, pFilter)
 end
 
+-- 玩家模型到语音集的映射表
 local VoiceSetTranslate = {}
 VoiceSetTranslate["models/player/alyx.mdl"] = VOICESET_ALYX
 VoiceSetTranslate["models/player/barney.mdl"] = VOICESET_BARNEY
@@ -4242,6 +4739,10 @@ VoiceSetTranslate["models/loyalists/mmd/flandre/flandre_mp_pm.mdl"] = VOICESET_F
 VoiceSetTranslate["models/jazzmcfly/kantai/yuudachi/yuudachi.mdl"] = VOICESET_FEMALE
 VoiceSetTranslate["models/player/dewobedil/vocaloid/haku/bikini_p.mdl"] = VOICESET_FEMALE
 VoiceSetTranslate["models/player/dewobedil/touhou/junko/default_p.mdl"] = VOICESET_FEMALE
+--[[
+	函数名: GM:PlayerSpawn (玩家生成)
+	功能: 玩家生成/重生时的核心初始化，处理僵尸和人类各自的数据设置
+--]]
 function GM:PlayerSpawn(pl)
 	pl:StripWeapons()
 	pl:WipePlayerInventory()
@@ -4515,6 +5016,10 @@ function GM:PlayerSpawn(pl)
 	pl:SetWeaponColor(wcol)
 end
 
+--[[
+	函数名: GM:SetWave (设置波次)
+	功能: 设置波次编号并自动解锁满足条件的僵尸职业
+--]]
 function GM:SetWave(wave)
 	local previouslylocked = {}
 	local UnlockedClasses = {}
@@ -4567,6 +5072,10 @@ function GM:SetWave(wave)
 end
 
 GM.NextEscapeDamage = 0
+--[[
+	函数名: GM:WaveStateChanged (波次状态转换)
+	功能: 处理波次开始/结束的核心逻辑，包括奖励、僵尸生成、印记模式切换
+--]]
 function GM:WaveStateChanged(newstate)
 	if newstate then
 		if self:GetWave() == 0 then
@@ -4774,6 +5283,7 @@ function GM:WaveStateChanged(newstate)
 	gamemode.Call("OnWaveStateChanged")
 end
 
+-- 控制手电筒开关（僵尸禁用，人类有冷却）
 function GM:PlayerSwitchFlashlight(pl, newstate)
 	if pl:Team() == TEAM_UNDEAD then
 		return false
@@ -4787,13 +5297,19 @@ function GM:PlayerSwitchFlashlight(pl, newstate)
 	return false
 end
 
+-- 脚步声时间（第二次出现，保留原实现）
 function GM:PlayerStepSoundTime(pl, iType, bWalking)
 	return 350
 end
 
+-- ZE模式武器拾取钩子
 function GM:OnZEWeaponPickup(pl, wep)
 end
 
+--[[
+	网络消息: zs_changeclass (切换僵尸职业)
+	功能: 客户端请求切换僵尸职业，设置死亡职业或立即自杀切换
+--]]
 net.Receive("zs_changeclass", function(len, sender)
 	if sender:Team() ~= TEAM_UNDEAD or sender.Revive or GAMEMODE.PantsMode or GAMEMODE:IsClassicMode() or GAMEMODE:IsBabyMode() or GAMEMODE.ZombieEscape then return end
 
@@ -4816,6 +5332,10 @@ net.Receive("zs_changeclass", function(len, sender)
 	end
 end)
 
+--[[
+	网络消息: zs_zsfriend (僵尸好友设置)
+	功能: 客户端设置好友关系，允许好友互相移除钉子
+--]]
 net.Receive("zs_zsfriend", function(len, sender)
 	local zsfriendid = net:ReadString()
 	local zsfriendent = player.GetBySteamID(zsfriendid)
@@ -4831,6 +5351,10 @@ net.Receive("zs_zsfriend", function(len, sender)
 end)
 
 
+--[[
+	网络消息: zs_nestspec (巢穴旁观)
+	功能: 客户端请求旁观巢穴或作为Gore Child从巢穴重生
+--]]
 net.Receive("zs_nestspec", function(len, sender)
 	if not sender:IsValidZombie() then return end
 	if sender:GetObserverMode() == OBS_MODE_NONE then return end
