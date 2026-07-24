@@ -1,34 +1,48 @@
+--[[
+==================================================================
+泰坦3 (Titan3) — BOSS僵尸职业
+继承自：titan
+特点：泰坦的BOSS版本、更高血量、已解锁、暗色材质渲染
+==================================================================
+]]
+
+-- 基础职业为"泰坦"
 CLASS.Base = "titan"
 
+-- 职业显示名称
 CLASS.Name = "Titan3"
-CLASS.TranslationName = "class_titan_b" --语言系统中的名字
-CLASS.Description = "description_titan" --语言系统中的角色设定和描述
-CLASS.Help = "controls_titan" --语言系统中的角色教程
+-- 翻译键名
+CLASS.TranslationName = "class_titan_b"
+-- 描述/帮助文本键名（复用泰坦）
+CLASS.Description = "description_titan"
+CLASS.Help = "controls_titan"
 
+-- 生命值/速度
 CLASS.Health = 2000
 CLASS.Speed = 145
+-- 不可复活
 CLASS.Revives = false
-CLASS.Hidden = true
+-- 标记为BOSS
 CLASS.Boss = true
 
+-- 绑定的武器
 CLASS.SWEP = "weapon_zs_titan_b"
 
+-- 击杀得分
 CLASS.Points = CLASS.Health/GM.HumanoidZombiePointRatio
 
---CLASS.Wave = 5 / 6
-
+-- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/zombie"
 CLASS.IconColor = Color(0.271, 0.271, 0.271)
 
-CLASS.NoFallDamage = true --没有摔落伤害
-CLASS.Unlocked = true --是否解锁
-CLASS.CanFeignDeath = false --是否可以装死
-CLASS.CanTaunt = true --禁止嘲讽
+-- 属性
+CLASS.NoFallDamage = true
+CLASS.Unlocked = true
+CLASS.CanFeignDeath = false
+CLASS.CanTaunt = true
 
 CLASS.VoicePitch = 1.0
-
 CLASS.ModelScale = 1.45
-
 CLASS.Mass = 500
 CLASS.ViewOffset = DEFAULT_VIEW_OFFSET * CLASS.ModelScale
 CLASS.ViewOffsetDucked = DEFAULT_VIEW_OFFSET_DUCKED * CLASS.ModelScale
@@ -36,19 +50,7 @@ CLASS.StepSize = 25
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 72)}
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 36)}
 
-local math_random = math.random
-local math_min = math.min
-local math_max = math.max
-local math_ceil = math.ceil
-local CurTime = CurTime
-
-local DIR_BACK = DIR_BACK
-local ACT_HL2MP_ZOMBIE_SLUMP_RISE = ACT_HL2MP_ZOMBIE_SLUMP_RISE
-local ACT_HL2MP_SWIM_PISTOL = ACT_HL2MP_SWIM_PISTOL
-local ACT_HL2MP_IDLE_CROUCH_ZOMBIE = ACT_HL2MP_IDLE_CROUCH_ZOMBIE
-local ACT_HL2MP_WALK_CROUCH_ZOMBIE_01 = ACT_HL2MP_WALK_CROUCH_ZOMBIE_01
-local ACT_HL2MP_RUN_ZOMBIE = ACT_HL2MP_RUN_ZOMBIE
-
+-- 材质
 local matSkin = Material("models/Zombie_Classic/Zombie_Classic_sheet.vtf")
 
 function CLASS:PrePlayerDraw(pl)

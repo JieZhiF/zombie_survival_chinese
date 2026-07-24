@@ -1,43 +1,66 @@
+-- ============================================================================
+-- DPingMeter - Ping 值显示组件
+-- 以柱状条形式可视化显示玩家的网络延迟（Ping值）
+-- ============================================================================
+
 local PANEL = {}
-//这是是用来显示玩家的ping值的
-//注释状态
-PANEL.IdealPing = 50//理想的ping值
-PANEL.MaxPing = 400//最大的ping值
-PANEL.RefreshTime = 1//刷新时间
-PANEL.PingBars = 5//ping条数
 
-PANEL.m_Player = NULL//玩家
-PANEL.m_Ping = 0//玩家ping值
-PANEL.NextRefresh = 0//下次刷新时间
+-- 理想 Ping 值（低于此值显示全绿）
+PANEL.IdealPing = 50
+-- 最大 Ping 值（超过此值显示全红）
+PANEL.MaxPing = 400
+-- 刷新间隔（秒）
+PANEL.RefreshTime = 1
+-- Ping 柱状条数量
+PANEL.PingBars = 5
 
+-- 目标玩家
+PANEL.m_Player = NULL
+-- 当前 Ping 值
+PANEL.m_Ping = 0
+-- 下次刷新时间
+PANEL.NextRefresh = 0
+
+-- ============================================================================
+-- Init - 初始化
+-- ============================================================================
 function PANEL:Init()
 end
 
-local colPing = Color(255, 255, 60, 255)//ping值的颜色
+-- Ping 柱状条颜色（初始黄色）
+local colPing = Color(255, 255, 60, 255)
+
+-- ============================================================================
+-- Paint - 绘制 Ping 柱状图
+-- 根据 Ping 值动态改变颜色（绿→黄→红）
+-- ============================================================================
 function PANEL:Paint()
-	local ping = self:GetPing()//获取ping值
-	local pingmul = 1 - math.Clamp((ping - self.IdealPing) / self.MaxPing, 0, 1)//ping值的比例，这是是传入了玩家ping值减去理想的ping值除以最大的ping值，然后限制在0到1之间，然后用1减去这个值
-	local wid, hei = self:GetWide(), self:GetTall()//获取宽高
-	local pingbars = math.max(1, self.PingBars)//ping条数
-	local barwidth = math.floor(wid / pingbars)//ping条宽度
-	local baseheight = math.floor(hei / pingbars)//ping条高度
+	local ping = self:GetPing()
+	local pingmul = 1 - math.Clamp((ping - self.IdealPing) / self.MaxPing, 0, 1)
+	local wid, hei = self:GetWide(), self:GetTall()
+	local pingbars = math.max(1, self.PingBars)
+	local barwidth = math.floor(wid / pingbars)
+	local baseheight = math.floor(hei / pingbars)
 
-	colPing.r = (1 - pingmul) * 255//ping值的红色
-	colPing.g = pingmul * 255//ping值的绿色
+	-- 根据 Ping 比例计算颜色（低Ping绿色，高Ping红色）
+	colPing.r = (1 - pingmul) * 255
+	colPing.g = pingmul * 255
 
-	for i=1, pingbars do//循环ping条数
-		local barheight = math.floor(baseheight * i)//ping条高度
-		local x, y = (i - 1) * barwidth, hei - barheight//ping条的x和y
+	-- 绘制每一根柱状条
+	for i=1, pingbars do
+		local barheight = math.floor(baseheight * i)
+		local x, y = (i - 1) * barwidth, hei - barheight
 
-		surface.SetDrawColor(20, 20, 20, 255)//设置颜色
-		surface.DrawRect(x, y, barwidth, barheight)//绘制ping条
+		surface.SetDrawColor(20, 20, 20, 255)
+		surface.DrawRect(x, y, barwidth, barheight)
 
-		if i == 1 or pingmul >= i / pingbars then//如果是第一条或者ping值的比例大于等于i除以ping条数
-			surface.SetDrawColor(colPing)//设置颜色
-			surface.DrawRect(x, y, barwidth, barheight)//绘制ping条
+		-- 如果 Ping 比例足够高，填充对应柱状条颜色
+		if i == 1 or pingmul >= i / pingbars then
+			surface.SetDrawColor(colPing)
+			surface.DrawRect(x, y, barwidth, barheight)
 		end
 
-		surface.SetDrawColor(80, 80, 80, 255)//设置颜色
+		surface.SetDrawColor(80, 80, 80, 255)
 		surface.DrawOutlinedRect(x, y, barwidth, barheight)
 	end
 
@@ -46,36 +69,54 @@ function PANEL:Paint()
 	return true
 end
 
-function PANEL:RefreshContents()//刷新内容
-	local pl = self:GetPlayer()//获取玩家
-	if pl:IsValid() then//如果玩家有效
-		self:SetPing(pl:Ping())//设置ping值
+-- ============================================================================
+-- RefreshContents - 刷新 Ping 数据
+-- ============================================================================
+function PANEL:RefreshContents()
+	local pl = self:GetPlayer()
+	if pl:IsValid() then
+		self:SetPing(pl:Ping())
 	else
-		self:SetPing(0)//设置ping值为0
+		self:SetPing(0)
 	end
 end
 
-function PANEL:Think()//思考,这是是每帧都会调用的，说人话就是会刷新
-	if RealTime() >= self.NextRefresh then//如果当前时间大于等于下次刷新时间
-		self.NextRefresh = RealTime() + self.RefreshTime//设置下次刷新时间
-		self:RefreshContents()//刷新内容
+-- ============================================================================
+-- Think - 定时刷新 Ping 显示
+-- ============================================================================
+function PANEL:Think()
+	if RealTime() >= self.NextRefresh then
+		self.NextRefresh = RealTime() + self.RefreshTime
+		self:RefreshContents()
 	end
 end
 
-function PANEL:SetPlayer(pl)//设置玩家
-	self.m_Player = pl or NULL//设置玩家
-	self:RefreshContents()//刷新内容
+-- ============================================================================
+-- SetPlayer - 设置要显示 Ping 的玩家
+-- ============================================================================
+function PANEL:SetPlayer(pl)
+	self.m_Player = pl or NULL
+	self:RefreshContents()
 end
 
-function PANEL:GetPlayer()//获取玩家
+-- ============================================================================
+-- GetPlayer - 获取当前显示 Ping 的玩家
+-- ============================================================================
+function PANEL:GetPlayer()
 	return self.m_Player
 end
 
-function PANEL:SetPing(ping)//设置ping值
+-- ============================================================================
+-- SetPing - 设置 Ping 值
+-- ============================================================================
+function PANEL:SetPing(ping)
 	self.m_Ping = ping
 end
 
-function PANEL:GetPing()//获取ping值
+-- ============================================================================
+-- GetPing - 获取当前 Ping 值
+-- ============================================================================
+function PANEL:GetPing()
 	return self.m_Ping
 end
 

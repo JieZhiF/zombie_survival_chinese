@@ -1,3 +1,12 @@
+-- ============================================================
+-- 技能树系统 - 服务端层
+-- 负责处理所有服务端网络消息、技能管理逻辑、
+-- 经验值/转生/重置等核心操作
+-- ============================================================
+
+-- ============================================================
+-- 处理客户端发送的单个技能激活/停用请求
+-- ============================================================
 net.Receive("zs_skill_is_desired", function(length, pl)
 	local skillid = net.ReadUInt(16)
 	local desired = net.ReadBool()
@@ -5,6 +14,9 @@ net.Receive("zs_skill_is_desired", function(length, pl)
 	pl:SetSkillDesired(skillid, desired)
 end)
 
+-- ============================================================
+-- 处理客户端发送的完整期望技能列表（位标记方式）
+-- ============================================================
 net.Receive("zs_skills_desired", function(length, pl)
 	local desired = {}
 
@@ -14,15 +26,20 @@ net.Receive("zs_skills_desired", function(length, pl)
 		end
 	end
 	pl:SetDesiredActiveSkills(desired)
-	pl:ApplySkills(desired) -- 添加此行
+	pl:ApplySkills(desired)
 end)
 
+-- ============================================================
+-- 处理客户端发送的"全部激活/全部停用"请求
+-- ============================================================
 net.Receive("zs_skills_all_desired", function(length, pl)
     local desired = {}
     if net.ReadBool() then
+        -- 全部激活：将所有已解锁技能设为期望
         desired = table.Copy(pl:GetUnlockedSkills())
         pl:SetDesiredActiveSkills(desired)
     else
+        -- 全部停用：仅保留 AlwaysActive 标记的技能
         for _, id in pairs(pl:GetUnlockedSkills()) do
             if GAMEMODE.Skills[id] and GAMEMODE.Skills[id].AlwaysActive then
                 desired[#desired + 1] = id
@@ -31,9 +48,12 @@ net.Receive("zs_skills_all_desired", function(length, pl)
         pl:SetDesiredActiveSkills(desired)
     end
     
-    pl:ApplySkills(desired) -- 添加此行
+    pl:ApplySkills(desired)
 end)
 
+-- ============================================================
+-- 处理客户端发送的"加载配装"请求（从保存的配装中读取）
+-- ============================================================
 net.Receive("zs_skill_set_desired", function(length, pl)
     local skillset = net.ReadTable()
     local assoc = table.ToAssoc(skillset)
@@ -45,9 +65,13 @@ net.Receive("zs_skill_set_desired", function(length, pl)
         end
     end
     pl:SetDesiredActiveSkills(desired)
-    pl:ApplySkills(desired) -- 添加此行
+    pl:ApplySkills(desired)
 end)
 
+-- ============================================================
+-- 处理客户端发送的技能解锁请求
+-- 检查：技能是否存在、是否已解锁、技能点是否充足、是否可解锁、是否被禁用
+-- ============================================================
 net.Receive("zs_skill_is_unlocked", function(length, pl)
     local skillid = net.ReadUInt(16)
     local activate = net.ReadBool()
@@ -64,12 +88,20 @@ net.Receive("zs_skill_is_unlocked", function(length, pl)
         end
     end
 end)
+
+-- ============================================================
+-- 处理客户端发送的转生请求
+-- ============================================================
 net.Receive("zs_skills_remort", function(length, pl)
     if pl:CanSkillsRemort() then
         pl:SkillsRemort()
     end
 end)
 
+-- ============================================================
+-- 处理客户端发送的技能重置请求
+-- 检查：等级不低于10、冷却时间是否已过
+-- ============================================================
 net.Receive("zs_skills_reset", function(length, pl)
     if pl:GetZSLevel() < 10 then
         pl:SkillNotify(translate.Get("must_be_level_10"))
@@ -89,6 +121,10 @@ net.Receive("zs_skills_reset", function(length, pl)
     net.Send(pl)
 end)
 
+-- ============================================================
+-- 处理客户端发送的"检查退款状态"请求
+-- 通知玩家是否有技能点被退还（因技能树变更）
+-- ============================================================
 net.Receive("zs_skills_refunded", function(length, pl)
     if pl.SkillsRefunded then
         pl:SkillNotify(translate.Get("skill_tree_changed_refunded"))
@@ -97,7 +133,10 @@ net.Receive("zs_skills_refunded", function(length, pl)
     pl.SkillsRefunded = false
 end)
 
-
+-- ============================================================
+-- 工具函数：将技能表按位写入网络消息
+-- 遍历所有技能ID，为每个技能写入一个布尔值
+-- ============================================================
 function GM:WriteSkillBits(t)
 	t = table.ToAssoc(t)
 
@@ -110,9 +149,15 @@ function GM:WriteSkillBits(t)
 	end
 end
 
+-- ============================================================
+-- 获取 Player 元表
+-- ============================================================
 local meta = FindMetaTable("Player")
 if not meta then return end
 
+-- ============================================================
+-- 向客户端发送通知消息（带颜色标记）
+-- ============================================================
 function meta:SkillNotify(message, green)
 	net.Start("zs_skills_notify")
 	net.WriteString(message)
@@ -120,6 +165,10 @@ function meta:SkillNotify(message, green)
 	net.Send(self)
 end
 
+-- ============================================================
+-- 设置某技能的期望状态（激活/停用）
+-- 同步修改客户端并重新应用技能效果
+-- ============================================================
 function meta:SetSkillDesired(skillid, desired)
     local desiredskills = self:GetDesiredActiveSkills()
 
@@ -137,9 +186,13 @@ function meta:SetSkillDesired(skillid, desired)
     end
 
     self:SetDesiredActiveSkills(desiredskills)
-    self:ApplySkills(desiredskills) -- 添加此行
+    self:ApplySkills(desiredskills)
 end
 
+-- ============================================================
+-- 设置技能的解锁状态
+-- 只在实际状态变化时执行操作并通知客户端
+-- ============================================================
 function meta:SetSkillUnlocked(skillid, unlocked)
 	local unlockedskills = self:GetUnlockedSkills()
 
@@ -156,26 +209,39 @@ function meta:SetSkillUnlocked(skillid, unlocked)
 	self:SetUnlockedSkills(unlockedskills)
 end
 
--- Usually not called
+-- ============================================================
+-- 直接设置玩家等级（不常用）
+-- ============================================================
 function meta:SetZSLevel(level)
 	self:SetZSXP(GAMEMODE:XPForLevel(level))
 end
 
+-- ============================================================
+-- 设置转生等级（网络同步）
+-- ============================================================
 function meta:SetZSRemortLevel(level)
 	self:SetDTInt(DT_PLAYER_INT_REMORTLEVEL, level)
 end
 
+-- ============================================================
+-- 设置经验值（限制在 0 ~ MaxXP 范围内）
+-- ============================================================
 function meta:SetZSXP(xp)
 	self:SetDTInt(DT_PLAYER_INT_XP, math.Clamp(xp, 0, GAMEMODE.MaxXP))
 end
 
+-- ============================================================
+-- 增加经验值
+-- TODO: 在保险箱加载时缓存"下一级所需经验"以优化检查
+-- ============================================================
 function meta:AddZSXP(xp)
-	-- TODO: Level change checking. Cache the "XP for next level" in the vault load and compare it here instead of checking every add.
 	self:SetZSXP(self:GetZSXP() + xp)
 end
 
--- Done on team switch to anything except human.
--- We don't bother with anything except functions because modifiers typically only modify stats that humans use in one life or are only used by humans.
+-- ============================================================
+-- 移除所有技能（切换为人类以外队伍时调用）
+-- 只处理技能函数，不处理修饰符（修饰符只影响人类生命周期内的属性）
+-- ============================================================
 function meta:RemoveSkills()
 	local active = self:GetActiveSkills()
 	local gm_functions = GAMEMODE.SkillFunctions
@@ -190,6 +256,9 @@ function meta:RemoveSkills()
 	end
 end
 
+-- ============================================================
+-- 向客户端发送某技能期望状态变更
+-- ============================================================
 function meta:SendSkillDesired(skillid, desired)
 	net.Start("zs_skill_is_desired")
 		net.WriteUInt(skillid, 16)
@@ -197,6 +266,9 @@ function meta:SendSkillDesired(skillid, desired)
 	net.Send(self)
 end
 
+-- ============================================================
+-- 向客户端发送某技能解锁状态变更
+-- ============================================================
 function meta:SendSkillUnlocked(skillid, unlocked)
 	net.Start("zs_skill_is_unlocked")
 		net.WriteUInt(skillid, 16)
@@ -204,6 +276,9 @@ function meta:SendSkillUnlocked(skillid, unlocked)
 	net.Send(self)
 end
 
+-- ============================================================
+-- 设置期望激活的技能列表，并同步到客户端
+-- ============================================================
 function meta:SetDesiredActiveSkills(skills, nosend)
 	self.DesiredActiveSkills = table.ToKeyValues(skills)
 
@@ -214,8 +289,11 @@ function meta:SetDesiredActiveSkills(skills, nosend)
 	end
 end
 
+-- ============================================================
+-- 设置当前激活的技能表（哈希表格式，O(1)访问），并同步到客户端
+-- ============================================================
 function meta:SetActiveSkills(skills, nosend)
-	self.ActiveSkills = table.ToAssoc(skills) -- Active skills are hash tables for O(1) access.
+	self.ActiveSkills = table.ToAssoc(skills)
 
 	if not nosend then
 		net.Start("zs_skills_active")
@@ -224,6 +302,9 @@ function meta:SetActiveSkills(skills, nosend)
 	end
 end
 
+-- ============================================================
+-- 设置已解锁的技能列表，并同步到客户端
+-- ============================================================
 function meta:SetUnlockedSkills(skills, nosend)
 	self.UnlockedSkills = table.ToKeyValues(skills)
 
@@ -234,6 +315,11 @@ function meta:SetUnlockedSkills(skills, nosend)
 	end
 end
 
+-- ============================================================
+-- 执行转生：
+-- 转生等级+1，重置经验值，清空所有技能，
+-- 向全服玩家发送通知
+-- ============================================================
 function meta:SkillsRemort()
 	local rl = self:GetZSRemortLevel() + 1
 	local myname = self:Name()
@@ -257,10 +343,15 @@ function meta:SkillsRemort()
 	util.ScreenShake(self:GetPos(), 50, 0.5, 1.5, 800)
 end
 
+-- ============================================================
+-- 执行技能重置：
+-- 清空所有已解锁技能和期望技能，
+-- 设置重置冷却时间（1小时=3600秒）
+-- ============================================================
 function meta:SkillsReset()
 	self:SetUnlockedSkills({})
 	self:SetDesiredActiveSkills({})
-	self.NextSkillReset = os.time() + 3600 -- 1 week
+	self.NextSkillReset = os.time() + 3600
 
 	self:CenterNotify(COLOR_CYAN, translate.ClientGet(self, "you_have_reset_all"))
 end

@@ -1,14 +1,22 @@
---local MainMenu
-//这个文件应该是NOX团队还在的时候所用的，但现在已经没有用了，所以就不注释了
-//注释状态：未注释
+-- ============================================================================
+-- MainMenu - 主菜单界面
+-- 这是 NOX 团队时期使用的主菜单，当前版本已不再使用
+-- 包含"开始游戏"、"观战"、"帮助"、"指南"、"致谢"、"支持者"和"退出"按钮
+-- ============================================================================
+
+-- 游戏版本号
 GM.REVISION = 4352
 
+-- ============================================================================
+-- OpenMainMenu - 打开主菜单
+-- ============================================================================
 function GM:OpenMainMenu()
 	if MainMenu and MainMenu:IsValid() then
 		MainMenu:MakePopup()
 		return
 	end
 
+	-- 创建主菜单根面板
 	MainMenu = vgui.Create("DEXRoundedPanel")
 	MainMenu:SetCurve(false)
 	MainMenu:SetColor(color_black_alpha220)
@@ -16,6 +24,7 @@ function GM:OpenMainMenu()
 	MainMenu:DockPadding(0, 0, 0, 0)
 	MainMenu:DockMargin(0, 0, 0, 0)
 
+	-- 底部致谢栏
 	local creditbar = vgui.Create("DEXRoundedPanel", MainMenu)
 	creditbar:SetCurve(false)
 	creditbar:SetColor(color_black_alpha220)
@@ -32,6 +41,7 @@ function GM:OpenMainMenu()
 
 	-- Tooltip section...
 
+	-- 退出按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("QUIT")
 	button:SizeToContents()
@@ -39,6 +49,7 @@ function GM:OpenMainMenu()
 	button:DockMargin(90, 8, 0, 220)
 	button.Tooltip = "mainmenu_tooltip_quit"
 
+	-- 支持者按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("BECOME A SUPPORTER")
 	button:SizeToContents()
@@ -46,6 +57,7 @@ function GM:OpenMainMenu()
 	button:DockMargin(80, 8, 0, 0)
 	button.Tooltip = "mainmenu_tooltip_supporter"
 
+	-- 致谢按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("CREDITS")
 	button:SizeToContents()
@@ -53,6 +65,7 @@ function GM:OpenMainMenu()
 	button:DockMargin(70, 8, 0, 0)
 	button.Tooltip = "mainmenu_tooltip_credits"
 
+	-- 指南按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("GUIDES")
 	button:SizeToContents()
@@ -60,6 +73,7 @@ function GM:OpenMainMenu()
 	button:DockMargin(60, 8, 0, 0)
 	button.Tooltip = "mainmenu_tooltip_guides"
 
+	-- 帮助按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("HELP")
 	button:SizeToContents()
@@ -67,6 +81,7 @@ function GM:OpenMainMenu()
 	button:DockMargin(50, 8, 0, 0)
 	button.Tooltip = "mainmenu_tooltip_help"
 
+	-- 观战按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("SPECTATE")
 	button:SizeToContents()
@@ -74,6 +89,7 @@ function GM:OpenMainMenu()
 	button:DockMargin(40, 8, 0, 0)
 	button.Tooltip = "mainmenu_tooltip_spectate"
 
+	-- 开始游戏按钮
 	button = vgui.Create("ZSMenuButton", MainMenu)
 	button:SetText("PLAY")
 	button:SizeToContents()
@@ -84,6 +100,9 @@ function GM:OpenMainMenu()
 	MainMenu:MakePopup()
 end
 
+-- ============================================================================
+-- ZSMenuButton - 菜单按钮面板
+-- ============================================================================
 local PANEL = {}
 
 function PANEL:Init()

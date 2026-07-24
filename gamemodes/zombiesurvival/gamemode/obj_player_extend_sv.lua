@@ -47,14 +47,14 @@
 -- meta:StartFeignDeath 让僵尸玩家开始装死。
 -- meta:UpdateLegDamage 将腿部伤害数据同步到客户端。
 -- meta:UpdateArmDamage 将手臂伤害数据同步到客户端。
--- meta:CoupleWith 将玩家与一个头蟹玩家“配对”，触发特殊效果。
+-- meta:CoupleWith 将玩家与一个头蟹玩家"配对"，触发特殊效果。
 -- meta:FixModelAngles 在服务器端修正玩家模型的角度。
 -- meta:RemoveAllStatus 移除玩家身上所有的状态效果。
 -- meta:RemoveStatus 移除玩家身上指定类型的状态效果。
 -- meta:GetStatus 获取玩家身上指定类型的状态效果实体。
 -- meta:GiveStatus 给予玩家一个指定类型的状态效果。
 -- meta:UnSpectateAndSpawn 让玩家退出观察者模式并立即重生。
--- meta:SecondWind 执行“二次活力”技能，让死去的僵尸玩家在原地复活。
+-- meta:SecondWind 执行"二次活力"技能，让死去的僵尸玩家在原地复活。
 -- meta:DropAll 让玩家丢弃所有武器、弹药和库存物品。
 -- meta:CreateRagdoll 重写创建布娃娃的函数，以支持由状态效果指定的自定义模型。
 -- meta:DropWeaponByType 按类别丢弃一件武器。
@@ -71,12 +71,12 @@
 -- meta:SetZombieClass 设置玩家的僵尸职业，并同步给客户端。
 -- meta:DoHulls 根据玩家的队伍和职业，在服务器端调整其物理碰撞箱等属性，并同步给客户端。
 -- meta:ChangeTeam 改变玩家的队伍，并触发相关钩子。
--- meta:Redeem 执行僵尸“救赎”逻辑，使其变回人类。
--- meta:RedeemNextFrame 安排在下一帧执行“救贖”。
+-- meta:Redeem 执行僵尸"救赎"逻辑，使其变回人类。
+-- meta:RedeemNextFrame 安排在下一帧执行"救贖"。
 -- meta:ShouldCrouchJumpPunish 判断是否应惩罚玩家的蹲跳行为。
--- meta:TakeBrains 减少玩家的“大脑”（分数）。
--- meta:AddBrains 增加玩家的“大脑”（分数），并检查是否满足救赎条件。
--- meta:GetBrains 获取玩家的“大脑”（分数）。
+-- meta:TakeBrains 减少玩家的"大脑"（分数）。
+-- meta:AddBrains 增加玩家的"大脑"（分数），并检查是否满足救赎条件。
+-- meta:GetBrains 获取玩家的"大脑"（分数）。
 -- meta:CheckRedeem 检查玩家是否满足救赎条件并执行。
 -- meta:AntiGrief 对玩家的恶意攻击行为进行处理（伤害减免、惩罚等）。
 -- meta:GivePenalty 计算并对玩家施加点数惩罚。
@@ -101,28 +101,39 @@
 -- meta:SendDeployableClaimedMessage 向玩家发送其放置物被认领的消息。
 -- meta:SendDeployableOutOfAmmoMessage 向玩家发送其放置物弹药耗尽的消息。
 -- meta:GetRandomStartingItem 根据玩家技能，获取一个随机的初始物品。
--- meta:PulseResonance 触发一个死亡后的“脉冲共振”爆炸效果。
--- meta:CryogenicInduction 触发一个死亡后的“低温诱导”冰冻爆炸效果。
+-- meta:PulseResonance 触发一个死亡后的"脉冲共振"爆炸效果。
+-- meta:CryogenicInduction 触发一个死亡后的"低温诱导"冰冻爆炸效果。
 -- meta:SetPhantomHealth 设置玩家的幻影生命值（同步到客户端）。
--- meta:HasBarricadeExpert 检查玩家是否拥有“障碍物专家”资格。
--- meta:BarricadeExpertPrecedence 比较两个玩家的“障碍物专家”等级，确定谁有优先权。
+-- meta:HasBarricadeExpert 检查玩家是否拥有"障碍物专家"资格。
+-- meta:BarricadeExpertPrecedence 比较两个玩家的"障碍物专家"等级，确定谁有优先权。
+
+-- 获取玩家（Player）的元表，用于在服务器端扩展功能
 local meta = FindMetaTable("Player")
 local P_Team = meta.Team
 
+-- 定义会造成流血的伤害类型组合
 local DMG_TAKE_BLEED = DMG_SLASH + DMG_CLUB + DMG_BULLET + DMG_BUCKSHOT + DMG_CRUSH
+
+-- 处理对玩家造成的所有伤害
+-- 根据攻击者、队伍、武器、技能和状态效果计算最终伤害并触发相应事件
+-- 返回true表示阻止进一步处理
 function meta:ProcessDamage(dmginfo)
-	if not self:IsValidLivingPlayer() then return end --??? Apparently player was null sometimes on server?
+	if not self:IsValidLivingPlayer() then return end
 
 	local attacker, inflictor, dmgtype = dmginfo:GetAttacker(), dmginfo:GetInflictor(), dmginfo:GetDamageType()
 
+	-- 检查是否允许玩家受到伤害
 	if not GAMEMODE:PlayerShouldTakeDamage(self, attacker) then return true end
 
+	-- DMG_DIRECT标志表示伤害跳过常规处理
 	local dmgbypass = bit.band(dmgtype, DMG_DIRECT) ~= 0
 
+	-- 应用伤害脆弱性修正
 	if self.DamageVulnerability and not dmgbypass then
 		dmginfo:SetDamage(dmginfo:GetDamage() * self.DamageVulnerability)
 	end
 
+	-- 处理攻击者转发（一些实体将攻击者信息转发给实际来源）
 	if attacker.AttackerForward and attacker.AttackerForward:IsValid() then
 		dmginfo:SetAttacker(attacker.AttackerForward)
 		attacker = attacker.AttackerForward
@@ -132,11 +143,14 @@ function meta:ProcessDamage(dmginfo)
 		end
 	end
 
+	-- 处理func_physbox的攻击者追踪
 	if attacker.PBAttacker and attacker.PBAttacker:IsValid() then
 		attacker = attacker.PBAttacker
 	end
 
+	-- 对僵尸的伤害处理
 	if P_Team(self) == TEAM_UNDEAD then
+		-- 出生保护：免疫所有伤害
 		if self.SpawnProtection then
 			dmginfo:SetDamage(0)
 			dmginfo:ScaleDamage(0)
@@ -144,6 +158,7 @@ function meta:ProcessDamage(dmginfo)
 			return
 		end
 
+		-- 应用僵尸伤害缩放（腐蚀状态和DMG_DIRECT跳过缩放）
 		local corrosion = self.Corrosion and self.Corrosion + 2 > CurTime()
 		if self ~= attacker and not corrosion and not dmgbypass then
 			dmginfo:SetDamage(dmginfo:GetDamage() * GAMEMODE:GetZombieDamageScale(dmginfo:GetDamagePosition(), self))
@@ -151,34 +166,41 @@ function meta:ProcessDamage(dmginfo)
 
 		self.ShouldFlinch = true
 
+		-- 处理人类玩家对僵尸的近战攻击效果
 		if attacker:IsValidLivingHuman() and inflictor:IsValid() and inflictor == attacker:GetActiveWeapon() then
 			local damage = dmginfo:GetDamage()
 			local wep = attacker:GetActiveWeapon()
 			local attackermaxhp = math.floor(attacker:GetMaxHealth() * (attacker:IsSkillActive(SKILL_D_FRAIL) and 0.25 or 1))
 
 			if wep.IsMelee then
+				-- 廉价拳套技能：正面攻击时附加腿部伤害
 				if attacker:IsSkillActive(SKILL_CHEAPKNUCKLE) and math.abs(self:GetForward():Angle().yaw - attacker:GetForward():Angle().yaw) <= 90 then
 					self:AddLegDamage(12)
 				end
 
+				-- 近战伤害转化为血甲
 				if attacker.MeleeDamageToBloodArmorMul and attacker.MeleeDamageToBloodArmorMul > 0 and attacker:GetBloodArmor() < attacker.MaxBloodArmor then
 					attacker:SetBloodArmor(math.min(attacker.MaxBloodArmor, attacker:GetBloodArmor() + math.min(damage, self:Health()) * attacker.MeleeDamageToBloodArmorMul * attacker.BloodarmorGainMul))
 				end
 
+				-- 重击技能：反馈伤害给攻击者
 				if attacker:IsSkillActive(SKILL_HEAVYSTRIKES) and not self:GetZombieClassTable().Boss and (wep.IsFistWeapon and attacker:IsSkillActive(SKILL_CRITICALKNUCKLE) or wep.MeleeKnockBack > 0) then
 					attacker:TakeSpecialDamage(damage * (wep.Unarmed and 1 or 0.08), DMG_SLASH, self, self:GetActiveWeapon())
 				end
 
+				-- 血怒技能：吸血效果
 				if attacker:IsSkillActive(SKILL_BLOODLUST) and attacker:GetPhantomHealth() > 0 and attacker:Health() < attackermaxhp then
 					local toheal = math.min(attacker:GetPhantomHealth(), math.min(self:Health(), damage * 0.25))
 					attacker:SetHealth(math.min(attacker:Health() + toheal, attackermaxhp))
 					attacker:SetPhantomHealth(attacker:GetPhantomHealth() - toheal)
 				end
 
+				-- 磨刀石饰品：根据腿部伤害增加伤害
 				if attacker:HasTrinket("sharpkit") then
 					dmginfo:SetDamage(dmginfo:GetDamage() * (1 + self:GetFlatLegDamage()/75))
 				end
 
+				-- 大厨技能：有几率标记目标
 				if wep.Culinary and attacker:IsSkillActive(SKILL_MASTERCHEF) and math.random(9) == 1 then
 					self.ChefMarkOwner = attacker
 					self.ChefMarkTime = CurTime() + 1
@@ -186,31 +208,39 @@ function meta:ProcessDamage(dmginfo)
 			end
 		end
 
+		-- 调用僵尸职业的ProcessDamage函数
 		return not dmgbypass and self:CallZombieFunction1("ProcessDamage", dmginfo)
 	end
 
-	-- Opted for multiplicative.
+	-- 以下为对人类玩家的伤害处理
+
+	-- 自伤倍率（排除挤压和坠落伤害）
 	if attacker == self and dmgtype ~= DMG_CRUSH and dmgtype ~= DMG_FALL and self.SelfDamageMul then
 		dmginfo:SetDamage(dmginfo:GetDamage() * self.SelfDamageMul)
 	end
+	-- 爆炸伤害倍率
 	if bit.band(dmgtype, DMG_ALWAYSGIB) ~= 0 and self.ExplosiveDamageTakenMul then
 		dmginfo:SetDamage(dmginfo:GetDamage() * self.ExplosiveDamageTakenMul)
 	end
+	-- 火焰伤害倍率
 	if bit.band(dmgtype, DMG_BURN) ~= 0 and self.FireDamageTakenMul then
 		dmginfo:SetDamage(dmginfo:GetDamage() * self.FireDamageTakenMul)
 	end
 
+	-- 物理道具伤害处理（物体撞击、飞行的道具等）
 	if inflictor:IsValid() and (inflictor:IsPhysicsModel() or inflictor.IsPhysbox) and self:IsValidLivingHuman() then
 		local damage = dmginfo:GetDamage()
 		local forcedamp = self:HasTrinket("forcedamp")
 		local noadj = attacker:IsValidLivingZombie() and attacker:GetZombieClassTable().NoAdjustPhysDamage
 
+		-- 对数缩放物理伤害（防止超高伤害）
 		if forcedamp or (attacker:IsValidLivingZombie() and not noadj) then
 			damage = math.max(5, (math.log10(damage) * 26)-5)
 		end
 		if self.PhysicsDamageTakenMul then
 			damage = damage * self.PhysicsDamageTakenMul
 		end
+		-- 高物理伤害击倒玩家
 		if damage >= 30 and not forcedamp and not noadj and inflictor ~= attacker then
 			self:KnockDown(damage * 0.05)
 		end
@@ -218,16 +248,21 @@ function meta:ProcessDamage(dmginfo)
 		dmginfo:SetDamage(damage)
 	end
 
+	-- 僵尸对人类的伤害处理
 	if attacker:IsValid() and attacker:IsPlayer() and inflictor:IsValid() and attacker:Team() == TEAM_UNDEAD then
+		-- 武器伤害（非投射物）
 		if inflictor == attacker:GetActiveWeapon() then
 			local damage = dmginfo:GetDamage()
 
+			-- 幽灵状态下施加腿部伤害
 			if self:IsBarricadeGhosting() then
 				self:SetLegDamage(21 * (self.SlowEffTakenMul or 1))
 			else
+				-- 普通攻击：根据伤害值决定是否附加腿部伤害
 				local scale = inflictor.SlowDownScale or 1
 				if damage >= 45 or scale > 1 then
 					local dolegdamage = true
+					-- 减速免疫时间检查
 					if inflictor.SlowDownImmunityTime then
 						if CurTime() < (self.SlowDownImmunityTime or 0) then
 							dolegdamage = false
@@ -241,16 +276,20 @@ function meta:ProcessDamage(dmginfo)
 				end
 			end
 
+			-- 近战/切割伤害时的反应效果
 			if bit.band(dmgtype, DMG_SLASH) ~= 0 or inflictor.IsMelee then
+				-- 荆棘护甲反弹伤害
 				if self.BarbedArmor and self.BarbedArmor > 0 then
 					attacker:TakeSpecialDamage(self.BarbedArmor, DMG_SLASH, self, self)
 					attacker:AddArmDamage(self.BarbedArmor)
 				end
 
+				-- 百分比荆棘护甲
 				if self.BarbedArmorPercent and self.BarbedArmorPercent > 0 then
 					attacker:TakeSpecialDamage(damage * self.BarbedArmorPercent, DMG_SLASH, self, self)
 				end
 
+				-- 反应闪光饰品：致盲攻击者
 				if self:HasTrinket("reactiveflasher") and (not self.LastReactiveFlash or self.LastReactiveFlash + 75 < CurTime()) then
 					attacker:ScreenFade(SCREENFADE.IN, nil, 1, 1)
 					attacker:SetDSP(36)
@@ -265,6 +304,7 @@ function meta:ProcessDamage(dmginfo)
 					self.LastReactiveFlash = CurTime()
 					self.ReactiveFlashMessage = nil
 				elseif self:HasTrinket("bleaksoul") and (not self.LastBleakSoul or self.LastBleakSoul + 35 < CurTime()) then
+					-- 黯淡灵魂饰品：击退攻击者并施加视觉干扰
 					attacker:GiveStatus("dimvision", 3)
 					attacker:SetGroundEntity(nil)
 					attacker:SetLocalVelocity((attacker:GetPos() - self:GetPos()):GetNormalized() * 450 + Vector(0, 0, 140))
@@ -276,6 +316,7 @@ function meta:ProcessDamage(dmginfo)
 					self.BleakSoulMessage = nil
 				end
 
+				-- 冰爆饰品：减速攻击者
 				if self:HasTrinket("iceburst") and (not self.LastIceBurst or self.LastIceBurst + 40 < CurTime()) then
 					attacker:AddLegDamageExt(17, attacker, attacker, SLOWTYPE_COLD)
 
@@ -287,15 +328,18 @@ function meta:ProcessDamage(dmginfo)
 					self.IceBurstMessage = nil
 				end
 
+				-- 近战伤害倍率
 				if self.MeleeDamageTakenMul and not dmgbypass then
 					dmginfo:SetDamage(dmginfo:GetDamage() * self.MeleeDamageTakenMul)
 				end
 
+				-- 后退者技能：受到近战时附加腿部伤害
 				if self:IsSkillActive(SKILL_BACKPEDDLER) then
 					self:AddLegDamage(8)
 				end
 			end
 
+			-- 血友病特质：攻击造成流血效果
 			if self.HasHemophilia and (damage >= 4 and dmgtype == 0 or bit.band(dmgtype, DMG_TAKE_BLEED) ~= 0) then
 				local bleed = self:GiveStatus("bleed")
 				if bleed and bleed:IsValid() then
@@ -306,16 +350,19 @@ function meta:ProcessDamage(dmginfo)
 				end
 			end
 		elseif inflictor:IsProjectile() then
+			-- 投射物伤害倍率
 			if self.ProjDamageTakenMul and not dmgbypass then
 				dmginfo:SetDamage(dmginfo:GetDamage() * self.ProjDamageTakenMul)
 			end
 		end
 	end
 
+	-- 血甲系统处理
 	self.NextBloodArmorRegen = CurTime() + 5
 	if self:GetBloodArmor() > 0 then
 		local damage = dmginfo:GetDamage()
 		if damage > 0 then
+			-- 血之释放技能：血甲被打掉时触发流血
 			if damage >= self:GetBloodArmor() and self:IsSkillActive(SKILL_BLOODLETTER) then
 				local bleed = self:GiveStatus("bleed")
 				if bleed and bleed:IsValid() then
@@ -324,11 +371,13 @@ function meta:ProcessDamage(dmginfo)
 				end
 			end
 
+			-- 血甲吸收伤害
 			local ratio = 0.5 + self.BloodArmorDamageReductionAdd + (self:IsSkillActive(SKILL_IRONBLOOD) and self:Health() <= self:GetMaxHealth() * 0.5 and 0.25 or 0)
 			local absorb = math.min(self:GetBloodArmor(), damage * ratio)
 			dmginfo:SetDamage(damage - absorb)
 			self:SetBloodArmor(self:GetBloodArmor() - absorb)
 
+			-- 记录伤害统计数据
 			if attacker:IsValid() and attacker:IsPlayer() then
 				local myteam = attacker:Team()
 				local otherteam = P_Team(self)
@@ -339,16 +388,19 @@ function meta:ProcessDamage(dmginfo)
 				end
 			end
 
+			-- 完全吸收高伤害时播放音效
 			if damage > 20 and damage - absorb <= 0 then
 				self:EmitSound("physics/flesh/flesh_strider_impact_bullet3.wav", 55)
 			end
 		end
 	end
 
+	-- 血怒技能：被攻击时增加幻影生命值
 	if self:IsSkillActive(SKILL_BLOODLUST) and attacker:IsValid() and attacker:IsPlayer() and inflictor:IsValid() and attacker:Team() == TEAM_UNDEAD then
 		self:SetPhantomHealth(math.min(self:GetPhantomHealth() + dmginfo:GetDamage() / 2, self:GetMaxHealth()))
 	end
 
+	-- 受到伤害后重置饰品冷却检查并触发flinching
 	if dmginfo:GetDamage() > 0 and not self:HasGodMode() then
 		self.NextRegenTrinket = CurTime() + 12
 
@@ -356,6 +408,8 @@ function meta:ProcessDamage(dmginfo)
 	end
 end
 
+-- 定义各种饰品的充能信息
+-- 包含：消息标志名、最后使用时间记录、显示名称、冷却时间（秒）
 GM.TrinketRecharges = {
 	reactiveflasher = {"ReactiveFlashMessage", "LastReactiveFlash", "Reactive Flasher", 75},
 	bleaksoul = {"BleakSoulMessage", "LastBleakSoul", "Bleak Soul", 35},
@@ -363,6 +417,7 @@ GM.TrinketRecharges = {
 	iceburst = {"IceBurstMessage", "LastIceBurst", "Iceburst Shield", 40}
 }
 
+-- 检查玩家的饰品是否已冷却完毕，并发送充能完成通知
 function meta:CheckTrinketRecharges()
 	local time = CurTime()
 
@@ -377,6 +432,8 @@ function meta:CheckTrinketRecharges()
 	end
 end
 
+-- 重写胜利条件
+-- 判断人类玩家是否通过观察胜利目标（prop_obj_exit）来获胜
 function meta:HasWon()
 	if P_Team(self) == TEAM_HUMAN and self:GetObserverMode() == OBS_MODE_ROAMING then
 		local target = self:GetObserverTarget()
@@ -386,33 +443,25 @@ function meta:HasWon()
 	return false
 end
 
+-- 检查玩家当前是否正在使用武器进行格挡
 function meta:IsDefending()
     local wep = self:GetActiveWeapon()
-    -- wep:IsBlocking() 是你武器中已经定义好的函数，直接调用即可
     return IsValid(wep) and wep.IsBlocking and wep:IsBlocking()
 end
 
---[[
-    功能: 获取玩家当前格挡武器的防御值。
-    注意: 这个函数现在在服务器上运行，'self' 代表任意一个玩家实例，而不是特指本地玩家。
-    用法: ply:GetBlockDefense()
-    领域: Server
-]]
+-- 获取玩家当前格挡武器的防御值
 function meta:GetBlockDefense()
     local wep = self:GetActiveWeapon()
     return IsValid(wep) and wep.DefendingDamageBlocked
 end
 
---[[
-    功能: 获取玩家当前格挡武器的默认防御值。
-    用法: ply:GetBlockDefenseDefault()
-    领域: Server
-]]
+-- 获取玩家当前格挡武器的默认防御值
 function meta:GetBlockDefenseDefault()
     local wep = self:GetActiveWeapon()
     return IsValid(wep) and wep.DefendingDamageBlockedDefault
 end
 
+-- 根据服务器或玩家设置确定将要生成的Boss僵尸类别索引
 function meta:GetBossZombieIndex()
 	local bossclasses = {}
 	for _, classtable in pairs(GAMEMODE.ZombieClasses) do
@@ -423,6 +472,7 @@ function meta:GetBossZombieIndex()
 
 	if #bossclasses == 0 then return -1 end
 
+	-- 根据玩家设置或模式选择Boss
 	local desired = self:GetInfo("zs_bossclass") or ""
 	if GAMEMODE:IsBabyMode() then
 		desired = "Giga Gore Child"
@@ -442,6 +492,8 @@ function meta:GetBossZombieIndex()
 	return bossindex or bossclasses[1]
 end
 
+-- 判断玩家在死亡时是否应进入可被复活的状态
+-- 基于伤害类型、部位和攻击者等条件
 function meta:ShouldReviveFrom(dmginfo, hullzplane)
 	return not self.Revive
 	and not dmginfo:GetInflictor().IsMelee and not dmginfo:GetInflictor().NoReviveFromKills
@@ -451,6 +503,7 @@ function meta:ShouldReviveFrom(dmginfo, hullzplane)
 	or dmginfo:GetDamagePosition().z < self:LocalToWorld(Vector(0, 0, hullzplane)).z)
 end
 
+-- 寻找附近由其他玩家拥有的军火箱
 function meta:NearestArsenalCrateOwnedByOther()
 	local pos = self:EyePos()
 
@@ -467,43 +520,56 @@ function meta:NearestArsenalCrateOwnedByOther()
 	end
 end
 
+-- 保存原始的LastHitGroup方法并重写
+-- 支持临时覆盖最后命中部位（SetLastHitGroup设置后0.2秒内有效）
 local OldLastHitGroup = meta.LastHitGroup
 function meta:LastHitGroup()
 	return self.m_LastHitGroupUnset and CurTime() <= self.m_LastHitGroupUnset and self.m_LastHitGroup or OldLastHitGroup(self)
 end
 
+-- 临时设置玩家最后被击中的部位（覆盖0.2秒）
 function meta:SetLastHitGroup(hitgroup)
 	self.m_LastHitGroup = hitgroup
 	self.m_LastHitGroupUnset = CurTime() + 0.2
 end
 
+-- 检查玩家最近是否被击中头部（0.2秒内）
 function meta:WasHitInHead()
 	return self.m_LastHitInHead and CurTime() <= self.m_LastHitInHead
 end
 
+-- 标记玩家最近被击中头部（0.2秒有效）
 function meta:SetWasHitInHead()
 	self.m_LastHitInHead = CurTime() + 0.2
 end
 
+-- 设置玩家的点数（同步到客户端的网络数据表）
 function meta:SetPoints(points)
 	self:SetDTInt(1, points)
 end
 
+-- 设置玩家的血甲值（同步到客户端的网络数据表）
 function meta:SetBloodArmor(armor)
 	self:SetDTInt(DT_PLAYER_INT_BLOODARMOR, armor)
 end
 
+-- 预测玩家是否会因承受给定伤害而死亡
+-- 考虑僵尸伤害缩放
 function meta:WouldDieFrom(damage, hitpos)
 	return self:Health() <= damage * GAMEMODE:GetZombieDamageScale(hitpos, self)
 end
 
+-- 使人类玩家进入被击倒状态
 function meta:KnockDown(time)
 	if P_Team(self) == TEAM_HUMAN then
 		self:GiveStatus("knockdown", time or 3)
 	end
 end
 
+-- 创建一个假的死亡效果（假人偶），而玩家本体不死亡
+-- 用于迷惑敌人或触发特殊事件
 function meta:FakeDeath(sequenceid, modelscale, length, start)
+	-- 移除已存在的假死亡实体
 	for _, ent in pairs(ents.FindByClass("fakedeath")) do
 		if ent:GetOwner() == self then
 			ent:Remove()
@@ -532,6 +598,8 @@ function meta:FakeDeath(sequenceid, modelscale, length, start)
 	return ent
 end
 
+-- 尝试让玩家在特定物体位置重生为Gore Child（一种僵尸）
+-- 从被投掷的婴儿实体上重生
 function meta:TrySpawnAsGoreChild(ent)
 	if ent and ent:IsValid() and not ent.SpawnedOn and ent:GetSettled() then
 		ent.SpawnedOn = true
@@ -559,6 +627,7 @@ function meta:TrySpawnAsGoreChild(ent)
 	end
 end
 
+-- 向客户端发送玩家当前生命周期的统计数据（伤害量等）
 function meta:SendLifeStats()
 	if self.LifeStatSend and self.LifeStatSend > CurTime() then return end
 	self.LifeStatSend = CurTime() + 0.33
@@ -570,6 +639,7 @@ function meta:SendLifeStats()
 	net.Send(self)
 end
 
+-- 增加玩家当前生命周期对路障的伤害统计
 function meta:AddLifeBarricadeDamage(amount)
 	self.LifeBarricadeDamage = self.LifeBarricadeDamage + amount
 	self.WaveBarricadeDamage = self.WaveBarricadeDamage + amount
@@ -579,6 +649,7 @@ function meta:AddLifeBarricadeDamage(amount)
 	end
 end
 
+-- 增加玩家当前生命周期对人类的伤害统计
 function meta:AddLifeHumanDamage(amount)
 	self.LifeHumanDamage = self.LifeHumanDamage + amount
 	self.WaveHumanDamage = self.WaveHumanDamage + amount
@@ -588,6 +659,7 @@ function meta:AddLifeHumanDamage(amount)
 	end
 end
 
+-- 增加玩家当前生命周期吞食大脑的数量统计
 function meta:AddLifeBrainsEaten(amount)
 	self.LifeBrainsEaten = self.LifeBrainsEaten + amount
 
@@ -596,6 +668,7 @@ function meta:AddLifeBrainsEaten(amount)
 	end
 end
 
+-- 移除玩家身上所有临时的状态效果
 function meta:RemoveEphemeralStatuses()
 	for _, status in pairs(ents.FindByClass("status_*")) do
 		if status.Ephemeral and status:IsValid() and status:GetOwner() == self then
@@ -604,9 +677,9 @@ function meta:RemoveEphemeralStatuses()
 	end
 end
 
+-- 对玩家施加中毒伤害效果
+-- 正数添加毒伤，负数移除毒伤
 function meta:AddPoisonDamage(damage, attacker)
-	--damage = math.ceil(damage)
-
 	if damage > 0 then
 		local status = self:GiveStatus("poison")
 		if status and status:IsValid() then
@@ -620,9 +693,9 @@ function meta:AddPoisonDamage(damage, attacker)
 	end
 end
 
+-- 对玩家施加流血伤害效果
+-- 正数添加流血，负数移除流血
 function meta:AddBleedDamage(damage, attacker)
-	--damage = math.ceil(damage)
-
 	if damage > 0 then
 		local status = self:GiveStatus("bleed")
 		if status and status:IsValid() then
@@ -636,6 +709,8 @@ function meta:AddBleedDamage(damage, attacker)
 	end
 end
 
+-- 向客户端发送指令，在指定位置显示浮动分数
+-- 支持向量位置和实体位置两种形式
 function meta:FloatingScore(victimorpos, effectname, frags, flags)
 	if type(victimorpos) == "Vector" then
 		net.Start("zs_floatscore_vec")
@@ -654,20 +729,24 @@ function meta:FloatingScore(victimorpos, effectname, frags, flags)
 	end
 end
 
+-- 累积一次性造成的多次伤害数值，用于合并显示
 function meta:CollectDamageNumberSession(dmg, lastpos, hasplayer)
 	self.DamageNumberTally = (self.DamageNumberTally or 0) + dmg
 	self.DamageNumberLastPos = self.DamageNumberLastPos and ((self.DamageNumberLastPos + lastpos)/2) or lastpos
 	self.DamageNumberHasPlayer = self.DamageNumberHasPlayer or hasplayer
 end
 
+-- 开始一个新的伤害数值累积会话
 function meta:StartDamageNumberSession()
 	self.DamageNumberTally = 0
 end
 
+-- 检查是否存在正在进行的伤害数值累积会话
 function meta:HasDamageNumberSession()
 	return self.DamageNumberTally
 end
 
+-- 结束并获取累积的伤害数值会话结果
 function meta:PopDamageNumberSession()
 	local tally, lastpos, hasplayer =
 		self.DamageNumberTally,
@@ -681,30 +760,37 @@ function meta:PopDamageNumberSession()
 	return tally, lastpos, hasplayer
 end
 
+-- 将玩家标记为不进行性能分析，以避免异常数据
 function meta:MarkAsBadProfile()
 	self.NoProfiling = true
 end
 
+-- 向玩家屏幕中央发送通知
 function meta:CenterNotify(...)
 	net.Start("zs_centernotify")
 		net.WriteTable({...})
 	net.Send(self)
 end
 
+-- 向玩家屏幕顶部发送通知
 function meta:TopNotify(...)
 	net.Start("zs_topnotify")
 		net.WriteTable({...})
 	net.Send(self)
 end
 
-//随便放
+-- 增加玩家的代币数量
 function meta:AddTokens(pts)
 	self:SetNWInt('btokens', self:GetTokens() + pts)
 end
 
+-- 减少玩家的代币数量
 function meta:TakeTokens(pts)
 	self:SetNWInt('btokens', self:GetTokens() - pts)
 end
+
+-- 根据玩家的观察目标，刷新其动态重生点
+-- 支持观察僵尸巢穴、玩家、重生点等目标
 function meta:RefreshDynamicSpawnPoint()
 	local target = self:GetObserverTarget()
 	if (GAMEMODE:GetDynamicSpawning() and self:GetObserverMode() == OBS_MODE_CHASE and target and target:IsValid()) and
@@ -719,6 +805,7 @@ function meta:RefreshDynamicSpawnPoint()
 	end
 end
 
+-- 为一个物品类别存储一项数据（入栈操作）
 function meta:PushPackedItem(class, ...)
 	if self.PackedItems and ... ~= nil then
 		local packed = {...}
@@ -729,6 +816,7 @@ function meta:PushPackedItem(class, ...)
 	end
 end
 
+-- 为一个物品类别取出一项数据（出栈操作）
 function meta:PopPackedItem(class)
 	if self.PackedItems and self.PackedItems[class] and self.PackedItems[class][1] ~= nil then
 		local index = #self.PackedItems[class]
@@ -739,6 +827,8 @@ function meta:PopPackedItem(class)
 	end
 end
 
+-- 将玩家的僵尸职业强制变为乌鸦
+-- 用于重生时的职业切换
 function meta:ChangeToCrow()
 	self.StartCrowing = nil
 
@@ -755,10 +845,12 @@ function meta:ChangeToCrow()
 	self.DeathClass = curclass
 end
 
+-- 为玩家选择一个随机的模型（从预定义的模型列表中）
 function meta:SelectRandomPlayerModel()
 	self:SetModel(player_manager.TranslatePlayerModel(GAMEMODE.RandomPlayerModels[math.random(#GAMEMODE.RandomPlayerModels)]))
 end
 
+-- 给予玩家一把没有弹药的武器
 function meta:GiveEmptyWeapon(weptype)
 	if not self:HasWeapon(weptype) then
 		local wep = self:Give(weptype)
@@ -770,12 +862,15 @@ function meta:GiveEmptyWeapon(weptype)
 	end
 end
 
+-- 保存原始的Give方法并重写
+-- 处理人类玩家的武器自动切换逻辑
 local OldGive = meta.Give
 function meta:Give(weptype, noammo)
 	if P_Team(self) ~= TEAM_HUMAN then
 		return OldGive(self, weptype, noammo)
 	end
 
+	-- 如果当前只有一把武器且该武器标记为自动切换，则自动切换到新武器
 	local weps = self:GetWeapons()
 	local autoswitch = #weps == 1 and weps[1]:IsValid() and weps[1].AutoSwitchFrom
 
@@ -788,6 +883,8 @@ function meta:Give(weptype, noammo)
 	return ret
 end
 
+-- 让僵尸玩家开始装死
+-- 创建一个装死状态效果，或更新已有状态的时间
 function meta:StartFeignDeath(force)
 	local feigndeath = self.FeignDeath
 	if feigndeath and feigndeath:IsValid() then
@@ -810,18 +907,21 @@ function meta:StartFeignDeath(force)
 	end
 end
 
+-- 将腿部伤害数据同步到客户端
 function meta:UpdateLegDamage()
 	net.Start("zs_legdamage")
 		net.WriteFloat(self.LegDamage)
 	net.Send(self)
 end
 
+-- 将手臂伤害数据同步到客户端
 function meta:UpdateArmDamage()
 	net.Start("zs_armdamage")
 		net.WriteFloat(self.ArmDamage)
 	net.Send(self)
 end
 
+-- 将玩家与一个头蟹玩家"配对"，触发头蟹耦合特殊效果
 function meta:CoupleWith(plheadcrab)
 	if self:GetZombieClassTable().Headcrab == plheadcrab:GetZombieClassTable().Name then
 		local status = self:GiveStatus("headcrabcouple")
@@ -831,12 +931,15 @@ function meta:CoupleWith(plheadcrab)
 	end
 end
 
+-- 在服务器端修正玩家模型的角度
 function meta:FixModelAngles(velocity)
 	local eye = self:EyeAngles()
 	self:SetLocalAngles(eye)
 	self:SetPoseParameter("move_yaw", math.NormalizeAngle(velocity:Angle().yaw - eye.y))
 end
 
+-- 移除玩家身上所有的状态效果
+-- bInstant为true时立即移除，否则优雅退出
 function meta:RemoveAllStatus(bSilent, bInstant)
 	if bInstant then
 		for _, ent in pairs(ents.FindByClass("status_*")) do
@@ -854,6 +957,8 @@ function meta:RemoveAllStatus(bSilent, bInstant)
 	end
 end
 
+-- 移除玩家身上指定类型的状态效果
+-- 支持排除特定类型
 function meta:RemoveStatus(sType, bSilent, bInstant, sExclude)
 	local removed
 
@@ -872,24 +977,30 @@ function meta:RemoveStatus(sType, bSilent, bInstant, sExclude)
 	return removed
 end
 
+-- 获取玩家身上指定类型的状态效果实体
 function meta:GetStatus(sType)
 	local ent = self["status_"..sType]
 	if ent and ent:IsValid() and ent:GetOwner() == self then return ent end
 end
 
+-- 给予玩家一个指定类型的状态效果
+-- 处理抵抗效果、饰品免疫、重复效果更新等
 function meta:GiveStatus(sType, fDie)
 	local resistable = table.HasValue(GAMEMODE.ResistableStatuses, sType)
 
+	-- 止血技能：消耗血甲抵抗状态效果
 	if resistable and self:IsSkillActive(SKILL_HAEMOSTASIS) and self:GetBloodArmor() >= 2 then
 		self:SetBloodArmor(self:GetBloodArmor() - 2)
 		return
 	end
 
+	-- 生物清洁饰品：免疫状态效果（20秒冷却）
 	if resistable and self:HasTrinket("biocleanser") and (not self.LastBioCleanser or self.LastBioCleanser + 20 < CurTime()) then
 		self.LastBioCleanser = CurTime()
 		self.BioCleanserMessage = nil
 	end
 
+	-- 更新已有状态或创建新状态
 	local cur = self:GetStatus(sType)
 	if cur then
 		if fDie then
@@ -910,11 +1021,14 @@ function meta:GiveStatus(sType, fDie)
 	end
 end
 
+-- 让玩家退出观察者模式并立即重生
 function meta:UnSpectateAndSpawn()
 	self:UnSpectate()
 	self:Spawn()
 end
 
+-- 执行"二次活力"技能
+-- 让死去的僵尸玩家在原地复活，保留部分状态
 function meta:SecondWind(pl)
 	if self.Gibbed or self:Alive() or P_Team(self) ~= TEAM_UNDEAD then return end
 
@@ -935,15 +1049,19 @@ function meta:SecondWind(pl)
 	self:CallZombieFunction0("OnSecondWind")
 end
 
+-- 让玩家丢弃所有武器、弹药和库存物品
 function meta:DropAll()
 	self:DropAllWeapons()
 	self:DropAllAmmo()
 	self:DropAllInventoryItems()
 end
 
+-- 创建布娃娃的内部辅助函数
 local function CreateRagdoll(pl)
 	if pl:IsValid() then pl:OldCreateRagdoll() end
 end
+
+-- 设置模型的内部辅助函数
 local function SetModel(pl, mdl)
 	if pl:IsValid() then
 		pl:SetModel(mdl)
@@ -951,6 +1069,8 @@ local function SetModel(pl, mdl)
 	end
 end
 
+-- 保存原始CreateRagdoll方法并重写
+-- 支持由状态效果指定的自定义布娃娃模型
 meta.OldCreateRagdoll = meta.CreateRagdoll
 function meta:CreateRagdoll()
 	local status = self.status_overridemodel
@@ -963,6 +1083,8 @@ function meta:CreateRagdoll()
 	end
 end
 
+-- 按类别丢弃一件武器
+-- 创建一个prop_weapon实体并转移弹药数据
 function meta:DropWeaponByType(class)
 	if GAMEMODE.ZombieEscape then return end
 
@@ -973,6 +1095,7 @@ function meta:DropWeaponByType(class)
 			ent:SetWeaponType(class)
 			ent:Spawn()
 
+			-- 转移弹药
 			if wep.AmmoIfHas then
 				local ammocount = wep:GetPrimaryAmmoCount()
 				local desiredrop = math.min(ammocount, wep.Primary.ClipSize) - wep:Clip1()
@@ -993,6 +1116,7 @@ function meta:DropWeaponByType(class)
 	end
 end
 
+-- 丢弃所有武器
 function meta:DropAllWeapons()
 	local vPos = self:GetPos()
 	local vVel = self:GetVelocity()
@@ -1012,6 +1136,7 @@ function meta:DropAllWeapons()
 		end
 	end
 
+	-- 僵尸逃生模式下保留精英手枪
 	if GAMEMODE.ZombieEscape then
 		local zewep = self:GetWeapon("weapon_elite")
 		if zewep and zewep:IsValid() then
@@ -1020,6 +1145,7 @@ function meta:DropAllWeapons()
 	end
 end
 
+-- 按类型丢弃一定数量的弹药
 function meta:DropAmmoByType(ammotype, amount)
 	if GAMEMODE.ZombieEscape then return end
 
@@ -1040,6 +1166,7 @@ function meta:DropAmmoByType(ammotype, amount)
 	end
 end
 
+-- 丢弃所有弹药
 function meta:DropAllAmmo()
 	local vPos = self:GetPos()
 	local vVel = self:GetVelocity()
@@ -1058,24 +1185,29 @@ function meta:DropAllAmmo()
 	end
 end
 
+-- 处理玩家从补给箱获取补给的逻辑
+-- 支持储备技能、仓库技能等
 function meta:Resupply(owner, obj)
 	if GAMEMODE:GetWave() <= 0 then return end
 
 	local stockpiling = self:IsSkillActive(SKILL_STOCKPILE)
 	local stowage = self:IsSkillActive(SKILL_STOWAGE)
 
+	-- 检查冷却时间或使用次数
 	if (stowage and (self.StowageCaches or 0) <= 0) or (not stowage and CurTime() < (self.NextResupplyUse or 0)) then
 		self:CenterNotify(COLOR_RED, translate.ClientGet(self, "no_ammo_here"))
 		return
 	end
 
 	if not stowage then
+		-- 普通补给：设置冷却时间
 		self.NextResupplyUse = CurTime() + GAMEMODE.ResupplyBoxCooldown * (self.ResupplyDelayMul or 1) * (stockpiling and 2.12 or 1)
 
 		net.Start("zs_nextresupplyuse")
 			net.WriteFloat(self.NextResupplyUse)
 		net.Send(self)
 	else
+		-- 仓库补给：消耗一次使用次数
 		self.StowageCaches = self.StowageCaches - 1
 
 		net.Start("zs_stowagecaches")
@@ -1083,6 +1215,7 @@ function meta:Resupply(owner, obj)
 		net.Send(self)
 	end
 
+	-- 发放弹药
 	local ammotype = self:GetResupplyAmmoType()
 	local amount = GAMEMODE.AmmoCache[ammotype]
 
@@ -1094,10 +1227,12 @@ function meta:Resupply(owner, obj)
 
 		self:GiveAmmo(amount, ammotype)
 
+		-- 觅食技能：有几率获得食物
 		if self:IsSkillActive(SKILL_FORAGER) and math.random(4) == 1 and #GAMEMODE.Food > 0 then
 			self:Give(GAMEMODE.Food[math.random(#GAMEMODE.Food)])
 		end
 
+		-- 给补给箱所有者奖励点数
 		if self ~= owner and owner:IsValidHuman() then
 			if obj:GetClass() == "prop_resupplybox" then
 				owner.ResupplyBoxUsedByOthers = owner.ResupplyBoxUsedByOthers + 1
@@ -1116,7 +1251,8 @@ function meta:Resupply(owner, obj)
 	return true
 end
 
--- Lets other players know about our maximum health.
+-- 保存原始SetMaxHealth方法并重写
+-- 同步最大生命值到客户端的网络数据表
 meta.OldSetMaxHealth = FindMetaTable("Entity").SetMaxHealth
 function meta:SetMaxHealth(num)
 	num = math.ceil(num)
@@ -1124,23 +1260,27 @@ function meta:SetMaxHealth(num)
 	self:OldSetMaxHealth(num)
 end
 
+-- 结算并给予玩家队列中的点数
 function meta:PointCashOut(ent, fmtype)
 	if self.PointQueue >= 1 and P_Team(self) == TEAM_HUMAN then
-		local points = self.PointQueue --math.floor(self.PointQueue)
+		local points = self.PointQueue
 		self.PointQueue = self.PointQueue - points
 
 		self:AddPoints(points, ent or self.LastDamageDealtPos or vector_origin, fmtype)
 	end
 end
 
+-- 为玩家增加点数
+-- 处理小数部分累积、点数吸收、浮动分数显示和经验值转换
 function meta:AddPoints(points, floatingscoreobject, fmtype, nomul)
 	if gamemode.Call("IsEscapeDoorOpen") then return end
 
+	-- 应用点数收入倍率
 	if points > 0 and not nomul and self.PointIncomeMul then
 		points = points * self.PointIncomeMul
 	end
 
-	-- This lets us add partial amounts of points (floats)
+	-- 处理小数部分
 	local wholepoints = math.floor(points)
 	local remainder = points - wholepoints
 	if remainder > 0 then
@@ -1150,6 +1290,7 @@ function meta:AddPoints(points, floatingscoreobject, fmtype, nomul)
 		self.PointsRemainder = self.PointsRemainder - carryover
 	end
 
+	-- 点数吸收机制
 	local absorb = self.PointsToAbsorb
 	if absorb and absorb > 0 then
 		wholepoints = math.max(wholepoints - absorb, 0)
@@ -1159,17 +1300,21 @@ function meta:AddPoints(points, floatingscoreobject, fmtype, nomul)
 		self.PointsToAbsorb = nil
 	end
 
+	-- 更新分数
 	self:AddFrags(wholepoints)
 	self:SetPoints(self:GetPoints() + wholepoints)
 
+	-- 点数存储（用于转生）
 	if self.PointsVault then
 		self.PointsVault = self.PointsVault + wholepoints * GAMEMODE.PointSaving
 	end
 
+	-- 显示浮动分数
 	if floatingscoreobject then
 		self:FloatingScore(floatingscoreobject, "floatingscore", wholepoints, fmtype or FM_NONE)
 	end
 
+	-- 转换为经验值
 	local xp = wholepoints
 	if GAMEMODE.HumanXPMulti and GAMEMODE.HumanXPMulti >= 0 then
 		xp = xp * GAMEMODE.HumanXPMulti
@@ -1188,6 +1333,7 @@ function meta:AddPoints(points, floatingscoreobject, fmtype, nomul)
 	gamemode.Call("PlayerPointsAdded", self, wholepoints)
 end
 
+-- 扣除玩家的点数
 function meta:TakePoints(points)
 	self:SetPoints(self:GetPoints() - points)
 
@@ -1196,6 +1342,8 @@ function meta:TakePoints(points)
 	end
 end
 
+-- 向指定玩家发送服务器上所有僵尸的职业信息
+-- 用于客户端同步其他玩家的职业
 function meta:UpdateAllZombieClasses()
 	for _, pl in pairs(player.GetAll()) do
 		if pl ~= self and pl:Team() == TEAM_UNDEAD then
@@ -1210,6 +1358,7 @@ function meta:UpdateAllZombieClasses()
 	end
 end
 
+-- 为玩家创建一个附着的氛围音效实体
 function meta:CreateAmbience(class)
 	class = "status_"..class
 
@@ -1227,8 +1376,11 @@ function meta:CreateAmbience(class)
 	end
 end
 
+-- 设置玩家的僵尸职业，并同步给客户端
+-- 支持仅同步（onlyupdate）和完整切换
 function meta:SetZombieClass(cl, onlyupdate, filter)
 	if onlyupdate then
+		-- 仅向客户端发送更新
 		net.Start("zs_zclass")
 			net.WriteEntity(self)
 			net.WriteUInt(cl, 8)
@@ -1241,6 +1393,7 @@ function meta:SetZombieClass(cl, onlyupdate, filter)
 		return
 	end
 
+	-- 完整职业切换
 	self:CallZombieFunction0("SwitchedAway")
 
 	local classtab = GAMEMODE.ZombieClasses[cl]
@@ -1262,6 +1415,7 @@ function meta:SetZombieClass(cl, onlyupdate, filter)
 	end
 end
 
+-- 根据玩家的队伍和职业，在服务器端调整其物理碰撞箱等属性，并同步给客户端
 function meta:DoHulls(classid, teamid)
 	teamid = teamid or P_Team(self)
 	classid = classid or self:GetZombieClass()
@@ -1269,16 +1423,19 @@ function meta:DoHulls(classid, teamid)
 	if teamid == TEAM_UNDEAD then
 		local classtab = GAMEMODE.ZombieClasses[classid]
 		if classtab then
+			-- 设置移动类型
 			if self:Alive() then
 				self:SetMoveType(classtab.MoveType or MOVETYPE_WALK)
 			end
 
+			-- 设置模型缩放
 			if classtab.ModelScale then
 				self:SetModelScale(classtab.ModelScale, 0)
 			elseif self:GetModelScale() ~= DEFAULT_MODELSCALE then
 				self:SetModelScale(DEFAULT_MODELSCALE, 0)
 			end
 
+			-- 设置碰撞箱
 			if not classtab.Hull or not classtab.HullDuck then
 				self:ResetHull()
 			end
@@ -1313,16 +1470,19 @@ function meta:DoHulls(classid, teamid)
 			elseif self:GetGravity() ~= 1 then
 				self:SetGravity(1)
 			end
+
+			-- 设置血液颜色
 			local bloodcolor = classtab.BloodColor or 0
 			if self:GetBloodColor() ~= bloodcolor then
 				self:SetBloodColor(bloodcolor)
 			end
 
+			-- 设置阴影和渲染模式
 			self:DrawShadow(not classtab.NoShadow)
 			self:SetRenderMode(classtab.RenderMode or RENDERMODE_NORMAL)
 
+			-- 设置碰撞和物理属性
 			self.NoCollideAll = classtab.NoCollideAll or (classtab.ModelScale or 1) ~= DEFAULT_MODELSCALE
-			--self.NoCollideInside = classtab.NoCollideInside or (classtab.ModelScale or 1) ~= DEFAULT_MODELSCALE
 			self.AllowTeamDamage = classtab.AllowTeamDamage
 			self.NeverAlive = classtab.NeverAlive
 			self.KnockbackScale = classtab.KnockbackScale
@@ -1332,6 +1492,7 @@ function meta:DoHulls(classid, teamid)
 			end
 		end
 	else
+		-- 人类模式：重置所有属性
 		self:SetModelScale(DEFAULT_MODELSCALE, 0)
 		self:ResetHull()
 		self:SetViewOffset(DEFAULT_VIEW_OFFSET)
@@ -1345,7 +1506,6 @@ function meta:DoHulls(classid, teamid)
 		self:SetRenderMode(RENDERMODE_NORMAL)
 
 		self.NoCollideAll = nil
-		--self.NoCollideInside = nil
 		self.AllowTeamDamage = nil
 		self.NeverAlive = nil
 		self.KnockbackScale = nil
@@ -1355,6 +1515,7 @@ function meta:DoHulls(classid, teamid)
 		end
 	end
 
+	-- 广播物理属性更新到所有客户端
 	net.Start("zs_dohulls")
 		net.WriteEntity(self)
 		net.WriteUInt(classid, 8)
@@ -1364,6 +1525,7 @@ function meta:DoHulls(classid, teamid)
 	self:CollisionRulesChanged()
 end
 
+-- 改变玩家的队伍，并触发相关钩子
 function meta:ChangeTeam(teamid)
 	local oldteam = P_Team(self)
 	if oldteam ~= teamid then
@@ -1376,6 +1538,8 @@ function meta:ChangeTeam(teamid)
 	end
 end
 
+-- 执行僵尸"救赎"逻辑，使其变回人类
+-- 保存玩家的积分，切换到人类队伍并重生
 function meta:Redeem(silent, noequip)
 	if gamemode.Call("PrePlayerRedeemed", self) then return end
 
@@ -1395,6 +1559,7 @@ function meta:Redeem(silent, noequip)
 	self.m_PreRedeem = nil
 	self:DoHulls()
 
+	-- 重置分数
 	local frags = self:Frags()
 	if frags < 0 then
 		self:SetFrags(frags * 5)
@@ -1403,8 +1568,6 @@ function meta:Redeem(silent, noequip)
 	end
 	self:SetDeaths(0)
 
-	--[[self.DeathClass = nil
-	self:SetZombieClass(GAMEMODE.DefaultZombieClass)]]
 	self.DeathClass = GAMEMODE.DefaultZombieClass
 
 	self.SpawnedTime = CurTime()
@@ -1418,6 +1581,7 @@ function meta:Redeem(silent, noequip)
 	gamemode.Call("PostPlayerRedeemed", self)
 end
 
+-- 安排在下一帧执行救赎
 function meta:RedeemNextFrame()
 	timer.Simple(0, function()
 		if IsValid(self) then
@@ -1426,7 +1590,11 @@ function meta:RedeemNextFrame()
 	end)
 end
 
+-- 蹲跳惩罚检测的射线检测配置
 local walltrace = {mask = MASK_SOLID_BRUSHONLY, mins = Vector(-8, -8, -8), maxs = Vector(8, 8, 8)}
+
+-- 判断是否应惩罚玩家的蹲跳行为
+-- 如果玩家在空中蹲伏且前方没有障碍物，判定为蹲跳
 function meta:ShouldCrouchJumpPunish()
 	if not self:OnGround() and self:Crouching() and self:GetZombieClassTable().CrouchedWalkSpeed ~= 1 then
 		local pos = self:WorldSpaceCenter()
@@ -1440,19 +1608,23 @@ function meta:ShouldCrouchJumpPunish()
 	return false
 end
 
+-- 减少玩家的"大脑"（分数）
 function meta:TakeBrains(amount)
 	self:AddFrags(-amount)
 	self.BrainsEaten = self.BrainsEaten - 1
 end
 
+-- 增加玩家的"大脑"（分数），并检查是否满足救赎条件
 function meta:AddBrains(amount)
 	self:AddFrags(amount)
 	self.BrainsEaten = self.BrainsEaten + 1
 	self:CheckRedeem()
 end
 
+-- GetBrains等同于Frags
 meta.GetBrains = meta.Frags
 
+-- 检查玩家是否满足救赎条件并执行
 function meta:CheckRedeem(instant)
 	if not self:IsValid() or P_Team(self) ~= TEAM_UNDEAD
 	or GAMEMODE:GetRedeemBrains() <= 0 or self:GetBrains() < GAMEMODE:GetRedeemBrains()
@@ -1467,19 +1639,26 @@ function meta:CheckRedeem(instant)
 	end
 end
 
+-- 对玩家的恶意攻击行为进行处理
+-- 伤害减免、惩罚和反弹
 function meta:AntiGrief(dmginfo, overridenostrict)
+	-- 严格模式下完全免疫伤害
 	if GAMEMODE.GriefStrict and not overridenostrict then
 		dmginfo:SetDamage(0)
 		dmginfo:ScaleDamage(0)
 		return
 	end
 
+	-- 伤害减免
 	dmginfo:SetDamage(dmginfo:GetDamage() * GAMEMODE.GriefForgiveness)
 
+	-- 给攻击者惩罚
 	self:GivePenalty(math.ceil(dmginfo:GetDamage() * 0.5))
 	self:ReflectDamage(dmginfo:GetDamage())
 end
 
+-- 计算并对玩家施加点数惩罚
+-- 使用累积机制来避免频繁的小额扣分
 function meta:GivePenalty(amount)
 	self.m_PenaltyCarry = (self.m_PenaltyCarry or 0) + amount * 0.1
 	local frags = math.floor(self.m_PenaltyCarry)
@@ -1489,6 +1668,7 @@ function meta:GivePenalty(amount)
 	end
 end
 
+-- 直接扣除玩家的分数作为惩罚，并通知客户端播放惩罚音效
 function meta:GivePointPenalty(amount)
 	self:SetFrags(self:Frags() - amount)
 
@@ -1497,6 +1677,8 @@ function meta:GivePointPenalty(amount)
 	net.Send(self)
 end
 
+-- 将一部分伤害反弹给攻击者
+-- 当攻击者分数低于阈值时触发
 function meta:ReflectDamage(damage)
 	local frags = self:Frags()
 	if frags < GAMEMODE.GriefReflectThreshold then
@@ -1504,6 +1686,8 @@ function meta:ReflectDamage(damage)
 	end
 end
 
+-- 将指定类型的武器或弹药从一个玩家给予另一个玩家
+-- 处理弹药转移、武器交换等
 function meta:GiveWeaponByType(weapon, plyr, ammo)
 	local wep = self:GetActiveWeapon()
 	if not wep or not wep:IsValid() then return end
@@ -1521,7 +1705,7 @@ function meta:GiveWeaponByType(weapon, plyr, ammo)
 				wep:TakeCombinedPrimaryAmmo(desiredgive)
 				plyr:GiveAmmo(desiredgive, ammotype)
 
-
+				-- 通知双方
 				net.Start("zs_ammogive")
 					net.WriteUInt(desiredgive, 16)
 					net.WriteString(ammotype)
@@ -1540,15 +1724,14 @@ function meta:GiveWeaponByType(weapon, plyr, ammo)
 		end
 	end
 
+	-- 转移弹匣中的弹药
 	local primary = wep:ValidPrimaryAmmo()
 	if primary and 0 < wep:Clip1() then
-
 		self:GiveAmmo(wep:Clip1(), primary, true)
 		wep:SetClip1(0)
 	end
 	local secondary = wep:ValidSecondaryAmmo()
 	if secondary and 0 < wep:Clip2() then
-
 		self:GiveAmmo(wep:Clip2(), secondary, true)
 		wep:SetClip2(0)
 	end
@@ -1558,6 +1741,7 @@ function meta:GiveWeaponByType(weapon, plyr, ammo)
 
 	local wep2 = plyr:Give(weapon:GetClass())
 	if wep2 and wep2:IsValid() then
+		-- 调整弹药至默认配置
 		if wep2.Primary then
 			primary = wep2:ValidPrimaryAmmo()
 			if primary then
@@ -1575,6 +1759,7 @@ function meta:GiveWeaponByType(weapon, plyr, ammo)
 	end
 end
 
+-- 使玩家被炸成碎片
 function meta:Gib()
 	local pos = self:WorldSpaceCenter()
 
@@ -1588,14 +1773,15 @@ function meta:Gib()
 	timer.Simple(0, function() GAMEMODE:CreateGibs(pos, pos2) end)
 end
 
+-- 获取最近攻击该玩家的实体（10秒内有效）
 function meta:GetLastAttacker()
 	local ent = self.LastAttacker
 	if ent and ent:IsValid() and CurTime() <= self.LastAttacked + 10 then
 		return ent
 	end
-	--self:SetLastAttacker()
 end
 
+-- 设置最近攻击该玩家的实体
 function meta:SetLastAttacker(ent)
 	if ent then
 		if ent ~= self then
@@ -1608,6 +1794,8 @@ function meta:SetLastAttacker(ent)
 	end
 end
 
+-- 保存原始UnSpectate方法并重写
+-- 仅当玩家不在观察模式时才执行
 meta.OldUnSpectate = meta.UnSpectate
 function meta:UnSpectate()
 	if self:GetObserverMode() ~= OBS_MODE_NONE then
@@ -1615,6 +1803,7 @@ function meta:UnSpectate()
 	end
 end
 
+-- 临时碰撞取消的定时器回调
 local function nocollidetimer(self, timername)
 	if self:IsValid() then
 		for _, e in pairs(ents.FindInBox(self:WorldSpaceAABB())) do
@@ -1629,6 +1818,8 @@ local function nocollidetimer(self, timername)
 	timer.Remove(timername)
 end
 
+-- 临时禁用玩家间的碰撞以解决卡住的问题
+-- 当玩家与其他玩家重叠时，暂时切换到Debris触发器碰撞组
 function meta:TemporaryNoCollide(force)
 	if self:GetCollisionGroup() ~= COLLISION_GROUP_PLAYER and not force then return end
 
@@ -1646,6 +1837,7 @@ function meta:TemporaryNoCollide(force)
 	self:SetCollisionGroup(COLLISION_GROUP_PLAYER)
 end
 
+-- 向客户端发送播放眼部受伤音效的指令
 function meta:PlayEyePainSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
@@ -1654,6 +1846,7 @@ function meta:PlayEyePainSound()
 	net.Send(rf)
 end
 
+-- 向客户端发送播放给予弹药音效的指令
 function meta:PlayGiveAmmoSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
@@ -1662,6 +1855,7 @@ function meta:PlayGiveAmmoSound()
 	net.Send(rf)
 end
 
+-- 向客户端发送播放死亡音效的指令
 function meta:PlayDeathSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
@@ -1670,6 +1864,7 @@ function meta:PlayDeathSound()
 	net.Send(rf)
 end
 
+-- 向客户端发送播放僵尸死亡音效的指令
 function meta:PlayZombieDeathSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
@@ -1678,6 +1873,7 @@ function meta:PlayZombieDeathSound()
 	net.Send(rf)
 end
 
+-- 向客户端发送播放受伤音效的指令（带冷却时间）
 function meta:PlayPainSound()
 	if CurTime() < self.NextPainSound then return end
 	self.NextPainSound = CurTime() + 0.5
@@ -1690,6 +1886,7 @@ function meta:PlayPainSound()
 	net.Send(rf)
 end
 
+-- 向客户端发送播放僵尸受伤音效的指令（带冷却时间）
 function meta:PlayZombiePainSound()
 	if CurTime() < self.NextPainSound then return end
 	self.NextPainSound = CurTime() + 0.5
@@ -1701,16 +1898,20 @@ function meta:PlayZombiePainSound()
 	net.Send(rf)
 end
 
+-- 执行通过特殊标记进行的传送
+-- 处理传送视觉效果、位置设置、碰撞规则等
 function meta:DoSigilTeleport(target, from, corrupted)
 	if not target then return end
 
 	if corrupted == nil then corrupted = false end
 
+	-- 检查传送条件：距离、武器有效性等
 	if from and not from:IsValid() or not from:IsWeapon() and self:GetPos():DistToSqr(from:GetPos()) > 16384 or from:IsWeapon() and self:GetActiveWeapon() ~= from then
 		return
 	end
 
 	if self:IsValidLivingHuman() and target:IsValid() and corrupted == target:GetSigilCorrupted() then
+		-- 传送视觉效果（冷却0.25秒）
 		if CurTime() >= (self._NextSigilTeleportEffect or 0) then
 			self._NextSigilTeleportEffect = CurTime() + 0.25
 
@@ -1724,6 +1925,7 @@ function meta:DoSigilTeleport(target, from, corrupted)
 			util.Effect(effect, effectdata, true, true)
 		end
 
+		-- 设置传送位置
 		local movepos = target:GetPos() % 2
 
 		self:SetBarricadeGhosting(true, true)
@@ -1731,6 +1933,7 @@ function meta:DoSigilTeleport(target, from, corrupted)
 			self:SetPos(movepos)
 			self:SetLocalPos(movepos)
 		end
+		-- 强制移动钩子
 		hook.Add("Move", self, function(_, p, mv)
 			if p == self then
 				hook.Remove("Move", p)
@@ -1738,12 +1941,14 @@ function meta:DoSigilTeleport(target, from, corrupted)
 			end
 		end)
 
+		-- 临时取消附近僵尸的碰撞
 		for _, e in pairs(ents.FindInSphere(movepos, 64)) do
 			if e:IsValidLivingZombie() then
 				e:TemporaryNoCollide(true)
 			end
 		end
 
+		-- 消耗传送武器弹药
 		if from and from:IsValid() and from:IsWeapon() then
 			from:TakePrimaryAmmo(1)
 
@@ -1754,11 +1959,13 @@ function meta:DoSigilTeleport(target, from, corrupted)
 	end
 end
 
+-- Boss掉落物品列表
 local bossdrops = {
 	"trinket_bleaksoul",
 	"trinket_spiritess"
 }
 
+-- 在Boss死亡位置生成一个特殊物品掉落
 function meta:MakeBossDrop()
 	local drop = table.Random(bossdrops)
 	local inv = string.sub(drop, 1, 4) ~= "weap"
@@ -1784,11 +1991,13 @@ function meta:MakeBossDrop()
 	end
 end
 
+-- 通知客户端更新其备用武器选择（用于快速切换）
 function meta:UpdateAltSelectedWeapon()
 	net.Start("zs_updatealtselwep")
 	net.Send(self)
 end
 
+-- 向玩家发送其放置物被摧毁的消息
 function meta:SendDeployableLostMessage(deployable)
 	local deployableclass = deployable:GetClass()
 	local deployableinfo = GAMEMODE.DeployableInfo[deployableclass]
@@ -1799,6 +2008,7 @@ function meta:SendDeployableLostMessage(deployable)
 	net.Send(self)
 end
 
+-- 向玩家发送其放置物被认领的消息
 function meta:SendDeployableClaimedMessage(deployable)
 	local deployableclass = deployable:GetClass()
 	local deployableinfo = GAMEMODE.DeployableInfo[deployableclass]
@@ -1809,6 +2019,7 @@ function meta:SendDeployableClaimedMessage(deployable)
 	net.Send(self)
 end
 
+-- 向玩家发送其放置物弹药耗尽的消息
 function meta:SendDeployableOutOfAmmoMessage(deployable)
 	local deployableclass = deployable:GetClass()
 	local deployableinfo = GAMEMODE.DeployableInfo[deployableclass]
@@ -1819,13 +2030,16 @@ function meta:SendDeployableOutOfAmmoMessage(deployable)
 	net.Send(self)
 end
 
+-- 根据玩家技能，获取一个随机的初始物品
 function meta:GetRandomStartingItem()
 	local pool = {}
 
+	-- 准备技能：随机食物
 	if self:IsSkillActive(SKILL_PREPAREDNESS) and #GAMEMODE.Food > 0 then
 		pool[#pool + 1] = GAMEMODE.Food[math.random(#GAMEMODE.Food)]
 	end
 
+	-- 装备技能：随机初始饰品
 	if self:IsSkillActive(SKILL_EQUIPPED) then
 		pool[#pool + 1] = GAMEMODE.StarterTrinkets[math.random(#GAMEMODE.StarterTrinkets)]
 	end
@@ -1835,9 +2049,9 @@ function meta:GetRandomStartingItem()
 	end
 end
 
+-- 触发死亡后的"脉冲共振"爆炸效果
+-- 产生范围伤害和减速效果
 function meta:PulseResonance(attacker, inflictor)
-	-- Weird things happen with multishot weapons..
-
 	timer.Create("PulseResonance" .. attacker:SteamID64(), 0.06, 1, function()
 		if not attacker:IsValid() or not self:IsValid() then return end
 
@@ -1847,7 +2061,9 @@ function meta:PulseResonance(attacker, inflictor)
 		pos.z = pos.z + 16
 
 		if attacker:IsValidLivingHuman() then
+			-- 爆炸伤害
 			util.BlastDamagePlayer(inflictor, attacker, pos, 100, 75, DMG_ALWAYSGIB, 0.95)
+			-- 脉冲减速效果
 			for _, ent in pairs(util.BlastAlloc(inflictor, attacker, pos, 100 * (attacker.ExpDamageRadiusMul or 1))) do
 				if ent:IsValidLivingPlayer() and gamemode.Call("PlayerShouldTakeDamage", ent, attacker) then
 					ent:AddLegDamageExt(5, attacker, inflictor, SLOWTYPE_PULSE)
@@ -1855,6 +2071,7 @@ function meta:PulseResonance(attacker, inflictor)
 			end
 		end
 
+		-- 视觉效果
 		local effectdata = EffectData()
 			effectdata:SetOrigin(pos)
 			effectdata:SetNormal(attacker:GetShootPos())
@@ -1862,6 +2079,8 @@ function meta:PulseResonance(attacker, inflictor)
 	end)
 end
 
+-- 触发死亡后的"低温诱导"冰冻爆炸效果
+-- 击杀目标并产生范围冰冻效果
 function meta:CryogenicInduction(attacker, inflictor, damage)
 	if self:Health() > self:GetMaxHealthEx() * (damage/100) or math.random(50) > damage then return end
 
@@ -1871,10 +2090,13 @@ function meta:CryogenicInduction(attacker, inflictor, damage)
 		local pos = self:WorldSpaceCenter()
 		pos.z = pos.z + 16
 
+		-- 直接处决目标
 		self:TakeSpecialDamage(self:Health() + 90, DMG_DIRECT, attacker, inflictor, pos)
 
 		if attacker:IsValidLivingHuman() then
+			-- 冰冻爆炸范围伤害
 			util.BlastDamagePlayer(inflictor, attacker, pos, 100, self:GetMaxHealthEx() * 0.12, DMG_DROWN, 0.95)
+			-- 冰冻减速效果
 			for _, ent in pairs(util.BlastAlloc(inflictor, attacker, pos, 100 * (attacker.ExpDamageRadiusMul or 1))) do
 				if ent:IsValidLivingPlayer() and gamemode.Call("PlayerShouldTakeDamage", ent, attacker) then
 					ent:AddLegDamageExt(6, attacker, inflictor, SLOWTYPE_COLD)
@@ -1882,6 +2104,7 @@ function meta:CryogenicInduction(attacker, inflictor, damage)
 			end
 		end
 
+		-- 冰冻视觉效果
 		local effectdata = EffectData()
 			effectdata:SetOrigin(pos)
 			effectdata:SetNormal(attacker:GetShootPos())
@@ -1889,14 +2112,18 @@ function meta:CryogenicInduction(attacker, inflictor, damage)
 	end)
 end
 
+-- 设置玩家的幻影生命值（同步到客户端）
 function meta:SetPhantomHealth(amount)
 	self:SetDTFloat(DT_PLAYER_FLOAT_PHANTOMHEALTH, amount)
 end
 
+-- 检查玩家是否拥有"障碍物专家"资格（基于转生等级）
 function meta:HasBarricadeExpert()
 	return self:GetZSRemortLevel() > 0
 end
 
+-- 比较两个玩家的"障碍物专家"等级，确定谁有优先权
+-- 返回1：本玩家优先，0：平级，-1：对方优先
 function meta:BarricadeExpertPrecedence(otherpl)
 	local mygrade, myexpert = self:GetZSRemortLevelGraded(), self:HasBarricadeExpert()
 	local othergrade, otherexpert = otherpl:GetZSRemortLevelGraded(), otherpl:HasBarricadeExpert()

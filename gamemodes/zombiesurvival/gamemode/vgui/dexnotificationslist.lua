@@ -41,6 +41,8 @@ function PANEL:AddLabel(text, col, font, extramargin)
 		label:SetContentAlignment(4)
 	end
 	label:Dock(LEFT)
+
+	return label
 end
 
 function PANEL:AddImage(mat, col)
@@ -69,6 +71,37 @@ function PANEL:AddKillIcon(class)
 			self:AddLabel(fontdata[2], fontdata[3], fontdata[1], true)
 		end
 	end
+end
+
+-- 用于生成去重 key 的辅助函数：把参数序列化成一个可比较的字符串
+-- 忽略 CustomTime 等不影响外观的控制字段
+local function BuildNotifyKey(args)
+	local parts = {}
+
+	for k, v in ipairs(args) do
+		local vtype = type(v)
+
+		if vtype == "table" then
+			if v.r and v.g and v.b then
+				parts[#parts + 1] = "col:" .. v.r .. "," .. v.g .. "," .. v.b .. "," .. (v.a or 255)
+			elseif v.font then
+				parts[#parts + 1] = "font:" .. tostring(v.font)
+			elseif v.killicon then
+				parts[#parts + 1] = "killicon:" .. tostring(v.killicon) .. (v.headshot and ":hs" or "")
+			elseif v.image then
+				parts[#parts + 1] = "image:" .. tostring(v.image)
+			end
+			-- CustomTime 等其他控制字段不参与 key 计算
+		elseif vtype == "Player" then
+			parts[#parts + 1] = "player:" .. (IsValid(v) and v:SteamID64() or "invalid")
+		elseif vtype == "Entity" then
+			parts[#parts + 1] = "ent:" .. (IsValid(v) and v:GetClass() or "invalid")
+		else
+			parts[#parts + 1] = "s:" .. tostring(v)
+		end
+	end
+
+	return table.concat(parts, "|")
 end
 
 function PANEL:SetNotification(...)
@@ -123,6 +156,25 @@ function PANEL:SetNotification(...)
 			self:AddLabel(text, defaultcol, defaultfont)
 		end
 	end
+
+	-- 记录 key，供堆叠比对使用
+	self.NotifyKey = BuildNotifyKey(args)
+
+	-- 创建一个专门用于显示堆叠次数的标签（初始隐藏/空）
+	self.StackCount = 1
+	self.StackLabel = self:AddLabel("", defaultcol, defaultfont)
+	self.StackLabel:SetVisible(false)
+end
+
+function PANEL:SetStackCount(n)
+	self.StackCount = n
+	if n > 1 then
+		self.StackLabel:SetText(" x" .. n)
+		self.StackLabel:SizeToContents()
+		self.StackLabel:SetVisible(true)
+	else
+		self.StackLabel:SetVisible(false)
+	end
 end
 
 vgui.Register("DEXNotification", PANEL, "Panel")
@@ -145,14 +197,15 @@ end
 function PANEL:Paint()
 end
 
-function PANEL:AddNotification(...)
-	local notif = vgui.Create("DEXNotification", self)
-	notif:SetTall(BetterScreenScale() * self:GetMessageHeight())
-	notif:SetNotification(...)
+-- 重新计算某条通知的 DockPadding（因为堆叠计数标签会改变总宽度）
+function PANEL:RelayoutNotification(notif)
 	local w = 0
 	for _, p in pairs(notif:GetChildren()) do
-		w = w + p:GetWide()
+		if p:IsVisible() then
+			w = w + p:GetWide()
+		end
 	end
+
 	if self:GetAlign() == RIGHT then
 		notif:DockPadding(self:GetWide() - w - 32, 0, 8, 0)
 	elseif self:GetAlign() == CENTER then
@@ -161,18 +214,48 @@ function PANEL:AddNotification(...)
 		notif:DockPadding(8, 0, 8, 0)
 	end
 
-	notif:Dock(TOP)
+	notif:InvalidateLayout(true)
+end
 
+function PANEL:AddNotification(...)
 	local args = {...}
 
-	local FadeTime = GAMEMODE.NotifyFadeTime
+	local key = BuildNotifyKey(args)
 
+	local FadeTime = GAMEMODE.NotifyFadeTime
 	for k, v in pairs(args) do
 		if type(v) == "table" and v.CustomTime and type(v.CustomTime == "number") then
 			FadeTime = v.CustomTime
 			break
 		end
 	end
+
+	-- 查找是否已有相同内容且尚未过期的通知，若有则直接堆叠刷新
+	if key ~= "" then
+		for _, pan in pairs(self:GetChildren()) do
+			if IsValid(pan) and pan.NotifyKey == key and pan.DieTime then
+				pan:SetStackCount((pan.StackCount or 1) + 1)
+				self:RelayoutNotification(pan)
+
+				pan.DieTime = CurTime() + FadeTime
+
+				-- 重新触发一次淡入提示效果，让玩家注意到刷新
+				pan:SetAlpha(255)
+				pan:AlphaTo(1, 1, FadeTime - 0.15)
+
+				return pan
+			end
+		end
+	end
+
+	-- 没有可堆叠的，创建新的通知
+	local notif = vgui.Create("DEXNotification", self)
+	notif:SetTall(BetterScreenScale() * self:GetMessageHeight())
+	notif:SetNotification(...)
+
+	self:RelayoutNotification(notif)
+
+	notif:Dock(TOP)
 
 	notif:SetAlpha(1)
 	notif:AlphaTo(255, 0.15)

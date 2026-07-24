@@ -2,7 +2,7 @@ DEFINE_BASECLASS("weapon_zs_poisonzombie")
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_wildpoisonzombie")
 
-SWEP.MeleeDamage = 45
+SWEP.MeleeDamage = 35
 SWEP.PoisonThrowSpeed = 420
 
 function SWEP:PlayAttackSound()

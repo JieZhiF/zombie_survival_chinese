@@ -1,22 +1,31 @@
+﻿-- 本文件负责管理击杀图标（killicon）的注册、查找以及击杀/死亡信息的网络消息处理和屏幕显示
+
+-- 检查killicon系统是否支持GetFont方法，如果不支持则扩展killicon库的功能
 if not killicon.GetFont then
+	-- 保存原始的killicon.AddFont和killicon.Add函数引用
 	local OldAddFont = killicon.AddFont
 	local OldAdd = killicon.Add
 
+	-- 存储所有通过字体注册的击杀图标信息（类名 -> {字体名, 字符, 颜色}）
 	local storedfonts = {}
+	-- 存储所有通过纹理注册的击杀图标信息（类名 -> {纹理路径, 颜色}）
 	local storedicons = {}
 
+	-- 扩展killicon.AddFont：在调用原始函数的同时，将注册信息缓存到storedfonts表中
 	function killicon.AddFont(sClass, sFont, sLetter, cColor)
 		cColor = cColor or color_white
 		storedfonts[sClass] = {sFont, sLetter, cColor}
 		return OldAddFont(sClass, sFont, sLetter, cColor)
 	end
 
+	-- 扩展killicon.Add：在调用原始函数的同时，将注册信息缓存到storedicons表中
 	function killicon.Add(sClass, sTexture, cColor)
 		cColor = cColor or color_white
 		storedicons[sClass] = {sTexture, cColor}
 		return OldAdd(sClass, sTexture, cColor)
 	end
 
+	-- 添加killicon.AddAlias方法：为指定类名创建一个别名，指向已注册的基础类图标
 	function killicon.AddAlias(sClass, sBaseClass)
 		if storedfonts[sBaseClass] then
 			return killicon.AddFont(sClass, storedfonts[sBaseClass][1], storedfonts[sBaseClass][2], storedfonts[sBaseClass][3])
@@ -25,19 +34,23 @@ if not killicon.GetFont then
 		end
 	end
 
+	-- 获取指定类名的击杀图标（优先查找字体图标，再查找纹理图标）
 	function killicon.Get(sClass)
 		return killicon.GetFont(sClass) or killicon.GetIcon(sClass)
 	end
 
+	-- 获取指定类名的字体图标信息
 	function killicon.GetFont(sClass)
 		return storedfonts[sClass]
 	end
 
+	-- 获取指定类名的纹理图标信息
 	function killicon.GetIcon(sClass)
 		return storedicons[sClass]
 	end
 end
 
+-- 基础击杀图标注册：使用zsdeathnoticecs字体，默认字母"C"
 killicon.AddFont("default", "zsdeathnoticecs", "C")
 killicon.AddFont("suicide", "zsdeathnoticecs", "C")
 killicon.AddFont("player", "zsdeathnoticecs", "C")
@@ -46,10 +59,13 @@ killicon.AddFont("func_move_linear", "zsdeathnoticecs", "C")
 killicon.AddFont("func_rotating", "zsdeathnoticecs", "C")
 killicon.AddFont("trigger_hurt", "zsdeathnoticecs", "C")
 
+-- 物理投射物击杀图标：使用zsdeathnotice字体，字母"9"
 killicon.AddFont("prop_physics", "zsdeathnotice", "9")
 killicon.AddFont("prop_physics_respawnable", "zsdeathnotice", "9")
 killicon.AddFont("prop_physics_multiplayer", "zsdeathnotice", "9")
 killicon.AddFont("func_physbox", "zsdeathnotice", "9")
+
+-- 基础武器击杀图标（HL2原版武器）
 killicon.AddFont("weapon_smg1", "zsdeathnotice", "/")
 killicon.AddFont("weapon_357", "zsdeathnotice", ".")
 killicon.AddFont("weapon_ar2", "zsdeathnotice", "2")
@@ -64,69 +80,94 @@ killicon.AddFont("weapon_stunstick", "zsdeathnotice", "!")
 killicon.AddFont("weapon_slam", "zsdeathnotice", "*")
 killicon.AddFont("weapon_crowbar", "zsdeathnotice", "6")
 
+-- 特殊效果击杀图标
 killicon.Add("headshot", "zombiesurvival/killicons/zs_headshot")
 killicon.Add("redeem", "killicon/redeem_v2")
 
+-- ============================================================
+-- 僵尸类击杀图标注册
+-- ============================================================
+-- 基础僵尸
 killicon.Add("weapon_zs_zombie", "zombiesurvival/killicons/zombie")
 killicon.Add("weapon_zs_zombie_gore_blaster", "zombiesurvival/killicons/zombie", Color(255, 0, 0))
+-- 骷髅类僵尸
 killicon.Add("weapon_zs_skeleton", "zombiesurvival/killicons/skeletal_walker")
 killicon.Add("weapon_zs_skeletallurker", "zombiesurvival/killicons/skeletal_lurker")
+-- 新鲜尸体/敏捷尸体/经典僵尸/超级僵尸
 killicon.Add("weapon_zs_freshdead", "zombiesurvival/killicons/fresh_dead")
 killicon.Add("weapon_zs_agiledead", "zombiesurvival/killicons/fresh_dead")
 killicon.Add("weapon_zs_classiczombie", "zombiesurvival/killicons/fresh_dead")
 killicon.Add("weapon_zs_superzombie", "zombiesurvival/killicons/fresh_dead")
+-- 躯干/腿部类僵尸
 killicon.Add("weapon_zs_zombietorso", "zombiesurvival/killicons/torso")
 killicon.Add("weapon_zs_fastzombietorso", "zombiesurvival/killicons/fast_torso")
 killicon.Add("weapon_zs_fastzombietorso_slingshot", "zombiesurvival/killicons/fast_torso", Color(163, 94, 99))
+-- 阴影类僵尸
 killicon.Add("weapon_zs_shadowlurker", "zombiesurvival/killicons/skeletal_lurker", Color(20, 20, 20))
 killicon.Add("weapon_zs_shadowwalker", "zombiesurvival/killicons/skeletal_walker", Color(50, 50, 50))
+-- 腿部类特殊僵尸
 killicon.Add("weapon_zs_zombielegs", "zombiesurvival/killicons/legs")
 killicon.Add("weapon_zs_fastzombielegs", "zombiesurvival/killicons/fast_legs")
 killicon.Add("weapon_zs_asskicker", "zombiesurvival/killicons/legs")
 killicon.Add("weapon_zs_shitslapper", "zombiesurvival/killicons/torso")
+-- 梦魇类僵尸
 killicon.Add("weapon_zs_nightmare", "zombiesurvival/killicons/nightmare2")
 killicon.Add("weapon_zs_anightmare", "zombiesurvival/killicons/ancient_nightmare")
+-- 呕吐/搔痒类僵尸
 killicon.Add("weapon_zs_pukepus", "zombiesurvival/killicons/pukepus")
 killicon.Add("weapon_zs_ticklemonster", "zombiesurvival/killicons/tickle")
+-- 乌鸦僵尸
 killicon.Add("weapon_zs_crow", "zombiesurvival/killicons/crow")
+-- 快速僵尸
 killicon.Add("weapon_zs_fastzombie", "zombiesurvival/killicons/fastzombie")
 killicon.Add("weapon_zs_fastzombie_slingshot", "zombiesurvival/killicons/fastzombie", Color(163, 94, 99))
+-- 毒僵尸
 killicon.Add("weapon_zs_poisonzombie", "zombiesurvival/killicons/poisonzombie")
 killicon.Add("weapon_zs_wildpoisonzombie", "zombiesurvival/killicons/poisonzombie", Color(190, 240, 0))
 killicon.Add("weapon_zs_chemzombie", "zombiesurvival/killicons/chemzombie")
+-- 食尸鬼类
 killicon.Add("weapon_zs_ghoul", "zombiesurvival/killicons/ghoul")
 killicon.Add("weapon_zs_chilledghoul", "zombiesurvival/killicons/ghoul", Color(20, 20, 250))
 killicon.Add("weapon_zs_elderghoul", "zombiesurvival/killicons/ghoul", Color(170, 220, 0))
 killicon.Add("dummy_chemzombie", "zombiesurvival/killicons/chemzombie")
+-- 幽灵类僵尸
 killicon.Add("weapon_zs_wraith", "zombiesurvival/killicons/wraithv2")
+-- 头蟹类
 killicon.Add("weapon_zs_headcrab", "zombiesurvival/killicons/headcrab")
 killicon.Add("weapon_zs_doomcrab", "zombiesurvival/killicons/headcrab", Color(25, 25, 25))
 killicon.Add("weapon_zs_fastheadcrab", "zombiesurvival/killicons/fastheadcrab")
 killicon.Add("weapon_zs_bloodsucker_headcrab", "zombiesurvival/killicons/fastheadcrab", Color(175, 100, 100))
 killicon.Add("weapon_zs_poisonheadcrab", "zombiesurvival/killicons/poisonheadcrab")
 killicon.Add("weapon_zs_barbedheadcrab", "zombiesurvival/killicons/poisonheadcrab", Color(236, 218, 0))
+-- 投射物类
 killicon.Add("projectile_poisonspit", "zombiesurvival/killicons/projectile_poisonspit")
 killicon.Add("projectile_poisonflesh", "zombiesurvival/killicons/projectile_poisonflesh")
 killicon.Add("projectile_poisonpuke", "zombiesurvival/killicons/pukepus")
+-- 特殊效果类
 killicon.Add("weapon_zs_special_wow", "sprites/glow04_noz")
 killicon.Add("weapon_zs_coolwisp", "sprites/glow04_noz", Color(0, 180, 255))
 killicon.Add("projectile_wispball", "sprites/glow04_noz")
+-- 血肉爬行/臃肿僵尸
 killicon.Add("weapon_zs_fleshcreeper", "zombiesurvival/killicons/fleshcreeper")
 killicon.Add("weapon_zs_bloatedzombie", "zombiesurvival/killicons/bloatedzombie")
 killicon.Add("weapon_zs_vilebloatedzombie", "zombiesurvival/killicons/bloatedzombie", Color(10, 94, 0))
+-- 巨量出血/出血孩子类
 killicon.Add("weapon_zs_gigagorechild", "zombiesurvival/killicons/gigagorechild")
 killicon.Add("weapon_zs_gorechild", "zombiesurvival/killicons/gorechild")
 killicon.Add("weapon_zs_gigashadowchild", "zombiesurvival/killicons/gigagorechild", Color(0, 0, 0))
 killicon.Add("weapon_zs_shadowgorechild", "zombiesurvival/killicons/gorechild", Color(0, 0, 0))
+-- 阴影/骨网/吞噬类
 killicon.Add("weapon_zs_shade", "zombiesurvival/killicons/shadev2", Color(0, 50, 255))
 killicon.Add("weapon_zs_bonemesh", "zombiesurvival/killicons/bonemesh")
 killicon.Add("projectile_bonemesh", "zombiesurvival/killicons/projectile_bonemesh")
 killicon.Add("projectile_doomcrab", "zombiesurvival/killicons/projectile_bonemesh", Color(30, 30, 30))
+-- 红色骨髓/撕裂者/吞噬者
 killicon.Add("weapon_zs_redmarrow", "zombiesurvival/killicons/skeletal_walker", Color(255,0,0))
 killicon.Add("weapon_zs_lacerator", "zombiesurvival/killicons/lacerator")
 killicon.Add("weapon_zs_lacerator_charging", "zombiesurvival/killicons/lacerator", Color(180, 45, 0))
 killicon.Add("weapon_zs_devourer", "zombiesurvival/killicons/devourer")
 killicon.Add("projectile_devourer", "zombiesurvival/killicons/devourer")
+-- 冰霜阴影/根除者/嚎叫者
 killicon.Add("weapon_zs_frostshade", "zombiesurvival/killicons/shadev2", Color(0, 190, 255))
 killicon.Add("projectile_shadeice", "zombiesurvival/killicons/projectile_shadeice")
 killicon.Add("status_frostshadeshield", "zombiesurvival/killicons/shadev2", Color(0, 190, 255))
@@ -134,13 +175,16 @@ killicon.Add("weapon_zs_eradicator", "zombiesurvival/killicons/poisonzombie", Co
 killicon.Add("weapon_zs_howler", "zombiesurvival/killicons/howler")
 killicon.Add("weapon_zs_extinctioncrab", "zombiesurvival/killicons/fastheadcrab", Color(100, 20, 0))
 killicon.Add("projectile_extinctioncrab", "zombiesurvival/killicons/fastheadcrab", Color(100, 20, 0))
+-- 冰霜亡魂/骷髅骗术/折磨幽灵/毒气食尸鬼/电子僵尸
 killicon.Add("weapon_zs_frigidrevenant", "zombiesurvival/killicons/skeletal_walker", Color(50, 90, 135))
 killicon.Add("weapon_zs_skelesham", "zombiesurvival/killicons/skeletal_walker", Color(220, 200, 150))
 killicon.Add("weapon_zs_tormentedwraith", "zombiesurvival/killicons/wraithv2", Color(190, 255, 190))
 killicon.Add("weapon_zs_noxiousghoul", "zombiesurvival/killicons/ghoul", Color(230, 130, 190))
 killicon.Add("weapon_zs_electron", "zombiesurvival/killicons/weapon_zs_electron")
 
-
+-- ============================================================
+-- 炮塔类击杀图标
+-- ============================================================
 killicon.Add("prop_gunturret", "zombiesurvival/killicons/weapon_zs_gunturret2")
 killicon.Add("prop_gunturret_assault", "zombiesurvival/killicons/weapon_zs_assaultturret.png")
 killicon.Add("prop_gunturret_buckshot", "zombiesurvival/killicons/weapon_zs_gunturret_buckshot")
@@ -150,6 +194,10 @@ killicon.Add("weapon_zs_gunturret", "zombiesurvival/killicons/weapon_zs_gunturre
 killicon.Add("weapon_zs_gunturret_assault", "zombiesurvival/killicons/weapon_zs_assaultturret.png")
 killicon.Add("weapon_zs_gunturret_buckshot", "zombiesurvival/killicons/weapon_zs_gunturret_buckshot")
 killicon.Add("weapon_zs_gunturret_rocket", "zombiesurvival/killicons/weapon_zs_gunturret_rocket")
+
+-- ============================================================
+-- 投掷物/爆炸物类击杀图标
+-- ============================================================
 killicon.AddFont("projectile_zsgrenade", "zsdeathnotice", "4")
 killicon.Add("projectile_proxymine", "zombiesurvival/killicons/weapon_zs_proxymine")
 killicon.AddFont("weapon_zs_grenade", "zsdeathnotice", "4")
@@ -158,6 +206,10 @@ killicon.Add("weapon_zs_proxymine", "zombiesurvival/killicons/weapon_zs_proxymin
 killicon.Add("weapon_zs_detpack", "zombiesurvival/killicons/weapon_zs_detpack2")
 killicon.Add("prop_detpack", "zombiesurvival/killicons/weapon_zs_detpack2")
 killicon.Add("weapon_zs_detpackremote", "zombiesurvival/killicons/weapon_zs_detpack2")
+
+-- ============================================================
+-- 枪械类击杀图标（zsdeathnoticecs字体）
+-- ============================================================
 killicon.AddFont("weapon_zs_stubber", "zsdeathnoticecs", "n")
 killicon.AddFont("weapon_zs_zestubber", "zsdeathnoticecs", "n")
 killicon.AddFont("weapon_zs_hunter", "zsdeathnoticecs", "r")
@@ -282,6 +334,7 @@ killicon.Add("weapon_zs_healingray", "zombiesurvival/killicons/weapon_zs_healing
 killicon.Add("weapon_zs_proliferator", "zombiesurvival/killicons/weapon_zs_proliferator.png")
 killicon.Add("weapon_zs_pollutor", "zombiesurvival/killicons/weapon_zs_proliferator.png")
 
+-- 带颜色的特殊武器变体
 killicon.AddFont("weapon_zs_origin12", "zsdeathnoticecs", "v", Color(160,32,240))
 killicon.AddFont("weapon_zs_vepr12", "zsdeathnoticecs", "v",  Color(255,165,0))
 killicon.AddFont("weapon_zs_81", "zsdeathnoticecs", "b", Color(255,165,0))
@@ -292,6 +345,9 @@ killicon.Add("weapon_zs_suicidebomb", "zombiesurvival/killicons/weapon_zs_detpac
 killicon.Add("weapon_zs_m82a3", "zombiesurvival/killicons/weapon_zs_renegade.png", Color(105,105,105))
 killicon.AddFont("weapon_zs_teleportationdagger", "zsdeathnoticecs", "j", Color(255,165,0))
 
+-- ============================================================
+-- 近战武器类击杀图标
+-- ============================================================
 killicon.Add("weapon_zs_axe", "zombiesurvival/killicons/weapon_zs_axe")
 killicon.Add("weapon_zs_sawhack", "zombiesurvival/killicons/weapon_zs_sawhack.png")
 killicon.Add("weapon_zs_keyboard", "zombiesurvival/killicons/weapon_zs_keyboard")
@@ -336,13 +392,16 @@ killicon.Add("weapon_zs_ladel", "zombiesurvival/killicons/weapon_zs_ladel")
 killicon.Add("weapon_zs_glassbottle", "zombiesurvival/killicons/glass_bottle")
 killicon.Add("weapon_zs_crackedbottle", "zombiesurvival/killicons/glass_bottle")
 killicon.Add("weapon_zs_graveshovel", "zombiesurvival/killicons/weapon_zs_graveshovel")
-killicon.Add("weapon_zs_graveshovelz", "zombiesurvival/killicons/butcher", Color(100, 0, 220)) -- temp killicon
+killicon.Add("weapon_zs_graveshovelz", "zombiesurvival/killicons/butcher", Color(100, 0, 220))
 killicon.Add("weapon_zs_pushbroom", "zombiesurvival/killicons/weapon_zs_broom")
 killicon.Add("weapon_zs_scythe", "zombiesurvival/killicons/weapon_zs_scythe2")
 killicon.Add("weapon_zs_harpoon_sp", "zombiesurvival/killicons/weapon_zs_harpoon2")
 killicon.Add("weapon_zs_kongolaxe_sp", "zombiesurvival/killicons/weapon_zs_kongolaxe2")
 killicon.AddFont("weapon_zs_famas_s", "zsdeathnoticecs", "t")
 
+-- ============================================================
+-- 道具/物品类击杀图标
+-- ============================================================
 killicon.Add("weapon_zs_stone", "zombiesurvival/killicons/weapon_zs_stone")
 killicon.Add("projectile_stone", "zombiesurvival/killicons/weapon_zs_stone")
 killicon.Add("projectile_shaderock", "zombiesurvival/killicons/weapon_zs_stone")
@@ -354,6 +413,7 @@ killicon.Add("weapon_zs_remantler", "zombiesurvival/killicons/weapon_zs_remantle
 killicon.Add("weapon_zs_tv", "zombiesurvival/killicons/weapon_zs_tv.png")
 killicon.Add("weapon_zs_barricadekit", "zombiesurvival/killicons/weapon_zs_barricadekit")
 killicon.Add("weapon_zs_boardpack", "zombiesurvival/killicons/weapon_zs_boardpack")
+-- 电子干扰器类
 killicon.Add("weapon_zs_manhack", "zombiesurvival/killicons/weapon_zs_manhack")
 killicon.Add("prop_manhack", "zombiesurvival/killicons/weapon_zs_manhack")
 killicon.AddFont("weapon_zs_manhackcontrol", "zsdeathnotice", "*")
@@ -366,12 +426,14 @@ killicon.Add("weapon_zs_oxygentank", "zombiesurvival/killicons/weapon_zs_oxygent
 killicon.Add("weapon_zs_resupplybox", "zombiesurvival/killicons/weapon_zs_resupplybox")
 killicon.Add("weapon_zs_spotlamp", "zombiesurvival/killicons/weapon_zs_spotlamp")
 killicon.Add("prop_spotlamp", "zombiesurvival/killicons/weapon_zs_spotlamp")
+-- 无人机类
 killicon.Add("prop_drone", "zombiesurvival/killicons/weapon_zs_drone3.png")
 killicon.Add("weapon_zs_drone", "zombiesurvival/killicons/weapon_zs_drone3.png")
 killicon.Add("prop_drone_hauler", "zombiesurvival/killicons/weapon_zs_haulerdrone.png")
 killicon.Add("weapon_zs_drone_hauler", "zombiesurvival/killicons/weapon_zs_haulerdrone.png")
 killicon.Add("prop_drone_pulse", "zombiesurvival/killicons/weapon_zs_drone_pulse.png")
 killicon.Add("weapon_zs_drone_pulse", "zombiesurvival/killicons/weapon_zs_drone_pulse.png")
+
 killicon.Add("prop_rollermine", "zombiesurvival/killicons/weapon_zs_rollermine.png")
 killicon.Add("weapon_zs_rollermine", "zombiesurvival/killicons/weapon_zs_rollermine.png")
 killicon.AddFont("weapon_zs_dronecontrol", "zsdeathnotice", "*")
@@ -385,6 +447,7 @@ killicon.Add("weapon_zs_zapper", "zombiesurvival/killicons/weapon_zs_zapper")
 killicon.Add("prop_zapper", "zombiesurvival/killicons/weapon_zs_zapper")
 killicon.Add("weapon_zs_zapper_arc", "zombiesurvival/killicons/weapon_zs_dynamo")
 killicon.Add("prop_zapper_arc", "zombiesurvival/killicons/weapon_zs_dynamo")
+-- 食物类物品
 killicon.Add("weapon_zs_f_banana", "zombiesurvival/killicons/food")
 killicon.Add("weapon_zs_f_water", "zombiesurvival/killicons/food")
 killicon.Add("weapon_zs_f_milk", "zombiesurvival/killicons/food")
@@ -392,6 +455,7 @@ killicon.Add("weapon_zs_f_orange", "zombiesurvival/killicons/food")
 killicon.Add("weapon_zs_f_soda", "zombiesurvival/killicons/food")
 killicon.Add("weapon_zs_f_watermelon", "zombiesurvival/killicons/food")
 killicon.Add("weapon_zs_f_takeout", "zombiesurvival/killicons/food")
+-- 符文碎片/小饰品/可制作物品
 killicon.Add("weapon_zs_sigilfragment", "zombiesurvival/killicons/sigil_fragment")
 killicon.Add("weapon_zs_corruptedfragment", "zombiesurvival/killicons/sigil_fragment", Color(50, 255, 50))
 killicon.Add("weapon_zs_trinket", "zombiesurvival/killicons/weapon_zs_trinket")
@@ -403,11 +467,16 @@ killicon.Add("weapon_zs_katana","zombiesurvival/killicons/weapon_zs_katana.png")
 killicon.Add("weapon_zs_electron","zombiesurvival/killicons/weapon_zs_electron.png")
 killicon.Add("weapon_zs_energysword","zombiesurvival/killicons/weapon_zs_energysword.png")
 killicon.Add("weapon_zs_energysword_dasher","zombiesurvival/killicons/weapon_zs_energysword.png")
+
+-- ============================================================
+-- 状态效果/环境/弹药类击杀图标
+-- ============================================================
 killicon.Add("status_bleed", "zombiesurvival/killicons/bleed", Color(255, 0, 0))
 killicon.Add("status_poison", "zombiesurvival/killicons/projectile_poisonflesh")
 killicon.Add("env_fire", "zombiesurvival/killicons/burn")
 killicon.Add("entityflame", "zombiesurvival/killicons/burn")
 
+-- 弹药类型图标
 killicon.Add("ammo_pistol", "zombiesurvival/killicons/pistol_ammo_icon", Color(255, 255, 200))
 killicon.Add("ammo_shotgun", "zombiesurvival/killicons/shotgun_ammo_icon", Color(255, 140, 120))
 killicon.Add("ammo_pulse", "zombiesurvival/killicons/pulse_ammo_icon", Color(150, 200, 255))
@@ -421,6 +490,7 @@ killicon.Add("ammo_bolts", "zombiesurvival/killicons/bolts_ammo_icon_2", Color(2
 killicon.Add("ammo_medpower", "zombiesurvival/killicons/medpower_ammo_icon")
 killicon.Add("ammo_nail", "zombiesurvival/killicons/nail_ammo_icon_2")
 
+-- 接收乌鸦击杀网络消息，在屏幕顶部显示击杀通知
 net.Receive("zs_crow_kill_crow", function(length)
 	local victim = net.ReadString()
 	local attacker = net.ReadString()
@@ -428,7 +498,8 @@ net.Receive("zs_crow_kill_crow", function(length)
 	GAMEMODE:TopNotify(attacker, " ", {killicon = "weapon_zs_crow"}, " ", victim)
 end)
 
-net.Receive("zs_pl_kill_pl", function(length)
+--[[
+net.Receive("zs_pl_kill_pl", function(length) -- 单独击杀
 	local victim = net.ReadEntity()
 	local attacker = net.ReadEntity()
 
@@ -461,7 +532,7 @@ net.Receive("zs_pl_kill_pl", function(length)
 	end
 end)
 
-net.Receive("zs_pls_kill_pl", function(length)
+net.Receive("zs_pls_kill_pl", function(length) -- 合作击杀
 	local victim = net.ReadEntity()
 	local attacker = net.ReadEntity()
 	local assister = net.ReadEntity()
@@ -489,32 +560,132 @@ net.Receive("zs_pls_kill_pl", function(length)
 		GAMEMODE:TopNotify(attacker, " and ", assister, " ", {killicon = inflictor, headshot = headshot}, " ", victim)
 	end
 end)
+]]
 
+-- ============================================================
+-- 静态颜色常量声明（避免在消息高频触发时重复创建Color对象产生GC压力）
+-- ============================================================
+local COLOR_GOLD = Color(255, 215, 0)
+local COLOR_LIGHT_RED = Color(255, 100, 100)
+
+-- 自定义高亮底色
+local BG_KILL = Color(255, 100, 100)    -- 我击杀别人的高亮底色
+local BG_DEATH = Color(130, 30, 30, 190)  -- 我被击杀的深红底色
+
+-- 调试开关（需要调试时设为true，平时请保持false避免控制台卡顿）
+local DEBUG_MODE = false
+
+-- 接收玩家击杀玩家的网络消息（包含击杀者、受害者、武器、是否爆头等信息）
+net.Receive("zs_pl_kill_pl", function(length)
+	-- 从网络消息中读取各种数据
+    local victim = net.ReadEntity()
+    local attacker = net.ReadEntity()
+    local inflictor = net.ReadString()
+    local victimteam = net.ReadUInt(8)
+    local attackerteam = net.ReadUInt(8)
+    local headshot = net.ReadBit() == 1
+    
+    -- 安全获取本地玩家对象（MySelf或LocalPlayer()兜底）
+    local lp = MySelf or LocalPlayer()
+
+	-- 调试模式下打印本地玩家信息
+    if DEBUG_MODE then
+        print("[ZS Kill] LocalPlayer:", lp)
+    end
+    
+    -- 安全性判定：避免entity为nil时导致运行时报错崩溃
+    if IsValid(victim) and IsValid(attacker) then
+        local attackername = attacker:Name()
+        local victimname = victim:Name()
+
+		-- 如果受害者是本地玩家且是人类阵营，触发玩家死亡回调
+        if victim == lp then
+            if victimteam == TEAM_HUMAN then
+                gamemode.Call("LocalPlayerDied", attackername)
+            end
+		-- 如果击杀者是本地玩家且是亡灵阵营，触发浮分显示
+        elseif attacker == lp then
+            if attacker:Team() == TEAM_UNDEAD then
+                gamemode.Call("FloatingScore", victim, "floatingscore_und", 1, 0)
+            end
+        end
+
+		-- 在受害者身上触发击杀回调函数
+        victim:CallZombieFunction5("OnKilled", attacker, attacker, attacker == victim, headshot, DamageInfo())
+
+		-- 在控制台输出击杀信息（带队伍颜色）
+        MsgC(team.GetColor(attackerteam), attackername, color_white, " killed ", team.GetColor(victimteam), victimname, color_white, " with ", COLOR_YELLOW, inflictor, "\n")
+
+        -- -----------------------------------------------------------------
+        -- 【核心高亮逻辑控制】(动态底色配置)
+        -- -----------------------------------------------------------------
+        local highlightConfig = nil 
+
+        if attacker == lp then
+            -- 情况A：我击杀别人（金黄文字 + 高亮底色，强化反馈）
+            highlightConfig = { 
+                IsMeHighlight = true, 
+                HighlightTextColor = COLOR_GOLD,
+                HighlightBgColor = BG_KILL
+            }
+        elseif victim == lp then
+            -- 情况B：我被别人击杀（亮红文字 + 醒目深红底色，危险警告）
+            highlightConfig = { 
+                IsMeHighlight = true, 
+                HighlightTextColor = COLOR_LIGHT_RED,
+                HighlightBgColor = BG_DEATH
+            }
+        end
+
+		-- 调试模式下打印高亮配置
+        if DEBUG_MODE and highlightConfig then
+            PrintTable(highlightConfig)
+        end
+
+        -- 发送击杀通知到屏幕顶部显示
+        if highlightConfig then
+			-- 带高亮配置的击杀通知
+            GAMEMODE:TopNotify(highlightConfig, attacker, " ", {killicon = inflictor, headshot = headshot}, " ", victim)
+        else
+			-- 普通击杀通知（无高亮）
+            GAMEMODE:TopNotify(attacker, " ", {killicon = inflictor, headshot = headshot}, " ", victim)
+        end
+    end
+end)
+
+-- 接收玩家自杀的网络消息
 net.Receive("zs_pl_kill_self", function(length)
 	local victim = net.ReadEntity()
 	local victimteam = net.ReadUInt(8)
 
 	if victim:IsValid() then
+		-- 如果自杀者是本地玩家且是人类阵营，触发玩家死亡回调
 		if victim == MySelf and victimteam == TEAM_HUMAN then
 			gamemode.Call("LocalPlayerDied")
 		end
 
+		-- 在受害者身上触发击杀回调（自杀场景下击杀者等于受害者）
 		victim:CallZombieFunction5("OnKilled", victim, victim, true, false, DamageInfo())
 
 		local victimname = victim:Name()
 
+		-- 在控制台输出自杀信息
 		MsgC(team.GetColor(victimteam), victimname, color_white, " killed themself", "\n")
 
+		-- 在屏幕顶部显示自杀通知
 		GAMEMODE:TopNotify({killicon = "suicide"}, " ", victim)
 	end
 end)
 
+-- 接收玩家重生的网络消息
 net.Receive("zs_playerredeemed", function(length)
 	local pl = net.ReadEntity()
 
 	if pl:IsValid() then
+		-- 在屏幕顶部显示某玩家被重生的通知
 		GAMEMODE:TopNotify(translate.Format("x_redeemed", pl:Name()), " ", {killicon = "redeem"})
 
+		-- 如果重生的是本地玩家，显示居中的提示文字并触发白屏闪光效果
 		if pl == MySelf then
 			GAMEMODE:CenterNotify(COLOR_CYAN, translate.Get("you_redeemed"))
 
@@ -523,6 +694,7 @@ net.Receive("zs_playerredeemed", function(length)
 	end
 end)
 
+-- 接收通用死亡网络消息（非玩家之间的击杀，如NPC、环境伤害等）
 net.Receive("zs_death", function(length)
 	local victim = net.ReadEntity()
 	local inflictor = net.ReadString()
@@ -530,16 +702,21 @@ net.Receive("zs_death", function(length)
 	local victimteam = net.ReadUInt(8)
 
 	if victim:IsValid() then
+		-- 如果受害者是本地玩家且是人类阵营，触发玩家死亡回调
 		if victim == MySelf and victimteam == TEAM_HUMAN then
 			gamemode.Call("LocalPlayerDied")
 		end
 
+		-- 在受害者身上触发击杀回调（击杀者使用字符串标识）
 		victim:CallZombieFunction5("OnKilled", attacker, NULL, attacker == victim, false, DamageInfo())
 
 		local victimname = victim:Name()
 
+		-- 在控制台输出死亡信息
 		MsgC(team.GetColor(victimteam), victimname, color_white, " was killed by ", COLOR_YELLOW, attacker, color_white, " with ", COLOR_YELLOW, inflictor, "\n")
 
+		-- 在屏幕顶部显示死亡通知
 		GAMEMODE:TopNotify(COLOR_RED, attacker, " ", {deathicon = inflictor}, " ", victim)
 	end
 end)
+

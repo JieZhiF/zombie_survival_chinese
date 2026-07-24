@@ -1,124 +1,162 @@
+-- ============================================================================
+-- DSideMenu - 侧边菜单面板（人类 ALT 菜单右侧界面）
+-- 按下 ALT 键后从右侧滑入，显示弹药计数器列表
+-- 根据弹药是否为空自动隐藏/显示对应的弹药行
+-- ============================================================================
+
 local PANEL = {}
-//描述：这个文件是按下ALT后右边出现的界面
-//注释状态：已完成
-PANEL.Spacing = 8//间隔
-PANEL.SlideTime = 0 --0.2 ，//滑动时间
-PANEL.NextRefresh = 0//下一次刷新
 
+-- 每个项目之间的垂直间距
+PANEL.Spacing = 8
+-- 滑动动画时间（已禁用，设为 0）
+PANEL.SlideTime = 0
+-- 下次刷新时间
+PANEL.NextRefresh = 0
+
+-- ============================================================================
+-- Init - 初始化侧边菜单
+-- ============================================================================
 function PANEL:Init()
-	self:RefreshSize()//刷新大小
-	self:SetPos(ScrW() - 1, 0)//设置位置,屏幕宽度-1,0
+	self:RefreshSize()
+	self:SetPos(ScrW() - 1, 0)
 
-	self.Items = {}//项目
+	self.Items = {}
 end
 
+-- ============================================================================
+-- Think - 每帧逻辑：检测按键释放以关闭菜单
+-- ============================================================================
 function PANEL:Think()
-	local time = RealTime()//获取时间
-	if self.CloseTime and time >= self.CloseTime then//如果关闭时间存在并且时间大于等于关闭时间
-		self.CloseTime = nil//关闭时间为空
-		self:SetVisible(false)//设置不可见
-	elseif self.StartChecking and time >= self.StartChecking then//如果开始检查存在并且时间大于等于开始检查的时间
-		if not MySelf:KeyDown(GAMEMODE.MenuKey) then//如果玩家没有按下菜单键,也就是按下
-			self:CloseMenu()//关闭菜单
+	local time = RealTime()
+	if self.CloseTime and time >= self.CloseTime then
+		self.CloseTime = nil
+		self:SetVisible(false)
+	elseif self.StartChecking and time >= self.StartChecking then
+		if not MySelf:KeyDown(GAMEMODE.MenuKey) then
+			self:CloseMenu()
 		end
 	end
 end
 
+-- ============================================================================
+-- RefreshSize - 根据屏幕 DPI 刷新菜单大小
+-- ============================================================================
 function PANEL:RefreshSize()
-	self:SetSize(BetterScreenScale() * 256, ScrH())//设置大小,这里被设为了界面DPI比例乘以256,屏幕高度
+	self:SetSize(BetterScreenScale() * 256, ScrH())
 end
 
+-- ============================================================================
+-- OpenMenu - 打开侧边菜单
+-- ============================================================================
 function PANEL:OpenMenu()
-	if self.StartChecking and RealTime() < self.StartChecking then return end//如果开始检查存在并且时间小于开始检查的时间
+	if self.StartChecking and RealTime() < self.StartChecking then return end
 
-	self.CloseTime = nil//关闭时间为空
+	self.CloseTime = nil
 
-	self:RefreshSize()//刷新大小
-	self:SetPos(ScrW() - self:GetWide(), 0, self.SlideTime, 0, self.SlideTime * 0.8) --self:MoveTo(ScrW() - self:GetWide(), 0, self.SlideTime, 0, self.SlideTime * 0.8)//设置位置,屏幕宽度-宽度,0,滑动时间,0,滑动时间*0.8
-	self:SetVisible(true)//设置可见
-	self:MakePopup()//设置弹出
-	self.StartChecking = RealTime() + 0.1//开始检查时间为当前时间加0.1
-	self:RefreshContents()//刷新内容
+	self:RefreshSize()
+	self:SetPos(ScrW() - self:GetWide(), 0, self.SlideTime, 0, self.SlideTime * 0.8)
+	self:SetVisible(true)
+	self:MakePopup()
+	self.StartChecking = RealTime() + 0.1
+	self:RefreshContents()
 
-	timer.Simple(0, function()//延迟0秒
-		gui.SetMousePos(ScrW() * 0.5, ScrH() * 0.5)//设置鼠标位置,屏幕宽度*0.5,屏幕高度*0.5
-	end)//结束
+	timer.Simple(0, function()
+		gui.SetMousePos(ScrW() * 0.5, ScrH() * 0.5)
+	end)
 end
 
-function PANEL:CloseMenu()//关闭菜单
-	self:RefreshContents()//刷新内容
+-- ============================================================================
+-- CloseMenu - 关闭侧边菜单
+-- ============================================================================
+function PANEL:CloseMenu()
+	self:RefreshContents()
 
-	if self.CloseTime then return end//如果关闭时间存在,返回并结束
-	self.CloseTime = RealTime() + self.SlideTime//关闭时间为当前时间加滑动时间
-
-	--self:MoveTo(ScrW() - 1, 0, self.SlideTime, 0, self.SlideTime * 0.8)
+	if self.CloseTime then return end
+	self.CloseTime = RealTime() + self.SlideTime
 end
 
-local texRightEdge = surface.GetTextureID("gui/gradient")//获取纹理ID,这个是一个渐变
-function PANEL:Paint()  //绘制
-	surface.SetDrawColor(5, 5, 5, 180)//设置绘制颜色,5,5,5,180
-	surface.DrawRect(self:GetWide() * 0.4, 0, self:GetWide() * 0.6 + 1, self:GetTall())//绘制矩形,宽度*0.4,0,宽度*0.6+1,高度
-	surface.SetTexture(texRightEdge)//设置纹理
-	surface.DrawTexturedRectRotated(self:GetWide() * 0.2, self:GetTall() * 0.5, self:GetWide() * 0.4, self:GetTall(), 180)//绘制纹理矩形旋转,宽度*0.2,高度*0.5,宽度*0.4,高度,旋转了180度
+-- 右侧渐变纹理
+local texRightEdge = surface.GetTextureID("gui/gradient")
+
+-- ============================================================================
+-- Paint - 绘制菜单背景渐变
+-- ============================================================================
+function PANEL:Paint()
+	surface.SetDrawColor(5, 5, 5, 180)
+	surface.DrawRect(self:GetWide() * 0.4, 0, self:GetWide() * 0.6 + 1, self:GetTall())
+	surface.SetTexture(texRightEdge)
+	surface.DrawTexturedRectRotated(self:GetWide() * 0.2, self:GetTall() * 0.5, self:GetWide() * 0.4, self:GetTall(), 180)
 end
 
-function PANEL:AddItem(item)//添加项目
-	item:SetParent(self)//设置父控件
-	item:SetWide(self:GetWide() - 16)//设置宽度,父控件宽度-16
+-- ============================================================================
+-- AddItem - 添加项目到侧边菜单
+-- ============================================================================
+function PANEL:AddItem(item)
+	item:SetParent(self)
+	item:SetWide(self:GetWide() - 16)
 
-	table.insert(self.Items, item)//插入项目
+	table.insert(self.Items, item)
 
-	self:InvalidateLayout()//重新布局
+	self:InvalidateLayout()
 end
 
-function PANEL:RemoveItem(item)//移除项目
-	for k, v in ipairs(self.Items) do//遍历项目
-		if v == item then//如果项目等于项目
-			item:Remove()//移除项目
-			table.remove(self.Items, k)//移除项目
+-- ============================================================================
+-- RemoveItem - 从侧边菜单移除项目
+-- ============================================================================
+function PANEL:RemoveItem(item)
+	for k, v in ipairs(self.Items) do
+		if v == item then
+			item:Remove()
+			table.remove(self.Items, k)
 			self:InvalidateLayout()
 			break
 		end
 	end
 end
 
-function PANEL:RefreshContents()//刷新内容
-	local changed = false//设置没有发生改变
+-- ============================================================================
+-- RefreshContents - 根据弹药数量显示/隐藏对应的弹药计数器
+-- ============================================================================
+function PANEL:RefreshContents()
+	local changed = false
 
-	for k, v in ipairs(self.Items) do//遍历项目，也就是按下ALT后右边出现的子弹那些
-		if v.GetAmmoType then//如果项目有获取弹药类型
-			if MySelf:GetAmmoCount(v:GetAmmoType()) <= 0 then//如果玩家获取弹药数量小于等于0
-				if v:IsVisible() then//如果项目可见
-					v:SetVisible(false)//设置不可见
-					changed = true//设置发生改变
+	for k, v in ipairs(self.Items) do
+		if v.GetAmmoType then
+			if MySelf:GetAmmoCount(v:GetAmmoType()) <= 0 then
+				if v:IsVisible() then
+					v:SetVisible(false)
+					changed = true
 				end
-			elseif not v:IsVisible() then//如果项目不可见
-				v:SetVisible(true)//设置可见
-				changed = true//设置发生改变
+			elseif not v:IsVisible() then
+				v:SetVisible(true)
+				changed = true
 			end
 		end
 	end
 
-	if changed then//如果发生改变
-		self:InvalidateLayout()//重新布局
+	if changed then
+		self:InvalidateLayout()
 	end
 end
 
-function PANEL:PerformLayout()//布局
-	local y = ScrH() / 2//设置y为屏幕高度除以2
-	for k, item in ipairs(self.Items) do//遍历项目
-		if item and item:IsValid() and item:IsVisible() then//如果项目存在并且有效并且可见
-			y = y - (item:GetTall() + self.Spacing) / 2//y为y减去项目高度加间隔除以2
+-- ============================================================================
+-- PerformLayout - 垂直居中排列所有可见项目
+-- ============================================================================
+function PANEL:PerformLayout()
+	local y = ScrH() / 2
+	for k, item in ipairs(self.Items) do
+		if item and item:IsValid() and item:IsVisible() then
+			y = y - (item:GetTall() + self.Spacing) / 2
 		end
 	end
 
-	for k, item in ipairs(self.Items) do//遍历所有物品
-		if item and item:IsValid() and item:IsVisible() then//如果存在并且物品可见和有效
-			item:SetPos(0, y)//设置位置,0,y
-			item:CenterHorizontal()//水平居中
-			y = y + item:GetTall() + self.Spacing//y为y加上物品高度加间隔
+	for k, item in ipairs(self.Items) do
+		if item and item:IsValid() and item:IsVisible() then
+			item:SetPos(0, y)
+			item:CenterHorizontal()
+			y = y + item:GetTall() + self.Spacing
 		end
 	end
 end
 
-vgui.Register("DSideMenu", PANEL, "DPanel")//注册侧边菜单
+vgui.Register("DSideMenu", PANEL, "DPanel")

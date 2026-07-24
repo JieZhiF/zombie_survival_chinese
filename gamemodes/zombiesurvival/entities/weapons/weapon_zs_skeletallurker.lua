@@ -5,7 +5,7 @@ SWEP.Base = "weapon_zs_zombietorso"
 SWEP.PrintName = ""..translate.Get("weapon_zs_skeletallurker")
 
 SWEP.MeleeDelay = 0.25
-SWEP.MeleeDamage = 20
+SWEP.MeleeDamage = 14
 
 function SWEP:Reload()
 	self:SecondaryAttack()

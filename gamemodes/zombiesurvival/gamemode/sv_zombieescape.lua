@@ -1,15 +1,23 @@
+-- 本文件负责处理僵尸逃生（Zombie Escape / ZE）模式的服务器端逻辑。
+-- 包括：CS地图实体转换、玩家冻结、波次管理、时间限制伤害、以及通过 trigger_hurt 检测僵尸全灭来结束回合。
+
+-- 注册客户端和共享文件以便传输至客户端
 AddCSLuaFile("cl_zombieescape.lua")
 AddCSLuaFile("sh_zombieescape.lua")
 
+-- 包含共享的 ZE 逻辑文件
 include("sh_zombieescape.lua")
 
+-- 如果不是僵尸逃生模式，则直接返回（不执行后续代码）
 if not GM.ZombieEscape then return end
 
+-- 将需要清理地图时保留的实体类型添加到清理过滤表中
 table.insert(GM.CleanupFilter, "func_brush")
 table.insert(GM.CleanupFilter, "env_global")
 table.insert(GM.CleanupFilter, "info_player_terrorist")
 table.insert(GM.CleanupFilter, "info_player_counterterrorist")
 
+-- 映射表：用于修正 CS 地图中的 setparentattachment 值为 GMod 支持的值
 local attachmentFallbackMap = table.ToAssoc({
 	"forward",
 	"grenade0",
@@ -24,9 +32,9 @@ local attachmentFallbackMap = table.ToAssoc({
 	"muzzle_flash"
 })
 
--- We need to fix these important entities.
+-- 钩子：拦截实体键值设置，修正 CS 地图实体以适配 ZS
 hook.Add("EntityKeyValue", "zombieescape", function(ent, key, value)
-	-- The teamid for Terrorist and Counter Terrorist is different than Zombie and Human in ZS.
+	-- 修正 filter_activator_team 的队伍ID：CS中 Terrorist=2, CT=3，需要映射到 ZS 的 TEAM_UNDEAD 和 TEAM_HUMAN
 	if ent:GetClass() == "filter_activator_team" and not ent.ZEFix then
 		if string.lower(key) == "filterteam" then
 			if value == "2" then
@@ -39,13 +47,12 @@ hook.Add("EntityKeyValue", "zombieescape", function(ent, key, value)
 		return true
 	end
 
-	-- Some maps have brushes that regenerate or set health to dumb values. We don't want them. Although this can break maps I can't think of a way to remove the output instead.
+	-- 注释掉的代码：原本用于删除会恢复血量或设置血量的触发器
 	--[[if (ent:GetClass() == "trigger_multiple" or ent:GetClass() == "trigger_once") and string.find(string.lower(value), "%!.*%,.+%,health") then
 		ent.ZEDelete = true
 	end]]
 
-	-- Samuel Maddock's fix for setparentattachment
-	-- https://github.com/JetBoom/zombiesurvival/pull/178/commits/74aaeb2c2ffc8d5a848945162618de00aacbec72#diff-9fc6a6639c31f62902ca6b7a2f812044L29
+	-- 修复 setparentattachment 的兼容性问题（Samuel Maddock 的修复）
 	if value:lower():find("setparentattachment") then
 		local startIdx, endIdx, attachmentName = value:lower():find("^.-,setparentattachment,(.-),")
 
@@ -56,37 +63,42 @@ hook.Add("EntityKeyValue", "zombieescape", function(ent, key, value)
 	end
 end)
 
+-- 钩子：地图实体初始化完成后执行修正和设置
 hook.Add("InitPostEntityMap", "zombieescape", function(fromze)
+	-- 应用之前保存的队伍过滤器修正
 	for _, ent in pairs(ents.FindByClass("filter_activator_team")) do
 		if ent.ZEFix then
 			ent:SetKeyValue("filterteam", ent.ZEFix)
 		end
 	end
 
+	-- 删除标记为需要删除的实体
 	for _, ent in pairs(ents.GetAll()) do
 		if ent and ent.ZEDelete and ent:IsValid() then
 			ent:Remove()
 		end
 	end
 
-	-- Forced dynamic spawning.
-	-- It'd be pretty damn boring for the zombies with it off since there's only one spawn usually.
+	-- 强制启用动态生成（ZE地图通常只有一个出生点，不开动态生成对僵尸太无聊）
 	GAMEMODE.DynamicSpawning = true
 
+	-- 如果不是从 ZE 地图重新初始化，则设置波次开始时间
 	if not fromze then
 		GAMEMODE:SetRedeemBrains(0)
 		if GAMEMODE.CurrentRound <= 1 then
-			GAMEMODE:SetWaveStart(CurTime() + GAMEMODE.WaveZeroLength + 30) -- 30 extra seconds for late joiners
+			GAMEMODE:SetWaveStart(CurTime() + GAMEMODE.WaveZeroLength + 30) -- 首回合多给30秒让玩家加入
 		else
 			GAMEMODE:SetWaveStart(CurTime() + GAMEMODE.ZE_FreezeTime)
 		end
 	end
 end)
 
+-- 钩子：玩家出生时处理冻结逻辑
 hook.Add("PlayerSpawn", "zombieescape", function(pl)
 	timer.Simple(0, function()
 		if not pl:IsValid() then return end
 
+		-- 在第0波且波次未开始时，冻结所有玩家（无敌且不能移动），类似CS的冻住时间
 		if GAMEMODE:GetWave() == 0 and not GAMEMODE:GetWaveActive() and (pl:Team() == TEAM_UNDEAD or pl:Team() == TEAM_HUMAN and CurTime() < GAMEMODE:GetWaveStart() - GAMEMODE.ZE_FreezeTime) then
 			pl.ZEFreeze = true
 			pl:Freeze(true)
@@ -95,11 +107,10 @@ hook.Add("PlayerSpawn", "zombieescape", function(pl)
 	end)
 end)
 
--- In ze_ the winning condition is when all players on the zombie team are dead at the exact same time.
--- Usually set on by a trigger_hurt that takes over the entire map.
--- So if all living zombies get killed at the same time from a trigger_hurt that did massive damage, we end the round in favor of the humans.
--- But in order to do that we have to force zombies to spawn. Which is shitty.
+-- 在 ZE 模式中，胜利条件通常是所有僵尸在同一时刻全部死亡（由覆盖全图的 trigger_hurt 触发）
+-- 所以当所有活着的僵尸同时被 trigger_hurt 杀死时，判定人类获胜
 
+-- 钩子：监听波次状态变化，在波1开始时解冻所有玩家
 hook.Add("OnWaveStateChanged", "zombieescape", function()
 	if GAMEMODE:GetWave() == 1 and GAMEMODE:GetWaveActive() then
 		for _, pl in pairs(player.GetAll()) do
@@ -109,17 +120,23 @@ hook.Add("OnWaveStateChanged", "zombieescape", function()
 	end
 end)
 
+-- 局部变量：用于检测僵尸全灭的时间状态
 local CheckTime
 local FreezeTime = true
 local NextDamage = 0
+
+-- 钩子：每帧更新逻辑，处理冻结阶段、时间限制伤害和僵尸全灭检测
 hook.Add("Think", "zombieescape", function()
+	-- 第0波（准备阶段）的处理：冻结倒计时结束后解冻人类并重新布置
 	if GAMEMODE:GetWave() == 0 then
 		if FreezeTime and CurTime() >= GAMEMODE:GetWaveStart() - GAMEMODE.ZE_FreezeTime then
 			FreezeTime = false
 
+			-- 清理地图（保留过滤列表中的实体）
 			game.CleanUpMap(false, GAMEMODE.CleanupFilter)
 			gamemode.Call("InitPostEntityMap", true)
 
+			-- 解冻所有人类玩家，并将他们移动到出生点
 			for _, pl in pairs(team.GetPlayers(TEAM_HUMAN)) do
 				pl.ZEFreeze = nil
 				pl:Freeze(false)
@@ -134,8 +151,10 @@ hook.Add("Think", "zombieescape", function()
 		return
 	end
 
+	-- 重置冻结状态标志
 	FreezeTime = true
 
+	-- 时间限制：波次开始后超过 ZE_TimeLimit 秒，人类每秒受到5点伤害（强制推进）
 	if CurTime() >= GAMEMODE:GetWaveStart() + GAMEMODE.ZE_TimeLimit and CurTime() >= NextDamage then
 		NextDamage = CurTime() + 1
 
@@ -144,9 +163,11 @@ hook.Add("Think", "zombieescape", function()
 		end
 	end
 
+	-- 检查是否所有僵尸都已死亡
 	local undead = team.GetPlayers(TEAM_UNDEAD)
 	if #undead == 0 then return end
 
+	-- 检查每个僵尸是否都被 trigger_hurt 杀死（超过12秒的标记则忽略）
 	for _, pl in pairs(undead) do
 		if not pl.KilledByTriggerHurt or CurTime() > pl.KilledByTriggerHurt + 12 then
 			CheckTime = nil
@@ -154,23 +175,30 @@ hook.Add("Think", "zombieescape", function()
 		end
 	end
 
+	-- 所有僵尸都被 trigger_hurt 杀死，设置2.5秒的延迟检测
 	CheckTime = CheckTime or (CurTime() + 2.5)
 
+	-- 延迟结束后宣告人类胜利
 	if CheckTime and CurTime() >= CheckTime then
 		gamemode.Call("EndRound", TEAM_HUMAN)
 	end
 end)
 
+-- 钩子：玩家死亡时记录死亡位置和 trigger_hurt 击杀标记
 hook.Add("DoPlayerDeath", "zombieescape", function(pl, attacker, dmginfo)
 	pl.KilledPos = pl:GetPos()
 
+	-- 僵尸玩家死亡处理
 	if pl:Team() == TEAM_UNDEAD then
-		if attacker:IsValid() and attacker:GetClass() == "trigger_hurt" and not attacker:GetParent():IsValid() --[[and dmginfo:GetDamage() >= 1000]] then
+		-- 被 trigger_hurt 击杀（即地图范围的即死伤害），标记并设置10秒重生延迟
+		if attacker:IsValid() and attacker:GetClass() == "trigger_hurt" and not attacker:GetParent():IsValid() then
 			pl.KilledByTriggerHurt = CurTime()
 			pl.NextSpawnTime = CurTime() + 10
 		elseif GAMEMODE.RoundEnded then
+			-- 如果回合已结束，设置极长的重生延迟（防止回合结束后重生）
 			pl.NextSpawnTime = CurTime() + 9999
 		else
+			-- 正常死亡，5秒后重生
 			pl.NextSpawnTime = CurTime() + 5
 		end
 	end

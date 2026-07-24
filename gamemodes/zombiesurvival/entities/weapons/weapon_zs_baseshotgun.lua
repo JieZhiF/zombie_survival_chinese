@@ -12,7 +12,7 @@ end
 SWEP.Base = "weapon_zs_base"
 
 SWEP.HoldType = "shotgun"
-
+SWEP.BattleReload = false
 SWEP.ViewModel = "models/weapons/c_shotgun.mdl"
 SWEP.WorldModel = "models/weapons/w_shotgun.mdl"
 SWEP.UseHands = true
@@ -43,6 +43,15 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
+
+	local owner = self:GetOwner()
+
+	-- R + 左键
+	if owner:KeyDown(IN_ATTACK) then
+		self.BattleReload = true
+	end
+
+
 	if not self:IsReloading() and self:CanReload() then
 		self:StartReloading()
 	end
@@ -89,7 +98,12 @@ function SWEP:StopReloading()
 end
 
 function SWEP:DoReload()
-	if not self:CanReload() or self:GetOwner():KeyDown(IN_ATTACK) or not self:GetDTBool(2) and not self:GetOwner():KeyDown(IN_RELOAD) then
+	local owner = self:GetOwner()
+
+	if not self:CanReload()
+	or (owner:KeyDown(IN_ATTACK) and not self.BattleReload)
+	or (not self:GetDTBool(2) and not owner:KeyDown(IN_RELOAD)) then
+
 		self:StopReloading()
 		return
 	end
@@ -106,7 +120,17 @@ function SWEP:DoReload()
 	self:GetOwner():RemoveAmmo(1, self.Primary.Ammo, false)
 	self:SetClip1(self:Clip1() + 1)
 
-	self:SetDTBool(2, false)
+
+	self:SetDTBool(2,false)
+
+
+	if self.BattleReload then
+
+		self:SetDTFloat(3,0)
+		self.BattleReload = false
+
+		return
+	end
 	-- We always wanna call the reload function one more time. Forces a pump to take place.
 	self:SetDTFloat(3, CurTime() + delay)
 
@@ -155,8 +179,7 @@ function SWEP:CanPrimaryAttack()
 	return self:GetNextPrimaryFire() <= CurTime()
 end
 
-
-SWEP.Crosshair_MaterialPath        = "weapons/circleprong_un.png" -- 我暂时用一个ARC9的路径作为示例，请替换成您自己的
+SWEP.Crosshair_MaterialPath        = "weapons/circleprong_un.png" 
 SWEP.Crosshair_Color               = Color(255, 255, 255, 220) -- 准星颜色 (R, G, B, Alpha)
 SWEP.Crosshair_ShowVertical        = true -- 是否显示上下两个环
 -- (保留) 动画平滑度

@@ -29,18 +29,24 @@ SKIN.bg_color_sleep = Color(40, 40, 40, 255)
 -- 较暗的背景颜色,用于需要更深背景的元素.
 SKIN.bg_color_dark = Color(30, 30, 30, 180)
 -- 较亮的背景颜色,用于高亮或需要更突出显示的元素.
-
 SKIN.bg_color_bright = Color(55, 55, 55, 240)  -- 亮一点的背景色 (用于悬停等)
-SKIN.text_color_normal = Color(220, 220, 220, 255) -- 普通文本颜色 (亮灰色)
-SKIN.text_color_bright = Color(255, 255, 255, 255) -- 高亮文本颜色 (纯白)
-SKIN.border_color = Color(10, 10, 10, 255)       -- 边框颜色
-SKIN.highlight_color = Color(0, 150, 255, 255)   -- 高亮/选中项颜色 (示例为蓝色,可换成图片中的白色或绿色)
+-- 普通文本颜色 (亮灰色)
+SKIN.text_color_normal = Color(220, 220, 220, 255)
+-- 高亮文本颜色 (纯白)
+SKIN.text_color_bright = Color(255, 255, 255, 255)
+-- 边框颜色
+SKIN.border_color = Color(10, 10, 10, 255)
+-- 高亮/选中项颜色
+SKIN.highlight_color = Color(0, 150, 255, 255)
+-- 轮廓线颜色（纯白）
 SKIN.OutlineColor = Color(255,255,255,255)
+
 -- 为不同类型的控件定义颜色.
 SKIN.Colors = {}
 SKIN.Colors.Panel = {}
 -- 定义普通面板的颜色.
 SKIN.Colors.Panel.Normal = Color(35, 35, 35, 220)
+
 -- 绘制通用面板(Panel)的函数.
 -- @param panel 要绘制的面板对象.
 -- @param w 面板的宽度.
@@ -93,25 +99,24 @@ SKIN.colTextEntryText = Color( 20, 20, 20, 255 )
 SKIN.colTextEntryTextHighlight = Color( 20, 200, 250, 255 )
 SKIN.colTextEntryTextCursor	= Color( 0, 0, 100, 255 )]]
 
--- 2. 修改绘制函数
+-- 重写属性表的绘制函数：仅绘制简单的背景
 function SKIN:PaintPropertySheet(panel, w, h)
-	-- 只绘制一个简单的背景
 	surface.SetDrawColor(SKIN.bg_color)
 	surface.DrawRect(0, 0, w, h)
 end
 
+-- 绘制非活动标签页的函数
 function SKIN:PaintTab(panel, w, h)
-	-- 非活动标签页
 	surface.SetDrawColor(SKIN.colTabInactive)
 	surface.DrawRect(0, 0, w, h)
 end
 
+-- 绘制活动标签页的函数（带下划线高亮）
 function SKIN:PaintActiveTab(panel, w, h)
-	-- 活动标签页
 	surface.SetDrawColor(SKIN.colTab)
 	surface.DrawRect(0, 0, w, h)
 
-	-- 为活动标签页添加一个下划线以突出显示
+	-- 在底部绘制高亮下划线
 	surface.SetDrawColor(SKIN.highlight_color)
 	surface.DrawRect(0, h - 2, w, 2)
 end
@@ -148,6 +153,7 @@ function SKIN:PaintFrame(panel, w, h)
 	surface.DrawOutlinedRect(0, 0, w, h)
 end
 
+-- 通用的框架绘制函数，包含渐变边缘效果（未被直接使用，保留作为参考）
 function PaintGenericFrame(panel, x, y, wid, hei, edgesize)
 	edgesize = edgesize or math.ceil(math.min(hei * 0.1, math.min(16, wid * 0.1)))
 	local hedgesize = edgesize * 0.5
@@ -212,16 +218,19 @@ end]]
 -- GWEN.TextureColor从一个纹理图谱(spritesheet)中获取颜色.
 SKIN.Colours = {}
 
+-- 窗口标题栏颜色定义（活动/非活动状态）
 SKIN.Colours.Window = {}
 SKIN.Colours.Window.TitleActive			= GWEN.TextureColor( 4 + 8 * 0, 508 );
 SKIN.Colours.Window.TitleInactive		= GWEN.TextureColor( 4 + 8 * 1, 508 );
 
+-- 按钮颜色定义（普通/悬停/按下/禁用状态）
 SKIN.Colours.Button = {}
 SKIN.Colours.Button.Normal				= Color(200, 200, 200, 220)
 SKIN.Colours.Button.Hover				= Color(255, 255, 255, 220)
 SKIN.Colours.Button.Down				= Color(255, 255, 255, 255)
 SKIN.Colours.Button.Disabled			= Color(160, 160, 160, 220)
 
+-- 标签页颜色定义（活动状态下：普通/悬停/按下/禁用）
 SKIN.Colours.Tab = {}
 SKIN.Colours.Tab.Active = {}
 SKIN.Colours.Tab.Active.Normal			= GWEN.TextureColor( 4 + 8 * 4, 508 );
@@ -229,24 +238,28 @@ SKIN.Colours.Tab.Active.Hover			= GWEN.TextureColor( 4 + 8 * 5, 508 );
 SKIN.Colours.Tab.Active.Down			= GWEN.TextureColor( 4 + 8 * 4, 500 );
 SKIN.Colours.Tab.Active.Disabled		= GWEN.TextureColor( 4 + 8 * 5, 500 );
 
+-- 标签页颜色定义（非活动状态下：普通/悬停/按下/禁用）
 SKIN.Colours.Tab.Inactive = {}
 SKIN.Colours.Tab.Inactive.Normal		= GWEN.TextureColor( 4 + 8 * 6, 508 );
 SKIN.Colours.Tab.Inactive.Hover			= GWEN.TextureColor( 4 + 8 * 7, 508 );
 SKIN.Colours.Tab.Inactive.Down			= GWEN.TextureColor( 4 + 8 * 6, 500 );
 SKIN.Colours.Tab.Inactive.Disabled		= GWEN.TextureColor( 4 + 8 * 7, 500 );
 
+-- 标签颜色定义（默认/高亮/暗色/高亮色）
 SKIN.Colours.Label = {}
 SKIN.Colours.Label.Default				= GWEN.TextureColor( 4 + 8 * 8, 508 );
 SKIN.Colours.Label.Bright				= GWEN.TextureColor( 4 + 8 * 9, 508 );
 SKIN.Colours.Label.Dark					= GWEN.TextureColor( 4 + 8 * 8, 500 );
 SKIN.Colours.Label.Highlight			= GWEN.TextureColor( 4 + 8 * 9, 500 );
 
+-- 树形控件颜色定义（连接线/普通/悬停/选中状态）
 SKIN.Colours.Tree = {}
 SKIN.Colours.Tree.Lines					= GWEN.TextureColor( 4 + 8 * 10, 508 );		---- !!!
 SKIN.Colours.Tree.Normal				= GWEN.TextureColor( 4 + 8 * 11, 508 );
 SKIN.Colours.Tree.Hover					= GWEN.TextureColor( 4 + 8 * 10, 500 );
 SKIN.Colours.Tree.Selected				= GWEN.TextureColor( 4 + 8 * 11, 500 );
 
+-- 属性表颜色定义（各种行、列、标题、标签的不同状态）
 SKIN.Colours.Properties = {}
 SKIN.Colours.Properties.Line_Normal			= GWEN.TextureColor( 4 + 8 * 12, 508 );
 SKIN.Colours.Properties.Line_Selected		= GWEN.TextureColor( 4 + 8 * 13, 508 );
@@ -260,6 +273,7 @@ SKIN.Colours.Properties.Label_Normal		= GWEN.TextureColor( 4 + 8 * 16, 508 );
 SKIN.Colours.Properties.Label_Selected		= GWEN.TextureColor( 4 + 8 * 17, 508 );
 SKIN.Colours.Properties.Label_Hover			= GWEN.TextureColor( 4 + 8 * 16, 500 );
 
+-- 分类控件颜色定义（标题、行文本、行按钮的不同状态）
 SKIN.Colours.Category = {}
 SKIN.Colours.Category.Header				= GWEN.TextureColor( 4 + 8 * 18, 500 );
 SKIN.Colours.Category.Header_Closed			= GWEN.TextureColor( 4 + 8 * 19, 500 );
@@ -270,6 +284,7 @@ SKIN.Colours.Category.Line.Text_Selected	= GWEN.TextureColor( 4 + 8 * 20, 500 );
 SKIN.Colours.Category.Line.Button			= GWEN.TextureColor( 4 + 8 * 21, 500 );
 SKIN.Colours.Category.Line.Button_Hover		= GWEN.TextureColor( 4 + 8 * 22, 508 );
 SKIN.Colours.Category.Line.Button_Selected	= GWEN.TextureColor( 4 + 8 * 23, 508 );
+-- 分类控件备用行颜色定义（交替行颜色方案）
 SKIN.Colours.Category.LineAlt = {}
 SKIN.Colours.Category.LineAlt.Text				= GWEN.TextureColor( 4 + 8 * 22, 500 );
 SKIN.Colours.Category.LineAlt.Text_Hover		= GWEN.TextureColor( 4 + 8 * 23, 500 );
@@ -278,6 +293,7 @@ SKIN.Colours.Category.LineAlt.Button			= GWEN.TextureColor( 4 + 8 * 25, 508 );
 SKIN.Colours.Category.LineAlt.Button_Hover		= GWEN.TextureColor( 4 + 8 * 24, 500 );
 SKIN.Colours.Category.LineAlt.Button_Selected	= GWEN.TextureColor( 4 + 8 * 25, 500 );
 
+-- 工具提示文本颜色
 SKIN.Colours.TooltipText	= GWEN.TextureColor( 4 + 8 * 26, 500 );
 
 -- 这是当前皮肤中实际使用的按钮绘制函数.
@@ -290,7 +306,7 @@ function SKIN:PaintButton(panel, w, h)
 	local textColor = Color(220, 220, 220, 255) -- << 修改这里：未选中项的默认文本颜色
 
 	if panel.Depressed or panel:IsSelected() then
-		-- 按下或选中状态 (您图片中高亮的“医疗用品”就属于这个状态)
+		-- 按下或选中状态 (您图片中高亮的"医疗用品"就属于这个状态)
 		bgColor = SKIN.highlight_color -- 这就是您图片里那个蓝色
 		textColor = Color(255, 255, 255, 255) -- << 修改这里：选中项的文本颜色（当前是白色）
 
@@ -305,17 +321,17 @@ function SKIN:PaintButton(panel, w, h)
 	surface.SetDrawColor(bgColor)
 	surface.DrawRect(0, 0, w, h)
 
-	-- 绘制悬停时的边框
-	if panel.Hovered and not panel:IsSelected() then -- 最好在选中时不要绘制边框，避免重叠
+	-- 绘制悬停时的边框（选中状态下不绘制边框避免重叠）
+	if panel.Hovered and not panel:IsSelected() then
 		surface.SetDrawColor(SKIN.OutlineColor)
 		surface.DrawOutlinedRect(0, 0, w, h, 2)
 	end
 
 	-- 4. 应用最终计算出的文本颜色
-	-- 这行代码至关重要，它会将上面逻辑中确定的 textColor 应用到按钮上
 	panel:SetTextColor(textColor)
 
 end
+
 -- 绘制下拉菜单(ComboBox)的向下箭头,特别用于职业选择.
 -- 这个函数名表明它可能是一个特定用途的重写.
 function SKIN:PaintComboDownArrowClassSel(panel, w, h)
@@ -323,40 +339,42 @@ function SKIN:PaintComboDownArrowClassSel(panel, w, h)
 	local y = math.sin(UnPredictedCurTime() * 3) * 5 * (w/15) - 1
 
 	-- 根据下拉菜单的状态,使用不同的纹理来绘制箭头.
-	-- 这是一个复杂的纹理系统,可能依赖于另一个未在此处定义的表 `self.tex`.
 	if panel.ComboBox:GetDisabled() then
+		-- 禁用状态：使用禁用状态的箭头纹理
 		return self.tex.Input.ComboBox.Button.Disabled(0, 0, w, h)
 	end
 
 	if panel.ComboBox.Depressed or panel.ComboBox:IsMenuOpen() then
+		-- 按下或菜单打开状态：使用滑块按下纹理
 		return self.tex.Input.Slider.H.Down(0, y, w, h)
 	end
 
 	if panel.ComboBox.Hovered then
+		-- 悬停状态：使用滑块悬停纹理
 		return self.tex.Input.Slider.H.Hover(0, y, w, h)
 	end
 
+	-- 默认状态：使用滑块普通纹理
 	self.tex.Input.Slider.H.Normal(0, y, w, h)
 end
-
 
 --[[
 	绘制下拉框主体 (DComboBox)
 ]]
 function SKIN:PaintComboBox(panel, w, h)
-	-- 1. 根据状态定义背景和文本颜色
+	-- 1. 根据状态定义背景和文本颜色（默认、禁用、悬停）
 	local bgColor = SKIN.bg_color or Color(45, 45, 45, 180)
-	local textColor = Color(200, 200, 200, 255) -- << 添加：默认状态的文本颜色
+	local textColor = Color(200, 200, 200, 255) -- 默认状态的文本颜色
 
 	if (panel:GetDisabled()) then
-		-- 如果控件被禁用
+		-- 禁用状态：更暗的颜色
 		bgColor = Color(50, 50, 50, 150)
-		textColor = Color(100, 100, 100) -- << 添加：禁用状态的文本颜色
+		textColor = Color(100, 100, 100) -- 禁用状态的文本颜色
 
 	elseif (panel.Hovered or panel:IsMenuOpen()) then
-		-- 如果鼠标悬停或菜单已打开
+		-- 鼠标悬停或菜单已打开：亮色背景和白字
 		bgColor = SKIN.bg_color_bright or Color(65, 65, 65, 255)
-		textColor = Color(255, 255, 255, 255) -- << 添加：悬停状态的文本颜色
+		textColor = Color(255, 255, 255, 255) -- 悬停状态的文本颜色
 	end
 
 	-- 2. 绘制背景
@@ -366,11 +384,11 @@ function SKIN:PaintComboBox(panel, w, h)
 	-- 3. 绘制边框
 	surface.SetDrawColor(SKIN.border_color or Color(80, 80, 80, 255))
 	surface.DrawOutlinedRect(0, 0, w, h)
-	
-	-- 4. 应用文本颜色 (这是最关键的一步)
-	-- 这个函数会告诉 DComboBox 它内部的那个 DLabel 应该用什么颜色来显示文字
+
+	-- 4. 应用文本颜色（设置给内部的DLabel控件）
 	panel:SetTextColor(textColor)
 end
+
 --[[
 	绘制下拉框的箭头 (DComboBoxDownArrow)
 ]]
@@ -383,6 +401,7 @@ function SKIN:PaintComboBoxDownArrow(panel, w, h)
 	if (panel.ComboBox.Hovered or panel.ComboBox:IsMenuOpen()) then
 		color = Color(255, 255, 255, 255)
 	end
+
 	-- 计算三角形的三个顶点坐标,使其居中
 	local x, y = w / 2, h / 2
 	local vertices = {
@@ -391,7 +410,7 @@ function SKIN:PaintComboBoxDownArrow(panel, w, h)
 		{ x = x,        y = y + size / 2 }
 	}
 
-	-- 绘制三角形
+	-- 绘制向下的三角形箭头
 	surface.SetDrawColor(color)
 	surface.DrawPoly(vertices)
 end
@@ -420,6 +439,7 @@ function SKIN:PaintMenuOption(panel, w, h)
 		surface.DrawRect(0, 0, w, h)
 	end
 end
+
 -- 最后,将整个SKIN表注册到Derma系统中.
 -- "zombiesurvival" 是皮肤的内部名称.
 -- 第二个参数是皮肤的描述.

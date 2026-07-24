@@ -151,11 +151,7 @@ if CLIENT then
 	SWEP.IronsightsMultiplier = 0.25
 
 	function SWEP:GetViewModelPosition(pos, ang)
-		if GAMEMODE.DisableScopes then return end
-
-		if self:IsScoped() then
-			return pos + ang:Up() * 256, ang
-		end
+		if GAMEMODE.DisableScopes or self:IsScoped() then return end
 
 		return self.BaseClass.GetViewModelPosition(self, pos, ang)
 	end

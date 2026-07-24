@@ -1,4 +1,4 @@
--- 本文件主要负责处理服务器端的“符文”（Sigil）系统，这是一种游戏目标。文件包含了创建、放置符文的逻辑，以及当符文状态（被腐化或净化）改变时触发的事件和网络通信。
+-- 本文件主要负责处理服务器端的"符文"（Sigil）系统，这是一种游戏目标。文件包含了创建、放置符文的逻辑，以及当符文状态（被腐化或净化）改变时触发的事件和网络通信。
 
 -- GM:PreOnSigilCorrupted 在符文被腐化之前调用的钩子函数，用于执行前置逻辑。
 -- GM:OnSigilCorrupted 当符文被腐化时调用，并向所有客户端广播当前已腐化的符文数量。
@@ -13,7 +13,7 @@
 function GM:PreOnSigilCorrupted(ent, dmginfo)
 end
 
--- Sigil被腐化时调用
+-- Sigil被腐化时调用：向所有客户端广播当前已腐化的Sigil数量
 function GM:OnSigilCorrupted(ent, dmginfo)
 	net.Start("zs_sigilcorrupted") -- 开始一个网络消息
 		net.WriteUInt(self:NumCorruptedSigils(), 8) -- 写入当前腐化的Sigil数量 (8位无符号整数)
@@ -24,7 +24,7 @@ end
 function GM:PreOnSigilUncorrupted(ent, dmginfo)
 end
 
--- Sigil被净化时调用
+-- Sigil被净化时调用：向所有客户端广播净化事件
 function GM:OnSigilUncorrupted(ent, dmginfo)
 	net.Start("zs_sigiluncorrupted") -- 开始一个网络消息
 		--net.WriteUInt(self:NumCorruptedSigils(), 8) -- (这行被注释掉了，但原本可能用于发送净化后的数量)
@@ -40,7 +40,8 @@ end
 local validity_trace = {
 	start = Vector(0, 0, 0), endpos = Vector(0, 0, 0), mins = Vector(-18, -18, 0), maxs = Vector(18, 18, 2), mask = MASK_SOLID_BRUSHONLY
 }
--- 创建Sigil实体
+
+-- 创建Sigil实体：核心函数，负责在地图上选择合适的位置并创建符文
 function GM:CreateSigils(secondtry, rearrange)
 	local alreadycreated = self:NumSigils() -- 获取当前已创建的Sigil数量
 
@@ -56,46 +57,40 @@ function GM:CreateSigils(secondtry, rearrange)
 
 	local nodes = {} -- 用于存储候选Sigil点的表
 
-	-- 尝试从地图放置的 info_sigilnode 实体中获取节点
+	-- 第一步：获取候选节点。优先使用地图放置的 info_sigilnode 实体
 	local vec
 	local mapplacednodes = ents.FindByClass("info_sigilnode")
-	-- 如果地图上有放置的节点且当前不是预设模式（即没有手动编辑的profiler节点）
 	if #mapplacednodes > 0 and not self.ProfilerIsPreMade then
 		for _, placednode in pairs(mapplacednodes) do
-			nodes[#nodes + 1] = {v = placednode:GetPos(), en = placednode} -- 将实体位置添加到候选节点列表
+			nodes[#nodes + 1] = {v = placednode:GetPos(), en = placednode}
 		end
 	else
-		-- 否则，从游戏模式的 ProfilerNodes（自动或手动保存的）中复制节点
+		-- 如果没有地图节点，则使用分析器（Profiler）中保存的节点
 		for _, node in pairs(self.ProfilerNodes) do
-			-- 检查节点是否“卡在”某个物体中（例如墙里或天花板里）
+			-- 检查节点是否"卡在"物体中（通过向上发射检测射线）
 			validity_trace.start:Set(node)
-			validity_trace.start.z = node.z + 1 -- 起点略高于节点位置
+			validity_trace.start.z = node.z + 1
 			validity_trace.endpos:Set(node)
-			validity_trace.endpos.z = node.z + 73 -- 终点在节点上方 73 单位
-			if util.TraceHull(validity_trace).Hit then -- 如果追踪击中物体，说明节点无效
-				print("bad sigil node at", node) -- 打印错误信息
+			validity_trace.endpos.z = node.z + 73
+			if util.TraceHull(validity_trace).Hit then
+				print("bad sigil node at", node)
 			else
 				vec = Vector(0, 0, 0)
 				vec:Set(node)
-				nodes[#nodes + 1] = {v = vec} -- 将有效节点添加到候选列表
+				nodes[#nodes + 1] = {v = vec}
 			end
 		end
 	end
 
-	--[[ 已注释的代码块：
-	-- 这段代码原本可能用于在节点不足时，从人类玩家的刷新点随机选取一些点作为Sigil点。
-	-- 目前被注释，不执行。
-	if secondtry then
+	-- 注释掉的代码：在节点不足时从人类出生点随机选取补充
+	--[[if secondtry then
 		local needed = self.MaxSigils - #nodes - alreadycreated
 		if needed > 0 then
-			-- We seem to be missing some nodes...
-			-- This might happen if nobody seeds the map and the round begins.
 			for i = 1, needed do
 				local spawns = team.GetSpawnPoint(TEAM_HUMAN)
 				if #spawns > 0 then
 					local spawnid = math.random(#spawns)
 					local spawn = spawns[spawnid]
-
 					nodes[#nodes + 1] = {v = spawn:GetPos()}
 					spawn.Disabled = true
 				end
@@ -104,83 +99,89 @@ function GM:CreateSigils(secondtry, rearrange)
 	end]]
 
 	local spawns = team.GetSpawnPoint(TEAM_UNDEAD) -- 获取僵尸刷新点
-	-- 循环创建 Sigil，直到达到 MaxSigils 数量
+
+	-- 循环创建Sigil，直到达到最大数量
 	for i = 1 + (rearrange and 0 or alreadycreated), self.MaxSigils do
 		local id
-		local sigs = ents.FindByClass("prop_obj_sigil") -- 获取当前地图上已存在的 Sigil 实体
+		local sigs = ents.FindByClass("prop_obj_sigil")
 		local numsigs = #sigs
-		if rearrange then -- 如果是重排模式
+
+		-- 重排模式下，将所有现有Sigil的节点位置设为极远值以便重新计算
+		if rearrange then
 			for _, sig in pairs(sigs) do
-				sig.NodePos = Vector(99999, 99999, 99999) -- 临时将所有现有Sigil的节点位置设置为一个极远的值，以便重新计算距离
+				sig.NodePos = Vector(99999, 99999, 99999)
 			end
 		end
 
-		local force -- 用于存储强制刷新的节点
+		local force -- 存储强制刷新的节点
+
+		-- 计算每个节点到最近参考点的距离，并考虑上方空间
 		for _, n in pairs(nodes) do
-			if n.en and n.en.ForceSpawn then -- 如果节点是地图放置的且有强制刷新标志
-				force = n -- 标记为强制刷新节点
+			if n.en and n.en.ForceSpawn then
+				force = n
 			end
 
-			n.d = 999999 -- 初始化节点距离为极大值
+			n.d = 999999
 
-			if numsigs == 0 then -- 如果当前没有Sigil实体（第一次创建）
+			-- 第一次创建时计算到最近僵尸出生点的距离；否则计算到最近现有Sigil的距离
+			if numsigs == 0 then
 				for __, spawn in pairs(spawns) do
-					n.d = math.min(n.d, n.v:Distance(spawn:GetPos())) -- 计算节点与最近僵尸刷新点的距离
+					n.d = math.min(n.d, n.v:Distance(spawn:GetPos()))
 				end
 			else
 				for __, sig in pairs(sigs) do
-					n.d = math.min(n.d, n.v:Distance(sig.NodePos)) -- 计算节点与最近现有Sigil的距离
+					n.d = math.min(n.d, n.v:Distance(sig.NodePos))
 				end
 			end
 
-			-- 向上追踪射线，检查节点上方是否有空间（例如天花板）
+			-- 向上追踪射线检查上方空间，空间越大距离权重越小，使其更优先被选择
 			local tr = util.TraceLine({start = n.v + Vector(0, 0, 8), endpos = n.v + Vector(0, 0, 512), mask = MASK_SOLID_BRUSHONLY})
-			-- 调整节点距离：如果上方空间越大 (Fraction 越接近 1)，则距离权重越小 (2 - Fraction 越小)，使其更优先被选择
 			n.d = n.d * (2 - tr.Fraction)
 		end
 
-		-- 根据计算出的距离对节点进行排序
+		-- 按距离排序（距离越近越靠前）
 		table.sort(nodes, SortDistFromLast)
 
-		-- 使用指数权重选择一个节点
-		-- 生成一个0到0.7之间的随机数，然后进行0.3次幂运算。
-		-- 这样做的目的是使索引较小的节点（即距离最近的节点）有更高的选中几率，但仍保留选中较远节点的可能性。
+		-- 使用指数权重随机选择一个节点：使近处节点被选中几率更高，但仍保留随机性
 		id = math.Rand(0, 0.7) ^ 0.3
-		id = math.Clamp(math.ceil(id * #nodes), 1, #nodes) -- 将计算出的 id 限制在有效范围内
+		id = math.Clamp(math.ceil(id * #nodes), 1, #nodes)
+
+		-- 如果有强制刷新节点则覆盖随机选择
 		if force then
-			id = table.KeyFromValue(nodes, force) -- 如果有强制刷新节点，则使用它的索引
+			id = table.KeyFromValue(nodes, force)
 		end
 
-		-- 从临时列表中移除选中的节点，并创建Sigil
+		-- 从候选列表中移除已选节点并创建Sigil实体
 		local node = nodes[id]
 		if node then
 			local point = node.v
-			table.remove(nodes, id) -- 从候选列表中移除已选择的节点
+			table.remove(nodes, id)
 
-			local ent = rearrange and sigs[i] or ents.Create("prop_obj_sigil") -- 如果是重排模式，则重用现有Sigil实体；否则创建新实体
+			-- 重排模式复用现有实体，否则创建新实体
+			local ent = rearrange and sigs[i] or ents.Create("prop_obj_sigil")
 			if ent:IsValid() then
-				ent:SetPos(point) -- 设置Sigil位置
+				ent:SetPos(point)
 				if not rearrange then
-					ent:Spawn() -- 如果不是重排，则生成实体
+					ent:Spawn()
 				end
-				ent.NodePos = point -- 存储Sigil所关联的节点位置
+				ent.NodePos = point
 			end
 		end
 	end
 
-	-- 根据当前Sigil数量设置是否启用Sigil功能
+	-- 根据Sigil创建结果启用或禁用Sigil功能
 	self:SetUseSigils(self:NumSigils() > 0)
 end
 
--- 设置是否使用Sigil
+-- 设置是否使用Sigil系统，并同步为全局变量
 function GM:SetUseSigils(use)
-	--if self:GetUseSigils() ~= use then -- (这行被注释掉，但原本可能用于避免不必要的设置)
-		self.UseSigils = use -- 更新游戏模式内部的标志
-		SetGlobalBool("sigils", use) -- 设置一个全局布尔量，客户端和其他脚本可以读取
+	--if self:GetUseSigils() ~= use then
+		self.UseSigils = use
+		SetGlobalBool("sigils", use) -- 客户端可以通过这个全局变量判断
 	--end
 end
 
--- 获取是否使用Sigil
-function GM:GetUseSigils(use) -- (参数 use 是多余的，可以移除)
+-- 获取当前是否使用Sigil系统
+function GM:GetUseSigils(use)
 	return self.UseSigils
 end

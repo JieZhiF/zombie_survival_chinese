@@ -1,3 +1,12 @@
+-- ============================================================================
+-- PArsenal - 积分商店界面（按 F2 打开）
+-- 包含物品列表（按类别分页）、物品详情查看器、购买/快速购买系统
+-- 以及物品统计条和弹药购买等完整功能
+-- ============================================================================
+
+-- ============================================================================
+-- pointslabelThink - 刷新剩余积分显示
+-- ============================================================================
 local function pointslabelThink(self)
 	local points = MySelf:GetPoints()
 	if self.m_LastPoints ~= points then
@@ -9,6 +18,7 @@ local function pointslabelThink(self)
 	end
 end
 
+-- 当鼠标移出商店界面时自动关闭
 hook.Add("Think", "ArsenalMenuThink", function()
 	local pan = GAMEMODE.ArsenalInterface
 	if pan and pan:IsValid() and pan:IsVisible() then
@@ -20,24 +30,30 @@ hook.Add("Think", "ArsenalMenuThink", function()
 	end
 end)
 
+-- 将鼠标指针锁定在商店窗口中心
 local function ArsenalMenuCenterMouse(self)
 	local x, y = self:GetPos()
 	local w, h = self:GetSize()
 	gui.SetMousePos(x + w / 2, y + h / 2)
 end
 
+-- 打开价值/装备菜单
 local function worthmenuDoClick()
 	MakepWorth()
 	GAMEMODE.ArsenalInterface:Close()
 end
 
+-- ============================================================================
+-- CanBuy - 检查玩家是否可购买该物品
+-- 检查经典模式、层级锁定、库存和积分条件
+-- ============================================================================
 local function CanBuy(item, pan)
 	if item.NoClassicMode and GAMEMODE:IsClassicMode() then
 		return false
 	end
 
 	if item.Tier and GAMEMODE.LockItemTiers and not GAMEMODE.ZombieEscape and not GAMEMODE.ObjectiveMap and not GAMEMODE:IsClassicMode() then
-		if not GAMEMODE:GetWaveActive() then -- We can buy during the wave break before hand.
+		if not GAMEMODE:GetWaveActive() then
 			if GAMEMODE:GetWave() + 1 < item.Tier then
 				return false
 			end
@@ -59,6 +75,10 @@ local function CanBuy(item, pan)
 	return true
 end
 
+-- ============================================================================
+-- ItemPanelThink - 物品面板的每帧逻辑
+-- 更新购买状态（文字颜色）和库存显示
+-- ============================================================================
 local function ItemPanelThink(self)
 	local itemtab = FindItem(self.ID)
 	if itemtab then
@@ -89,7 +109,18 @@ local function ItemPanelThink(self)
 	end
 end
 
+-- 快速购买按钮点击回调
+local function quickbuyDoClick()
+	RunConsoleCommand("zs_alwaysquickbuy", GAMEMODE.AlwaysQuickBuy and "0" or "1")
+end
+
+-- 物品面板背景颜色
 local colBG = Color(20, 20, 20)
+
+-- ============================================================================
+-- ItemPanelPaint - 物品面板的绘制函数
+-- 显示边框（根据可购买状态变色）和库存持有状态
+-- ============================================================================
 local function ItemPanelPaint(self, w, h)
 	if self.Hovered or self.On then
 		local outline
@@ -111,6 +142,9 @@ local function ItemPanelPaint(self, w, h)
 	return true
 end
 
+-- ============================================================================
+-- ViewerStatBarUpdate - 更新物品详情查看器的统计条
+-- ============================================================================
 function GM:ViewerStatBarUpdate(viewer, display, sweptable)
 	local done, statshow = {}
 	local speedtotext = GAMEMODE.SpeedToText
@@ -121,17 +155,16 @@ function GM:ViewerStatBarUpdate(viewer, display, sweptable)
 			viewer.ItemStatBars[i]:SetVisible(false)
 			continue
 		end
-		local statshowbef = statshow  -- 保存第一次的statshow值
+		local statshowbef = statshow
 		for k, stat in pairs(GAMEMODE.WeaponStatBarVals) do
-			local statval = stat[6] and sweptable[stat[6]][stat[1]] or sweptable[stat[1]] -- 获取stat[6]对应的sweptable中的stat[1]的值，如果没有stat[6]，则直接获取sweptable中的stat[1]的值
-			if not done[stat] and statval and statval ~= -1 then -- 如果done[stat]为false，并且statval存在且不等于-1
-				statshow = stat -- 将stat赋值给statshow
-				done[stat] = true -- 将done[stat]设置为true
-				break -- 跳出循环
+			local statval = stat[6] and sweptable[stat[6]][stat[1]] or sweptable[stat[1]]
+			if not done[stat] and statval and statval ~= -1 then
+				statshow = stat
+				done[stat] = true
+				break
 			end
 		end
 		
-		-- 比较statshowbef和当前statshow的值
 		if statshowbef and statshowbef[1] == statshow[1] then
 			viewer.ItemStats[i]:SetText("")
 			viewer.ItemStatValues[i]:SetText("")
@@ -141,7 +174,7 @@ function GM:ViewerStatBarUpdate(viewer, display, sweptable)
 		
 		local statnum, stattext = statshow[6] and sweptable[statshow[6]][statshow[1]] or sweptable[statshow[1]]
 		if statshow[1] == "Damage" and sweptable.Primary.NumShots and sweptable.Primary.NumShots > 1 then
-			stattext = statnum .. " x " .. sweptable.Primary.NumShots-- .. " (" .. (statnum * sweptable.Primary.NumShots) .. ")"
+			stattext = statnum .. " x " .. sweptable.Primary.NumShots
 		elseif statshow[1] == "WalkSpeed" then
 			stattext = speedtotext[SPEED_NORMAL]
 			if speedtotext[sweptable[statshow[1]]] then
@@ -172,11 +205,19 @@ function GM:ViewerStatBarUpdate(viewer, display, sweptable)
 	end
 end
 
+-- ============================================================================
+-- HasPurchaseableAmmo - 检查武器是否有可购买的弹药
+-- ============================================================================
 function GM:HasPurchaseableAmmo(sweptable)
 	if sweptable.Primary and self.AmmoToPurchaseNames[sweptable.Primary.Ammo] then
 		return true
 	end
 end
+
+-- ============================================================================
+-- SupplyItemViewerDetail - 在查看器中显示物品详情
+-- 包括模型预览、描述文字、统计数据、弹药信息
+-- ============================================================================
 function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 	viewer.m_Title:SetText(sweptable.PrintName)
 	viewer.m_Title:PerformLayout()
@@ -185,7 +226,6 @@ function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 	if not self.ZSInventoryItemData[shoptbl.SWEP] then
 		if IsValid(viewer.ModelPanel) and viewer.ModelPanel.SetWeaponPreview then
 			viewer.ModelPanel:SetWeaponPreview(sweptable)
-			-- 如果你想要自定义摄像机位置（用你原来的偏移）
 			if viewer.ModelPanel.Entity and IsValid(viewer.ModelPanel.Entity) then
 				local mins, maxs = viewer.ModelPanel.Entity:GetRenderBounds()
 				viewer.ModelPanel:SetCamPos(mins:Distance(maxs) * Vector(1.15, 0.75, 0.5))
@@ -236,6 +276,10 @@ function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 	end
 end
 
+-- ============================================================================
+-- ItemPanelDoClick - 物品面板点击回调
+-- 选中物品并更新查看器，显示购买按钮和价格
+-- ============================================================================
 local function ItemPanelDoClick(self)
 	local shoptbl = self.ShopTabl
 	local viewer = self.NoPoints and GAMEMODE.RemantlerInterface.TrinketsFrame.Viewer or GAMEMODE.ArsenalInterface.Viewer
@@ -297,9 +341,15 @@ local function ItemPanelDoClick(self)
 	ppurbl:SetVisible(canammo)
 end
 
+-- ============================================================================
+-- ArsenalMenuThink - 商店菜单 Think（预留）
+-- ============================================================================
 local function ArsenalMenuThink(self)
 end
 
+-- ============================================================================
+-- AttachKillicon - 在物品面板上附加击杀图标
+-- ============================================================================
 function GM:AttachKillicon(kitbl, itempan, mdlframe, ammo, missing_skill)
 	local function imgAdj(img, maximgx, maximgy)
 		img:SizeToContents()
@@ -351,6 +401,9 @@ function GM:AttachKillicon(kitbl, itempan, mdlframe, ammo, missing_skill)
 	end
 end
 
+-- ============================================================================
+-- AddShopItem - 向商店列表中添加物品面板
+-- ============================================================================
 function GM:AddShopItem(list, i, tab, issub, nopointshop)
 	local screenscale = BetterScreenScale()
 
@@ -457,6 +510,9 @@ function GM:AddShopItem(list, i, tab, issub, nopointshop)
 	return itempan
 end
 
+-- ============================================================================
+-- ConfigureMenuTabs - 配置菜单属性的标签按钮样式和行为
+-- ============================================================================
 function GM:ConfigureMenuTabs(tabs, tabhei, callback)
 	local screenscale = BetterScreenScale()
 
@@ -480,6 +536,10 @@ function GM:ConfigureMenuTabs(tabs, tabhei, callback)
 	end
 end
 
+-- ============================================================================
+-- ZSItemStatBar - 武器属性条组件
+-- 显示伤害、射速等属性的横向对比条
+-- ============================================================================
 local PANEL = {}
 
 PANEL.Stat = 50
@@ -487,12 +547,17 @@ PANEL.StatMin = 0
 PANEL.StatMax = 100
 PANEL.BadHigh = false
 PANEL.LerpStat = 50
+
 function PANEL:Init()
 	self:SetMouseInputEnabled(false)
 	self:SetKeyboardInputEnabled(false)
 end
 
 local matGradientLeft = CreateMaterial("gradient-l", "UnlitGeneric", {["$basetexture"] = "vgui/gradient-l", ["$vertexalpha"] = "1", ["$vertexcolor"] = "1", ["$ignorez"] = "1", ["$nomip"] = "1"})
+
+-- ============================================================================
+-- Paint - 绘制属性渐变条
+-- ============================================================================
 function PANEL:Paint(w, h)
 	self.LerpStat = Lerp(FrameTime() * 4, self.LerpStat, self.Stat)
 	local progress = math.Clamp((self.StatMax - self.LerpStat)/(self.StatMax - self.StatMin), 0, 1)
@@ -510,6 +575,10 @@ function PANEL:Paint(w, h)
 end
 vgui.Register("ZSItemStatBar", PANEL, "Panel")
 
+-- ============================================================================
+-- CreateItemViewerGenericElems - 创建物品查看器的通用 UI 元素
+-- 包括标题、弹药类型、弹药图标、模型面板、描述、统计条
+-- ============================================================================
 function GM:CreateItemViewerGenericElems(viewer)
 	local screenscale = BetterScreenScale()
 
@@ -594,10 +663,14 @@ function GM:CreateItemViewerGenericElems(viewer)
 	viewer.ItemStatBars = itemsbs
 end
 
+-- 菜单类型常量
 MENU_POINTSHOP = 1
 MENU_WORTH = 2
 MENU_REMANTLER = 3
 
+-- ============================================================================
+-- CreateItemInfoViewer - 创建物品信息查看器框架
+-- ============================================================================
 function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, menutype)
 	local __, topy = topspace:GetPos()
 	local ___, boty = bottomspace:GetPos()
@@ -625,6 +698,7 @@ function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, me
 
 	self:CreateItemViewerGenericElems(viewer)
 
+	-- 购买按钮
 	local purchaseb = vgui.Create("DButton", viewer)
 	purchaseb:SetText("")
 	purchaseb:SetSize(viewer:GetWide() / 2, 54 * screenscale)
@@ -640,6 +714,7 @@ function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, me
 	pricelab:SetVisible(false)
 	viewer.m_PurchasePrice = pricelab
 
+	-- 弹药购买按钮
 	local ammopb = vgui.Create("DButton", viewer)
 	ammopb:SetText("")
 	ammopb:SetSize(viewer:GetWide() / 4, 54 * screenscale)
@@ -656,6 +731,9 @@ function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, me
 	viewer.m_AmmoPrice = pricelab
 end
 
+-- ============================================================================
+-- OpenArsenalMenu - 打开积分商店主窗口
+-- ============================================================================
 function GM:OpenArsenalMenu()
 	if self.ArsenalInterface and self.ArsenalInterface:IsValid() then
 		self.ArsenalInterface:SetVisible(true)
@@ -667,6 +745,7 @@ function GM:OpenArsenalMenu()
 	local wid, hei = math.min(ScrW(), 900) * screenscale, math.min(ScrH(), 800) * screenscale
 	local tabhei = 24 * screenscale
 
+	-- 创建主窗口框架
 	local frame = vgui.Create("DFrame")
 	frame:SetSize(wid, hei)
 	frame:Center()
@@ -680,6 +759,7 @@ function GM:OpenArsenalMenu()
 	frame.Think = ArsenalMenuThink
 	self.ArsenalInterface = frame
 
+	-- 顶部空间：标题、副标题、快速购买开关
 	local topspace = vgui.Create("DPanel", frame)
 	topspace:SetWide(wid - 16)
 
@@ -690,11 +770,65 @@ function GM:OpenArsenalMenu()
 	subtitle:CenterHorizontal()
 	subtitle:MoveBelow(title, 4)
 
+	-- 快速购买开关（自定义 iOS 风格切换按钮）
+	local QuickBuyButton = vgui.Create("DCheckBox", topspace)
+	QuickBuyButton:SetSize(80 * screenscale, 30* screenscale)
+	QuickBuyButton:SetText(""..translate.Get("Option_AlwaysQuickBuy"))
+	QuickBuyButton:SetFont("ZSHUDFontSmallest")
+	QuickBuyButton.DoClick = quickbuyDoClick
+
+	QuickBuyButton:SetConVar("zs_alwaysquickbuy")
+
+    local convar_state = GetConVar("zs_alwaysquickbuy"):GetBool()
+    QuickBuyButton:SetValue(convar_state)
+	QuickBuyButton.animProgress = QuickBuyButton:GetChecked() and 1 or 0
+    QuickBuyButton.lastAnimTime = CurTime()
+    QuickBuyButton.Paint = function(self, w, h)
+        local checked = self:GetChecked()
+        local targetProgress = checked and 1 or 0
+        local deltaTime = CurTime() - self.lastAnimTime
+        self.lastAnimTime = CurTime()
+        self.animProgress = Lerp(deltaTime * 12, self.animProgress, targetProgress)
+
+        local padding = 3
+        local knobSize = h - padding * 2
+
+        local COLOR_TRACK_OFF = Color(80, 85, 95, 255)
+		local COLOR_TRACK_ON = Color(155, 155, 155, 255)
+        local COLOR_KNOB_OFF = Color(180, 185, 195, 255)
+        local COLOR_KNOB_ON = Color(255, 255, 255, 255)
+
+        local trackColor = Color(
+            Lerp(self.animProgress, COLOR_TRACK_OFF.r, COLOR_TRACK_ON.r),
+            Lerp(self.animProgress, COLOR_TRACK_OFF.g, COLOR_TRACK_ON.g),
+            Lerp(self.animProgress, COLOR_TRACK_OFF.b, COLOR_TRACK_ON.b)
+        )
+        local knobColor = Color(
+            Lerp(self.animProgress, COLOR_KNOB_OFF.r, COLOR_KNOB_ON.r),
+            Lerp(self.animProgress, COLOR_KNOB_OFF.g, COLOR_KNOB_ON.g),
+            Lerp(self.animProgress, COLOR_KNOB_OFF.b, COLOR_KNOB_ON.b)
+        )
+
+        if self:IsHovered() then
+            trackColor.r = math.min(255, trackColor.r + 20)
+            trackColor.g = math.min(255, trackColor.g + 20)
+            trackColor.b = math.min(255, trackColor.b + 20)
+        end
+
+        local startX = padding
+        local endX = w - knobSize - padding
+        local knobX = Lerp(self.animProgress, startX, endX)
+
+        draw.RoundedBoxEx(h / 2, 0, 0, w, h, trackColor)
+        draw.RoundedBoxEx(knobSize / 2, knobX, padding, knobSize, knobSize, knobColor)
+    end
+
 	local _, y = subtitle:GetPos()
 	topspace:SetTall(y + subtitle:GetTall() + 4)
 	topspace:AlignTop(8)
 	topspace:CenterHorizontal()
 
+	-- 价值菜单按钮
 	local wsb = EasyButton(topspace, translate.Get("arsenal_WorthMenu"), 8, 4)
 
 	wsb:SetFont("ZSHUDFontSmaller")
@@ -703,6 +837,7 @@ function GM:OpenArsenalMenu()
 	wsb:AlignTop(8)
 	wsb.DoClick = worthmenuDoClick
 
+	-- 底部空间：剩余积分显示
 	local bottomspace = vgui.Create("DPanel", frame)
 	bottomspace:SetWide(topspace:GetWide())
 
@@ -725,12 +860,14 @@ function GM:OpenArsenalMenu()
 	local __, topy = topspace:GetPos()
 	local ___, boty = bottomspace:GetPos()
 
+	-- 创建分页属性表（按物品类别分页）
 	local propertysheet = vgui.Create("DPropertySheet", frame)
 	propertysheet:SetSize(wid - 320 * screenscale, boty - topy - 8 - topspace:GetTall())
 	propertysheet:MoveBelow(topspace, 4)
 	propertysheet:SetPadding(1)
 	propertysheet:CenterHorizontal(0.33)
 
+	-- 遍历物品类别，为每个类别创建标签页
 	for catid, catname in ipairs(GAMEMODE.ItemCategories) do
 		local hasitems = false
 		for i, tab in ipairs(GAMEMODE.Items) do
@@ -754,6 +891,7 @@ function GM:OpenArsenalMenu()
 			itemframe:SetSize(propertysheet:GetWide(), propertysheet:GetTall() - (usecats and (32 + offset) or 32))
 			itemframe:SetPos(0, usecats and offset or 0)
 
+			-- 创建网格布局辅助函数
 			local mkgrid = function()
 				local list = vgui.Create("DGrid", itemframe)
 				list:SetPos(0, 0)
@@ -767,6 +905,7 @@ function GM:OpenArsenalMenu()
 
 			local subcats = GAMEMODE.ItemSubCategories
 			if usecats then
+				-- 子分类标签按钮（Tier 1-5 或饰品子类）
 				local ind, tbn = 1
 				for i = ind, (trinkets and #subcats or 5) do
 					local ispacer = trinkets and ((i-1) % 3)+1 or i
@@ -799,6 +938,7 @@ function GM:OpenArsenalMenu()
 			local sheet = propertysheet:AddSheet(catname, tabpane, GAMEMODE.ItemCategoryIcons[catid], false, false)
 			sheet.Panel:SetPos(0, tabhei + 2)
 
+			-- 将物品添加到对应的网格
 			for i, tab in ipairs(GAMEMODE.Items) do
 				if tab.PointShop and tab.Category == catid then
 					self:AddShopItem(
@@ -808,6 +948,7 @@ function GM:OpenArsenalMenu()
 				end
 			end
 
+			-- 配置标签按钮样式
 			local scroller = propertysheet:GetChildren()[1]
 			local dragbase = scroller:GetChildren()[1]
 			local tabs = dragbase:GetChildren()

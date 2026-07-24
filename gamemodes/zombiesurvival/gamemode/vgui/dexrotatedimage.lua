@@ -1,51 +1,57 @@
+-- ============================================================================
+-- DEXRotatedImage - 可旋转的图片组件
+-- 继承自 DImage，增加旋转角度支持，用于显示带角度的图片
+-- ============================================================================
+
 local PANEL = {}
-//这个玩意应该是用来旋转图片的
-//注释状态：已完成，
+
+-- ============================================================================
+-- PaintAt - 在指定位置绘制旋转后的图片
+-- ============================================================================
 function PANEL:PaintAt( x, y, dw, dh )
 
-	self:LoadMaterial()//加载材质
+	self:LoadMaterial()
 
-	if ( !self.m_Material ) then return true end//如果没有材质就返回
+	if ( !self.m_Material ) then return true end
 
-	surface.SetMaterial( self.m_Material )//设置材质
-	surface.SetDrawColor( self.m_Color.r, self.m_Color.g, self.m_Color.b, self.m_Color.a )//设置颜色,RGB值和透明度
+	surface.SetMaterial( self.m_Material )
+	surface.SetDrawColor( self.m_Color.r, self.m_Color.g, self.m_Color.b, self.m_Color.a )
 	
-	if ( self:GetKeepAspect() ) then //如果保持比例
+	if ( self:GetKeepAspect() ) then
 	
-		local w = self.ActualWidth//获取宽度
-		local h = self.ActualHeight//获取高度
+		local w = self.ActualWidth
+		local h = self.ActualHeight
 		
 		-- Image is bigger than panel, shrink to suitable size
-		//图像比面板大，请缩小到合适的尺寸
-		if ( w > dw && h > dh ) then//如果宽度大于dw并且高度大于dh
+		if ( w > dw && h > dh ) then
 		
-			if ( w > dw ) then//如果宽度大于dw
+			if ( w > dw ) then
 			
-				local diff = dw / w//计算差值
-				w = w * diff//计算宽度
-				h = h * diff//计算高度
+				local diff = dw / w
+				w = w * diff
+				h = h * diff
 			
 			end
 			
-			if ( h > dh ) then//如果高度大于dh
+			if ( h > dh ) then
 			
-				local diff = dh / h//计算差值
-				w = w * diff//计算宽度
-				h = h * diff//计算高度
+				local diff = dh / h
+				w = w * diff
+				h = h * diff
 			
 			end
 
 		end
 		
-		if ( w < dw ) then//如果宽度小于dw
+		if ( w < dw ) then
 		
-			local diff = dw / w//计算差值
+			local diff = dw / w
 			w = w * diff
 			h = h * diff
 		
 		end
 		
-		if ( h < dh ) then//如果高度小于dh
+		if ( h < dh ) then
 		
 			local diff = dh / h
 			w = w * diff
@@ -53,25 +59,31 @@ function PANEL:PaintAt( x, y, dw, dh )
 		
 		end
 		
-		local OffX = (dw - w) * 0.5//计算偏移量
-		local OffY = (dh - h) * 0.5//计算偏移量
+		local OffX = (dw - w) * 0.5
+		local OffY = (dh - h) * 0.5
 			
-		surface.DrawTexturedRect( OffX+x, OffY+y, w, h )//绘制图像
+		surface.DrawTexturedRect( OffX+x, OffY+y, w, h )
 	
 		return true
 	
 	end
 	
 	
-	surface.DrawTexturedRectRotated( x + dw / 2, y + dh / 2, dw, dh, self:GetRotation() )//绘制图像
+	surface.DrawTexturedRectRotated( x + dw / 2, y + dh / 2, dw, dh, self:GetRotation() )
 	return true
 
 end
 
+-- ============================================================================
+-- SetRotation - 设置旋转角度
+-- ============================================================================
 function PANEL:SetRotation(m)
 	self.m_Rotation = m
 end
 
+-- ============================================================================
+-- GetRotation - 获取当前旋转角度
+-- ============================================================================
 function PANEL:GetRotation()
 	return self.m_Rotation or 0
 end

@@ -1,72 +1,101 @@
+-- ============================================================================
+-- DEXRoundedFrame - 增强型圆角窗口框架
+-- 继承自 DFrame，支持自定圆角半径和每个角的独立曲线控制
+-- ============================================================================
+
 local PANEL = {}
-//描述：这个应该是作者做的一个增强版的绘制圆角矩形的一个东西
-//注释状态：已完成
-AccessorFunc(PANEL, "m_iBorderRadius", "BorderRadius", FORCE_NUMBER)//添加函数,应该是圆角的角度？
-AccessorFunc(PANEL, "m_bCurveTopLeft", "CurveTopLeft", FORCE_BOOL)//添加函数,左上角的曲线
-AccessorFunc(PANEL, "m_bCurveTopRight", "CurveTopRight", FORCE_BOOL)//添加函数,右上角的曲线
-AccessorFunc(PANEL, "m_bCurveBottomLeft", "CurveBottomLeft", FORCE_BOOL)//添加函数,左下角的曲线
-AccessorFunc(PANEL, "m_bCurveBottomRight", "CurveBottomRight", FORCE_BOOL)//添加函数,右下角的曲线
 
-AccessorFunc(PANEL, "m_tColor", "Color")//添加函数,设置颜色
+-- 圆角半径存取器
+AccessorFunc(PANEL, "m_iBorderRadius", "BorderRadius", FORCE_NUMBER)
+-- 四个角的曲线开关
+AccessorFunc(PANEL, "m_bCurveTopLeft", "CurveTopLeft", FORCE_BOOL)
+AccessorFunc(PANEL, "m_bCurveTopRight", "CurveTopRight", FORCE_BOOL)
+AccessorFunc(PANEL, "m_bCurveBottomLeft", "CurveBottomLeft", FORCE_BOOL)
+AccessorFunc(PANEL, "m_bCurveBottomRight", "CurveBottomRight", FORCE_BOOL)
 
-local function CloseDoClick(self)//关闭按钮的点击事件
-	self:GetParent():Close()//关闭父面板
+-- 背景颜色存取器
+AccessorFunc(PANEL, "m_tColor", "Color")
+
+-- ============================================================================
+-- CloseDoClick - 关闭按钮点击回调
+-- ============================================================================
+local function CloseDoClick(self)
+	self:GetParent():Close()
 end
 
-function PANEL:Init()//初始化
-	self:SetBorderRadius(8)//设置圆角的角度
-	self:SetCurve(true)//设置曲线
+-- ============================================================================
+-- Init - 初始化圆角窗口框架
+-- ============================================================================
+function PANEL:Init()
+	self:SetBorderRadius(8)
+	self:SetCurve(true)
 
-	self:SetColor(Color(0, 0, 0, 180))//设置颜色
+	self:SetColor(Color(0, 0, 0, 180))
 
-	self:ShowCloseButton(false)//显示关闭按钮，false为不显示
+	self:ShowCloseButton(false)
 	self:SetTitle(" ")
 
-	self.CloseButton = vgui.Create("DImageButton", self)//创建一个带图片的按钮
-	self.CloseButton:SetImage("VGUI/notices/error")//设置图片
-	self.CloseButton:SetSize(32, 32)//设置大小
-	self.CloseButton:NoClipping(true)//设置不裁剪
-	self.CloseButton:SetZPos(-10)//设置Z轴位置
-	self.CloseButton.DoClick = CloseDoClick//设置点击事件
-	local oldpaint = self.CloseButton.m_Image.Paint//获取按钮的图片的绘制函数
-	self.CloseButton.m_Image.Paint = function(me)//重写按钮的图片的绘制函数
-		surface.DisableClipping(true)//禁用裁剪
-		oldpaint(me)//调用原来的绘制函数
-		surface.DisableClipping(false)//启用裁剪
+	-- 自定义关闭按钮（错误图标样式）
+	self.CloseButton = vgui.Create("DImageButton", self)
+	self.CloseButton:SetImage("VGUI/notices/error")
+	self.CloseButton:SetSize(32, 32)
+	self.CloseButton:NoClipping(true)
+	self.CloseButton:SetZPos(-10)
+	self.CloseButton.DoClick = CloseDoClick
+	local oldpaint = self.CloseButton.m_Image.Paint
+	self.CloseButton.m_Image.Paint = function(me)
+		surface.DisableClipping(true)
+		oldpaint(me)
+		surface.DisableClipping(false)
 	end
 
-	self.lblTitle:SetFont("dexfont_med")//设置字体
+	self.lblTitle:SetFont("dexfont_med")
 
-	self:InvalidateLayout()//重新布局
+	self:InvalidateLayout()
 end
 
+-- ============================================================================
+-- PerformLayout - 布局子控件位置
+-- ============================================================================
 function PANEL:PerformLayout()
-	self.lblTitle:SetWide(self:GetWide() - 25)//设置标题的宽度
-	self.lblTitle:SetPos(8, 2)//设置标题的位置
+	self.lblTitle:SetWide(self:GetWide() - 25)
+	self.lblTitle:SetPos(8, 2)
 
-	self.CloseButton:AlignRight(self.CloseButton:GetWide() * -0.25)//设置关闭按钮的右边距
-	self.CloseButton:AlignTop(self.CloseButton:GetTall() * -0.25)//设置关闭按钮的上边距
+	self.CloseButton:AlignRight(self.CloseButton:GetWide() * -0.25)
+	self.CloseButton:AlignTop(self.CloseButton:GetTall() * -0.25)
 end
 
-function PANEL:SetTitle(title)//设置标题
-	self.lblTitle:SetText(title)//设置标题的文本
-	self.lblTitle:SizeToContents()//设置标题的大小
+-- ============================================================================
+-- SetTitle - 设置窗口标题
+-- ============================================================================
+function PANEL:SetTitle(title)
+	self.lblTitle:SetText(title)
+	self.lblTitle:SizeToContents()
 
-	self:InvalidateLayout()///重新布局
+	self:InvalidateLayout()
 end
 
-function PANEL:SetCurve(curve)//设置曲线
-	self:SetCurveTopLeft(curve)//设置左上角的曲线
-	self:SetCurveTopRight(curve)//设置右上角的曲线
-	self:SetCurveBottomLeft(curve)//设置左下角的曲线
-	self:SetCurveBottomRight(curve)//设置右下角的曲线
+-- ============================================================================
+-- SetCurve - 同时设置所有四个角的曲线开关
+-- ============================================================================
+function PANEL:SetCurve(curve)
+	self:SetCurveTopLeft(curve)
+	self:SetCurveTopRight(curve)
+	self:SetCurveBottomLeft(curve)
+	self:SetCurveBottomRight(curve)
 end
 
+-- ============================================================================
+-- SetColorAlpha - 设置背景颜色的透明度
+-- ============================================================================
 function PANEL:SetColorAlpha(a)
 	self:GetColor().a = a
 end
 
-function PANEL:Paint()//绘制
+-- ============================================================================
+-- Paint - 绘制圆角矩形背景
+-- ============================================================================
+function PANEL:Paint()
 	draw.RoundedBoxEx(self:GetBorderRadius(), 0, 0, self:GetWide(), self:GetTall(), self:GetColor(), self:GetCurveTopLeft(), self:GetCurveTopRight(), self:GetCurveBottomLeft(), self:GetCurveBottomRight())
 end
 

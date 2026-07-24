@@ -1,44 +1,20 @@
--- 本文件主要负责创建和管理游戏内的计分板（Scoreboard）用户界面。它包括显示玩家列表、队伍信息、分数，并提供了如静音玩家、查看玩家资料以及一个当鼠标悬停在玩家上时显示详细信息卡片的功能。同时，它还包含一个为机器人（Bot）随机分配并缓存头像的系统。
+-- ============================================================
+-- cl_scoreboard.lua - 计分板系统
+-- 负责创建和管理游戏内的计分板用户界面，包括：
+--   1. 玩家列表显示（按队伍分组）
+--   2. 玩家信息（头像、名字、分数、延迟、转生等级、僵尸职业图标）
+--   3. 静音/好友功能
+--   4. 鼠标悬停时弹出的玩家详细信息卡片
+--   5. 机器人的随机头像分配与缓存
+-- ============================================================
 
--- GM:ScoreboardShow 显示计分板界面。
--- GM:ScoreboardRebuild 重建计分板界面（当前仅实现隐藏）。
--- GM:ScoreboardHide 隐藏计分板界面。
--- GetRandomBotAvatar 从文件系统中查找并随机返回一个机器人头像的材质路径，以用于UI显示。
--- ZSScoreBoard VGUI面板，作为整个计分板的主容器。
--- ZSScoreBoard:Init 初始化计分板的静态元素，如标题、服务器名和队伍列表容器。
--- ZSScoreBoard:PerformLayout 定义并排列计分板内各个UI元素的位置和大小。
--- ZSScoreBoard:Think 定时器，周期性地刷新计分板内容。
--- ZSScoreBoard:Paint 绘制计分板的自定义背景和装饰性元素。
--- ZSScoreBoard:GetPlayerPanel 查找与特定玩家关联的玩家行面板。
--- ZSScoreBoard:CreatePlayerPanel 为一个新玩家创建一个专属的玩家行面板并添加到队伍列表中。
--- ZSScoreBoard:RefreshScoreboard 核心刷新函数，同步游戏内的玩家列表到UI上，添加新玩家并移除已断开的玩家。
--- ZSScoreBoard:RemovePlayerPanel 从UI中移除一个指定的玩家行面板。
-
--- ZSPlayerPanel VGUI面板，代表计分板中的单个玩家行。
--- ZSPlayerPanel:Init 初始化玩家行内的所有UI元素，如头像、名字、分数、静音按钮等。
--- ZSPlayerPanel:Paint 绘制玩家行的背景，颜色会根据队伍和鼠标悬停状态变化。
--- ZSPlayerPanel:DoClick 处理对玩家行的点击事件。
--- ZSPlayerPanel:OnCursorEntered 当鼠标光标进入玩家行区域时，触发显示玩家信息悬停卡。
--- ZSPlayerPanel:PerformLayout 排列玩家行内部各元素的位置。
--- ZSPlayerPanel:RefreshPlayer 用最新的玩家数据（如分数、转生等级、僵尸职业图标）更新UI显示。
--- ZSPlayerPanel:Think 定时器，周期性地调用刷新函数。
--- ZSPlayerPanel:SetPlayer 将一个玩家实体与该面板关联，并设置其头像（真人或机器人）。
--- ZSPlayerPanel:GetPlayer 获取与该面板关联的玩家实体。
--- ZSPlayerPanel:GetBotAvatarMaterial 获取分配给该机器人玩家行的特定头像材质路径。
-
--- ZSPlayerHoverCard VGUI面板，当鼠标悬停在玩家行上时弹出的详细信息卡。
--- ZSPlayerHoverCard:Init 初始化信息卡内的元素，如大头像、名字、SteamID等。
--- ZSPlayerHoverCard:Paint 绘制信息卡的背景。
--- ZSPlayerHoverCard:PerformLayout 排列信息卡内部各元素的位置。
--- ZSPlayerHoverCard:UpdateWithPlayer 使用特定玩家的数据填充信息卡，并能正确显示机器人的头像。
--- ZSPlayerHoverCard:ShowAndUpdate 显示信息卡，将其定位在源玩家行的旁边，并更新其内容。
--- ZSPlayerHoverCard:Think 检查鼠标是否还在源玩家行或信息卡上，如果不在则隐藏卡片。
--- ZSPlayerHoverCard:HideAndStopThinking 隐藏信息卡并停止其Think逻辑。
--- ZSPlayerHoverCard:OnCursorExited 当鼠标离开信息卡时触发的事件。
+-- 计分板主面板的全局引用
 local ScoreBoard
-function GM:ScoreboardShow() //面板显示
-	gui.EnableScreenClicker(true) //启用光标移动
-	PlayMenuOpenSound() 
+
+-- 显示计分板：启用鼠标点击，创建面板，设置大小位置，淡入动画
+function GM:ScoreboardShow() --面板显示
+	gui.EnableScreenClicker(true) --启用光标移动
+	PlayMenuOpenSound()
 
 	if not ScoreBoard then
 		ScoreBoard = vgui.Create("ZSScoreBoard")
@@ -50,15 +26,17 @@ function GM:ScoreboardShow() //面板显示
 	ScoreBoard:AlignTop(ScrH() * 0.05)
 	ScoreBoard:CenterHorizontal()
 	ScoreBoard:SetAlpha(0)
-	ScoreBoard:AlphaTo(255, 0.15, 0) //设置透明度（目前透明度，转化时间，延迟）
+	ScoreBoard:AlphaTo(255, 0.15, 0) --设置透明度（目前透明度，转化时间，延迟）
 	ScoreBoard:SetVisible(true)
 end
 
+-- 重建计分板：先隐藏然后销毁面板引用
 function GM:ScoreboardRebuild()
 	self:ScoreboardHide()
 	ScoreBoard = nil
 end
 
+-- 隐藏计分板：关闭鼠标点击，播放关闭音效，隐藏面板
 function GM:ScoreboardHide()
 	gui.EnableScreenClicker(false)
 
@@ -68,66 +46,71 @@ function GM:ScoreboardHide()
 	end
 end
 
---[[
-    机器人头像缓存
-    这个列表会缓存找到的所有机器人头像材质，以提高效率。
-    在GMod中，我们应该搜索.vmt文件而不是.png文件。
-]]
+-- ============================================================
+-- 机器人头像缓存系统
+-- 搜索 materials/botavatar/ 下的 .vmt 文件，随机分配头像。
+-- ============================================================
 local botAvatarList = nil
 
---[[
-    @function GetRandomBotAvatar
-    @description 获取一个随机的机器人头像材质路径。
-    @returns string 材质路径，例如 "botavatar/bot_default"
-]]
+-- 获取一个随机的机器人头像材质路径
+-- 返回值：材质路径字符串（如 "botavatar/bot_default"）
 local function GetRandomBotAvatar()
-    -- 如果列表是空的，就搜索一次文件。
+    -- 如果缓存列表为空，则搜索文件系统
 	if not botAvatarList then
-        -- 搜索.vmt文件，这是GMod UI能识别的材质文件
-        -- "GAME"表示在游戏主目录和所有插件中搜索。
+        -- 搜索 .vmt 材质文件（GMod UI 可识别的格式）
+        -- "GAME" 表示在游戏主目录和所有插件中搜索
 		local files, _ = file.Find("materials/botavatar/*.vmt", "GAME", "sorted")
 		
-        -- 如果找到了文件，就填充列表
+        -- 如果找到了文件，填充缓存列表
 		if files and #files > 0 then
-			botAvatarList = {} -- 创建一个新列表
+			botAvatarList = {} -- 创建新列表
 			for _, vmtFile in ipairs(files) do
-                -- SetImage使用的是材质路径，它相对于materials文件夹且不带扩展名。
-                -- 例如, materials/botavatar/bot1.vmt -> "botavatar/bot1"
+                -- SetImage 使用相对于 materials 文件夹且不带扩展名的路径
+                -- 例如 materials/botavatar/bot1.vmt -> "botavatar/bot1"
 				table.insert(botAvatarList, "botavatar/" .. string.gsub(vmtFile, ".vmt", ""))
 			end
 		else
-            -- 如果没有找到任何文件，记录一个错误并返回一个默认头像以防UI出错。
+            -- 未找到文件时打印错误并返回默认头像
 			print("[BotAvatars] Error: No .vmt files found in materials/botavatar/. Using default.")
-			return "botavatar/odoko" -- 确保你有一个名为 botimage.vmt 的默认头像
+			return "botavatar/odoko" -- 默认头像兜底
 		end
 	end
     
-    -- 从有效的列表中随机返回一个头像路径
+    -- 从有效列表中随机返回一个头像路径
 	if botAvatarList and #botAvatarList > 0 then
 		return botAvatarList[math.random(1, #botAvatarList)]
 	end
 
-    -- 最终的保险，以防万一
+    -- 最终保险：返回默认头像
 	return "botavatar/odoko"
 end
 
-
+-- ============================================================
+-- ZSScoreBoard - 计分板主面板
+-- 包含标题、服务器名、作者信息、队伍标题、分数列、两列可滚动的玩家列表（人类/僵尸）
+-- ============================================================
 local PANEL = {}
 
+-- 刷新间隔（秒）
 PANEL.RefreshTime = 1
+-- 下次刷新时间戳
 PANEL.NextRefresh = 0
+-- 最大滚动值
 PANEL.m_MaximumScroll = 0
 
+-- 内部函数：为标签绘制字体模糊效果
 local function BlurPaint(self)
 	draw.SimpleTextBlur(self:GetValue(), self.Font, 0, 0, self:GetTextColor())
 
 	return true
 end
 
+-- 初始化计分板面板的所有静态 UI 元素
 function PANEL:Init()
 	self.NextRefresh = RealTime() + 0.1
 
-	self.m_TitleLabel = vgui.Create("DLabel", self) //游戏模式名字
+	-- 游戏模式名称标签
+	self.m_TitleLabel = vgui.Create("DLabel", self) --游戏模式名字
 	self.m_TitleLabel.Font = "ZSScoreBoardTitle"
 	self.m_TitleLabel:SetFont(self.m_TitleLabel.Font)
 	self.m_TitleLabel:SetText(GAMEMODE.Name)
@@ -136,7 +119,8 @@ function PANEL:Init()
 	self.m_TitleLabel:NoClipping(true)
 	self.m_TitleLabel.Paint = BlurPaint
 
-	self.m_ServerNameLabel = vgui.Create("DLabel", self) //服务器名字
+	-- 服务器名称标签
+	self.m_ServerNameLabel = vgui.Create("DLabel", self) --服务器名字
 	self.m_ServerNameLabel.Font = "ZSScoreBoardSubTitle"
 	self.m_ServerNameLabel:SetFont(self.m_ServerNameLabel.Font)
 	self.m_ServerNameLabel:SetText(GetHostName())
@@ -145,30 +129,38 @@ function PANEL:Init()
 	self.m_ServerNameLabel:NoClipping(true)
 	self.m_ServerNameLabel.Paint = BlurPaint
 
-	self.m_AuthorLabel = EasyLabel(self, "by "..GAMEMODE.Author.." ("..GAMEMODE.Email..")", "ZSScoreBoardPing", COLOR_GRAY) //作者
-	self.m_ContactLabel = EasyLabel(self, GAMEMODE.Website, "ZSScoreBoardPing", COLOR_GRAY) //联系方式
+	-- 作者和联系方式标签
+	self.m_AuthorLabel = EasyLabel(self, "by "..GAMEMODE.Author.." ("..GAMEMODE.Email..")", "ZSScoreBoardPing", COLOR_GRAY) --作者
+	self.m_ContactLabel = EasyLabel(self, GAMEMODE.Website, "ZSScoreBoardPing", COLOR_GRAY) --联系方式
 
+	-- 人类队伍标题头
 	self.m_HumanHeading = vgui.Create("DTeamHeading", self)
 	self.m_HumanHeading:SetTeam(TEAM_HUMAN)
 
+	-- 僵尸队伍标题头
 	self.m_ZombieHeading = vgui.Create("DTeamHeading", self)
 	self.m_ZombieHeading:SetTeam(TEAM_UNDEAD)
 
+	-- 人类队伍的列标题：分数和转生等级
 	self.m_PointsLabel = EasyLabel(self, "Score", "ZSScoreBoardPlayer", COLOR_GRAY)
 	self.m_RemortCLabel = EasyLabel(self, "R.LVL", "ZSScoreBoardPlayer", COLOR_GRAY)
 
+	-- 僵尸队伍的列标题：吃掉的大脑数和转生等级
 	self.m_BrainsLabel = EasyLabel(self, "Brains", "ZSScoreBoardPlayer", COLOR_GRAY)
 	self.m_RemortCZLabel = EasyLabel(self, "R.LVL", "ZSScoreBoardPlayer", COLOR_GRAY)
 
-	self.ZombieList = vgui.Create("DScrollPanel", self) //僵尸列表
+	-- 僵尸列表滚动面板
+	self.ZombieList = vgui.Create("DScrollPanel", self) --僵尸列表
 	self.ZombieList.Team = TEAM_UNDEAD
 
-	self.HumanList = vgui.Create("DScrollPanel", self) //人类列表
+	-- 人类列表滚动面板
+	self.HumanList = vgui.Create("DScrollPanel", self) --人类列表
 	self.HumanList.Team = TEAM_HUMAN
 
-	self:InvalidateLayout() //重新布局
+	self:InvalidateLayout() --触发重新布局
 end
 
+-- 定义计分板内各 UI 元素的位置和大小
 function PANEL:PerformLayout()
 	local screenscale = math.max(0.95, BetterScreenScale())
 
@@ -177,37 +169,46 @@ function PANEL:PerformLayout()
 
 	self.m_ServerNameLabel:SetPos(math.min(self:GetWide() - self.m_ServerNameLabel:GetWide(), self:GetWide() * 0.75 - self.m_ServerNameLabel:GetWide() * 0.5), 32 - self.m_ServerNameLabel:GetTall() / 2)
 
+	-- 人类队伍标题头
 	self.m_HumanHeading:SetSize(self:GetWide() / 2 - 32, 28 * screenscale)
 	self.m_HumanHeading:SetPos(self:GetWide() * 0.25 - self.m_HumanHeading:GetWide() * 0.5, 110 * screenscale - self.m_HumanHeading:GetTall())
 
+	-- 僵尸队伍标题头
 	self.m_ZombieHeading:SetSize(self:GetWide() / 2 - 32, 28 * screenscale)
 	self.m_ZombieHeading:SetPos(self:GetWide() * 0.75 - self.m_ZombieHeading:GetWide() * 0.5, 110 * screenscale - self.m_ZombieHeading:GetTall())
 
+	-- 人类分数列标签
 	self.m_PointsLabel:SizeToContents()
 	self.m_PointsLabel:SetPos((self:GetWide() / 2 - 24) * 0.6 - self.m_PointsLabel:GetWide() * 0.35, 110 * screenscale - self.m_HumanHeading:GetTall())
 	self.m_PointsLabel:MoveBelow(self.m_HumanHeading, 1 * screenscale)
 
+	-- 人类转生等级列标签
 	self.m_RemortCLabel:SizeToContents()
 	self.m_RemortCLabel:SetPos((self:GetWide() / 2 - 24) * 0.71 - self.m_RemortCLabel:GetWide() * 0.5, 110 * screenscale - self.m_HumanHeading:GetTall())
 	self.m_RemortCLabel:MoveBelow(self.m_HumanHeading, 1 * screenscale)
 
+	-- 僵尸大脑数列标签
 	self.m_BrainsLabel:SizeToContents()
 	self.m_BrainsLabel:SetPos(self:GetWide() / 2 + 3 * screenscale + (self:GetWide() / 2 - 24) * 0.61 - self.m_BrainsLabel:GetWide() * 0.35, 110 * screenscale - self.m_HumanHeading:GetTall())
 	self.m_BrainsLabel:MoveBelow(self.m_ZombieHeading, 1 * screenscale)
 
+	-- 僵尸转生等级列标签
 	self.m_RemortCZLabel:SizeToContents()
 	self.m_RemortCZLabel:SetPos(self:GetWide() / 2 + 3 * screenscale + (self:GetWide() / 2 - 24) * 0.71 - self.m_RemortCZLabel:GetWide() * 0.5, 110 * screenscale - self.m_HumanHeading:GetTall())
 	self.m_RemortCZLabel:MoveBelow(self.m_ZombieHeading, 1 * screenscale)
 
+	-- 人类列表滚动面板
 	self.HumanList:SetSize(self:GetWide() / 2 - 24, self:GetTall() - 150 * screenscale)
 	self.HumanList:AlignBottom(16 * screenscale)
 	self.HumanList:AlignLeft(8 * screenscale)
 
+	-- 僵尸列表滚动面板
 	self.ZombieList:SetSize(self:GetWide() / 2 - 24, self:GetTall() - 150 * screenscale)
 	self.ZombieList:AlignBottom(16 * screenscale)
 	self.ZombieList:AlignRight(8 * screenscale)
 end
 
+-- 定时器：周期刷新计分板内容
 function PANEL:Think()
 	if RealTime() >= self.NextRefresh then
 		self.NextRefresh = RealTime() + self.RefreshTime
@@ -215,10 +216,13 @@ function PANEL:Think()
 	end
 end
 
+-- 缓存的纹理 ID（用于绘制背景装饰）
 local texRightEdge = surface.GetTextureID("gui/gradient")
 local texCorner = surface.GetTextureID("zombiesurvival/circlegradient")
 local texDownEdge = surface.GetTextureID("gui/gradient_down")
-function PANEL:Paint() //这个绘制的是背景
+
+-- 绘制计分板的自定义背景和装饰性边框
+function PANEL:Paint() --这个绘制的是背景
 	local wid, hei = self:GetSize()
 	local barw = 64
 
@@ -227,9 +231,11 @@ function PANEL:Paint() //这个绘制的是背景
 	surface.SetDrawColor(90, 90, 90, 180)
 	surface.DrawOutlinedRect(0, 64, wid, hei - 64)
 
+	-- 顶部标题栏
 	surface.SetDrawColor(5, 5, 5, 220)
 	PaintGenericFrame(self, 0, 0, wid, 64, 32)
 
+	-- 中间分割线及渐变装饰
 	surface.SetDrawColor(5, 5, 5, 160)
 	surface.DrawRect(wid * 0.5 - 16, 64, 32, hei - 128)
 	surface.SetTexture(texRightEdge)
@@ -242,6 +248,7 @@ function PANEL:Paint() //这个绘制的是背景
 	surface.DrawTexturedRect(wid * 0.5 - 16, hei - 64, 32, 64)
 end
 
+-- 根据玩家实体查找其对应的玩家行面板
 function PANEL:GetPlayerPanel(pl)
 	for _, panel in pairs(self.PlayerPanels) do
 		if panel:IsValid() and panel:GetPlayer() == pl then
@@ -250,6 +257,7 @@ function PANEL:GetPlayerPanel(pl)
 	end
 end
 
+-- 为指定玩家创建一个新的玩家行面板，并添加到对应的队伍列表中
 function PANEL:CreatePlayerPanel(pl)
 	local curpan = self:GetPlayerPanel(pl)
 	if curpan and curpan:IsValid() then return curpan end
@@ -266,6 +274,7 @@ function PANEL:CreatePlayerPanel(pl)
 	return panel
 end
 
+-- 核心刷新函数：同步游戏内玩家列表到 UI 上，添加新玩家并移除已断开玩家
 function PANEL:RefreshScoreboard()
 	self.m_ServerNameLabel:SetText(GetHostName())
 	self.m_ServerNameLabel:SizeToContents()
@@ -273,17 +282,20 @@ function PANEL:RefreshScoreboard()
 
 	if self.PlayerPanels == nil then self.PlayerPanels = {} end
 
+	-- 移除无效或已转为观察者的玩家
 	for pl, panel in pairs(self.PlayerPanels) do
 		if not panel:IsValid() or pl:IsValid() and pl:IsSpectator() then
 			self:RemovePlayerPanel(panel)
 		end
 	end
 
+	-- 为所有活跃玩家创建或更新面板
 	for _, pl in pairs(player.GetAllActive()) do
 		self:CreatePlayerPanel(pl)
 	end
 end
 
+-- 从 UI 中移除指定的玩家行面板
 function PANEL:RemovePlayerPanel(panel)
 	if panel:IsValid() then
 		self.PlayerPanels[panel:GetPlayer()] = nil
@@ -291,16 +303,25 @@ function PANEL:RemovePlayerPanel(panel)
 	end
 end
 
+-- 注册 ZSScoreBoard 面板类（继承自 Panel）
 vgui.Register("ZSScoreBoard", PANEL, "Panel")
 
-//玩家的面板
+-- ============================================================
+-- ZSPlayerPanel - 单个玩家行面板
+-- 显示玩家头像、名字、分数、延迟、转生等级、僵尸职业图标、
+-- 静音按钮和好友按钮。鼠标悬停时弹出详细信息卡片。
+-- ============================================================
 PANEL = {}
 
+-- 刷新间隔（秒）
 PANEL.RefreshTime = 1
 
+-- 关联的玩家实体
 PANEL.m_Player = NULL
+-- 下次刷新时间戳
 PANEL.NextRefresh = 0
 
+-- 静音按钮的点击回调：切换静音状态
 local function MuteDoClick(self)
 	local pl = self:GetParent():GetPlayer()
 	if pl:IsValid() then
@@ -309,13 +330,10 @@ local function MuteDoClick(self)
 	end
 end
 
+-- 好友系统全局表
 GM.ZSFriends = {}
---[[hook.Add("Initialize", "LoadZSFriends", function()
-	if file.Exists(GAMEMODE.FriendsFile, "DATA") then
-		GAMEMODE.ZSFriends = Deserialize(file.Read(GAMEMODE.FriendsFile)) or {}
-	end
-end)]]
 
+-- 好友按钮点击回调：添加/移除好友
 local function ToggleZSFriend(self)
 	if MySelf.LastFriendAdd and MySelf.LastFriendAdd + 2 > CurTime() then return end
 
@@ -335,15 +353,16 @@ local function ToggleZSFriend(self)
 		net.SendToServer()
 
 		MySelf.LastFriendAdd = CurTime()
-		--file.Write(GAMEMODE.FriendsFile, Serialize(GAMEMODE.ZSFriends))
 	end
 end
 
+-- 接收服务器确认的好友添加结果
 net.Receive("zs_zsfriendadded", function()
 	local pl = net:ReadEntity()
 	pl.ZSFriendAdded = net:ReadBool()
 end)
 
+-- 头像按钮点击回调：打开玩家的 Steam 资料页
 local function AvatarDoClick(self)
 	local pl = self.PlayerPanel:GetPlayer()
 	if pl:IsValidPlayer() then
@@ -351,12 +370,15 @@ local function AvatarDoClick(self)
 	end
 end
 
+-- 空绘制函数（用于透明按钮）
 local function empty() end
 
+-- 初始化玩家行面板的所有 UI 元素
 function PANEL:Init()
 	local screenscale = math.max(0.95, BetterScreenScale())
 	self:SetTall(32 * screenscale)
 
+	-- 头像按钮（点击打开 Steam 资料）
 	self.m_AvatarButton = self:Add("DButton", self)
 	self.m_AvatarButton:SetText(" ")
 	self.m_AvatarButton:SetSize(32 * screenscale, 32 * screenscale)
@@ -365,45 +387,53 @@ function PANEL:Init()
 	self.m_AvatarButton.Paint = empty
 	self.m_AvatarButton.PlayerPanel = self
 
+	-- 真人头像（AvatarImage）
 	self.m_Avatar = vgui.Create("AvatarImage", self.m_AvatarButton)
 	self.m_Avatar:SetSize(32 * screenscale, 32 * screenscale)
 	self.m_Avatar:SetVisible(false)
 	self.m_Avatar:SetMouseInputEnabled(false)
 
+	-- 机器人头像（DImage）
 	self.m_BotAvatar = vgui.Create("DImage", self.m_AvatarButton)
 	self.m_BotAvatar:SetSize(32 * screenscale, 32 * screenscale)
 	self.m_BotAvatar:SetVisible(false)
 	self.m_BotAvatar:SetMouseInputEnabled(false)
 
+	-- 特殊人物标记图标
 	self.m_SpecialImage = vgui.Create("DImage", self)
 	self.m_SpecialImage:SetSize(16, 16)
 	self.m_SpecialImage:SetMouseInputEnabled(true)
 	self.m_SpecialImage:SetVisible(false)
 
+	-- 僵尸职业图标
 	self.m_ClassImage = vgui.Create("DImage", self)
 	self.m_ClassImage:SetSize(22 * screenscale, 22 * screenscale)
 	self.m_ClassImage:SetMouseInputEnabled(false)
 	self.m_ClassImage:SetVisible(false)
 
+	-- 玩家名字、分数、转生等级标签
 	self.m_PlayerLabel = EasyLabel(self, " ", "ZSScoreBoardPlayer", COLOR_WHITE)
 	self.m_ScoreLabel = EasyLabel(self, " ", "ZSScoreBoardPlayerSmall", COLOR_WHITE)
 	self.m_RemortLabel = EasyLabel(self, " ", "ZSScoreBoardPlayerSmaller", COLOR_WHITE)
 
-
-
+	-- 延迟指示器
 	self.m_PingMeter = vgui.Create("DPingMeter", self)
 	self.m_PingMeter.PingBars = 5
 
+	-- 静音按钮
 	self.m_Mute = vgui.Create("DImageButton", self)
 	self.m_Mute.DoClick = MuteDoClick
 
+	-- 好友按钮
 	self.m_Friend = vgui.Create("DImageButton", self)
 	self.m_Friend.DoClick = ToggleZSFriend
 
-
 end
 
+-- 临时颜色变量（用于绘制背景）
 local colTemp = Color(255, 255, 255, 200)
+
+-- 绘制玩家行背景色（根据队伍颜色、悬停状态和个人高亮）
 function PANEL:Paint()
 	local col = color_black_alpha220
 	local mul = 0.5
@@ -430,6 +460,7 @@ function PANEL:Paint()
 	return true
 end
 
+-- 玩家行点击回调：触发 ClickedPlayerButton 游戏模式回调
 function PANEL:DoClick()
 	local pl = self:GetPlayer()
 	if pl:IsValid() then
@@ -437,15 +468,14 @@ function PANEL:DoClick()
 	end
 end
 
--- 用下面的代码替换你旧的 OnCursorEntered 函数
+-- 鼠标光标进入玩家行时：显示玩家信息悬停卡片
 function PANEL:OnCursorEntered()
     if not IsValid(PlayerHoverCard) then return end
     
-    -- 调用我们新的显示函数，将自己 (self) 作为源面板传入
     PlayerHoverCard:ShowAndUpdate(self)
 end
 
-
+-- 排列玩家行内部各元素的位置
 function PANEL:PerformLayout()
 	self.m_AvatarButton:AlignLeft(16)
 	self.m_AvatarButton:CenterVertical()
@@ -482,13 +512,14 @@ function PANEL:PerformLayout()
 	self.m_RemortLabel:MoveLeftOf(self.m_ClassImage, 2)
 	self.m_RemortLabel:CenterVertical()
 
-	    -- 新增代码: 确保全局名片面板存在
+	-- 确保全局名片面板存在
     if not IsValid(PlayerHoverCard) then
         PlayerHoverCard = vgui.Create("ZSPlayerHoverCard")
     end
 	
 end
 
+-- 用最新的玩家数据更新 UI 显示
 function PANEL:RefreshPlayer()
 	local pl = self:GetPlayer()
 	if not pl:IsValid() then
@@ -496,6 +527,7 @@ function PANEL:RefreshPlayer()
 		return
 	end
 
+	-- 更新玩家名称（超过23字符则截断）
 	local name = pl:Name()
 	if #name > 23 then
 		name = string.sub(name, 1, 21)..".."
@@ -503,12 +535,15 @@ function PANEL:RefreshPlayer()
 	self.m_PlayerLabel:SetText(name)
 	self.m_PlayerLabel:SetAlpha(240)
 
+	-- 更新分数
 	self.m_ScoreLabel:SetText(pl:Frags())
 	self.m_ScoreLabel:SetAlpha(240)
 
+	-- 更新转生等级（0 时不显示）
 	local rlvl = pl:GetZSRemortLevel()
 	self.m_RemortLabel:SetText(rlvl > 0 and rlvl or "")
 
+	-- 根据转生等级计算颜色（每40级一个循环，每4级一种颜色）
 	local rlvlmod = math.floor((rlvl % 40) / 4)
 	local hcolor, hlvl = COLOR_GRAY, 0
 	for rlvlr, rcolor in pairs(GAMEMODE.RemortColors) do
@@ -520,6 +555,7 @@ function PANEL:RefreshPlayer()
 	self.m_RemortLabel:SetColor(hcolor)
 	self.m_RemortLabel:SetAlpha(240)
 
+	-- 显示僵尸职业图标（仅僵尸队伍看僵尸）
 	if MySelf:Team() == TEAM_UNDEAD and pl:Team() == TEAM_UNDEAD and pl:GetZombieClassTable().Icon then
 		self.m_ClassImage:SetVisible(true)
 		self.m_ClassImage:SetImage(pl:GetZombieClassTable().Icon)
@@ -528,6 +564,7 @@ function PANEL:RefreshPlayer()
 		self.m_ClassImage:SetVisible(false)
 	end
 
+	-- 更新静音和好友按钮状态（不显示自己的按钮）
 	if pl == MySelf then
 		self.m_Mute:SetVisible(false)
 		self.m_Friend:SetVisible(false)
@@ -542,8 +579,10 @@ function PANEL:RefreshPlayer()
 		self.m_Friend:SetImage(GAMEMODE.ZSFriends[pl:SteamID()] and "icon16/heart_delete.png" or "icon16/heart.png")
 	end
 
+	-- 按分数排序（Z-Pos 越大越靠上）
 	self:SetZPos(-pl:Frags())
 
+	-- 如果玩家更换了队伍，移动到对应的列表
 	if pl:Team() ~= self._LastTeam then
 		self._LastTeam = pl:Team()
 		self:SetParent(self._LastTeam == TEAM_HUMAN and ScoreBoard.HumanList or ScoreBoard.ZombieList)
@@ -552,6 +591,7 @@ function PANEL:RefreshPlayer()
 	self:InvalidateLayout()
 end
 
+-- 定时器：周期刷新玩家信息
 function PANEL:Think()
 	if RealTime() >= self.NextRefresh then
 		self.NextRefresh = RealTime() + self.RefreshTime
@@ -559,10 +599,10 @@ function PANEL:Think()
 	end
 end
 
-
+-- 关联玩家实体到该面板，设置头像和队伍相关显示
 function PANEL:SetPlayer(pl)
 	self.m_Player = pl or NULL
-    self.m_BotAvatarMaterial = nil -- [修改] 默认先清空机器人头像材质
+    self.m_BotAvatarMaterial = nil -- 默认先清空机器人头像材质
 
 	if not IsValid(pl) then return end
 
@@ -570,16 +610,17 @@ function PANEL:SetPlayer(pl)
 		self.m_Avatar:SetVisible(false)
 		self.m_SpecialImage:SetVisible(false)
 
-		-- [核心修改] 调用函数获取随机头像，并将其路径保存在面板变量中
+		-- 调用函数获取随机头像，并将其路径保存在面板变量中
 		local randomAvatarMaterial = GetRandomBotAvatar()
-		self.m_BotAvatarMaterial = randomAvatarMaterial -- 保存这个材质路径
-		self.m_BotAvatar:SetImage(self.m_BotAvatarMaterial) -- 使用保存的路径设置图片
+		self.m_BotAvatarMaterial = randomAvatarMaterial -- 保存材质路径
+		self.m_BotAvatar:SetImage(self.m_BotAvatarMaterial) -- 设置图片
 		self.m_BotAvatar:SetVisible(true)
 	else
 		self.m_BotAvatar:SetVisible(false)
 		self.m_Avatar:SetPlayer(pl, 64)
 		self.m_Avatar:SetVisible(true)
 
+		-- 检查是否为特殊人物（如开发者、捐赠者等）
 		if gamemode.Call("IsSpecialPerson", pl, self.m_SpecialImage) then
 			self.m_SpecialImage:SetVisible(true)
 		else
@@ -594,23 +635,28 @@ function PANEL:SetPlayer(pl)
 	self:RefreshPlayer()
 end
 
+-- 获取与该面板关联的玩家实体
 function PANEL:GetPlayer()
 	return self.m_Player
 end
 
--- [新增] 创建一个新的函数，让外部可以获取到机器人头像的材质
+-- 获取该面板的机器人头像材质路径（供悬停卡片使用）
 function PANEL:GetBotAvatarMaterial()
     return self.m_BotAvatarMaterial
 end
 
+-- 注册 ZSPlayerPanel 面板类（继承自 Button）
 vgui.Register("ZSPlayerPanel", PANEL, "Button")
 
-
+-- ============================================================
+-- ZSPlayerHoverCard - 玩家信息悬停卡片
+-- 当鼠标悬停在玩家行上时弹出，显示大头像、名字、SteamID、分数
+-- ============================================================
 local PlayerHoverCard = nil
 local PANEL = {}
 
+-- 初始化悬停卡片的所有 UI 元素
 function PANEL:Init()
-    -- ... (Init函数内容保持不变) ...
     self:SetSize(320, 100)
     self:SetPaintBackground(false)
     self:SetVisible(false)
@@ -619,34 +665,39 @@ function PANEL:Init()
     self.bIsThinking = false 
     self.SourcePanel = nil
 
+    -- 大头像（真人）
     self.PlayerAvatar = vgui.Create("AvatarImage", self)
     self.PlayerAvatar:SetSize(64, 64)
 
+    -- 大头像（机器人）
     self.BotAvatar = vgui.Create("DImage", self)
     self.BotAvatar:SetSize(64, 64)
 
+    -- 玩家名字标签
     self.NameLabel = self:Add("DLabel")
     self.NameLabel:SetFont("ZS2DFontHarmonySmall")
     self.NameLabel:SetColor(COLOR_WHITE)
 
+    -- SteamID 或"机器人"标签
     self.SteamIDLabel = self:Add("DLabel")
     self.SteamIDLabel:SetFont("ZS2DFontHarmonySmall")
     self.SteamIDLabel:SetColor(Color(200, 200, 200))
     
+    -- 分数标签
     self.ScoreLabel = self:Add("DLabel")
     self.ScoreLabel:SetFont("ZS2DFontHarmonySmall")
     self.ScoreLabel:SetColor(Color(200, 200, 200))
 end
 
+-- 绘制悬停卡片的半透明背景和边框
 function PANEL:Paint(w, h)
-    -- ... (Paint函数内容保持不变) ...
     draw.RoundedBox(8, 0, 0, w, h, Color(30, 30, 30, 240))
     surface.SetDrawColor(Color(100, 100, 100, 150))
     surface.DrawOutlinedRect(0, 0, w, h)
 end
 
+-- 排列悬停卡片内部各元素的位置
 function PANEL:PerformLayout()
-    -- ... (PerformLayout函数内容保持不变) ...
     self.PlayerAvatar:SetPos(10, 10)
     self.BotAvatar:SetPos(10, 10)
 
@@ -658,8 +709,7 @@ function PANEL:PerformLayout()
     self.ScoreLabel:SetPos(80, 55)
 end
 
-
--- [核心修改] 更新函数现在可以接收机器人头像材质
+-- 使用玩家数据更新卡片显示（支持真人玩家和机器人）
 function PANEL:UpdateWithPlayer(ply, botAvatarMaterial)
     if not IsValid(ply) then return end
 
@@ -669,7 +719,7 @@ function PANEL:UpdateWithPlayer(ply, botAvatarMaterial)
     if ply:IsBot() then
         self.PlayerAvatar:SetVisible(false)
         self.BotAvatar:SetVisible(true)
-		-- [修改] 使用传递进来的 botAvatarMaterial 参数来设置图片
+		-- 使用传递进来的 botAvatarMaterial 参数设置图片
         self.BotAvatar:SetImage(botAvatarMaterial) 
         self.SteamIDLabel:SetText("机器人 (Bot)")
     else
@@ -682,7 +732,7 @@ function PANEL:UpdateWithPlayer(ply, botAvatarMaterial)
     self:InvalidateLayout(true)
 end
 
--- [核心修改] 在显示和更新时，同时获取玩家和机器人头像材质
+-- 显示悬停卡片并将其定位在源玩家行旁边，同时更新内容
 function PANEL:ShowAndUpdate(sourcePanel)
     if not IsValid(sourcePanel) or not IsValid(sourcePanel:GetPlayer()) then 
         self:HideAndStopThinking()
@@ -691,11 +741,11 @@ function PANEL:ShowAndUpdate(sourcePanel)
 
     self.SourcePanel = sourcePanel
     
-    -- [修改] 从 sourcePanel 获取玩家实体 和 机器人头像材质
+    -- 从 sourcePanel 获取玩家实体和机器人头像材质
     local player = sourcePanel:GetPlayer()
-    local botAvatar = sourcePanel:GetBotAvatarMaterial() -- 调用我们新增的函数
+    local botAvatar = sourcePanel:GetBotAvatarMaterial() -- 调用新增的函数
 
-    -- [修改] 将两个信息都传递给 UpdateWithPlayer
+    -- 将两个信息都传递给 UpdateWithPlayer
     self:UpdateWithPlayer(player, botAvatar)
     
     local x, y = sourcePanel:LocalToScreen(sourcePanel:GetWide() + 5, 0)
@@ -704,21 +754,24 @@ function PANEL:ShowAndUpdate(sourcePanel)
     self.bIsThinking = true
 end
 
+-- 定时器：检查鼠标是否在源面板或卡片上，不在则隐藏
 function PANEL:Think()
-    -- ... (Think, HideAndStopThinking, OnCursorExited 等函数保持不变) ...
     if not self.bIsThinking then return end
     if not IsValid(self.SourcePanel) or (not self.SourcePanel:IsHovered() and not self:IsHovered()) then
         self:HideAndStopThinking()
     end
 end
 
+-- 隐藏悬停卡片并停止其 Think 逻辑
 function PANEL:HideAndStopThinking()
     self:SetVisible(false)
     self.SourcePanel = nil
     self.bIsThinking = false
 end
 
+-- 鼠标离开卡片时的事件（当前为空）
 function PANEL:OnCursorExited()
 end
 
+-- 注册 ZSPlayerHoverCard 面板类（继承自 DPanel）
 vgui.Register("ZSPlayerHoverCard", PANEL, "DPanel")

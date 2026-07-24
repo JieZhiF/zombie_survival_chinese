@@ -1,26 +1,47 @@
+--[[
+==================================================================
+长者食尸鬼 (Elder Ghoul) — 僵尸职业
+继承自：ghoul
+特点：被攻击时喷射毒肉块、黄色发光眼睛、绿色调渲染
+==================================================================
+]]
+
+-- 基础职业为"食尸鬼"
 CLASS.Base = "ghoul"
 
+-- 出现波次
 CLASS.Wave = 2 / 6
 
+-- 职业显示名称
 CLASS.Name = "Elder Ghoul"
+-- 翻译键名
 CLASS.TranslationName = "class_elderghoul"
+-- 描述文本键名
 CLASS.Description = "description_elderghoul"
+-- 控制帮助文本键名
 CLASS.Help = "controls_elderghoul"
 
+-- 进阶版本
 CLASS.BetterVersion = "Noxious Ghoul"
 
-CLASS.Health = 190
+-- 生命值
+CLASS.Health = 175
+-- 移动速度
 CLASS.Speed = 165
 
+-- 击杀得分
 CLASS.Points = CLASS.Health/GM.HumanoidZombiePointRatio
 
+-- 绑定的武器
 CLASS.SWEP = "weapon_zs_elderghoul"
 
+-- 创建毒肉块投射物（被攻击时溅射）
 local function CreateFlesh(pl, damage, damagepos, damagedir)
 	damage = math.min(damage, 100)
 
 	pl:EmitSound("physics/body/body_medium_break"..math.random(2, 4)..".wav", 74, 125 - damage * 0.50)
 
+	-- 服务端创建投射物
 	if SERVER then
 		damagepos = pl:LocalToWorld(damagepos)
 
@@ -42,6 +63,7 @@ local function CreateFlesh(pl, damage, damagepos, damagedir)
 	end
 end
 
+-- 受伤时触发毒肉块溅射
 function CLASS:ProcessDamage(pl, dmginfo)
 	local attacker, damage = dmginfo:GetAttacker(), math.min(dmginfo:GetDamage(), pl:Health())
 	if attacker ~= pl and damage >= 5 and CurTime() >= (pl.m_NextPukeEmit or 0) then
@@ -57,27 +79,33 @@ function CLASS:ProcessDamage(pl, dmginfo)
 	end
 end
 
+-- 客户端在此处结束
 if not CLIENT then return end
 
+-- 击杀图标（复用食尸鬼图标，黄绿色）
 CLASS.Icon = "zombiesurvival/killicons/ghoul"
 CLASS.IconColor = Color(170, 220, 0)
 
+-- 渲染变量
 local render_SetMaterial = render.SetMaterial
 local render_DrawSprite = render.DrawSprite
 local angle_zero = angle_zero
 local LocalToWorld = LocalToWorld
 
+-- 发光颜色（黄褐色）
 local colGlow = Color(200, 160, 50)
 local matSkin = Material("Models/humans/corpse/corpse1.vtf")
 local matGlow = Material("sprites/glow04_noz")
 local vecEyeLeft = Vector(4, -4.6, -1)
 local vecEyeRight = Vector(4, -4.6, 1)
 
+-- 绘制前：覆盖皮肤材质并调制黄绿色
 function CLASS:PrePlayerDraw(pl)
 	render.ModelMaterialOverride(matSkin)
 	render.SetColorModulation(0.66, 0.86, 0)
 end
 
+-- 绘制后恢复并绘制发光眼睛
 function CLASS:PostPlayerDraw(pl)
 	render.ModelMaterialOverride()
 	render.SetColorModulation(1, 1, 1)

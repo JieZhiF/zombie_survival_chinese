@@ -1,9 +1,20 @@
+-- ============================================================================
+-- PMainMenu - 主菜单/帮助菜单界面（按 F1 或 ? 键打开）
+-- 包含"帮助"、"玩家模型"、"玩家颜色"、"武器颜色"、"设置"、"武器库"、
+-- "技能"、"致谢"和"关闭"按钮
+-- ============================================================================
+
+-- 帮助菜单背景模糊绘制
 local function HelpMenuPaint(self)
 	Derma_DrawBackgroundBlur(self, self.Created)
 	Derma_DrawBackgroundBlur(self, self.Created)
 end
 
 local pPlayerModel
+
+-- ============================================================================
+-- SwitchPlayerModel - 切换玩家模型
+-- ============================================================================
 local function SwitchPlayerModel(self)
 	surface.PlaySound("buttons/button14.wav")
 	RunConsoleCommand("cl_playermodel", self.m_ModelName)
@@ -12,6 +23,10 @@ local function SwitchPlayerModel(self)
 
 	pPlayerModel:Close()
 end
+
+-- ============================================================================
+-- MakepPlayerModel - 创建玩家模型选择窗口
+-- ============================================================================
 function MakepPlayerModel()
 	if pPlayerModel and pPlayerModel:IsValid() then pPlayerModel:Remove() end
 
@@ -29,6 +44,7 @@ function MakepPlayerModel()
 	pPlayerModel:Center()
 	pPlayerModel:SetDeleteOnClose(true)
 
+	-- 模型列表
 	local list = vgui.Create("DPanelList", pPlayerModel)
 	list:StretchToParent(8, 24, 8, 8)
 	list:EnableVerticalScrollbar()
@@ -38,6 +54,7 @@ function MakepPlayerModel()
 	grid:SetColWide(68)
 	grid:SetRowHeight(68)
 
+	-- 遍历所有可用玩家模型
 	for name, mdl in pairs(player_manager.AllValidModels()) do
 		local button = vgui.Create("SpawnIcon", grid)
 		button:SetPos(0, 0)
@@ -54,6 +71,9 @@ function MakepPlayerModel()
 	pPlayerModel:MakePopup()
 end
 
+-- ============================================================================
+-- MakepPlayerColor - 创建玩家颜色/武器颜色选择窗口
+-- ============================================================================
 function MakepPlayerColor()
 	if pPlayerColor and pPlayerColor:IsValid() then pPlayerColor:Remove() end
 
@@ -70,6 +90,7 @@ function MakepPlayerColor()
 	label:SetPos((pPlayerColor:GetWide() - label:GetWide()) / 2, y)
 	y = y + label:GetTall() + 8
 	
+	-- 玩家颜色选择器
 	local lab = EasyLabel(pPlayerColor, translate.Get("mainmenu_PlayerColor"))
 	
 	lab:SetPos(8, y)
@@ -90,6 +111,7 @@ function MakepPlayerColor()
 	colpicker:SetPos(8, y)
 	y = y + colpicker:GetTall()
 
+	-- 武器颜色选择器
 	lab = EasyLabel(pPlayerColor, translate.Get("mainmenu_WeaponColor"))
 
 	lab:SetPos(8, y)
@@ -115,6 +137,9 @@ function MakepPlayerColor()
 	pPlayerColor:MakePopup()
 end
 
+-- ============================================================================
+-- ShowHelp - 显示主帮助菜单
+-- ============================================================================
 function GM:ShowHelp()
 	if self.HelpMenu and self.HelpMenu:IsValid() then
 		self.HelpMenu:Remove()
@@ -136,6 +161,7 @@ function GM:ShowHelp()
 
 	local buttonhei = 32 * screenscale
 
+	-- 帮助按钮
 	local but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_Help"))
@@ -145,6 +171,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() MakepHelp() end
 	
+	-- 玩家模型按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_PlayerModel"))
@@ -154,6 +181,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() MakepPlayerModel() end
 	
+	-- 玩家颜色按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_PlayerColor"))
@@ -163,6 +191,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() MakepPlayerColor() end
 	
+	-- 设置按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_Options"))
@@ -172,6 +201,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() MakepOptions() end
 	
+	-- 武器数据库按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_WeaponDatabase"))
@@ -181,6 +211,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() MakepWeapons() end
 	
+	-- 技能按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_Skills"))
@@ -190,6 +221,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() GAMEMODE:ToggleSkillWeb() end
 	
+	-- 致谢按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_Credits"))
@@ -199,6 +231,7 @@ function GM:ShowHelp()
 	but:Dock(TOP)
 	but.DoClick = function() MakepCredits() end
 	
+	-- 关闭按钮
 	but = vgui.Create("DButton", menu)
 	but:SetFont("ZSHUDFontSmaller")
 	but:SetText(translate.Get("mainmenu_Close"))

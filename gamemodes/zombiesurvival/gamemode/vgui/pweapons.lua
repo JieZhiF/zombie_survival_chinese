@@ -1,3 +1,12 @@
+-- ============================================================================
+-- PWeapons - 武器数据库界面（武器图鉴）
+-- 分"武器"和"合成品"两个标签页，以树状列表展示所有武器
+-- 点击武器后右侧显示详细信息和属性统计
+-- ============================================================================
+
+-- ============================================================================
+-- WeaponButtonDoClick - 武器树节点点击回调
+-- ============================================================================
 local function WeaponButtonDoClick(self)
 	local swep = self.SWEP
 	if swep then
@@ -5,6 +14,9 @@ local function WeaponButtonDoClick(self)
 	end
 end
 
+-- ============================================================================
+-- SetWeaponViewerSWEP - 在查看器中显示武器详情
+-- ============================================================================
 local function SetWeaponViewerSWEP(self, swep, category, comps)
 	if self.Viewer then
 		if self.Viewer:IsValid() then
@@ -16,6 +28,7 @@ local function SetWeaponViewerSWEP(self, swep, category, comps)
 	local wid, hei = self:GetWide() * 0.6 - 16, self:GetTall() - self.ViewerY - 8
 	local screenscale = BetterScreenScale()
 
+	-- 创建查看器面板
 	local viewer = vgui.Create("DPanel", self)
 	viewer:SetPaintBackground(false)
 	viewer:SetSize(wid, hei)
@@ -26,6 +39,7 @@ local function SetWeaponViewerSWEP(self, swep, category, comps)
 	local sweptable = weapons.Get(swep)
 	if not sweptable then return end
 
+	-- 使用通用查看器组件
 	GAMEMODE:CreateItemViewerGenericElems(viewer)
 
 	viewer.m_Title:SetText(sweptable.PrintName)
@@ -47,6 +61,7 @@ local function SetWeaponViewerSWEP(self, swep, category, comps)
 	viewer.m_Desc:SetFont("ZSBodyTextFont")
 	viewer.m_Desc:SetText(desctext)
 
+	-- 更新统计条
 	GAMEMODE:ViewerStatBarUpdate(viewer, category ~= ITEMCAT_GUNS and category ~= ITEMCAT_MELEE, sweptable)
 	if GAMEMODE:HasPurchaseableAmmo(sweptable) and GAMEMODE.AmmoNames[string.lower(sweptable.Primary.Ammo)] then
 		local lower = string.lower(sweptable.Primary.Ammo)
@@ -65,6 +80,7 @@ local function SetWeaponViewerSWEP(self, swep, category, comps)
 		viewer.m_AmmoIcon:SetVisible(false)
 	end
 
+	-- 合成配方显示
 	if not viewer.m_Recipe1 then
 		local recipe = EasyLabel(viewer, "", "ZSBodyTextFont", COLOR_TAN)
 		recipe:SetContentAlignment(8)
@@ -90,6 +106,9 @@ local function SetWeaponViewerSWEP(self, swep, category, comps)
 	) or "")
 end
 
+-- ============================================================================
+-- MakepWeapons - 创建武器数据库窗口
+-- ============================================================================
 function MakepWeapons(silent)
 	if not silent then
 		PlayMenuOpenSound()
@@ -109,6 +128,7 @@ function MakepWeapons(silent)
 	local weps = {}
 	local crafts = {}
 
+	-- 收集所有商店物品中的武器
 	for _, tab in ipairs(GAMEMODE.Items) do
 		if tab.SWEP and not added[tab.SWEP] then
 			if weapons.Get(tab.SWEP) then
@@ -119,6 +139,7 @@ function MakepWeapons(silent)
 		end
 	end
 
+	-- 收集所有合成武器
 	for wep, comps in pairs(GAMEMODE.Assemblies) do
 		if not added[wep] then
 			if weapons.Get(wep) then
@@ -132,6 +153,7 @@ function MakepWeapons(silent)
 	local wid, hei = math.min(ScrW(), 700) * screenscale, math.min(ScrH(), 700) * screenscale
 	local tabhei = 24 * screenscale
 
+	-- 创建主框架
 	local frame = vgui.Create("DFrame")
 	frame:SetDeleteOnClose(false)
 	frame:SetSize(wid, hei)
@@ -142,16 +164,19 @@ function MakepWeapons(silent)
 
 	local y = 8
 
+	-- 标题
 	local title = EasyLabel(frame, "Weapon Database", "ZSHUDFont", color_white)
 	title:SetPos(wid * 0.5 - title:GetWide() * 0.5, y)
 	y = y + title:GetTall() + 8
 
+	-- 分页属性表
 	local propertysheet = vgui.Create("DPropertySheet", frame)
 
 	propertysheet:SetSize(wid * 0.4 - 8, hei - title:GetTall() - 32 * screenscale)
 	propertysheet:MoveBelow(title, 16 * screenscale)
 	propertysheet:SetPadding(1)
 
+	-- 武器树
 	local tree = vgui.Create("DTree", propertysheet)
 	tree:SetWide(propertysheet:GetWide() - 16)
 	local sheet = propertysheet:AddSheet("Weapons", tree, nil, false, false)
@@ -159,6 +184,7 @@ function MakepWeapons(silent)
 	tree:SetIndentSize(4)
 	frame.WeaponsTree = tree
 
+	-- 合成品树
 	tree = vgui.Create("DTree", propertysheet)
 	tree:SetWide(propertysheet:GetWide() - 16)
 	sheet = propertysheet:AddSheet("Crafts", tree, nil, false, false)
@@ -166,6 +192,7 @@ function MakepWeapons(silent)
 	tree:SetIndentSize(4)
 	frame.CraftsTree = tree
 
+	-- 配置标签样式
 	local scroller = propertysheet:GetChildren()[1]
 	local dragbase = scroller:GetChildren()[1]
 	local tabs = dragbase:GetChildren()
@@ -174,6 +201,7 @@ function MakepWeapons(silent)
 
 	frame.ViewerY = y
 
+	-- 添加武器节点到树
 	for _, wep in pairs(weps) do
 		local enttab = weapons.Get(wep)
 		local wepnode
@@ -187,6 +215,7 @@ function MakepWeapons(silent)
 		wepnode.Category = addedcat[wep] or ITEMCAT_GUNS
 	end
 
+	-- 添加合成品节点到树
 	for _, wep in pairs(crafts) do
 		local enttab = weapons.Get(wep)
 		local wepnode

@@ -4,8 +4,8 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_zombie_gore_blaster")
 
 SWEP.Base = "weapon_zs_zombie"
 
-SWEP.MeleeDamage = 21
-SWEP.BleedDamageMul = 10 / SWEP.MeleeDamage
+SWEP.MeleeDamage = 18
+SWEP.BleedDamageMul = 8 / SWEP.MeleeDamage
 SWEP.MeleeDamageVsProps = 28
 
 SWEP.AlertDelay = 2.75

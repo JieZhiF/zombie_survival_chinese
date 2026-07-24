@@ -4,7 +4,7 @@ SWEP.Base = "weapon_zs_zombie"
 
 SWEP.PrintName = ""..translate.Get("weapon_zs_skelesham")
 
-SWEP.MeleeDamage = 33
+SWEP.MeleeDamage = 28
 
 function SWEP:Reload()
 	self:SecondaryAttack()

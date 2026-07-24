@@ -34,8 +34,11 @@
 -- DispatchTraceAttack 重写原函数，允许某些实体绕过常规的射线攻击检测直接承受伤害
 -- IsPhysicsModel 检查实体是否为物理道具（prop_physics），并可选择性地匹配模型
 -- IsWeaponType 检查实体是否为特定类型的武器（包括掉落的和持有的）
+
+-- 获取实体（Entity）的元表，以便后续扩展其功能
 local meta = FindMetaTable("Entity")
 
+-- 缓存常用的全局变量和函数，以提高性能并避免重复查找
 local vector_origin = vector_origin
 local util_SharedRandom = util.SharedRandom
 local util_TraceHull = util.TraceHull
@@ -46,25 +49,38 @@ local HITGROUP_HEAD = HITGROUP_HEAD
 local MASK_SHOT = MASK_SHOT
 local pairs = pairs
 
+-- 缓存Player元表及其Team方法
 local M_Player = FindMetaTable("Player")
 local P_Team = M_Player.Team
 local E_IsValid = meta.IsValid
 
--- Completely Lua-side bullets
+-- 射线检测用的位掩码，包含液体类型（水和黏液）
 local CONTENTS_LIQUID = bit.bor(CONTENTS_WATER, CONTENTS_SLIME)
 local MASK_SHOT_HIT_WATER = bit.bor(MASK_SHOT, CONTENTS_LIQUID)
 
+-- 预分配射线检测结果表，避免反复创建新表造成GC压力
 local bullet_tr = {}
 local bullet_water_tr = {}
+-- 临时角度变量，用于子弹散布计算
 local temp_angle = Angle(0, 0, 0)
+-- 临时存储忽略队伍的变量
 local temp_ignore_team
+-- 标记当前是否开启了散布
 local temp_has_spread
+-- 使用的检测方法（线检测或包围盒检测）和基础角度
 local method_to_use, base_ang
+-- 基础射线检测配置表
 local bullet_trace = {mask = MASK_SHOT, output = bullet_tr}
+-- 临时存储射击者和攻击者的实体
 local temp_shooter = NULL
 local temp_attacker = NULL
+-- 标记攻击者和伤害来源是否为玩家/武器
 local attacker_player, inflictor_weapon
+-- 用于临时存储被击中玩家速度的表，以避免多次设置
 local temp_vel_ents = {}
+
+-- 基础子弹过滤函数
+-- 用于在射线检测时过滤掉不需要检测的实体（如射击者自己、有保护状态的实体等）
 local function BaseBulletFilter(ent)
 	if ent == temp_shooter or ent == temp_attacker or ent.NeverAlive or ent.SpawnProtection or ent.IgnoreBullets or ent:IsPlayer() and P_Team(ent) == temp_ignore_team then
 		return false
@@ -77,8 +93,10 @@ local function BaseBulletFilter(ent)
 	return true
 end
 
+-- 处理子弹击中水面的逻辑
+-- 当子弹穿过液体时，重新进行一次包含水体的射线检测，并产生水花特效
 local function HandleShotImpactingWater(damage)
-	-- Trace again with water enabled
+	-- 使用包含水体的掩码重新进行射线检测
 	bullet_trace.mask = MASK_SHOT_HIT_WATER
 	bullet_trace.output = bullet_water_tr
 	util_TraceLine(bullet_trace)
@@ -87,9 +105,11 @@ local function HandleShotImpactingWater(damage)
 
 	if bullet_water_tr.AllSolid then return false end
 
+	-- 检测命中点附近的物质是否为液体
 	local contents = util.PointContents(bullet_water_tr.HitPos - bullet_water_tr.HitNormal * 0.1)
 	if bit.band(contents, CONTENTS_LIQUID) == 0 then return false end
 
+	-- 如果是第一次预测（客户端），则生成水花特效
 	if IsFirstTimePredicted() then
 		local effectdata = EffectData()
 		effectdata:SetOrigin(bullet_water_tr.HitPos)
@@ -102,7 +122,11 @@ local function HandleShotImpactingWater(damage)
 	return true
 end
 
+-- 获取世界实体（索引为0的实体）
 local wspawn = Entity(0)
+
+-- 检查射线检测结果是否包含FHB（假父级）实体
+-- 如果命中了FHB实体，则将其替换为真正的父级实体
 local function CheckFHB(tr)
 	local ent = tr.Entity
 	if ent == wspawn then return end
@@ -112,17 +136,21 @@ local function CheckFHB(tr)
 	end
 end
 
+-- 完全在Lua端实现的子弹发射函数
+-- 参数：src-发射位置, dir-发射方向, spread-散布角度, num-子弹数量, damage-伤害, attacker-攻击者, force_mul-力度倍率, tracer-曳光弹类型, callback-回调函数, hull_size-包围盒大小, hit_own_team-是否命中友军, max_distance-最大距离, filter-过滤器, inflictor-伤害来源武器
 function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul, tracer, callback, hull_size, hit_own_team, max_distance, filter, inflictor)
 	max_distance = max_distance or 56756
 	attacker = attacker or self
 	if not E_IsValid(attacker) then attacker = self end
 	force_mul = force_mul or 1
 
+	-- 设置临时变量以供过滤函数使用
 	temp_shooter = self
 	temp_attacker = attacker
 	attacker_player = attacker:IsPlayer()
 	inflictor_weapon = inflictor and inflictor:IsWeapon()
 
+	-- 配置射线检测的起始位置和过滤器
 	bullet_trace.start = src
 	if filter then
 		bullet_trace.filter = filter
@@ -135,6 +163,7 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 		end
 	end
 
+	-- 根据是否使用包围盒检测选择不同的检测方法
 	if hull_size then
 		bullet_trace.maxs = Vector(hull_size, hull_size, hull_size) * 0.5
 		bullet_trace.mins = bullet_trace.maxs * -1
@@ -143,12 +172,16 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 		method_to_use = util_TraceLine
 	end
 
+	-- 计算基础角度并记录是否有散布
 	base_ang = dir:Angle()
 	temp_has_spread = spread > 0
 
+	-- 在服务器端开始伤害数字会话（仅多子弹时）
 	if SERVER and num > 1 and attacker_player then attacker:StartDamageNumberSession() end
 
+	-- 循环发射每一颗子弹
 	for i=0, num - 1 do
+		-- 如果开启了散布，则随机旋转发射方向
 		if temp_has_spread then
 			temp_angle:Set(base_ang)
 			temp_angle:RotateAroundAxis(
@@ -163,16 +196,20 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 			dir = temp_angle:Forward()
 		end
 
+		-- 执行射线检测
 		bullet_trace.endpos = src + dir * max_distance
 		bullet_tr = method_to_use(bullet_trace)
 
+		-- 处理FHB实体
 		CheckFHB(bullet_tr)
 
+		-- 检测是否击中液体
 		local hitwater
 		if bit.band(util.PointContents(bullet_tr.HitPos), CONTENTS_LIQUID) ~= 0 then
 			hitwater = HandleShotImpactingWater(damage)
 		end
 
+		-- 创建伤害信息对象
 		local damageinfo = DamageInfo()
 		damageinfo:SetDamageType(DMG_BULLET)
 		damageinfo:SetDamage(damage)
@@ -185,11 +222,13 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 			damageinfo:SetDamageForce(Vector(0, 0, 1))
 		end
 
+		-- 标记哪些效果应该被触发
 		local use_tracer = true
 		local use_impact = true
 		local use_ragdoll_impact = true
 		local use_damage = true
 
+		-- 如果提供了回调，则调用回调函数并根据返回值调整行为
 		if callback then
 			local ret = callback(attacker, bullet_tr, damageinfo)
 			if ret then
@@ -202,9 +241,11 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 			end
 		end
 
+		-- 对命中的实体应用伤害
 		local ent = bullet_tr.Entity
 		if E_IsValid(ent) and use_damage then
 			if ent:IsPlayer() then
+				-- 缓存玩家当前速度，用于后续修正（防止多次速度修改）
 				temp_vel_ents[ent] = temp_vel_ents[ent] or ent:GetVelocity()
 				if SERVER then
 					ent:SetLastHitGroup(bullet_tr.HitGroup)
@@ -213,6 +254,7 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 					end
 				end
 			elseif attacker:IsValidPlayer() then
+				-- 对于可移动的物理实体，记录物理攻击者
 				local phys = ent:GetPhysicsObject()
 				if ent:GetMoveType() == MOVETYPE_VPHYSICS and phys:IsValid() and phys:IsMoveable() then
 					ent:SetPhysicsAttacker(attacker)
@@ -222,6 +264,7 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 			ent:DispatchTraceAttack(damageinfo, bullet_tr, dir)
 		end
 
+		-- 在服务器端弹出累积的伤害数字（最后一颗子弹时）
 		if SERVER and num > 1 and i == num - 1 and attacker_player then
 			local dmg, dmgpos, haspl = attacker:PopDamageNumberSession()
 
@@ -230,6 +273,7 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 			end
 		end
 
+		-- 在客户端生成各种视觉效果（第一次预测时）
 		if IsFirstTimePredicted() then
 			local effectdata = EffectData()
 			effectdata:SetOrigin(bullet_tr.HitPos)
@@ -237,7 +281,7 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 			effectdata:SetNormal(bullet_tr.HitNormal)
 
 			if hitwater then
-				-- We may not impact, but we DO need to affect ragdolls on the client
+				-- 击中水面时，可能仍然需要影响布娃娃
 				if use_ragdoll_impact then
 					util.Effect("RagdollImpact", effectdata)
 				end
@@ -249,6 +293,7 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 				util.Effect("Impact", effectdata)
 			end
 
+			-- 生成曳光弹效果
 			if use_tracer then
 				if self:IsPlayer() and E_IsValid(self:GetActiveWeapon()) then
 					effectdata:SetFlags( 0x0003 ) --TRACER_FLAG_USEATTACHMENT + TRACER_FLAG_WHIZ
@@ -264,45 +309,55 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 		end
 	end
 
-	-- No knockback vs. players. Do this ONLY once to migitate lag compensation issues instead of per bullet. Might just disable lag comp here.
+	-- 对所有命中的玩家恢复其原始速度，防止多次击退叠加导致的问题
+	-- 仅处理一次以缓解延迟补偿问题，而不是每颗子弹都处理
 	for ent, vel in pairs(temp_vel_ents) do
 		ent:SetLocalVelocity(vel)
 	end
 	table.Empty(temp_vel_ents)
 end
 
+-- 检查实体是否为有效的玩家
 function meta:IsValidPlayer()
 	return E_IsValid(self) and self:IsPlayer()
 end
 
+-- 检查实体是否为有效的人类玩家
 function meta:IsValidHuman()
 	return E_IsValid(self) and self:IsPlayer() and P_Team(self) == TEAM_HUMAN
 end
 
+-- 检查实体是否为有效的僵尸玩家
 function meta:IsValidZombie()
 	return E_IsValid(self) and self:IsPlayer() and P_Team(self) == TEAM_UNDEAD
 end
 
+-- 检查实体是否为人类玩家（不检查是否有效或存活）
 function meta:IsHuman()
 	return self:IsPlayer() and P_Team(self) == TEAM_HUMAN
 end
 
+-- 检查实体是否为僵尸玩家（不检查是否有效或存活）
 function meta:IsZombie()
 	return self:IsPlayer() and P_Team(self) == TEAM_UNDEAD
 end
 
+-- 检查实体是否为有效的、存活的玩家
 function meta:IsValidLivingPlayer()
 	return self:IsValidPlayer() and self:Alive()
 end
 
+-- 检查实体是否为有效的、存活的人类玩家
 function meta:IsValidLivingHuman()
 	return self:IsValidHuman() and self:Alive()
 end
 
+-- 检查实体是否为有效的、存活的僵尸玩家
 function meta:IsValidLivingZombie()
 	return self:IsValidZombie() and self:Alive()
 end
 
+-- 将一个玩家的外观属性（颜色、身体组件、材质、皮肤）应用到该实体上
 function meta:ApplyPlayerProperties(ply)
 	self.GetPlayerColor = function() return ply:GetPlayerColor() end
 	self:SetBodygroup( ply:GetBodygroup(1), 1 )
@@ -310,11 +365,14 @@ function meta:ApplyPlayerProperties(ply)
 	self:SetSkin( ply:GetSkin() or 1 )
 end
 
+-- 根据实体的包围盒计算其大致体积（三个维度之和）
 function meta:GetVolume()
 	local mins, maxs = self:OBBMins(), self:OBBMaxs()
 	return (maxs.x - mins.x) + (maxs.y - mins.y) + (maxs.z - mins.z)
 end
 
+-- 对实体造成特定类型的伤害
+-- 参数：damage-伤害值, damagetype-伤害类型, attacker-攻击者, inflictor-伤害来源, hitpos-命中位置, damageforce-伤害力
 function meta:TakeSpecialDamage(damage, damagetype, attacker, inflictor, hitpos, damageforce)
 	if self:IsPlayer() and not self:Alive() then return end
 	if not attacker or not E_IsValid(attacker) then attacker = game.GetWorld() end
@@ -326,6 +384,7 @@ function meta:TakeSpecialDamage(damage, damagetype, attacker, inflictor, hitpos,
 		dmginfo:SetAttacker(attacker)
 	end
 
+	-- 计算最近的命中点
 	local nearestpos = self:NearestPoint(inflictor:NearestPoint(self:LocalToWorld(self:OBBCenter())))
 
 	if inflictor then
@@ -340,6 +399,7 @@ function meta:TakeSpecialDamage(damage, damagetype, attacker, inflictor, hitpos,
 	end
 	dmginfo:SetDamageType(damagetype)
 
+	-- 缓存玩家速度以防止击退导致的速度异常
 	local vel = self:GetVelocity()
 	self:TakeDamageInfo(dmginfo)
 	if self:IsPlayer() and attacker ~= self then
@@ -349,6 +409,7 @@ function meta:TakeSpecialDamage(damage, damagetype, attacker, inflictor, hitpos,
 	return dmginfo
 end
 
+-- 找到实体上离指定位置最近的骨骼ID
 function meta:NearestBone(pos)
 	local count = self:GetBoneCount()
 	if count == 0 then return end
@@ -356,6 +417,7 @@ function meta:NearestBone(pos)
 	local nearest
 	local nearestdist
 
+	-- 遍历所有骨骼，计算距离并找出最近的
 	for boneid = 1, count - 1 do
 		local bonepos = self:GetBonePositionMatrixed(boneid)
 		local dist = bonepos:DistToSqr(pos)
@@ -369,10 +431,13 @@ function meta:NearestBone(pos)
 	return nearest
 end
 
+-- 检查实体是否被视为一个投射物（碰撞组为投射物或标记为AlwaysProjectile）
 function meta:IsProjectile()
 	return self:GetCollisionGroup() == COLLISION_GROUP_PROJECTILE or self.AlwaysProjectile
 end
 
+-- 将实体设置为一个通用投射物
+-- 设置自定义碰撞检测、碰撞组、物理质量、浮力、重力和阻力等属性
 function meta:SetupGenericProjectile(gravity)
 	self:SetCustomCollisionCheck(true)
 	self:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
@@ -388,18 +453,24 @@ function meta:SetupGenericProjectile(gravity)
 	end
 end
 
+-- 获取投射物的实际伤害来源实体
+-- 如果设置了ProjSource且有效，则返回该来源，否则返回自身
 function meta:ProjectileDamageSource()
 	return (self.ProjSource and E_IsValid(self.ProjSource)) and self.ProjSource or self
 end
 
+-- 重置实体所有骨骼的缩放、角度和位置
+-- 参数onlyscale为true时只重置缩放
 function meta:ResetBones(onlyscale)
 	local v = Vector(1, 1, 1)
 	local bcount = self.BuildingBones or self:GetBoneCount() - 1
 	if onlyscale then
+		-- 只重置缩放
 		for i=0, bcount do
 			self:ManipulateBoneScale(i, v)
 		end
 	else
+		-- 重置缩放、角度和位置
 		local a = Angle(0, 0, 0)
 		for i=0, bcount do
 			self:ManipulateBoneScale(i, v)
@@ -409,22 +480,28 @@ function meta:ResetBones(onlyscale)
 	end
 end
 
+-- 获取路障的当前生命值（通过数据表第1个浮点数）
 function meta:GetBarricadeHealth()
 	return self:GetDTFloat(1)
 end
 
+-- 获取路障的最大生命值（通过数据表第2个浮点数）
 function meta:GetMaxBarricadeHealth()
 	return self:GetDTFloat(2)
 end
 
+-- 获取路障已被修理的次数（通过数据表第3个浮点数）
 function meta:GetBarricadeRepairs()
 	return self:GetDTFloat(3)
 end
 
+-- 获取路障的最大可修理次数（基于最大生命值和全局修理容量系数）
 function meta:GetMaxBarricadeRepairs()
 	return self:GetMaxBarricadeHealth() * GAMEMODE.BarricadeRepairCapacity
 end
 
+-- 通过骨骼矩阵获取指定骨骼的位置和角度
+-- 如果矩阵不存在，则回退到实体的位置和角度
 function meta:GetBonePositionMatrixed(index)
 	local matrix = self:GetBoneMatrix(index)
 	if matrix then
@@ -434,7 +511,8 @@ function meta:GetBonePositionMatrixed(index)
 	return self:GetPos(), self:GetAngles()
 end
 
--- This needs to be done otherwise the physics might crash.
+-- 强制物理引擎重新计算实体的碰撞规则
+-- 通过快速切换碰撞组来触发物理引擎的更新，否则物理可能崩溃
 function meta:CollisionRulesChanged()
 	if not self.m_OldCollisionGroup then self.m_OldCollisionGroup = self:GetCollisionGroup() end
 	self:SetCollisionGroup(self.m_OldCollisionGroup == COLLISION_GROUP_DEBRIS and COLLISION_GROUP_WORLD or COLLISION_GROUP_DEBRIS)
@@ -442,20 +520,25 @@ function meta:CollisionRulesChanged()
 	self.m_OldCollisionGroup = nil
 end
 
+-- 获取实体颜色的Alpha（透明度）值
 function meta:GetAlpha()
 	return self:GetColor().a
 end
 
+-- 设置实体颜色的Alpha（透明度）值
 function meta:SetAlpha(a)
 	local col = self:GetColor()
 	col.a = a
 	self:SetColor(col)
 end
 
+-- 检查实体当前是否为一个路障道具（被标记为路障或被钉子固定）
 function meta:IsBarricadeProp()
 	return self.IsBarricadeObject or self:IsNailed()
 end
 
+-- 获取当前正在举起该实体的玩家
+-- 遍历所有status_human_holding实体查找持有者
 function meta:GetHolder()
 	for _, ent in pairs(ents.FindByClass("status_human_holding")) do
 		if ent:GetObject() == self then
@@ -465,15 +548,19 @@ function meta:GetHolder()
 	end
 end
 
+-- 从指定位置将实体抛出，施加一个力
+-- 支持玩家和物理实体两种移动类型
 function meta:ThrowFromPosition(pos, force, noknockdown)
 	if force == 0 or self:IsProjectile() or self.NoThrowFromPosition then return false end
 
+	-- 玩家有击退缩放系数
 	if self:IsPlayer() then
 		if self:ActiveBarricadeGhosting() then return false end
 
 		force = force * (self.KnockbackScale or 1)
 	end
 
+	-- 处理物理实体的击退
 	if self:GetMoveType() == MOVETYPE_VPHYSICS then
 		local phys = self:GetPhysicsObject()
 		if phys:IsValid() and phys:IsMoveable() then
@@ -483,6 +570,7 @@ function meta:ThrowFromPosition(pos, force, noknockdown)
 
 		return true
 	elseif self:GetMoveType() >= MOVETYPE_WALK and self:GetMoveType() < MOVETYPE_PUSH then
+		-- 处理玩家或NPC的击退
 		self:SetGroundEntity(NULL)
 		if SERVER and not noknockdown and self:IsPlayer() then
 			local absforce = math.abs(force)
@@ -496,6 +584,8 @@ function meta:ThrowFromPosition(pos, force, noknockdown)
 	end
 end
 
+-- 从指定位置将实体抛出，并可自定义垂直方向的力度
+-- 与ThrowFromPosition类似，但可控制Z轴方向的力度比例
 function meta:ThrowFromPositionSetZ(pos, force, zmul, noknockdown)
 	if force == 0 or self:IsProjectile() or self.NoThrowFromPosition then return false end
 	zmul = zmul or 0.7
@@ -506,6 +596,7 @@ function meta:ThrowFromPositionSetZ(pos, force, zmul, noknockdown)
 		force = force * (self.KnockbackScale or 1)
 	end
 
+	-- 处理物理实体的击退（带Z轴控制）
 	if self:GetMoveType() == MOVETYPE_VPHYSICS then
 		local phys = self:GetPhysicsObject()
 		if phys:IsValid() and phys:IsMoveable() then
@@ -519,6 +610,7 @@ function meta:ThrowFromPositionSetZ(pos, force, zmul, noknockdown)
 
 		return true
 	elseif self:GetMoveType() >= MOVETYPE_WALK and self:GetMoveType() < MOVETYPE_PUSH then
+		-- 处理玩家或NPC的击退（带Z轴控制）
 		self:SetGroundEntity(NULL)
 		if SERVER and not noknockdown and self:IsPlayer() then
 			local absforce = math.max(math.abs(force) * math.abs(zmul), math.abs(force))
@@ -537,21 +629,23 @@ function meta:ThrowFromPositionSetZ(pos, force, zmul, noknockdown)
 	end
 end
 
+-- 预缓存玩家疼痛音效
 util.PrecacheSound("player/pl_pain5.wav")
 util.PrecacheSound("player/pl_pain6.wav")
 util.PrecacheSound("player/pl_pain7.wav")
+
+-- 对实体造成毒性伤害
+-- 对玩家有特殊效果（视角震动、音效），并优先计算抗性和伤害缩放
 function meta:PoisonDamage(damage, attacker, inflictor, hitpos, noreduction, instant)
 	damage = damage or 1
 
 	local dmginfo = DamageInfo()
 
+	-- 处理对玩家的毒性伤害
 	if self:IsPlayer() then
 		if P_Team(self) ~= TEAM_HUMAN then return end
 
-		--[[if self.BuffResistant then
-			damage = damage / 2
-		end]]
-
+		-- 计算毒伤抗性缩放
 		if self.PoisonDamageTakenMul then
 			damage = damage * self.PoisonDamageTakenMul
 		end
@@ -560,9 +654,11 @@ function meta:PoisonDamage(damage, attacker, inflictor, hitpos, noreduction, ins
 			damage = damage * self.ProjDamageTakenMul
 		end
 
+		-- 视角震动和音效
 		self:ViewPunch(Angle(math.random(-10, 10), math.random(-10, 10), math.random(-20, 20)))
 		self:EmitSound(string.format("player/pl_pain%d.wav", math.random(5, 7)))
 
+		-- 如果不是立即生效，则将一半伤害作为持续毒伤
 		if not instant then
 			if SERVER then
 				local dmg = math.floor(damage * 0.5)
@@ -576,12 +672,11 @@ function meta:PoisonDamage(damage, attacker, inflictor, hitpos, noreduction, ins
 
 		dmginfo:SetDamageType(DMG_ACID)
 	elseif self.GetObjectHealth then
+		-- 对可部署物使用酸性伤害
 		dmginfo:SetDamageType(DMG_ACID)
 	else
-		--[[if not noreduction then
-			damage = damage / 3
-		end]]
-		dmginfo:SetDamageType(DMG_SLASH) -- Fixes not doing damage to props.
+		-- 对普通实体使用DMG_SLASH以确保能造成伤害
+		dmginfo:SetDamageType(DMG_SLASH)
 	end
 
 	attacker = attacker or self
@@ -594,13 +689,16 @@ function meta:PoisonDamage(damage, attacker, inflictor, hitpos, noreduction, ins
 	self:TakeDamageInfo(dmginfo)
 end
 
--- Fix sequence duration being able to be nil
+-- 重写SequenceDuration函数，防止返回nil导致错误
+-- 如果原函数返回nil，则返回0作为安全默认值
 local OldSequenceDuration = meta.SequenceDuration
 function meta:SequenceDuration(seqid)
 	return OldSequenceDuration(self, seqid) or 0
 end
 
--- Workaround for DispatchTraceAttack not interacting with some entities. Replace me after appropriate binding exists.
+-- 重写DispatchTraceAttack函数
+-- 允许设置了NoTraceAttack的实体绕过常规射线攻击检测，直接承受伤害
+-- 是解决某些实体不响应DispatchTraceAttack的临时方案
 local OldDispatch = meta.DispatchTraceAttack
 function meta:DispatchTraceAttack(dmginfo, tr, dir)
 	if self.NoTraceAttack then
@@ -610,10 +708,12 @@ function meta:DispatchTraceAttack(dmginfo, tr, dir)
 	end
 end
 
+-- 检查实体是否为物理道具（prop_physics），并可选择性地匹配模型
 function meta:IsPhysicsModel(mdl)
 	return string.sub(self:GetClass(), 1, 12) == "prop_physics" and (not mdl or string.lower(self:GetModel()) == string.lower(mdl))
 end
 
+-- 检查实体是否为特定类型的武器（包括掉落的prop_weapon和正在持有的武器）
 function meta:IsWeaponType(class)
 	return self:GetClass() == "prop_weapon" and self:GetWeaponType() == class or (self:IsWeapon() and self:GetClass() == class)
 end

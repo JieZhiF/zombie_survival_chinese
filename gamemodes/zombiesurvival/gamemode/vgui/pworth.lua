@@ -1,3 +1,12 @@
+-- ============================================================================
+-- PWorth - 价值/起始装备菜单（开局购买界面）
+-- 玩家可以在开局前使用 Worth 点数购买装备
+-- 支持保存/加载配置方案、快速购买、随机装备等功能
+-- ============================================================================
+
+-- ============================================================================
+-- InitialWorthMenu - 等待技能加载完成后打开价值菜单
+-- ============================================================================
 function InitialWorthMenu()
 	timer.Create("WaitUntilSkillsLoaded", 0, 0, function()
 		if GAMEMODE.ReceivedInitialSkills then
@@ -7,6 +16,7 @@ function InitialWorthMenu()
 	end)
 end
 
+-- 第一波开始时关闭价值菜单
 hook.Add("SetWave", "CloseWorthOnWave1", function(wave)
 	if wave > 0 then
 		if pWorth and pWorth:IsValid() then
@@ -17,17 +27,27 @@ hook.Add("SetWave", "CloseWorthOnWave1", function(wave)
 	end
 end)
 
+-- 额外起始价值（由服务器网络设置）
 local ExtraStartingWorth = 0
+
+-- ============================================================================
+-- GetStartingWorth - 获取总起始价值
+-- ============================================================================
 local function GetStartingWorth()
 	return GAMEMODE.StartingWorth + ExtraStartingWorth
 end
 
+-- 接收服务器发送的额外起始价值
 net.Receive("zs_extrastartingworth", function(len)
 	ExtraStartingWorth = net.ReadUInt(16)
 end)
 
+-- 默认方案客户端变量
 local cvarDefaultCart = CreateClientConVar("zs_defaultcart", "", true, false)
 
+-- ============================================================================
+-- DefaultDoClick - 设置/取消默认方案
+-- ============================================================================
 local function DefaultDoClick(btn)
 	if cvarDefaultCart:GetString() == btn.Name then
 		RunConsoleCommand("zs_defaultcart", "")
@@ -40,9 +60,13 @@ local function DefaultDoClick(btn)
 	timer.Simple(0.1, MakepWorth)
 end
 
+-- 剩余价值和所有购买按钮
 local remainingworth = 0
 local WorthButtons = {}
 
+-- ============================================================================
+-- Checkout - 结账购买
+-- ============================================================================
 local function Checkout(tobuy)
 	if tobuy and #tobuy > 0 then
 		gamemode.Call("SuppressArsenalUpgrades", 1)
@@ -57,6 +81,9 @@ local function Checkout(tobuy)
 	end
 end
 
+-- ============================================================================
+-- CheckoutDoClick - 结账按钮点击
+-- ============================================================================
 local function CheckoutDoClick(self)
 	local tobuy = {}
 	for _, btn in pairs(WorthButtons) do
@@ -72,6 +99,9 @@ local function CheckoutDoClick(self)
 	end
 end
 
+-- ============================================================================
+-- RandDoClick - 随机装备按钮
+-- ============================================================================
 local function RandDoClick(self)
 	gamemode.Call("SuppressArsenalUpgrades", 1)
 
@@ -82,13 +112,19 @@ local function RandDoClick(self)
 	end
 end
 
+-- 保存的方案列表
 GM.SavedCarts = {}
+
+-- 从文件加载已保存的方案
 hook.Add("Initialize", "LoadCarts", function()
 	if file.Exists(GAMEMODE.CartFile, "DATA") then
 		GAMEMODE.SavedCarts = Deserialize(file.Read(GAMEMODE.CartFile)) or {}
 	end
 end)
 
+-- ============================================================================
+-- ClearCartDoClick - 清空当前选择
+-- ============================================================================
 local function ClearCartDoClick()
 	for _, btn in ipairs(WorthButtons) do
 		if btn.On then
@@ -99,6 +135,9 @@ local function ClearCartDoClick()
 	surface.PlaySound("buttons/button11.wav")
 end
 
+-- ============================================================================
+-- ClickWorthButton - 模拟点击指定 ID 的价值按钮
+-- ============================================================================
 local function ClickWorthButton(id)
 	local result = true
 	for _, btn in pairs(WorthButtons) do
@@ -112,6 +151,9 @@ local function ClickWorthButton(id)
 	return result
 end
 
+-- ============================================================================
+-- LoadCart - 加载方案
+-- ============================================================================
 local function LoadCart(cartid, silent)
 	if not GAMEMODE.SavedCarts[cartid] then return end
 
@@ -131,10 +173,16 @@ local function LoadCart(cartid, silent)
 	return true
 end
 
+-- ============================================================================
+-- LoadDoClick - 加载方案按钮点击
+-- ============================================================================
 local function LoadDoClick(self)
 	LoadCart(self.ID)
 end
 
+-- ============================================================================
+-- SaveCurrentCart - 保存当前选择为方案
+-- ============================================================================
 local function SaveCurrentCart(name)
 	local tobuy = {}
 	for _, btn in pairs(WorthButtons) do
@@ -151,7 +199,6 @@ local function SaveCurrentCart(name)
 			file.Write(GAMEMODE.CartFile, Serialize(GAMEMODE.SavedCarts))
 			print(string.format(translate.Get("Worth_SavedCart"), tostring(name)))
 
-
 			LoadCart(i, true)
 			return
 		end
@@ -162,25 +209,29 @@ local function SaveCurrentCart(name)
 	file.Write(GAMEMODE.CartFile, Serialize(GAMEMODE.SavedCarts))
 	print(string.format(translate.Get("Worth_SavedCart"), tostring(name)))
 
-
 	LoadCart(#GAMEMODE.SavedCarts, true)
 end
 
+-- ============================================================================
+-- SaveDoClick - 保存方案按钮点击
+-- ============================================================================
 local function SaveDoClick(self)
     local frame = Derma_StringRequest(
-        translate.Get("Worth_SaveCart"), -- 使用翻译项
-        translate.Get("Worth_EnterCartName"), -- 使用翻译项
-        translate.Get("Worth_DefaultName"), -- 使用翻译项
+        translate.Get("Worth_SaveCart"),
+        translate.Get("Worth_EnterCartName"),
+        translate.Get("Worth_DefaultName"),
         function(strTextOut) SaveCurrentCart(strTextOut) end,
         function(strTextOut) end,
-        translate.Get("Worth_OK"), -- 使用翻译项
-        translate.Get("Worth_Cancel") -- 使用翻译项
+        translate.Get("Worth_OK"),
+        translate.Get("Worth_Cancel")
     )
 
     frame:GetChildren()[5]:GetChildren()[2]:SetTextColor(Color(30, 30, 30))
 end
 
-
+-- ============================================================================
+-- DeleteDoClick - 删除方案
+-- ============================================================================
 local function DeleteDoClick(self)
 	if GAMEMODE.SavedCarts[self.ID] then
 		table.remove(GAMEMODE.SavedCarts, self.ID)
@@ -190,18 +241,27 @@ local function DeleteDoClick(self)
 	end
 end
 
+-- ============================================================================
+-- QuickCheckDoClick - 快速结账：加载方案并直接购买
+-- ============================================================================
 local function QuickCheckDoClick(self)
 	if GAMEMODE.SavedCarts[self.ID] and LoadCart(self.ID, true) then
 		Checkout(GAMEMODE.SavedCarts[self.ID][2])
 	end
 end
 
+-- ============================================================================
+-- WorthThink - 检查玩家是否仍为人类，否则关闭
+-- ============================================================================
 local function WorthThink(self)
 	if MySelf:Team() ~= TEAM_HUMAN then
 		self:Close()
 	end
 end
 
+-- ============================================================================
+-- MakepWorth - 创建价值菜单主窗口
+-- ============================================================================
 function MakepWorth()
 	if pWorth and pWorth:IsValid() then
 		pWorth:Remove()
@@ -222,6 +282,7 @@ function MakepWorth()
 	frame:SetTitle(" ")
 	frame.Think = WorthThink
 
+	-- 顶部空间
 	local topspace = vgui.Create("DPanel", frame)
 	topspace:SetWide(wid * 0.75)
 	topspace:SetPaintBackground(false)
@@ -238,6 +299,7 @@ function MakepWorth()
 	topspace:AlignTop(8)
 	topspace:CenterHorizontal()
 
+	-- 底部空间
 	local bottomspace = vgui.Create("DPanel", frame)
 	bottomspace:SetWide(topspace:GetWide())
 	bottomspace:SetPaintBackground(false)
@@ -255,12 +317,14 @@ function MakepWorth()
 	local __, topy = topspace:GetPos()
 	local ___, boty = bottomspace:GetPos()
 
+	-- 主属性表
 	local propertysheet = vgui.Create("DPropertySheet", frame)
 	propertysheet:SetSize(wid, boty - topy - 8 - topspace:GetTall())
 	propertysheet:MoveBelow(topspace, 4)
 	propertysheet:SetPadding(1)
 	propertysheet.Paint = function() end
 
+	-- 收藏夹页面（已保存的方案列表）
 	local list = vgui.Create("DPanelList", propertysheet)
 	local sheet = propertysheet:AddSheet(translate.Get("Favorites_TabTitle"), list, "icon16/heart.png", false, false)
 	sheet.Panel:SetPos(0, tabhei + 2)
@@ -280,6 +344,7 @@ function MakepWorth()
 
 	local defaultcart = cvarDefaultCart:GetString()
 
+	-- 遍历已保存方案列表
 	for i, savetab in ipairs(GAMEMODE.SavedCarts) do
 		local cartpan = vgui.Create("DEXRoundedPanel")
 		cartpan:SetCursor("pointer")
@@ -290,6 +355,7 @@ function MakepWorth()
 		local x = 8
 		local limitedscale = math.Clamp(screenscale, 1, 1.5)
 
+		-- 默认方案图标
 		if defaultcart == cartname then
 			local defimage = vgui.Create("DImage", cartpan)
 			defimage:SetImage("icon16/heart.png")
@@ -302,11 +368,13 @@ function MakepWorth()
 			x = x + defimage:GetWide() + 4
 		end
 
+		-- 方案名称
 		local cartnamelabel = EasyLabel(cartpan, cartname, panfont)
 		cartnamelabel:SetPos(x, cartpan:GetTall() * 0.5 - cartnamelabel:GetTall() * 0.5)
 
 		x = cartpan:GetWide()
 
+		-- 快速购买按钮
 		local checkbutton = vgui.Create("DImageButton", cartpan)
 		checkbutton:SetImage("icon16/accept.png")
 		checkbutton:SizeToContents()
@@ -317,6 +385,7 @@ function MakepWorth()
 		checkbutton.ID = i
 		checkbutton.DoClick = QuickCheckDoClick
 
+		-- 加载方案按钮
 		local loadbutton = vgui.Create("DImageButton", cartpan)
 		loadbutton:SetImage("icon16/folder_go.png")
 		loadbutton:SizeToContents()
@@ -327,6 +396,7 @@ function MakepWorth()
 		loadbutton.ID = i
 		loadbutton.DoClick = LoadDoClick
 
+		-- 设为默认按钮
 		local defaultbutton = vgui.Create("DImageButton", cartpan)
 		defaultbutton:SetImage("icon16/heart.png")
 		defaultbutton:SizeToContents()
@@ -341,6 +411,7 @@ function MakepWorth()
 		defaultbutton.Name = cartname
 		defaultbutton.DoClick = DefaultDoClick
 
+		-- 删除方案按钮
 		local deletebutton = vgui.Create("DImageButton", cartpan)
 		deletebutton:SetImage("icon16/bin.png")
 		deletebutton:SizeToContents()
@@ -354,11 +425,11 @@ function MakepWorth()
 		list:AddItem(cartpan)
 	end
 
+	-- 按类别创建物品分页
 	for catid, catname in ipairs(GAMEMODE.ItemCategories) do
 		local itemframe = vgui.Create("DScrollPanel", propertysheet)
 		local trinkets = catid == ITEMCAT_TRINKETS
 
-		--list = vgui.Create("DPanelList", itemframe)
 		list = vgui.Create("DGrid", itemframe)
 		list:SetSize(propertysheet:GetWide() - 328, propertysheet:GetTall() - 32)
 		list:SetCols(2)
@@ -378,6 +449,7 @@ function MakepWorth()
 		end
 	end
 
+	-- 底部操作栏：剩余价值、结账、随机、清空
 	local worthlab = EasyLabel(frame, translate.Get("Worth_Label")..tostring(remainingworth), "ZSHUDFontSmall", COLOR_LIMEGREEN)
 	worthlab:SetPos(8, frame:GetTall() - worthlab:GetTall() - 8)
 	frame.WorthLab = worthlab
@@ -432,6 +504,9 @@ function MakepWorth()
 	return frame
 end
 
+-- ============================================================================
+-- ItemAmountCounter - 物品数量计数器（显示已拥有数量）
+-- ============================================================================
 local PANEL = {}
 PANEL.m_ItemID = 0
 PANEL.RefreshTime = 1
@@ -466,8 +541,14 @@ function PANEL:GetItemID() return self.m_ItemID end
 
 vgui.Register("ItemAmountCounter", PANEL, "DLabel")
 
+-- ============================================================================
+-- ZSWorthButton - 价值菜单中的单个物品按钮
+-- ============================================================================
 PANEL = {}
 
+-- ============================================================================
+-- Init - 初始化价值按钮
+-- ============================================================================
 function PANEL:Init()
 	self:SetText("")
 
@@ -478,6 +559,7 @@ function PANEL:Init()
 	self:SetWide(wid * screenscale)
 	self:SetTall(100 * screenscale)
 
+	-- 模型/图标框
 	self.ModelFrame = vgui.Create("DPanel", self)
 	self.ModelFrame:SetSize(wid/2 * screenscale, 100/2 * screenscale)
 	self.ModelFrame:SetPos(wid/4 * screenscale, 100/5 * screenscale)
@@ -485,23 +567,27 @@ function PANEL:Init()
 	self.ModelFrame:SetMouseInputEnabled(false)
 	self.ModelFrame.Paint = function() end
 
+	-- 物品名称
 	self.NameLabel = EasyLabel(self, "", "ZSHUDFontSmallest")
 	self.NameLabel:SetContentAlignment(4)
 	self.NameLabel:DockPadding(0, 0, 0, 0)
 	self.NameLabel:DockMargin(0, 0, 0, 0)
-	--self.NameLabel:Dock(FILL)
 
+	-- 价格标签
 	self.PriceLabel = EasyLabel(self, "", "ZSHUDFontTiny")
 	self.PriceLabel:SetContentAlignment(4)
 	self.PriceLabel:DockPadding(0, 0, 0, 0)
-	--self.PriceLabel:Dock(RIGHT)
 	self.PriceLabel:DockMargin(8, 0, 8 * screenscale, 0)
 
+	-- 数量计数器
 	self.ItemCounter = vgui.Create("ItemAmountCounter", self)
 
 	self:SetWorthID(nil)
 end
 
+-- ============================================================================
+-- SetWorthID - 设置价值物品 ID 并更新显示
+-- ============================================================================
 function PANEL:SetWorthID(id)
 	self.ID = id
 
@@ -579,8 +665,13 @@ function PANEL:SetWorthID(id)
 	self.NameLabel:SizeToContents()
 end
 
+-- 背景颜色
 local colBG = Color(15, 15, 15, 255)
 local colSel = Color(15, 40, 15, 255)
+
+-- ============================================================================
+-- Paint - 绘制选中/悬停状态边框
+-- ============================================================================
 function PANEL:Paint(w, h)
 	local outline
 	if self.Hovered then
@@ -594,19 +685,22 @@ function PANEL:Paint(w, h)
 	return true
 end
 
+-- ============================================================================
+-- OnCursorEntered - 鼠标进入时在查看器中显示详情
+-- ============================================================================
 function PANEL:OnCursorEntered()
 	local shoptbl = FindStartingItem(self.ID)
 	if not shoptbl then return end
 
 	local sweptable = GAMEMODE.ZSInventoryItemData[shoptbl.SWEP] or weapons.Get(shoptbl.SWEP)
-	if sweptable --[[and not GAMEMODE.AlwaysQuickBuy]] then
+	if sweptable then
 		GAMEMODE:SupplyItemViewerDetail(pWorth.Viewer, sweptable, shoptbl)
 	end
 end
 
---[[function PANEL:OnCursorExited()
-end]]
-
+-- ============================================================================
+-- DoClick - 点击切换选择/取消选择物品
+-- ============================================================================
 function PANEL:DoClick(silent, force)
 	local id = self.ID
 	local tab = FindStartingItem(id)
@@ -615,6 +709,7 @@ function PANEL:DoClick(silent, force)
 	if not tab then return end
 
 	if self.On then
+		-- 取消选择
 		self.On = nil
 		if not silent then
 			surface.PlaySound("buttons/button18.wav")
@@ -624,6 +719,7 @@ function PANEL:DoClick(silent, force)
 		surface.PlaySound("buttons/button8.wav")
 		return
 	else
+		-- 选择物品
 		if remainingworth < tab.Price then
 			if not force then
 				surface.PlaySound("buttons/button8.wav")
@@ -639,6 +735,7 @@ function PANEL:DoClick(silent, force)
 		remainingworth = remainingworth - tab.Price
 	end
 
+	-- 更新剩余价值显示和颜色
 	pWorth.WorthLab:SetText(""..translate.Get("Worth").. remainingworth)
 	if remainingworth <= 0 then
 		pWorth.WorthLab:SetTextColor(COLOR_RED)

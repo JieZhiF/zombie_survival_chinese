@@ -1,98 +1,134 @@
-//描述：这个文件是按ALT时右边出现的界面，也就是那个子弹界面
-//注释状态：已完成，
+-- ============================================================================
+-- DAmmoCounter - ALT菜单右侧界面的弹药计数器组件
+-- 显示当前选中弹药的类型图标、数量、丢弃和给予按钮
+-- ============================================================================
 
 local PANEL = {}
 
-PANEL.NextRefresh = 0//下一次刷新时间
-PANEL.RefreshTime = 1//刷新时间
+-- 下一次刷新时间
+PANEL.NextRefresh = 0
+-- 刷新间隔（秒）
+PANEL.RefreshTime = 1
 
-local col2 = Color(190, 150, 80, 210)//子弹类型颜色
-local coldark = Color(0, 0, 0, 100)//子弹数量颜色
+-- 子弹类型文字颜色（棕金色）
+local col2 = Color(190, 150, 80, 210)
+-- 子弹数量文字颜色（深色）
+local coldark = Color(0, 0, 0, 100)
 
-local function GetTargetEntIndex()//获取目标玩家的索引
+-- 获取目标玩家实体索引（用于给予弹药）
+local function GetTargetEntIndex()
 	return GAMEMODE.HumanMenuLockOn and GAMEMODE.HumanMenuLockOn:IsValid() and GAMEMODE.HumanMenuLockOn:EntIndex() or 0
 end
 
-local function DropDoClick(self)//丢弃
-	RunConsoleCommand("zsdropammo", self:GetParent():GetAmmoType())//zsdropammo 丢弃子弹,参数是子弹类型
+-- 丢弃按钮点击回调：发送丢弃弹药命令
+local function DropDoClick(self)
+	RunConsoleCommand("zsdropammo", self:GetParent():GetAmmoType())
 end
 
-local function GiveDoClick(self)//给予
-	RunConsoleCommand("zsgiveammo", self:GetParent():GetAmmoType(), GetTargetEntIndex())//zsgiveammo 给予子弹,参数是子弹类型和目标玩家
+-- 给予按钮点击回调：发送给予弹药命令
+local function GiveDoClick(self)
+	RunConsoleCommand("zsgiveammo", self:GetParent():GetAmmoType(), GetTargetEntIndex())
 end
 
+-- ============================================================================
+-- Init - 初始化弹药计数器面板
+-- ============================================================================
 function PANEL:Init()
-	local font = "ZSAmmoName"//字体
-	self.m_AmmoCountLabel = EasyLabel(self, "0", font, color_black)//子弹数量
+	local font = "ZSAmmoName"
+	-- 弹药数量标签
+	self.m_AmmoCountLabel = EasyLabel(self, "0", font, color_black)
 
-	self.m_AmmoTypeLabel = EasyLabel(self, " ", font, col2)//子弹类型
+	-- 弹药类型名称标签
+	self.m_AmmoTypeLabel = EasyLabel(self, " ", font, col2)
 
-	self.m_DropButton = vgui.Create("DImageButton", self)//丢弃按钮
-	self.m_DropButton:SetImage("icon16/box.png")--盒子图标,丢弃的那个
-	self.m_DropButton:SizeToContents()//自适应大小
-	self.m_DropButton:SetTooltip("Drop")//提示
-	self.m_DropButton.DoClick = DropDoClick//点击事件,上面那个丢弃函数
+	-- 丢弃按钮（盒子图标）
+	self.m_DropButton = vgui.Create("DImageButton", self)
+	self.m_DropButton:SetImage("icon16/box.png")
+	self.m_DropButton:SizeToContents()
+	self.m_DropButton:SetTooltip("Drop")
+	self.m_DropButton.DoClick = DropDoClick
 
-	self.m_GiveButton = vgui.Create("DImageButton", self)//给予按钮
-	self.m_GiveButton:SetImage("icon16/user_go.png")--小人
-	self.m_GiveButton:SizeToContents()//自适应大小
-	self.m_GiveButton:SetTooltip("Give")//提示
-	self.m_GiveButton.DoClick = GiveDoClick//点击事件,上面那个给予函数
+	-- 给予按钮（用户图标）
+	self.m_GiveButton = vgui.Create("DImageButton", self)
+	self.m_GiveButton:SetImage("icon16/user_go.png")
+	self.m_GiveButton:SizeToContents()
+	self.m_GiveButton:SetTooltip("Give")
+	self.m_GiveButton.DoClick = GiveDoClick
 
-	self:SetAmmoType("pistol")//默认是手枪子弹
+	-- 默认弹药类型为手枪弹
+	self:SetAmmoType("pistol")
 end
 
-local colBG = Color(5, 5, 5, 180)//背景颜色,也就是那个背景板
-function PANEL:Paint()
-	local tall = self:GetTall()//高度
-	local csize = tall - 8//子弹数量的大小
-	draw.RoundedBoxEx(8, 0, 0, self:GetWide(), tall, colBG)//画背景板,圆角8,x,y的位置，宽度,高度,颜色
-	draw.RoundedBox(4, 8, tall * 0.5 - csize * 0.5, csize, csize, col2)//画子弹数量的背景
+-- 面板背景颜色（深色半透明）
+local colBG = Color(5, 5, 5, 180)
 
+-- ============================================================================
+-- Paint - 绘制弹药计数器背景
+-- ============================================================================
+function PANEL:Paint()
+	local tall = self:GetTall()
+	local csize = tall - 8
+	draw.RoundedBoxEx(8, 0, 0, self:GetWide(), tall, colBG)
+	draw.RoundedBox(4, 8, tall * 0.5 - csize * 0.5, csize, csize, col2)
 	return true
 end
 
-function PANEL:Think()//刷新
-	if RealTime() >= self.NextRefresh then//如果当前时间大于下一次刷新时间
-		self.NextRefresh = RealTime() + self.RefreshTime//下一次刷新时间等于当前时间加上刷新时间
-		self:RefreshContents()//刷新内容
+-- ============================================================================
+-- Think - 定时刷新弹药数据
+-- ============================================================================
+function PANEL:Think()
+	if RealTime() >= self.NextRefresh then
+		self.NextRefresh = RealTime() + self.RefreshTime
+		self:RefreshContents()
 	end
 end
 
-function PANEL:RefreshContents()//刷新内容
-	local count = MySelf:GetAmmoCount(self:GetAmmoType())//获取子弹数量
+-- ============================================================================
+-- RefreshContents - 刷新弹药数量和显示
+-- ============================================================================
+function PANEL:RefreshContents()
+	local count = MySelf:GetAmmoCount(self:GetAmmoType())
 
-	self.m_AmmoCountLabel:SetTextColor(count == 0 and coldark or color_black)//如果子弹数量为0，就是黑色，否则就是白色
-	self.m_AmmoCountLabel:SetText(count)//设置子弹数量
-	self.m_AmmoCountLabel:SizeToContents()//自适应大小
+	self.m_AmmoCountLabel:SetTextColor(count == 0 and coldark or color_black)
+	self.m_AmmoCountLabel:SetText(count)
+	self.m_AmmoCountLabel:SizeToContents()
 
-	self:InvalidateLayout()//重新布局
+	self:InvalidateLayout()
 end
 
-function PANEL:PerformLayout()//重新布局
-	self.m_AmmoTypeLabel:Center()//居中
+-- ============================================================================
+-- PerformLayout - 布局子控件位置
+-- ============================================================================
+function PANEL:PerformLayout()
+	self.m_AmmoTypeLabel:Center()
 
-	self.m_AmmoCountLabel:SetPos(8 + (self:GetTall() - 8) * 0.5 - self.m_AmmoCountLabel:GetWide() / 2, 0)//设置子弹数量的位置,8+(高度-8)*0.5-子弹数量的宽度/2,0
-	self.m_AmmoCountLabel:CenterVertical()//垂直居中
+	self.m_AmmoCountLabel:SetPos(8 + (self:GetTall() - 8) * 0.5 - self.m_AmmoCountLabel:GetWide() / 2, 0)
+	self.m_AmmoCountLabel:CenterVertical()
 
-	self.m_DropButton:AlignTop(1)//对齐顶部,1是间隔
-	self.m_DropButton:AlignRight(8)//对齐右边,8是间隔
+	self.m_DropButton:AlignTop(1)
+	self.m_DropButton:AlignRight(8)
 
-	self.m_GiveButton:AlignBottom(1)//对齐底部
-	self.m_GiveButton:AlignRight(8)//对齐右边
+	self.m_GiveButton:AlignBottom(1)
+	self.m_GiveButton:AlignRight(8)
 end
 
-function PANEL:SetAmmoType(ammotype)//设置子弹类型
-	self.m_AmmoType = ammotype//子弹类型
+-- ============================================================================
+-- SetAmmoType - 设置当前弹药类型
+-- ============================================================================
+function PANEL:SetAmmoType(ammotype)
+	self.m_AmmoType = ammotype
 
-	self.m_AmmoTypeLabel:SetText(GAMEMODE.AmmoNames[ammotype] or ammotype)//设置子弹类型的文字,这里是获取的游戏ammonames列表里面的参数，传输的是子弹类型
-	self.m_AmmoTypeLabel:SizeToContents()//自适应大小
+	self.m_AmmoTypeLabel:SetText(GAMEMODE.AmmoNames[ammotype] or ammotype)
+	self.m_AmmoTypeLabel:SizeToContents()
 
-	self:RefreshContents()//刷新内容
+	self:RefreshContents()
 end
 
-function PANEL:GetAmmoType()//获取子弹类型
-	return self.m_AmmoType//子弹类型
+-- ============================================================================
+-- GetAmmoType - 获取当前弹药类型
+-- ============================================================================
+function PANEL:GetAmmoType()
+	return self.m_AmmoType
 end
 
 vgui.Register("DAmmoCounter", PANEL, "DPanel")

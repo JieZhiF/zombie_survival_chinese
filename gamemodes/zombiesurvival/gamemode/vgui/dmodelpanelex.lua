@@ -1,10 +1,17 @@
--- dmodelpanelex.lua
+-- ============================================================================
+-- DModelPanelEx - 增强型 3D 模型预览面板
+-- 继承自 DModelPanel，增加 WElements 子模型/精灵渲染系统
+-- 支持武器预览（含模型缩放、配件、材质覆盖等）
+-- ============================================================================
+
 local PANEL = {}
 
--- Helper: safe copy
+-- Helper: safe copy - 安全复制表
 local deepCopy = table.FullCopy or function(t) return table.Copy(t) end
 
--- 初始化一些默认值
+-- ============================================================================
+-- Init - 初始化一些默认值
+-- ============================================================================
 function PANEL:Init()
 	self.Entity = nil
 	self.WElements = nil
@@ -16,7 +23,9 @@ function PANEL:Init()
 	self.ShowBaseModel = true             -- 是否在渲染里 Draw 主模型 (由 SetWeaponPreview 设置)
 end
 
--- 设置/创建主体模型（不负责是否 Draw，由 ShowBaseModel 决定）
+-- ============================================================================
+-- SetModel - 设置/创建主体模型
+-- ============================================================================
 function PANEL:SetModel(strModelName)
 	if IsValid(self.Entity) then
 		self.Entity:Remove()
@@ -44,6 +53,9 @@ function PANEL:SetModel(strModelName)
 	self:AutoCam()
 end
 
+-- ============================================================================
+-- AutoCam - 自动调整摄像机视角以适配模型尺寸
+-- ============================================================================
 function PANEL:AutoCam()
 	if not IsValid(self.Entity) then return end
 	local mins, maxs = self.Entity:GetRenderBounds()
@@ -53,8 +65,10 @@ end
 
 -- ========== WElements 支持 ==========
 
+-- ============================================================================
+-- SetWElements - 设置武器配件元素列表
+-- ============================================================================
 function PANEL:SetWElements(tab)
-	-- 清除旧模型
 	self:RemoveWModels()
 
 	if not tab then
@@ -66,13 +80,15 @@ function PANEL:SetWElements(tab)
 	self.WElements = deepCopy(tab)
 	self.wRenderOrder = nil
 
-	-- 若已有主体实体则直接创建 models
 	if IsValid(self.Entity) then
 		self:CreateWModels(self.WElements)
 	end
 end
 
--- 在 SetWeaponPreview 里确保应用 ModelScale 到 base 与 child
+-- ============================================================================
+-- SetWeaponPreview - 设置武器预览数据
+-- 应用 ModelScale 到 base 与 child 模型
+-- ============================================================================
 function PANEL:SetWeaponPreview(weptab)
     if not weptab then return end
     self.WeaponPreview = weptab
@@ -102,11 +118,14 @@ function PANEL:SetWeaponPreview(weptab)
     end
 end
 
+-- ============================================================================
+-- CreateWModels - 根据 WElements 表创建子模型/精灵
+-- ============================================================================
 function PANEL:CreateWModels(tab)
 	if not tab or not IsValid(self.Entity) then return end
 
 	for k, v in pairs(tab) do
-		-- Model
+		-- Model - 创建客户端模型实体
 		if (v.type == "Model" and v.model and v.model ~= "" and
 			(not IsValid(v.modelEnt) or v.createdModel ~= v.model) and
 			string.find(v.model, "%.mdl") and file.Exists(v.model, "GAME")) then
@@ -115,14 +134,14 @@ function PANEL:CreateWModels(tab)
 			if IsValid(v.modelEnt) then
 				v.modelEnt:SetPos(self.Entity:GetPos())
 				v.modelEnt:SetAngles(self.Entity:GetAngles())
-				v.modelEnt:SetParent(self.Entity) -- 绑定到主体以便骨骼/相对变换一致
+				v.modelEnt:SetParent(self.Entity)
 				v.modelEnt:SetNoDraw(true)
 				v.createdModel = v.model
 			else
 				v.modelEnt = nil
 			end
 
-		-- Sprite
+		-- Sprite - 创建精灵材质
 		elseif (v.type == "Sprite" and v.sprite and v.sprite ~= "" and
 			(not v.spriteMaterial or v.createdSprite ~= v.sprite) and
 			file.Exists("materials/"..v.sprite..".vmt", "GAME")) then
@@ -154,6 +173,9 @@ function PANEL:CreateWModels(tab)
 	end
 end
 
+-- ============================================================================
+-- RemoveWModels - 移除所有子模型实体
+-- ============================================================================
 function PANEL:RemoveWModels()
 	if not self.WElements then return end
 	for _, v in pairs(self.WElements) do
@@ -164,6 +186,10 @@ function PANEL:RemoveWModels()
 	end
 end
 
+-- ============================================================================
+-- GetBoneOrientation - 获取骨骼/附件的变换矩阵
+-- 支持相对定位和递归查询
+-- ============================================================================
 function PANEL:GetBoneOrientation(basetab, tab, baseEnt, bone_override)
     if (tab.rel and tab.rel ~= "") then
         local v = basetab[tab.rel]
@@ -213,22 +239,22 @@ function PANEL:GetBoneOrientation(basetab, tab, baseEnt, bone_override)
             end
         end
 
-        -- 找不到就返回 nil
         return nil
     end
 end
 
 
--- RenderWElements：确保 SetupBones、按 ModelScale 缩放 pos、以及使用与游戏中一致的旋转顺序
+-- ============================================================================
+-- RenderWElements - 渲染所有子元素
+-- 确保 SetupBones、按 ModelScale 缩放 pos、以及使用与游戏中一致的旋转顺序
+-- ============================================================================
 function PANEL:RenderWElements(baseEnt)
     if not self.WElements or not IsValid(baseEnt) then return end
 
-    -- 确保骨骼是最新的
     baseEnt:SetupBones()
 
     local modelScale = (self.WeaponPreview and self.WeaponPreview.ModelScale) or 1
 
-    -- 重建渲染顺序（如果需要）
     if not self.wRenderOrder then
         self.wRenderOrder = {}
         for k,v in pairs(self.WElements) do
@@ -253,12 +279,10 @@ function PANEL:RenderWElements(baseEnt)
         end
         if not pos then continue end
 
-        -- 把 v.pos 按 modelScale 缩放，避免缩放导致偏移错误
         local px, py, pz = (v.pos.x or 0) * modelScale, (v.pos.y or 0) * modelScale, (v.pos.z or 0) * modelScale
         local drawpos = pos + ang:Forward() * px + ang:Right() * py + ang:Up() * pz
 
         if v.type == "Model" and IsValid(v.modelEnt) then
-            -- 这里使用与 prop_weapon 相同的旋转顺序（保证与游戏一致）
             local ang2 = Angle(ang.p, ang.y, ang.r)
             ang2:RotateAroundAxis(ang:Up(), v.angle.y)
             ang2:RotateAroundAxis(ang:Right(), v.angle.p)
@@ -267,19 +291,15 @@ function PANEL:RenderWElements(baseEnt)
             v.modelEnt:SetPos(drawpos)
             v.modelEnt:SetAngles(ang2)
 
-            -- 如果 weptab 有 ModelScale，我们在创建时已经 SetModelScale 到 modelEnt，
-            -- 此处确保 size 自身仍然生效（size * 1 为默认）
             local svec = Vector(1,1,1)
             if v.size then
                 if type(v.size) == "number" then svec = Vector(v.size, v.size, v.size) end
                 if type(v.size) == "Vector" then svec = v.size end
             end
-            -- overall scale = modelScale (applied by SetModelScale) * svec (matrix)
             local matrix = Matrix()
             matrix:Scale(svec)
             v.modelEnt:EnableMatrix("RenderMultiply", matrix)
 
-            -- 材质/皮肤处理按原逻辑
             if v.material == "" then
                 v.modelEnt:SetMaterial("")
             elseif v.modelEnt:GetMaterial() ~= v.material then
@@ -320,39 +340,35 @@ function PANEL:RenderWElements(baseEnt)
 end
 
 
--- LayoutEntity：保留自动旋转 / 动画推进逻辑
+-- ============================================================================
+-- LayoutEntity - 保留自动旋转 / 动画推进逻辑
+-- ============================================================================
 function PANEL:LayoutEntity(ent)
-	-- 动画推进（如果需要）
 	if IsValid(ent) and ent.FrameAdvance then
 		ent:FrameAdvance(FrameTime())
 	end
 
-	-- 自动旋转（当没有拖拽交互时）
 	if self.AutoRotate and not self.Dragging then
 		self.Angles.y = self.Angles.y + FrameTime() * self.RotateSpeed
 	end
 
-	-- 应用角度到实体（仅用于预览位置）
 	if IsValid(ent) then
 		ent:SetAngles(self.Angles)
 	end
 end
 
--- Paint：在正确的 3D 环境中先 Draw 主模型（如果需要），再 Draw WElements
+-- ============================================================================
+-- Paint - 在正确的 3D 环境中先 Draw 主模型，再 Draw WElements
+-- ============================================================================
 function PANEL:Paint(w, h)
 	if not IsValid(self.Entity) then
-		-- nothing to draw
 		return
 	end
 
-	-- 让父类更新一些内部变量（如果有），并执行我们自己的 LayoutEntity
 	self:LayoutEntity(self.Entity)
 
-	-- 转换为屏幕坐标区域，使用 DModelPanel 的内部相机参数
 	local x, y = self:LocalToScreen(0, 0)
 
-	-- DModelPanel 内部通常使用 self.vCamPos / self.vLookatPos / self.fFOV
-	-- 这些在 SetCamPos/SetLookAt/SetFOV 时被设置。我们直接使用它们。
 	local camPos = self.vCamPos or Vector(0,0,0)
 	local lookPos = self.vLookatPos or Vector(0,0,0)
 	local fov = self.fFOV or 50
@@ -360,12 +376,10 @@ function PANEL:Paint(w, h)
 	cam.Start3D(camPos, (lookPos - camPos):Angle(), fov, x, y, w, h)
 		render.SuppressEngineLighting(true)
 		render.SetLightingOrigin(self.Entity:GetPos())
-		-- 主模型是否显示由 SetWeaponPreview 决定（ShowBaseModel）
 		if self.ShowBaseModel then
 			self.Entity:DrawModel()
 		end
 
-		-- 不论主模型是否绘制，都尝试渲染 WElements（若存在）
 		if self.WElements then
 			self:RenderWElements(self.Entity)
 		end
@@ -374,6 +388,9 @@ function PANEL:Paint(w, h)
 	cam.End3D()
 end
 
+-- ============================================================================
+-- OnRemove - 清理子模型和主体模型
+-- ============================================================================
 function PANEL:OnRemove()
 	self:RemoveWModels()
 	if IsValid(self.Entity) then

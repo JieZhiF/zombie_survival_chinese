@@ -1,20 +1,41 @@
+--[[
+==================================================================
+弹弓僵尸 (Slingshot Zombie) — 僵尸职业
+继承自：fast_zombie
+特点：快速僵尸变体、不可复活分裂、暗红色皮肤材质渲染、
+      扑击时视角锁定
+==================================================================
+]]
+
+-- 基础职业为"快速僵尸"
 CLASS.Base = "fast_zombie"
 
+-- 出现波次
 CLASS.Wave = 2 / 6
 
+-- 职业显示名称
 CLASS.Name = "Slingshot Zombie"
+-- 翻译键名
 CLASS.TranslationName = "class_fast_zombie_slingshot"
+-- 描述文本键名
 CLASS.Description = "description_fast_zombie_slingshot"
+-- 控制帮助文本键名
 CLASS.Help = "controls_fast_zombie_slingshot"
 
+-- 不可复活分裂
 CLASS.Revives = false
 
+-- 生命值
 CLASS.Health = 180
+-- 移动速度
 CLASS.Speed = 235
+-- 绑定的武器
 CLASS.SWEP = "weapon_zs_fastzombie_slingshot"
 
+-- 击杀得分
 CLASS.Points = CLASS.Health/GM.NoHeadboxZombiePointRatio
 
+-- 缓存函数
 local math_random = math.random
 local math_min = math.min
 local math_Clamp = math.Clamp
@@ -29,18 +50,19 @@ local ACT_ZOMBIE_LEAPING = ACT_ZOMBIE_LEAPING
 local ACT_HL2MP_RUN_ZOMBIE = ACT_HL2MP_RUN_ZOMBIE
 local ACT_HL2MP_RUN_ZOMBIE_FAST = ACT_HL2MP_RUN_ZOMBIE_FAST
 
+-- 移动逻辑
 function CLASS:Move(pl, mv)
 	local wep = pl:GetActiveWeapon()
 	if wep.Move and wep:Move(mv) then
 		return true
 	end
-
 	if mv:GetForwardSpeed() <= 0 then
 		mv:SetMaxSpeed(math_min(mv:GetMaxSpeed(), 90))
 		mv:SetMaxClientSpeed(math_min(mv:GetMaxClientSpeed(), 90))
 	end
 end
 
+-- 脚步声列表
 local StepLeftSounds = {
 	"npc/fast_zombie/foot1.wav",
 	"npc/fast_zombie/foot2.wav"
@@ -49,16 +71,18 @@ local StepRightSounds = {
 	"npc/fast_zombie/foot3.wav",
 	"npc/fast_zombie/foot4.wav"
 }
+
+-- 自定义脚步声
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if iFoot == 0 then
 		pl:EmitSound(StepLeftSounds[math_random(#StepLeftSounds)], 70)
 	else
 		pl:EmitSound(StepRightSounds[math_random(#StepRightSounds)], 70)
 	end
-
 	return true
 end
 
+-- 脚步音效间隔
 function CLASS:PlayerStepSoundTime(pl, iType, bWalking)
 	if iType == STEPSOUNDTIME_NORMAL or iType == STEPSOUNDTIME_WATER_FOOT then
 		return 450 - pl:GetVelocity():Length()
@@ -67,18 +91,20 @@ function CLASS:PlayerStepSoundTime(pl, iType, bWalking)
 	elseif iType == STEPSOUNDTIME_WATER_KNEE then
 		return 550
 	end
-
 	return 250
 end
 
+-- 缩放伤害
 function CLASS:ScalePlayerDamage(pl, hitgroup, dmginfo)
 	return true
 end
 
+-- 忽略腿部伤害
 function CLASS:IgnoreLegDamage(pl, dmginfo)
 	return true
 end
 
+-- 计算主要活动动画
 function CLASS:CalcMainActivity(pl, velocity)
 	local wep = pl:GetActiveWeapon()
 	if not wep:IsValid() or not wep.GetClimbing or not wep.GetPounceTime then return end
@@ -100,13 +126,14 @@ function CLASS:CalcMainActivity(pl, velocity)
 		return 1, pl:LookupSequence("menu_zombie_01")
 	end
 
-	if speed > 256 and wep:GetSwinging() then --16^2
+	if speed > 256 and wep:GetSwinging() then
 		return ACT_HL2MP_RUN_ZOMBIE, -1
 	end
 
 	return ACT_HL2MP_RUN_ZOMBIE_FAST, -1
 end
 
+-- 更新动画
 function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 	local wep = pl:GetActiveWeapon()
 	if not wep:IsValid() or not wep.GetClimbing or not wep.GetPounceTime then return end
@@ -118,29 +145,26 @@ function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 		end
 	elseif pl.PlayingFZSwing then
 		pl.PlayingFZSwing = false
-		pl:AnimResetGestureSlot(GESTURE_SLOT_ATTACK_AND_RELOAD) --pl:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_GMOD_GESTURE_RANGE_FRENZY, true)
+		pl:AnimResetGestureSlot(GESTURE_SLOT_ATTACK_AND_RELOAD)
 	end
 
 	if wep:GetClimbing() then
 		local vel = pl:GetVelocity()
 		local speed = vel:LengthSqr()
-		if speed > 64 then --8^2
-			pl:SetPlaybackRate(math_Clamp(speed / 25600, 0, 1) * (vel.z < 0 and -1 or 1)) --160^2
+		if speed > 64 then
+			pl:SetPlaybackRate(math_Clamp(speed / 25600, 0, 1) * (vel.z < 0 and -1 or 1))
 		else
 			pl:SetPlaybackRate(0)
 		end
-
 		return true
 	end
 
 	if wep.GetPounceTime and wep:GetPounceTime() > 0 then
 		pl:SetPlaybackRate(0.25)
-
 		if not pl.m_PrevFrameCycle then
 			pl.m_PrevFrameCycle = true
 			pl:SetCycle(0)
 		end
-
 		return true
 	elseif pl.m_PrevFrameCycle then
 		pl.m_PrevFrameCycle = nil
@@ -148,22 +172,20 @@ function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 
 	if not pl:OnGround() or pl:WaterLevel() >= 3 then
 		pl:SetPlaybackRate(1)
-
 		if pl:GetCycle() >= 1 then
 			pl:SetCycle(pl:GetCycle() - 1)
 		end
-
 		return true
 	end
 
 	if wep:IsRoaring() and velocity:Length2DSqr() <= 1 then
 		pl:SetPlaybackRate(0)
 		pl:SetCycle(math_Clamp(1 - (wep:GetRoarEndTime() - CurTime()) / wep.RoarTime, 0, 1) * 0.9)
-
 		return true
 	end
 end
 
+-- 处理动画事件
 function CLASS:DoAnimationEvent(pl, event, data)
 	if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
 		pl:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_GMOD_GESTURE_RANGE_ZOMBIE_SPECIAL, true)
@@ -173,13 +195,17 @@ function CLASS:DoAnimationEvent(pl, event, data)
 	end
 end
 
+-- 禁用复活回调
 CLASS.ReviveCallback = nil
 
+-- 服务端在此处返回
 if SERVER then return end
 
+-- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/fastzombie"
 CLASS.IconColor = Color(163, 94, 99)
 
+-- 客户端移动指令：扑击时视角锁定
 function CLASS:CreateMove(pl, cmd)
 	local wep = pl:GetActiveWeapon()
 	if wep:IsValid() and wep.IsPouncing then
@@ -195,12 +221,12 @@ function CLASS:CreateMove(pl, cmd)
 			end
 
 			wep.m_ViewAngles = viewangles
-
 			cmd:SetViewAngles(viewangles)
 		end
 	end
 end
 
+-- 皮肤材质和颜色
 local matSkin = Material("models/barnacle/barnacle_sheet")
 
 function CLASS:PrePlayerDraw(pl)

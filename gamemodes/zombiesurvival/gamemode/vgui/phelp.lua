@@ -1,3 +1,10 @@
+-- ============================================================================
+-- PHelp - 帮助/致谢界面
+-- 包含 MakepHelp（帮助窗口，分页显示游戏指南）
+-- 和 MakepCredits（致谢窗口，显示所有贡献者名单）
+-- ============================================================================
+
+-- 帮助内容定义
 GM.Help = {
 {Name = "help_cat_introduction",
 Content = "help_cont_introduction"},
@@ -15,6 +22,10 @@ Content = "help_cont_upgrades"},
 Content = "help_cont_being_a_zombie"}
 }
 
+-- ============================================================================
+-- MakepCredits - 创建致谢窗口
+-- 显示游戏制作人员名单
+-- ============================================================================
 function MakepCredits()
 	PlayMenuOpenSound()
 
@@ -33,6 +44,7 @@ function MakepCredits()
 	label:CenterHorizontal()
 	y = y + label:GetTall() + 8
 
+	-- 遍历贡献者列表
 	for authorindex, authortab in ipairs(GAMEMODE.Credits) do
 		local lineleft = EasyLabel(frame, string.Replace(authortab[1], "@", "(at)"), "ZSHUDFontSmallestNS", color_white)
 		local linemid = EasyLabel(frame, "-", "ZSHUDFontSmallestNS", color_white)
@@ -65,6 +77,10 @@ function MakepCredits()
 	frame:MakePopup()
 end
 
+-- ============================================================================
+-- MakepHelp - 创建帮助窗口
+-- 使用 DHTML 渲染每个帮助类别的 HTML 内容
+-- ============================================================================
 function MakepHelp()
 	PlayMenuOpenSound()
 
@@ -92,9 +108,11 @@ function MakepHelp()
 	label:CenterHorizontal()
 	label:AlignTop(8)
 
+	-- 帮助内容分页属性表
 	local propertysheet = vgui.Create("DPropertySheet", Window)
 	propertysheet:StretchToParent(12, 52, 12, 64)
 
+	-- 遍历每个帮助类别，用 HTML 渲染内容
 	for _, helptab in ipairs(GAMEMODE.Help) do
 		local htmlpanel = vgui.Create("DHTML", propertysheet)
 		htmlpanel:StretchToParent(4, 4, 4, 24)
@@ -127,6 +145,7 @@ function MakepHelp()
 	Window:Center()
 	Window:MakePopup()
 
+	-- 致谢按钮
 	local button = EasyButton(Window, "Credits", 8, 4)
 	button:SetPos(wide - button:GetWide() - 12, tall - button:GetTall() - 12)
 	button:SetText("Credits")
@@ -139,5 +158,8 @@ function MakepHelp()
 	Window:MakePopup()
 end
 
+-- ============================================================================
+-- BuildHelpMenu - 构建帮助菜单的回调（可由其他模块扩展）
+-- ============================================================================
 function GM:BuildHelpMenu(window, propertysheet)
 end

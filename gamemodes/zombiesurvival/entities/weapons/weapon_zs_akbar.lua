@@ -48,61 +48,64 @@ SWEP.Tier = 3
 
 SWEP.IronSightsPos = Vector(-6.6, 20, 3.1)
 
+-- ==========================================
+-- [配置] 1. 核心后坐力参数 (COD风格AK - 上扬偏右, 渐进扩散)
+-- ==========================================
 SWEP.Recoil_Enabled             = true
--- ==========================================
--- [配置] 1. 核心后坐力参数 (物理弹道/准星移动)
--- ==========================================
--- 基础数值
-SWEP.RecoilPerShot      = 1   -- [热度] 每一发子弹增加的"后坐力热度" (Heat)
-SWEP.RecoilMax          = 12    -- [热度] 热度上限 (超过此值后，后坐力不再因连射而增加)
-SWEP.RecoilResetTime    = 0.09  -- [重置] 停火多少秒后，热度开始消散 (ARC9通常很短，0.05-0.1)
-SWEP.RecoilDissipationRate = 15 -- [重置] 热度消散速度 (值越大，停火后准星回复越快)
-SWEP.ConeRamp = 2
--- 动态倍率 (根据热度调整后坐力)
-SWEP.RecoilModifierCap  = 0.95   -- [倍率] 最大热度时的后坐力倍率 (1.2 = 满热度时后坐力是第一发的1.2倍)
+-- 热度曲线系统
+SWEP.RecoilPerShot      = 0.6   -- 每发子弹增加的热度
+SWEP.RecoilMax          = 10    -- 热度上限
+SWEP.RecoilResetTime    = 0.08  -- 停火后多久开始冷却
+SWEP.RecoilDissipationRate = 18 -- 热度消散速度
+SWEP.RecoilModifierCap  = 1.35  -- 满热度时后坐力倍率上限
 
--- 单发后坐力 (ViewAngles 变化)
-SWEP.RecoilUp           = 0.3   -- [垂直] 基础枪口上跳角度
-SWEP.RecoilSide         = 0.15  -- [水平] 基础左右偏转幅度
-SWEP.RecoilRandomUp     = 0.04  -- [随机] 垂直上跳的随机波动量 (+/-)
-SWEP.RecoilRandomSide   = 0.02  -- [随机] 水平偏转的随机波动量 (+/-)
+-- 后坐力曲线
+SWEP.RecoilFirstShotMult = 1.15 -- 首发稍微大一些
+SWEP.RecoilSideBias     = 0.4   -- 稍偏右 (AK经典右偏)
+SWEP.ConeRamp = 2
+
+-- 单发后坐力 (ViewAngles)
+SWEP.RecoilUp           = 0.17   -- 基础垂直上跳
+SWEP.RecoilSide         = 0.09  -- 基础水平偏转
+SWEP.RecoilRandomUp     = 0.05  -- 垂直随机波动
+SWEP.RecoilRandomSide   = 0.03  -- 水平随机波动
 
 -- 限制与自动控制
-SWEP.RecoilMaxTotalUp   = 45    -- [上限] 枪口最大抬升角度 (防上天，原值999或5都不合理，45度通常是极限)
-SWEP.RecoilAutoControl  = 15    --自动回正速度
-SWEP.RecoilAutoControlTime = 0.1 --停火后多少秒开始回正
-SWEP.RecoilAutoControl_PerShot = 0.24 -- 每发子弹增加的自动回正速度 (让连射时更稳)
-SWEP.RecoilAutoControl_DontTryToReturnBack = false -- 是否禁用"自动回正" (设为true则像CS，准星不会自动回到原位)
+SWEP.RecoilMaxTotalUp   = 50
+SWEP.RecoilAutoControl  = 3     -- 轻度自动回正 (COD靠玩家手动压枪)
+SWEP.RecoilAutoControlTime = 0.06
+SWEP.RecoilAutoControl_PerShot = 0.08
+SWEP.RecoilAutoControl_DontTryToReturnBack = false
 
 -- ==========================================
--- [配置] 2. 镜头效果 (FOV & Camera)
+-- [配置] 2. 镜头效果 (COD风格 - 明显的屏幕震动)
 -- ==========================================
-SWEP.CamRecoilFOV       = 1    -- 射击时 FOV 瞬间拉伸的度数
-SWEP.CamRecoilFOVStiffness = 300 -- FOV 震动的刚度 (越大回弹越快，越脆)
-SWEP.CamRecoilDamping   = 10    -- FOV 震动的阻尼
-SWEP.CamRecoilUp        = 0     -- 镜头上跳
-SWEP.CamRecoilSide      = 0     -- 镜头侧偏
-SWEP.CamRecoilRoll      = 0   -- [重要] 镜头滚转 (ARC9 风格核心，射击时屏幕倾斜)
-SWEP.CamRecoilLerpSpeed = 1
+SWEP.CamRecoilFOV       = 1.3    -- FOV冲击感
+SWEP.CamRecoilFOVStiffness = 220
+SWEP.CamRecoilFOVDamping = 10
+SWEP.CamRecoilUp        = 0.018  -- 镜头上跳 (屏幕视角弹跳)
+SWEP.CamRecoilSide      = 0.01   -- 镜头侧偏
+SWEP.CamRecoilRoll      = 0.015  -- 屏幕倾斜 (COD特色)
+SWEP.CamRecoilLerpSpeed = 24
 
 -- ==========================================
--- [配置] 3. 枪模视觉效果 (Visual Recoil)
+-- [配置] 3. 枪模视觉效果
 -- ==========================================
-SWEP.UseVisualRecoil    = false
+SWEP.UseVisualRecoil    = true
 SWEP.CustomSightsAttackAnim = false
-SWEP.VisualRecoilUp     = -1.5  -- 枪模垂直位移 (负数通常是向上，取决于骨骼)
-SWEP.VisualRecoilPunch  = 1.5   -- 枪模向后撞击力度 (Z轴/后坐力感)
-SWEP.VisualRecoilRoll   = 2.0   -- 枪模滚转力度
-SWEP.VisualRecoilStiffness = 250 -- [刚度] 弹簧回弹速度 (改大可以减少"飘"的感觉)
-SWEP.VisualRecoilDamping   = 25  -- [阻尼] 防止来回晃荡
-SWEP.VisualRecoilCenter = Vector(0, 0, 0) -- 旋转中心偏移
+SWEP.VisualRecoilUp     = -1.5   -- 枪模垂直位移
+SWEP.VisualRecoilPunch  = 1.6    -- 枪模后撞力度
+SWEP.VisualRecoilRoll   = 2.2    -- 枪模滚转
+SWEP.VisualRecoilStiffness = 220
+SWEP.VisualRecoilDamping   = 22
+SWEP.VisualRecoilCenter = Vector(0, 0, 0)
 
 -- ==========================================
--- [配置] 4. 姿态倍率 (Multipliers)
+-- [配置] 4. 姿态倍率
 -- ==========================================
-SWEP.RecoilMultSights   = 0.5   -- 瞄准时
-SWEP.RecoilMultCrouch   = 0.75  -- 蹲下时
-SWEP.RecoilMultMidAir   = 2.0   -- 空中时
-SWEP.RecoilMultMove     = 1.3   -- 移动时
+SWEP.RecoilMultSights   = 0.5    -- 瞄准时减半
+SWEP.RecoilMultCrouch   = 0.7    -- 蹲下时
+SWEP.RecoilMultMidAir   = 2.0    -- 空中
+SWEP.RecoilMultMove     = 1.3    -- 移动时
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MAX_SPREAD, -0.344)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MIN_SPREAD, -0.172)

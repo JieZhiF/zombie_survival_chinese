@@ -20,11 +20,10 @@ sound.Add({
 	sound = "npc/antlion_guard/confused1.wav"
 })
 
-SWEP.MeleeDamage = 9
-
+SWEP.MeleeDamage = 7
 SWEP.SlowMeleeDelay = 0.8
-SWEP.SlowMeleeDamage = 22
-SWEP.PounceDamage = 30
+SWEP.SlowMeleeDamage = 15
+SWEP.PounceDamage = 22
 
 function SWEP:MeleeHit(ent, trace, damage, forcescale)
 	if not ent:IsPlayer() then

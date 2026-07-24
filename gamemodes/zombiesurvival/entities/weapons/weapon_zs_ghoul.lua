@@ -4,7 +4,7 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_ghoul")
 
 SWEP.Base = "weapon_zs_zombie"
 
-SWEP.MeleeDamage = 23
+SWEP.MeleeDamage = 19
 SWEP.MeleeForceScale = 0.5
 SWEP.SlowDownScale = 0.25
 SWEP.EnfeebleDurationMul = 10 / SWEP.MeleeDamage

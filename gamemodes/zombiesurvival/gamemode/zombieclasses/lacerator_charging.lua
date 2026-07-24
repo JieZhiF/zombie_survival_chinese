@@ -1,25 +1,46 @@
+--[[
+==================================================================
+冲锋者 (Charger) — 僵尸职业
+特点：撕裂者变体、可蓄力冲锋、冲锋时加速、后退减速、
+      无腿部伤害判定、自定义死亡/受伤音效
+==================================================================
+]]
+
+-- 职业显示名称
 CLASS.Name = "Charger"
+-- 翻译键名
 CLASS.TranslationName = "class_lacerator_charging"
+-- 描述文本键名
 CLASS.Description = "description_lacerator_charging"
+-- 控制帮助文本键名
 CLASS.Help = "controls_lacerator_charging"
 
+-- 使用撕裂者模型
 CLASS.Model = Model("models/player/zombie_lacerator2.mdl")
 
+-- 出现波次
 CLASS.Wave = 4 / 6
 
+-- 生命值
 CLASS.Health = 350
+-- 移动速度
 CLASS.Speed = 220
+-- 绑定的武器
 CLASS.SWEP = "weapon_zs_lacerator_charging"
 
+-- 碰撞体积和视角
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 58)}
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 32)}
 CLASS.ViewOffset = Vector(0, 0, 50)
 CLASS.ViewOffsetDucked = Vector(0, 0, 24)
 
+-- 击杀得分
 CLASS.Points = CLASS.Health/GM.NoHeadboxZombiePointRatio
 
+-- 语音音调
 CLASS.VoicePitch = 0.75
 
+-- 缓存函数
 local math_random = math.random
 local math_min = math.min
 local CurTime = CurTime
@@ -37,22 +58,24 @@ local ACT_GMOD_GESTURE_RANGE_ZOMBIE_SPECIAL = ACT_GMOD_GESTURE_RANGE_ZOMBIE_SPEC
 local ACT_HL2MP_RUN_CHARGING = ACT_HL2MP_RUN_CHARGING
 local ACT_INVALID = ACT_INVALID
 
+-- 移动逻辑
 function CLASS:Move(pl, mv)
 	local wep = pl:GetActiveWeapon()
 	if wep.Move and wep:Move(mv) then
 		return true
 	end
-
 	if mv:GetForwardSpeed() <= 0 then
 		mv:SetMaxSpeed(math_min(mv:GetMaxSpeed(), 140))
 		mv:SetMaxClientSpeed(math_min(mv:GetMaxClientSpeed(), 140))
 	end
 end
 
+-- 缩放伤害
 function CLASS:ScalePlayerDamage(pl, hitgroup, dmginfo)
 	return true
 end
 
+-- 金属装备碰撞声
 local GearFoley = {
 	"npc/combine_soldier/gear1.wav",
 	"npc/combine_soldier/gear2.wav",
@@ -61,6 +84,8 @@ local GearFoley = {
 	"npc/combine_soldier/gear5.wav",
 	"npc/combine_soldier/gear6.wav"
 }
+
+-- 自定义脚步声
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if iFoot == 0 then
 		pl:EmitSound("npc/antlion_guard/foot_heavy1.wav", 70, math_random(120,133), 0.4)
@@ -68,28 +93,28 @@ function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilte
 		pl:EmitSound("npc/antlion_guard/foot_heavy2.wav", 70, math_random(120,133), 0.4)
 	end
 	pl:EmitSound(GearFoley[math_random(#GearFoley)], 70, 100, 0.6)
-
 	return true
 end
 
+-- 忽略腿部伤害
 function CLASS:IgnoreLegDamage(pl, dmginfo)
 	return true
 end
 
+-- 自定义受伤音效
 function CLASS:PlayPainSound(pl)
 	pl:EmitSound("npc/fast_zombie/leap1.wav", 75, math_random(70, 80))
-
 	pl.NextPainSound = CurTime() + .5
-
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound("npc/zombie/zombie_die"..math_random(3)..".wav",70, math_random(80,85))
-
 	return true
 end
 
+-- 脚步音效间隔
 function CLASS:PlayerStepSoundTime(pl, iType, bWalking)
 	local wep = pl:GetActiveWeapon()
 	if wep:IsValid() and wep.GetCharge and wep:GetCharge() > 0 and (iType == STEPSOUNDTIME_NORMAL or iType == STEPSOUNDTIME_WATER_FOOT) then
@@ -101,10 +126,10 @@ function CLASS:PlayerStepSoundTime(pl, iType, bWalking)
 	elseif iType == STEPSOUNDTIME_WATER_KNEE then
 		return 550
 	end
-
 	return 250
 end
 
+-- 计算主要活动动画
 function CLASS:CalcMainActivity(pl, velocity)
 	local wep = pl:GetActiveWeapon()
 	if not wep:IsValid() or not wep.GetChargeStart then return end
@@ -130,6 +155,7 @@ function CLASS:CalcMainActivity(pl, velocity)
 	return ACT_HL2MP_RUN_ZOMBIE_FAST, -1
 end
 
+-- 更新动画
 function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 	local wep = pl:GetActiveWeapon()
 	if not wep:IsValid() or not wep.GetChargeStart then return end
@@ -143,12 +169,10 @@ function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 
 	if wep:GetChargeStart() > 0 and wep:GetCharge() <= 0 then
 		pl:SetPlaybackRate(0.25)
-
 		if not pl.m_PrevFrameCycle then
 			pl.m_PrevFrameCycle = true
 			pl:SetCycle(0)
 		end
-
 		return true
 	elseif pl.m_PrevFrameCycle then
 		pl.m_PrevFrameCycle = nil
@@ -156,18 +180,15 @@ function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 
 	if not pl:OnGround() or pl:WaterLevel() >= 3 then
 		pl:SetPlaybackRate(1)
-
 		if pl:GetCycle() >= 1 then
 			pl:SetCycle(pl:GetCycle() - 1)
 		end
-
 		return true
 	end
-
 	return true
-
 end
 
+-- 处理动画事件
 function CLASS:DoAnimationEvent(pl, event, data)
 	if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
 		pl:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_GMOD_GESTURE_RANGE_ZOMBIE_SPECIAL, true)
@@ -178,11 +199,14 @@ function CLASS:DoAnimationEvent(pl, event, data)
 	end
 end
 
+-- 服务端在此处返回
 if SERVER then return end
 
+-- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/lacerator"
 CLASS.IconColor = Color(180, 45, 0)
 
+-- 客户端移动指令：冲锋时视角锁定
 function CLASS:CreateMove(pl, cmd)
 	local wep = pl:GetActiveWeapon()
 	if wep:IsValid() and wep.m_ViewAngles and ((wep.GetChargeStart and wep:GetChargeStart() ~= 0) or wep.IsCharging) then
@@ -197,11 +221,11 @@ function CLASS:CreateMove(pl, cmd)
 		end
 
 		wep.m_ViewAngles = viewangles
-
 		cmd:SetViewAngles(viewangles)
 	end
 end
 
+-- 颜色调制
 function CLASS:PrePlayerDraw(pl)
 	render.SetColorModulation(0.7, 0.17, 0)
 end

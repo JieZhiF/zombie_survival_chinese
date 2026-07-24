@@ -1820,7 +1820,7 @@ function GM:CalculateNextBoss()
     -- 2. 如果没有人类玩家候选，尝试从 BOT 中获取 (保持你原有的逻辑)
     if #zombies == 0 then
         for _, ent in pairs(D3bot.GetBots()) do
-            if ent:Team() == TEAM_UNDEAD and not ent:GetZombieClassTable().Boss then
+            if IsValid(ent) and ent:Team() == TEAM_UNDEAD and not ent:GetZombieClassTable().Boss then
                 table.insert(zombies, ent)
             end
         end

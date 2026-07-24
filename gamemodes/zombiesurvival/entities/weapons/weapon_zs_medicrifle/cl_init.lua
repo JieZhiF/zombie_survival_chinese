@@ -46,9 +46,7 @@ end
 function SWEP:GetViewModelPosition(pos, ang)
 	if GAMEMODE.DisableScopes then return end
 
-	if self:IsScoped() then
-		return pos + ang:Up() * 256, ang
-	end
+	if self:IsScoped() then return end
 
 	return BaseClass.GetViewModelPosition(self, pos, ang)
 end

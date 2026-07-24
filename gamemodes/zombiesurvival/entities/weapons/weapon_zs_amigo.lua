@@ -182,9 +182,7 @@ local branch = GAMEMODE:AddNewRemantleBranch(SWEP, 2, ""..translate.Get("weapon_
 		wept.GetViewModelPosition = function(self, pos, ang)
 			if GAMEMODE.DisableScopes then return end
 
-			if self:IsScoped() then
-				return pos + ang:Up() * 256, ang
-			end
+			if self:IsScoped() then return end
 
 			return BaseClass.GetViewModelPosition(self, pos, ang)
 		end

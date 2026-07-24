@@ -1,4 +1,9 @@
--- 将基础控件从 DFrame 更换为 DPanel
+-- ============================================================================
+-- POptions - 游戏设置界面（ZSOptions）
+-- 包含界面/HUD、游戏性、环境与效果、武器设置等分类
+-- 支持复选框、滑块、颜色选择器、下拉框和字体编辑器
+-- ============================================================================
+
 local PANEL = {}
 
 -- 定义常量以便于统一修改样式
@@ -6,63 +11,58 @@ local COLOR_BG = Color(45, 45, 55, 240)
 local COLOR_BG_INNER = Color(35, 35, 45, 220)
 local COLOR_ACCENT = Color(40, 155, 255)
 local COLOR_TEXT = Color(248, 248, 248, 240)
-local FONT_TOP_CATEGORY = "ZS2DFontHarmony" --顶部大类标签的字体
-local FONT_SUB_CATEGORY = "ZS2DFontHarmony" --左侧次一级分类标签的字体
+local FONT_TOP_CATEGORY = "ZS2DFontHarmony"
+local FONT_SUB_CATEGORY = "ZS2DFontHarmony"
 local FONT_LABEL = "ZS2DFontHarmonySmall"
 local FONT_LABEL_SMALL = "ZS2DFontHarmonySmall"
 
+-- ============================================================================
+-- Init - 初始化设置面板
+-- ============================================================================
 function PANEL:Init()
-    -- 1. 基本框架设置
     local scale = BetterScreenScale and BetterScreenScale() or 1
     self:SetSize(ScrW() * 0.45 * scale, ScrH() * 0.55 * scale)
     self:Center()
     self:MakePopup()
 
-    -- DPanel 没有这些 DFrame 的函数，所以移除它们
-    -- self:SetTitle("")
-    -- self:ShowCloseButton(false)
-    -- self:SetDraggable(true)
-
-    -- 填充所有选项数据
     self:PopulateOptionsData()
-
-    -- 2. 创建UI布局
     self:CreateLayout()
-    -- 3. 创建自定义关闭按钮 (在布局创建后，确保它在顶层)
     self:CreateCloseButton()
 
     if not IsValid(self) or not IsValid(self.TopCategoryBar) then return end
-    -- 查找第一个DButton并模拟点击，不播放声音
+    -- 自动选中第一个顶级分类
     for _, child in ipairs(self.TopCategoryBar:GetChildren()) do
         if IsValid(child) and isfunction(child.DoClick) then
-            child:DoClick(false) -- 传递 false 来静音
-            break -- 找到并点击第一个后就退出循环
+            child:DoClick(false)
+            break
         end
     end
 end
 
+-- ============================================================================
+-- Paint - 绘制圆角背景
+-- ============================================================================
 function PANEL:Paint(w, h)
     draw.RoundedBox(8, 0, 0, w, h, COLOR_BG)
 end
 
+-- ============================================================================
+-- CreateLayout - 创建界面布局
+-- ============================================================================
 function PANEL:CreateLayout()
-    -- 1. 创建顶部主分类栏
     self:CreateTopCategoryBar()
 
-    -- 2. 创建一个主内容容器，位于顶部栏下方
     local mainArea = vgui.Create("DPanel", self)
     mainArea:Dock(FILL)
-    mainArea:DockMargin(0, 8, 0, 0) -- 与顶部分割线留出间距
-    mainArea.Paint = function() end -- 透明背景
+    mainArea:DockMargin(0, 8, 0, 0)
+    mainArea.Paint = function() end
 
-    -- 3. 创建左侧的次级分类列表
     local sub_category_width = self:GetWide() * 0.15
     self.SubCategoryList = vgui.Create("DScrollPanel", mainArea)
     self.SubCategoryList:SetWide(sub_category_width)
     self.SubCategoryList:Dock(LEFT)
     self.SubCategoryList:DockMargin(8, 0, 4, 8)
 
-    -- 4. 创建右侧的内容面板
     self.ContentPanel = vgui.Create("DPanel", mainArea)
     self.ContentPanel:Dock(FILL)
     self.ContentPanel:DockMargin(4, 0, 8, 8)
@@ -71,11 +71,14 @@ function PANEL:CreateLayout()
     end
 end
 
+-- ============================================================================
+-- CreateCloseButton - 创建关闭按钮
+-- ============================================================================
 function PANEL:CreateCloseButton()
     local closeBtn = vgui.Create("DButton", self)
     closeBtn:SetSize(50, 50)
     closeBtn:SetPos(self:GetWide() - 75, 0)
-    closeBtn:SetZPos(1) -- 确保按钮在顶部类别栏之上
+    closeBtn:SetZPos(1)
     closeBtn:SetText("×")
     closeBtn:SetFont("ZS3D2DFontSmall")
     closeBtn:SetTextColor(COLOR_TEXT)
@@ -94,8 +97,10 @@ function PANEL:CreateCloseButton()
     end
 end
 
+-- ============================================================================
+-- PopulateOptionsData - 填充设置数据
+-- ============================================================================
 function PANEL:PopulateOptionsData()
-    -- 大类和次一级的结构定义
     self.SettingsData = {
         { name = "Interface", text = "界面和HUD", subCategories = {
             {name = "HUD", text = translate.Get("Category_HUD")},
@@ -113,24 +118,22 @@ function PANEL:PopulateOptionsData()
         { name = "Weapon", text = "武器设置", subCategories = {
             {name = "WeaponSlot", text = translate.Get("Category_WeaponSlot")},
         }},
-
     }
+
     -- 自动生成字体列表数据
     local fontOptions = {}
     
-    -- 遍历 ZSFontDLC.FontDefinitions 生成列表
     for fontID, def in pairs(ZSFontDLC.FontDefinitions) do
         table.insert(fontOptions, {
-            type = "font_entry", -- 自定义类型
-            label = def.name,    -- 显示用途名称 (例如：武器名字)
-            fontID = fontID,     -- 内部ID (例如：ZS3D2DFont2)
+            type = "font_entry",
+            label = def.name,
+            fontID = fontID,
             default = def.default
         })
     end
     
-    -- 简单的排序，让列表不乱跳
     table.sort(fontOptions, function(a, b) return a.label < b.label end)
-    -- 具体的设置项
+
     self.OptionsData = {
         HUD = {
             { type = "checkbox", label = "Option_AlwaysShowNailHealth", convar = "zs_alwaysshownails" },
@@ -285,35 +288,30 @@ function PANEL:PopulateOptionsData()
             { type = "slider", label = "Option_wepslot_bolt", convar = "zs_wepslot_bolt", min = 0, max = 6, decimals = 0 },
             { type = "slider", label = "Option_wepslot_medicaltools", convar = "zs_wepslot_medicaltools", min = 0, max = 6, decimals = 0 },
             { type = "slider", label = "Option_wepslot_medkits", convar = "zs_wepslot_medkits", min = 0, max = 6, decimals = 0 },
-            --{ type = "slider", label = "Option_wepslot_trinkets", convar = "zs_wepslot_trinkets",min = 0, max = 6, decimals = 0 },
-            --{ type = "slider", label = "Option_wepslot_flasks", convar = "zs_wepslot_flasks",min = 0, max = 6, decimals = 0 },
             { type = "slider", label = "Option_wepslot_deployables", convar = "zs_wepslot_deployables", min = 0, max = 6, decimals = 0 },
             { type = "slider", label = "Option_wepslot_misctools", convar = "zs_wepslot_misctools", min = 0, max = 6, decimals = 0 },
-          --  { type = "slider", label = "Option_wepslot_conoffensive", convar = "zs_wepslot_conoffensive" },
             { type = "slider", label = "Option_wepslot_explosives", convar = "zs_wepslot_explosives", min = 0, max = 6, decimals = 0 },
             { type = "slider", label = "Option_wepslot_food", convar = "zs_wepslot_food", min = 0, max = 6, decimals = 0 },
-            --{ type = "slider", label = "Option_wepslot_potions", convar = "zs_wepslot_potions", min = 0, max = 6, decimals = 0 },
-            --{ type = "slider", label = "Option_wepslot_consupportive", convar = "zs_wepslot_consupportive",min = 0, max = 6, decimals = 0 },
         },
-        Fonts = fontOptions, -- 将生成的列表放入 Fonts 分类
+        Fonts = fontOptions,
     }
 end
 
+-- ============================================================================
+-- CreateTopCategoryBar - 创建顶部主分类栏（带拖拽功能）
+-- ============================================================================
 function PANEL:CreateTopCategoryBar()
     self.TopCategoryBar = vgui.Create("DPanel", self)
     self.TopCategoryBar:Dock(TOP)
     self.TopCategoryBar:SetTall(50)
     self.TopCategoryBar:DockMargin(0, 0, 0, 0)
 
-    --[[-------------------------------------------------------------------------
-        新增: 为顶部大类栏添加拖拽功能
-    ---------------------------------------------------------------------------]]
+    -- 为顶部大类栏添加拖拽功能
     self.TopCategoryBar.m_bDragging = false
     self.TopCategoryBar.m_DragStart = {}
     self.TopCategoryBar.OnMousePressed = function( pnl, mcode )
         if mcode == MOUSE_LEFT then
             pnl.m_bDragging = true
-            -- self 指向的是 PANEL, 即我们的主窗口
             pnl.m_DragStart = { gui.MouseX() - self.x, gui.MouseY() - self.y }
         end
     end
@@ -324,11 +322,9 @@ function PANEL:CreateTopCategoryBar()
     end
     self.TopCategoryBar.Think = function( pnl )
         if pnl.m_bDragging then
-            -- 检查鼠标左键是否仍然被按下
             if input.IsMouseDown( MOUSE_LEFT ) then
                 self:SetPos( gui.MouseX() - pnl.m_DragStart[1], gui.MouseY() - pnl.m_DragStart[2] )
             else
-                -- 如果鼠标被释放了（例如在窗口外），则停止拖动
                 pnl.m_bDragging = false
             end
         end
@@ -364,6 +360,7 @@ function PANEL:CreateTopCategoryBar()
 
     local rootPanel = self
 
+    -- 创建每个顶级分类按钮
     for _, catData in ipairs(self.SettingsData) do
         local btn = vgui.Create("DButton", self.TopCategoryBar)
         btn:SetText(catData.text)
@@ -392,7 +389,6 @@ function PANEL:CreateTopCategoryBar()
             end
             self:SetSelected(true)
             rootPanel:UpdateSubCategoryList(self.subCategories)
-            -- 自动点击第一个子分类
             timer.Simple(0, function()
                 if not IsValid(rootPanel) then return end
                 local subCategoryList = rootPanel.SubCategoryList
@@ -413,6 +409,9 @@ function PANEL:CreateTopCategoryBar()
     end
 end
 
+-- ============================================================================
+-- UpdateSubCategoryList - 更新左侧子分类列表
+-- ============================================================================
 function PANEL:UpdateSubCategoryList(subCategories)
     if not IsValid(self.SubCategoryList) then return end
     self.SubCategoryList:Clear()
@@ -468,6 +467,9 @@ function PANEL:UpdateSubCategoryList(subCategories)
     end
 end
 
+-- ============================================================================
+-- UpdateContent - 根据选中的子分类更新右侧内容面板
+-- ============================================================================
 function PANEL:UpdateContent(category)
     if not IsValid(self.ContentPanel) then return end
     self.ContentPanel:Clear()
@@ -491,14 +493,16 @@ function PANEL:UpdateContent(category)
         elseif data.type == "combobox" then
             self:AddComboBox(list, data)
         elseif data.type == "font_entry" then
-            self:AddFontUsageEntry(list, data) -- 调用下面定义的新函数
+            self:AddFontUsageEntry(list, data)
         end
     end
-
 end
----------------------------------------------------------------------------
+
 -- 辅助函数 (创建UI控件) - 新的简约高级感样式
----------------------------------------------------------------------------
+
+-- ============================================================================
+-- AddCheckbox - 添加自定义 iOS 风格复选框
+-- ============================================================================
 function PANEL:AddCheckbox(parent, data)
     local container = vgui.Create("DPanel", parent)
     container:SetTall(30)
@@ -569,6 +573,10 @@ function PANEL:AddCheckbox(parent, data)
         checkbox:SetValue(not checkbox:GetValue())
     end
 end
+
+-- ============================================================================
+-- AddSlider - 添加滑块控件
+-- ============================================================================
 function PANEL:AddSlider(parent, data)
     local slider = vgui.Create("DNumSlider")
     slider:SetText(translate.Get(data.label) or data.label)
@@ -587,6 +595,9 @@ function PANEL:AddSlider(parent, data)
     parent:AddItem(slider)
 end
 
+-- ============================================================================
+-- AddColorMixer - 添加颜色选择器
+-- ============================================================================
 function PANEL:AddColorMixer(parent, data)
     local label = vgui.Create("DLabel")
     label:SetText(translate.Get(data.label) or data.label)
@@ -608,6 +619,9 @@ function PANEL:AddColorMixer(parent, data)
     parent:AddItem(picker)
 end
 
+-- ============================================================================
+-- AddComboBox - 添加下拉选择框
+-- ============================================================================
 function PANEL:AddComboBox(parent, data)
     local label = vgui.Create("DLabel")
     label:SetText(translate.Get(data.label) or data.label)
@@ -633,18 +647,21 @@ function PANEL:AddComboBox(parent, data)
     end
     parent:AddItem(combo)
 end
--- [4] 辅助函数：绘制字体设置行 (界面里的一行)
+
+-- ============================================================================
+-- AddFontUsageEntry - 添加字体设置行
+-- ============================================================================
 function PANEL:AddFontUsageEntry(parent, data)
     local container = vgui.Create("DPanel")
     container:SetTall(50)
     container.Paint = function(pnl, w, h)
         draw.RoundedBox(4, 0, 0, w, h, Color(60, 60, 65, 150))
         surface.SetDrawColor(COLOR_ACCENT)
-        surface.DrawRect(0, 0, 4, h) -- 左侧装饰条
+        surface.DrawRect(0, 0, 4, h)
     end
 
     local label = vgui.Create("DLabel", container)
-    label:SetText(data.label) -- 显示 "武器名字"
+    label:SetText(data.label)
     label:SetFont("ZS2DFontHarmony")
     label:SetTextColor(Color(240, 240, 240))
     label:Dock(LEFT)
@@ -657,14 +674,15 @@ function PANEL:AddFontUsageEntry(parent, data)
     btn:DockMargin(0, 10, 10, 10)
     btn:SetWide(100)
     btn.DoClick = function()
-        -- 点击后打开编辑器
         self:OpenRealtimeFontEditor(data.fontID, data.label, data.default)
     end
 
     parent:AddItem(container)
 end
 
--- [5] 辅助函数：打开实时编辑器 (弹出窗口)
+-- ============================================================================
+-- OpenRealtimeFontEditor - 打开字体实时编辑器
+-- ============================================================================
 function PANEL:OpenRealtimeFontEditor(fontID, friendlyName, defaultData)
     local currentConfig = ZSFontDLC.GetConfig()[fontID] or defaultData
     local PREVIEW_FONT_ID = "ZSFontDLC_Temp_Preview"
@@ -691,7 +709,6 @@ function PANEL:OpenRealtimeFontEditor(fontID, friendlyName, defaultData)
     local rightPnl = vgui.Create("DScrollPanel", frame)
     rightPnl:Dock(FILL)
 
-    -- 定义变量
     local entryFont, sliderSize, sliderWeight, checkAA, checkOutline, checkShadow, entryPreviewText
 
     -- 实时刷新函数
@@ -752,17 +769,20 @@ function PANEL:OpenRealtimeFontEditor(fontID, friendlyName, defaultData)
         local allConfig = ZSFontDLC.GetConfig()
         allConfig[fontID] = finalData
         ZSFontDLC.SaveConfig(allConfig)
-        surface.CreateFont(fontID, finalData) -- 应用到游戏
+        surface.CreateFont(fontID, finalData)
         frame:Close()
     end
     
-    UpdateRealtimePreview() -- 初始化预览
+    UpdateRealtimePreview()
 end
 
--- 注册面板
 vgui.Register("ZSOptions", PANEL, "DPanel")
 
 local WindowInstance = nil
+
+-- ============================================================================
+-- MakepOptions - 打开设置窗口
+-- ============================================================================
 function MakepOptions()
     if IsValid(WindowInstance) then
         WindowInstance:Remove()

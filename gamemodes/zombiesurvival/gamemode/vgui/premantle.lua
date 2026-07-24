@@ -1,3 +1,12 @@
+-- ============================================================================
+-- PRemantle - 武器改造/升级界面 (Remantler)
+-- 支持武器品质升级、分支变体选择和拆解功能
+-- 包含 3D 渲染的升级路径视图 (ZSRemantlePath)
+-- ============================================================================
+
+-- ============================================================================
+-- ScrapLabelThink - 实时刷新废料数量标签
+-- ============================================================================
 local function ScrapLabelThink(self)
 	local scrap = MySelf:GetAmmoCount("scrap")
 	if self.m_LastScrap ~= scrap then
@@ -8,10 +17,14 @@ local function ScrapLabelThink(self)
 	end
 end
 
+-- 获取选中的库存物品
 local function SelectedInv()
 	return GAMEMODE.InventoryMenu and GAMEMODE.InventoryMenu.SelInv
 end
 
+-- ============================================================================
+-- DismantleClick - 拆解确认对话框
+-- ============================================================================
 local function DismantleClick()
 	Derma_Query(translate.Get("Remantle_Query_Text"), translate.Get("Remantle_Query_Title"),
     translate.Get("Remantle_Query_Confirm"), function()
@@ -25,6 +38,7 @@ local function DismantleClick()
 
 end
 
+-- 鼠标移出改造界面时自动关闭
 hook.Add("Think", "RemantlerMenuThink", function()
 	local pan = GAMEMODE.RemantlerInterface
 	if pan and pan:IsValid() and pan:IsVisible() then
@@ -36,16 +50,20 @@ hook.Add("Think", "RemantlerMenuThink", function()
 	end
 end)
 
+-- 锁定鼠标到窗口中心
 local function RemantlerCenterMouse(self)
 	local x, y = self:GetPos()
 	local w, h = self:GetSize()
 	gui.SetMousePos(x + w / 2, y + h / 2)
 end
 
--- Miniature version of the skill tree code
+-- ============================================================================
+-- ZSRemantlePath - 3D 升级路径视图
+-- 使用 ClientsideModel 在 3D 空间中渲染品质升级节点和连接光束
+-- ============================================================================
 local PANEL = {}
-local hovquality
-local hovbranch
+local hovquality -- 悬停的品质等级
+local hovbranch -- 悬停的分支编号
 
 AccessorFunc( PANEL, "vCamPos",			"CamPos" )
 AccessorFunc( PANEL, "fFOV",			"FOV" )
@@ -55,6 +73,10 @@ AccessorFunc( PANEL, "colAmbientLight",	"AmbientLight" )
 
 PANEL.CreationTime = 0
 
+-- ============================================================================
+-- Init - 初始化升级路径视图
+-- 创建代表品质等级的 3D 节点模型
+-- ============================================================================
 function PANEL:Init()
 	local node
 	local screenscale = BetterScreenScale()
@@ -82,6 +104,7 @@ function PANEL:Init()
 
 			self.OrigTab = gtbl.BaseQuality and weapons.Get(gtbl.BaseQuality) or gtbl
 
+			-- 为每个品质等级和分支创建 3D 节点模型
 			for i = 0, #GAMEMODE.WeaponQualities do
 				node = ClientsideModel("models/props/cs_italy/orange.mdl", RENDER_GROUP_OPAQUE_ENTITY)
 				if IsValid(node) then
@@ -115,6 +138,7 @@ function PANEL:Init()
 		end
 	end
 
+	-- 设置相机参数
 	self:SetCamPos( Vector( 20000, 0, 0 ) )
 	self:SetLookAt( Vector( 0, 0, 0 ) )
 	self:SetFOV( 5 )
@@ -124,6 +148,7 @@ function PANEL:Init()
 	self:SetDirectionalLight( BOX_TOP, color_white )
 	self:SetDirectionalLight( BOX_FRONT, color_white )
 
+	-- 顶部信息面板
 	local top = vgui.Create("Panel", self)
 	top:SetSize(ScrW(), 256)
 	top:SetMouseInputEnabled(false)
@@ -144,6 +169,7 @@ function PANEL:Init()
 		table.insert(desc, qualityd)
 	end
 
+	-- 底部废料消耗面板
 	local bottom = vgui.Create("Panel", self)
 	bottom:SetSize(ScrW(), 36 * screenscale)
 	bottom:SetMouseInputEnabled(false)
@@ -169,6 +195,9 @@ function PANEL:Init()
 	self:InvalidateLayout()
 end
 
+-- ============================================================================
+-- PerformLayout - 布局信息面板
+-- ============================================================================
 function PANEL:PerformLayout()
 	local screenscale = BetterScreenScale()
 
@@ -179,16 +208,25 @@ function PANEL:PerformLayout()
 	self.Bottom:CenterHorizontal()
 end
 
+-- ============================================================================
+-- SetDirectionalLight - 设置方向光
+-- ============================================================================
 function PANEL:SetDirectionalLight(iDirection, color)
 	self.DirectionalLight[iDirection] = color
 end
 
+-- 渲染用材质
 local matBeam = Material("trails/laser")
 local matGlow = Material("sprites/glow04_noz")
 local matWhite = Material("models/debug/debugwhite")
 local colBeam = Color(0, 0, 0)
 local colBeam2 = Color(255, 255, 255)
 local colGlow = Color(0, 0, 0)
+
+-- ============================================================================
+-- Paint - 绘制 3D 升级路径
+-- 包含节点间的连接光束、节点颜色状态和悬停交互高亮
+-- ============================================================================
 function PANEL:Paint(w, h)
 	local realtime = RealTime()
 	local nodepos, selected
@@ -236,6 +274,7 @@ function PANEL:Paint(w, h)
 		end
 	end
 
+	-- 绘制节点间的连接光束
 	render.SetMaterial(matBeam)
 	for branch, nodes in pairs(self.RemantleNodes) do
 		for id, node in pairs(nodes) do
@@ -303,6 +342,7 @@ function PANEL:Paint(w, h)
 
 	local angle = (realtime * 180) % 360
 
+	-- 绘制节点并检测悬停
 	for branch, nodes in pairs(self.RemantleNodes) do
 		for id, node in pairs(nodes) do
 			if IsValid(node) then
@@ -352,6 +392,7 @@ function PANEL:Paint(w, h)
 				surface.DisableClipping(false)
 				cam.End3D2D()
 
+				-- 绘制节点发光效果
 				if not node.Locked then
 					render.SetMaterial(matGlow)
 					colGlow.r = sat * 255 colGlow.g = sat * 255 colGlow.b = sat * 255
@@ -387,6 +428,7 @@ function PANEL:Paint(w, h)
 	cam.IgnoreZ(false)
 	cam.End3D()
 
+	-- 更新悬停显示信息
 	if oldquality ~= hovquality or oldbranch ~= hovbranch then
 		self.Top:Stop()
 		self.Bottom:Stop()
@@ -438,6 +480,7 @@ function PANEL:Paint(w, h)
 	
 end
 
+-- 接收服务器确认升级的网络消息
 net.Receive("zs_remantleconf", function()
 	if not (GAMEMODE.RemantlerInterface and GAMEMODE.RemantlerInterface:IsValid() and hovquality and hovbranch) then return end
 
@@ -472,6 +515,9 @@ net.Receive("zs_remantleconf", function()
 	ri.m_DisaButton:SetTextColor(gtbl.NoDismantle and COLOR_DARKGRAY or COLOR_WHITE)
 end)
 
+-- ============================================================================
+-- OnMousePressed - 点击节点进行升级
+-- ============================================================================
 function PANEL:OnMousePressed(mc)
 	if mc == MOUSE_LEFT and hovquality and hovbranch and hovquality ~= 0 then
 		local gtbl = self.GunTab
@@ -505,6 +551,9 @@ end
 
 vgui.Register("ZSRemantlePath", PANEL, "Panel")
 
+-- ============================================================================
+-- OpenRemantlerMenu - 打开改造菜单
+-- ============================================================================
 function GM:OpenRemantlerMenu(remantler)
 	if not (remantler and remantler:IsValid()) or (self.RemantlerInterface and self.RemantlerInterface:IsVisible()) then return end
 	local mytarget = SelectedInv() or MySelf:GetActiveWeapon():GetClass()
@@ -519,6 +568,7 @@ function GM:OpenRemantlerMenu(remantler)
 	local wid, hei = math.min(ScrW(), 900) * screenscale, math.min(ScrH(), 800) * screenscale
 	local tabhei = 24 * screenscale
 
+	-- 创建主框架
 	local frame = vgui.Create("DFrame")
 	frame:SetSize(wid, hei)
 	frame:Center()
@@ -547,6 +597,7 @@ function GM:OpenRemantlerMenu(remantler)
 		frame.m_WepClass, gtbl = nil, nil
 	end
 
+	-- 顶部空间
 	local topspace = vgui.Create("DPanel", frame)
 	topspace:SetWide(wid - 16)
 
@@ -563,6 +614,7 @@ function GM:OpenRemantlerMenu(remantler)
 	topspace:AlignTop(8)
 	topspace:CenterHorizontal()
 
+	-- 底部空间（废料数量、拆解警告）
 	local bottomspace = vgui.Create("DPanel", frame)
 	bottomspace:SetWide(topspace:GetWide())
 
@@ -585,6 +637,7 @@ function GM:OpenRemantlerMenu(remantler)
 	local __, topy = topspace:GetPos()
 	local ___, boty = bottomspace:GetPos()
 
+	-- 属性表（改造/饰品/弹药标签页）
 	local remprop = vgui.Create("DPropertySheet", frame)
 	remprop:SetSize(wid - 8, boty - topy - 8 - topspace:GetTall())
 	remprop:MoveBelow(topspace, 4)
@@ -592,12 +645,14 @@ function GM:OpenRemantlerMenu(remantler)
 	remprop.Paint = function() end
 	remprop:SetPadding(0)
 
+	-- 改造页面
 	local remantleframe = vgui.Create("DPanel", remprop)
 	local sheet = remprop:AddSheet(translate.Get("Remantling"), remantleframe, "icon16/arrow_up.png", false, false)
 	sheet.Panel:SetPos(0, tabhei + 2)
 	remantleframe.Paint = function(me, w, h) surface.SetDrawColor(31, 33, 35, 255) surface.DrawRect(0, 0, w, h) end
 	remantleframe:SetSize(wid - 8, boty - topy - 8 - topspace:GetTall())
 
+	-- 饰品页面
 	local trinketsframe = vgui.Create("DPanel")
 	sheet = remprop:AddSheet(translate.Get("Trinkets"), trinketsframe, GAMEMODE.ItemCategoryIcons[ITEMCAT_TRINKETS], false, false)
 	sheet.Panel:SetPos(0, tabhei + 2)
@@ -605,6 +660,7 @@ function GM:OpenRemantlerMenu(remantler)
 	trinketsframe:SetPaintBackground(false)
 	frame.TrinketsFrame = trinketsframe
 
+	-- 弹药页面
 	local ammoframe = vgui.Create("DPanel")
 	sheet = remprop:AddSheet(translate.Get("Ammunition"), ammoframe, GAMEMODE.ItemCategoryIcons[ITEMCAT_AMMO], false, false)
 	
@@ -613,7 +669,7 @@ function GM:OpenRemantlerMenu(remantler)
 	ammoframe:SetPaintBackground(true)
 	frame.m_AmmoFrame = ammoframe
 	
-	-- 过滤配置（在此处添加需要过滤的签名）
+	-- 过滤配置
 	local filter_list = {
 		"scrap",
 		"scrap_x5",
@@ -628,6 +684,7 @@ function GM:OpenRemantlerMenu(remantler)
 		local curframe = frameindex == 0 and trinketsframe or ammoframe
 	
 		if frameindex == 0 then
+			-- 饰品页面：按子分类网格展示
 			local tabpane = vgui.Create("DPanel", curframe)
 			tabpane.Grids = {}
 			tabpane.Buttons = {}
@@ -641,7 +698,7 @@ function GM:OpenRemantlerMenu(remantler)
 			local mkgrid = function()
 				local list = vgui.Create("DGrid", itemframe)
 				list:SetPos(0, 0)
-				list:SetSize(itemframe:GetWide() - 20, 0) -- 留出滚动条空间
+				list:SetSize(itemframe:GetWide() - 20, 0)
 				list:SetCols(2)
 				list:SetColWide(280 * screenscale)
 				list:SetRowHeight(64 * screenscale)
@@ -673,26 +730,25 @@ function GM:OpenRemantlerMenu(remantler)
 	
 			for j, tab in ipairs(GAMEMODE.Items) do
 				if tab.PointShop and tab.Category == ITEMCAT_TRINKETS then
-					-- 添加过滤检查
 					if not filter_map[tab.Signature or ""] then
 						self:AddShopItem(tabpane.Grids[tab.SubCategory], j, tab, false, true)
 					end
 				end
 			end
 		else
+			-- 弹药页面：网格展示
 			local scrollpanel = vgui.Create("DScrollPanel", curframe)
 			scrollpanel:SetPos(8, 16)
 			scrollpanel:SetSize(ammoframe:GetWide() - 16, ammoframe:GetTall() - 32)
 	
 			local list = vgui.Create("DGrid", scrollpanel)
-			list:SetSize(scrollpanel:GetWide() - 20, 0) -- 留出滚动条空间
+			list:SetSize(scrollpanel:GetWide() - 20, 0)
 			list:SetCols(3)
 			list:SetColWide(290 * screenscale)
 			list:SetRowHeight(100 * screenscale)
 	
 			for j, tab in ipairs(GAMEMODE.Items) do
 				if tab.PointShop and (tab.Category == ITEMCAT_AMMO or tab.CanMakeFromScrap) then
-					-- 添加过滤检查
 					if not filter_map[tab.Signature or ""] then
 						self:AddShopItem(list, j, tab, false, true)
 					end
@@ -710,11 +766,13 @@ function GM:OpenRemantlerMenu(remantler)
 
 	self:ConfigureMenuTabs(tabs, tabhei)
 
+	-- 当前武器名称显示
 	local contents = EasyLabel(remantleframe, gtbl and gtbl.PrintName or "EMPTY", "ZSHUDFontSmall", COLOR_WHITE)
 	contents:AlignTop(16 * screenscale)
 	contents:CenterHorizontal()
 	frame.m_ContentsLabel = contents
 
+	-- 升级路径面板
 	local upgpathf = vgui.Create("DPanel", remantleframe)
 	upgpathf:SetSize(wid - 16, remantleframe:GetTall() / 1.75)
 	upgpathf:MoveBelow(contents, 24 * screenscale)

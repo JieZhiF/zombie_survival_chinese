@@ -1,14 +1,15 @@
--- 本文件包含一系列客户端辅助函数和控制台命令，用于调试、简化UI创建、处理UI缩放、快捷购买以及修改视图模型等。
+-- ============================================================
+-- cl_util.lua - 客户端辅助函数与控制台命令
+-- 包含以下功能模块：
+--   1. 调试命令（printdxinfo）
+--   2. 弹药快速购买（zs_quickbuyammo）
+--   3. 视图模型隐藏（DontDrawViewModel）
+--   4. UI 缩放比例计算（BetterScreenScale）
+--   5. 光照颜色获取（render.GetLightRGB）
+--   6. VGUI 控件快捷创建（EasyLabel / EasyButton）
+-- ============================================================
 
--- printdxinfo 添加一个控制台命令，用于打印客户端的DirectX支持信息到控制台。
--- ammonames 将武器弹药类型映射到商店购买命令名称的查找表。
--- zs_quickbuyammo 添加一个控制台命令，用于快速购买上次补给的弹药类型。
--- GetViewModelPosition 返回一个远离玩家的视图模型位置，用于隐藏它。
--- DontDrawViewModel 一个用于隐藏当前武器视图模型（玩家的手和武器）的函数。
--- BetterScreenScale 根据屏幕分辨率计算一个合适的UI缩放比例，以确保界面在不同分辨率下显示良好。
--- render.GetLightRGB 获取指定位置的光照颜色并返回其独立的R、G、B分量。
--- EasyLabel 一个用于快速创建和配置VGUI标签（DLabel）的辅助函数。
--- EasyButton 一个用于快速创建和配置VGUI按钮（DButton）的辅助函数。
+-- 添加 "printdxinfo" 控制台命令：打印客户端的 DirectX 支持信息到控制台
 concommand.Add("printdxinfo", function()
 	print("DX Level: "..tostring(render.GetDXLevel()))
 	print("Supports HDR: "..tostring(render.SupportsHDR()))
@@ -17,6 +18,8 @@ concommand.Add("printdxinfo", function()
 	print("Supports Vertex Shaders 2.0: "..tostring(render.SupportsVertexShaders_2_0()))
 end)
 
+-- 弹药类型名到商店购买命令名（不带"ps_"前缀）的映射查找表
+-- 键：弹药类型标识符  值：商店购买命令名
 local ammonames = {
 	["pistol"] = "pistolammo",
 	["buckshot"] = "shotgunammo",
@@ -31,32 +34,41 @@ local ammonames = {
 	["gaussenergy"] = "nail"
 }
 
+-- 添加 "zs_quickbuyammo" 控制台命令：快速购买上次补给的弹药类型
 concommand.Add("zs_quickbuyammo", function()
 	if ammonames[GAMEMODE.CachedResupplyAmmoType] then
 		RunConsoleCommand("zs_pointsshopbuy", "ps_"..ammonames[GAMEMODE.CachedResupplyAmmoType])
 	end
 end)
 
+-- 内部函数：将视图模型位置移到玩家身后极远处，以达到隐藏效果
 local function GetViewModelPosition(self, pos, ang)
 	return pos + ang:Forward() * -256, ang
 end
 
+-- 隐藏当前武器的视图模型（即玩家的手和武器模型）
+-- 通过覆写 SWEP.GetViewModelPosition 实现
 function DontDrawViewModel()
 	if SWEP then
 		SWEP.GetViewModelPosition = GetViewModelPosition
 	end
 end
 
--- Scales the screen based around 1080p but doesn't make things TOO tiny on low resolutions.
+-- 基于 1080p 分辨率缩放屏幕比例，但在低分辨率下不会让界面过小
+-- 返回值：最终的缩放比例（乘上用户自定义的 InterfaceSize）
 function BetterScreenScale()
 	return math.max(ScrH() / 1080, 0.851) * GAMEMODE.InterfaceSize
 end
 
+-- 扩展 render.GetLightRGB：获取指定位置的光照颜色并返回独立的 R、G、B 分量
 function render.GetLightRGB(pos)
 	local vec = render.GetLightColor(pos)
 	return vec.r, vec.g, vec.b
 end
 
+-- 快速创建并配置一个 VGUI 标签（DLabel）的辅助函数
+-- parent：父面板  text：显示文本  font：字体  textcolor：文字颜色
+-- 返回值：创建好的 DLabel 实例
 function EasyLabel(parent, text, font, textcolor)
 	local dpanel = vgui.Create("DLabel", parent)
 	if font then
@@ -73,6 +85,9 @@ function EasyLabel(parent, text, font, textcolor)
 	return dpanel
 end
 
+-- 快速创建并配置一个 VGUI 按钮（DButton）的辅助函数
+-- parent：父面板  text：显示文本  xpadding/ypadding：内边距（增加按钮尺寸）
+-- 返回值：创建好的 DButton 实例
 function EasyButton(parent, text, xpadding, ypadding)
 	local dpanel = vgui.Create("DButton", parent)
 	if textcolor then

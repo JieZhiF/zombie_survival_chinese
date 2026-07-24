@@ -1,19 +1,32 @@
+-- ============================================================================
+-- ZSGameState - 游戏状态 HUD 组件
+-- 显示波次信息、倒计时、队伍人数、分数/大脑数量
+-- 位于屏幕顶部，带渐变背景
+-- ============================================================================
+
 local PANEL = {}
 
+-- ============================================================================
+-- Init - 初始化游戏状态面板
+-- ============================================================================
 function PANEL:Init()
+	-- 人类计数器
 	self.m_HumanCount = vgui.Create("DTeamCounter", self)
 	self.m_HumanCount:SetTeam(TEAM_HUMAN)
 	self.m_HumanCount:SetImage("zombiesurvival/humanhead")
 
+	-- 僵尸计数器
 	self.m_ZombieCount = vgui.Create("DTeamCounter", self)
 	self.m_ZombieCount:SetTeam(TEAM_UNDEAD)
 	self.m_ZombieCount:SetImage("zombiesurvival/zombiehead")
 
+	-- 三行文本显示
 	self.m_Text1 = vgui.Create("DLabel", self)
 	self.m_Text2 = vgui.Create("DLabel", self)
 	self.m_Text3 = vgui.Create("DLabel", self)
 	self:SetTextFont("ZSHUDFontTiny")
 
+	-- 使用自定义 Paint 函数
 	self.m_Text1.Paint = self.Text1Paint
 	self.m_Text2.Paint = self.Text2Paint
 	self.m_Text3.Paint = self.Text3Paint
@@ -21,6 +34,9 @@ function PANEL:Init()
 	self:InvalidateLayout()
 end
 
+-- ============================================================================
+-- SetTextFont - 设置所有文本标签的字体
+-- ============================================================================
 function PANEL:SetTextFont(font)
 	self.m_Text1.Font = font
 	self.m_Text1:SetFont(font)
@@ -32,6 +48,9 @@ function PANEL:SetTextFont(font)
 	self:InvalidateLayout()
 end
 
+-- ============================================================================
+-- PerformLayout - 布局队伍计数器和文本标签
+-- ============================================================================
 function PANEL:PerformLayout()
 	local hs = self:GetTall() * 0.5
 	self.m_HumanCount:SetSize(hs, hs)
@@ -52,6 +71,9 @@ function PANEL:PerformLayout()
 	self.m_Text3:AlignBottom(4)
 end
 
+-- ============================================================================
+-- Text1Paint - 绘制第一行文本（波次信息或任务目标）
+-- ============================================================================
 function PANEL:Text1Paint()
 	local text
 	local override = MySelf:IsValid() and GetGlobalString("hudoverride"..MySelf:Team(), "")
@@ -66,12 +88,8 @@ function PANEL:Text1Paint()
 			text = translate.Get("prepare_yourself")
 		elseif GAMEMODE.ZombieEscape then
 			text = translate.Get("zombie_escape")
-
-			-- I'm gonna leave this as 2 for now, since it is 2 on NoX.
-			--if GAMEMODE.RoundLimit > 0 then
-				round = GAMEMODE.CurrentRound
-				text = text .. " - " .. translate.Format("round_x_of_y", round, 2)
-			--end
+			round = GAMEMODE.CurrentRound
+			text = text .. " - " .. translate.Format("round_x_of_y", round, 2)
 		else
 			local maxwaves = GAMEMODE:GetNumberOfWaves()
 			if maxwaves ~= -1 then
@@ -92,6 +110,9 @@ function PANEL:Text1Paint()
 	return true
 end
 
+-- ============================================================================
+-- Text2Paint - 绘制第二行文本（倒计时）
+-- ============================================================================
 function PANEL:Text2Paint()
 	if GAMEMODE:GetWave() <= 0 then
 		local col
@@ -121,9 +142,13 @@ function PANEL:Text2Paint()
 	return true
 end
 
+-- ============================================================================
+-- Text3Paint - 绘制第三行文本（分数/大脑数量）
+-- ============================================================================
 function PANEL:Text3Paint()
 	if MySelf:IsValid() then
 		if MySelf:Team() == TEAM_UNDEAD then
+			-- 僵尸：显示已食用的大脑数量
 			local toredeem = GAMEMODE:GetRedeemBrains()
 			if toredeem > 0 then
 				draw.SimpleText(translate.Format("brains_eaten_x", MySelf:Frags().." / "..toredeem), self.Font, 0, 0, COLOR_SOFTRED)
@@ -131,7 +156,7 @@ function PANEL:Text3Paint()
 				draw.SimpleText(translate.Format("brains_eaten_x", MySelf:Frags()), self.Font, 0, 0, COLOR_SOFTRED)
 			end
 		else
-			--draw.SimpleText(translate.Format("points_x", MySelf:GetPoints().." / "..MySelf:Frags()), self.Font, 0, 0, COLOR_DARKRED)
+			-- 人类：显示积分和得分
 			draw.SimpleText(""..translate.Format("gameui_points")..MySelf:GetPoints()..""..translate.Format("gameui_score")..MySelf:Frags(), self.Font, 0, 0, COLOR_SOFTRED)
 		end
 	end
@@ -139,13 +164,17 @@ function PANEL:Text3Paint()
 	return true
 end
 
+-- 渐变材质
 local matGradientLeft = CreateMaterial("gradient-l", "UnlitGeneric", {["$basetexture"] = "vgui/gradient-l", ["$vertexalpha"] = "1", ["$vertexcolor"] = "1", ["$ignorez"] = "1", ["$nomip"] = "1"})
+
+-- ============================================================================
+-- Paint - 绘制渐变背景
+-- ============================================================================
 function PANEL:Paint(w, h)
 	surface.SetDrawColor(0, 0, 0, 180)
 	surface.DrawRect(0, 0, w * 0.4, h)
 	surface.SetMaterial(matGradientLeft)
 	surface.DrawTexturedRect(w * 0.4, 0, w * 0.6, h)
-	--surface.DrawLine(0, h - 1, w, h - 1)
 	surface.SetDrawColor(0, 0, 0, 250)
 	surface.SetMaterial(matGradientLeft)
 	surface.DrawTexturedRect(0, h - 1, w, 1)

@@ -1,24 +1,46 @@
+--[[
+==================================================================
+根除者 (Eradicator) — 僵尸职业
+特点：可装死（假死复活）、可嘲讽、自定义动画集合、
+      被伤害致死时触发复活机制、自定义死亡/受伤音效
+==================================================================
+]]
+
+-- 职业显示名称
 CLASS.Name = "Eradicator"
+-- 翻译键名
 CLASS.TranslationName = "class_eradicator"
+-- 描述文本键名
 CLASS.Description = "description_eradicator"
+-- 控制帮助文本键名
 CLASS.Help = "controls_eradicator"
 
+-- 出现波次
 CLASS.Wave = 6 / 6
 
-CLASS.Health = 410
+-- 生命值
+CLASS.Health = 330
+-- 移动速度
 CLASS.Speed = 150
 
+-- 可嘲讽
 CLASS.CanTaunt = true
 
+-- 击杀得分
 CLASS.Points = CLASS.Health/GM.HumanoidZombiePointRatio
 
+-- 绑定的武器
 CLASS.SWEP = "weapon_zs_eradicator"
 
+-- 主模型（经典僵尸修复版）
 CLASS.Model = Model("models/player/zombie_classic_hbfix.mdl")
+-- 覆盖模型（毒僵尸）
 CLASS.OverrideModel = Model("models/Zombie/Poison.mdl")
 
+-- 语音音调
 CLASS.VoicePitch = 0.6
 
+-- 缓存函数和变量
 local CurTime = CurTime
 local math_random = math.random
 local math_ceil = math.ceil
@@ -50,10 +72,12 @@ local DMG_BURN = DMG_BURN
 local DMG_CRUSH = DMG_CRUSH
 local bit_band = bit.band
 
+-- 被击倒时重置手势动画
 function CLASS:KnockedDown(pl, status, exists)
 	pl:AnimResetGestureSlot(GESTURE_SLOT_ATTACK_AND_RELOAD)
 end
 
+-- 脚步声列表
 local StepLeftSounds = {
 	"npc/zombie/foot1.wav",
 	"npc/zombie/foot2.wav"
@@ -62,29 +86,31 @@ local StepRightSounds = {
 	"npc/zombie/foot2.wav",
 	"npc/zombie/foot3.wav"
 }
+
+-- 自定义脚步声
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if iFoot == 0 then
 		pl:EmitSound(StepLeftSounds[math_random(#StepLeftSounds)], 70)
 	else
 		pl:EmitSound(StepRightSounds[math_random(#StepRightSounds)], 70)
 	end
-
 	return true
 end
 
+-- 自定义受伤音效
 function CLASS:PlayPainSound(pl)
 	pl:EmitSound("npc/combine_soldier/pain"..math_random(3)..".wav", 75, math.Rand(60, 65))
 	pl.NextPainSound = CurTime() + 0.5
-
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound("npc/combine_gunship/gunship_pain.wav", 75, math.Rand(70, 75))
-
 	return true
 end
 
+-- 脚步音效间隔时间
 function CLASS:PlayerStepSoundTime(pl, iType, bWalking)
 	if iType == STEPSOUNDTIME_NORMAL or iType == STEPSOUNDTIME_WATER_FOOT then
 		return 625 - pl:GetVelocity():Length()
@@ -93,22 +119,23 @@ function CLASS:PlayerStepSoundTime(pl, iType, bWalking)
 	elseif iType == STEPSOUNDTIME_WATER_KNEE then
 		return 750
 	end
-
 	return 450
 end
 
+-- 计算主要活动动画
 function CLASS:CalcMainActivity(pl, velocity)
+	-- 复活动画
 	local revive = pl.Revive
 	if revive and revive:IsValid() then
 		return ACT_HL2MP_ZOMBIE_SLUMP_RISE, -1
 	end
 
+	-- 装死动画
 	local feign = pl.FeignDeath
 	if feign and feign:IsValid() then
 		if feign:GetDirection() == DIR_BACK then
 			return 1, pl:LookupSequence("zombie_slump_rise_02_fast")
 		end
-
 		return ACT_HL2MP_ZOMBIE_SLUMP_RISE, -1
 	end
 
@@ -116,6 +143,7 @@ function CLASS:CalcMainActivity(pl, velocity)
 		return ACT_HL2MP_SWIM_PISTOL, -1
 	end
 
+	-- 呻吟时站立不动
 	local wep = pl:GetActiveWeapon()
 	if wep:IsValid() and wep.IsMoaning and wep:IsMoaning() then
 		return ACT_HL2MP_RUN_ZOMBIE, -1
@@ -125,7 +153,6 @@ function CLASS:CalcMainActivity(pl, velocity)
 		if pl:Crouching() and pl:OnGround() then
 			return ACT_HL2MP_IDLE_CROUCH_ZOMBIE, -1
 		end
-
 		return ACT_HL2MP_IDLE_ZOMBIE, -1
 	end
 
@@ -136,7 +163,9 @@ function CLASS:CalcMainActivity(pl, velocity)
 	return ACT_HL2MP_WALK_ZOMBIE_01 - 1 + math_ceil((CurTime() / 3 + pl:EntIndex()) % 3), -1
 end
 
+-- 更新动画速率
 function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
+	-- 复活动画进度
 	local revive = pl.Revive
 	if revive and revive:IsValid() then
 		pl:SetCycle(0.4 + (1 - math_Clamp((revive:GetReviveTime() - CurTime()) / revive:GetReviveAnim(), 0, 1)) * 0.6)
@@ -144,6 +173,7 @@ function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 		return true
 	end
 
+	-- 装死动画进度
 	local feign = pl.FeignDeath
 	if feign and feign:IsValid() then
 		if feign:GetState() == 1 then
@@ -166,10 +196,10 @@ function CLASS:UpdateAnimation(pl, velocity, maxseqgroundspeed)
 	else
 		pl:SetPlaybackRate(1)
 	end
-
 	return true
 end
 
+-- 处理动画事件
 function CLASS:DoAnimationEvent(pl, event, data)
 	if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
 		pl:DoZombieAttackAnim(data)
@@ -180,7 +210,9 @@ function CLASS:DoAnimationEvent(pl, event, data)
 	end
 end
 
+-- 服务端逻辑
 if SERVER then
+	-- 伤害处理：触发复活机制
 	function CLASS:ProcessDamage(pl, dmginfo)
 		if pl.EradiVived then return end
 
@@ -198,6 +230,7 @@ if SERVER then
 		if CurTime() < (pl.NextZombieRevive or 0) then return end
 		pl.NextZombieRevive = CurTime() + 4.25
 
+		-- 归零伤害并触发复活
 		dmginfo:SetDamage(0)
 		pl:SetHealth(10)
 
@@ -206,24 +239,26 @@ if SERVER then
 			status:SetReviveTime(CurTime() + 3)
 			status:SetReviveAnim(3.15)
 			status:SetReviveHeal(130)
-
 			pl.EradiVived = true
 		end
-
 		return true
 	end
 
+	-- 生成时创建环境音效并重置复活标记
 	function CLASS:OnSpawned(pl)
 		pl:CreateAmbience("eradicatorambience")
 		pl.EradiVived = false
 	end
 end
 
+-- 客户端在此处结束
 if not CLIENT then return end
 
+-- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/poisonzombie"
 CLASS.IconColor = Color(66, 0, 0)
 
+-- 覆盖模型材质
 local matSkin = Material("Models/charple/charple4_sheet.vtf")
 function CLASS:PrePlayerDrawOverrideModel(pl)
 	render.ModelMaterialOverride(matSkin)

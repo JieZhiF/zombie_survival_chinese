@@ -255,7 +255,7 @@ function SWEP:DrawHUD()
         draw.SimpleText(math.Round(fraction * 100) .. "%", "Typenoksidi", x - 64 * scale, texty + hei * 1.75, COLOR_GREEN, TEXT_ALIGN_LEFT)
     end
 
-    draw.SimpleText("Heal Potency: " .. self.Heal, "Typenoksidi", x, texty - 40 * scale, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+    draw.SimpleText("医疗量: " .. self.Heal, "Typenoksidi", x, texty - 40 * scale, Color(255, 0, 0), TEXT_ALIGN_LEFT)
     draw.SimpleText(self.PrintName, "Typenoksidi", x, texty, COLOR_GREEN, TEXT_ALIGN_LEFT)
 
     local charges = self:GetPrimaryAmmoCount()

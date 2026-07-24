@@ -1,12 +1,20 @@
+﻿-- ========== 获取Player元表 ==========
+
 local M_Player = FindMetaTable("Player")
 
 local E_GetTable = FindMetaTable("Entity").GetTable
+
+-- ========== 保存客户端原始玩家弹药函数 ==========
 
 local old_Player_SetAmmo = M_Player.SetAmmo
 local old_Player_GetAmmoCount = M_Player.GetAmmoCount
 local old_Player_RemoveAmmo = M_Player.RemoveAmmo
 
+-- ========== 客户端自定义弹药计数表 ==========
+
 local CUSTOM_AMMO_COUNT = {}
+
+-- ========== 通过名称或ID获取自定义弹药ID ==========
 
 local function GetIDFromNameOrID(id_or_name)
 	local ca = CUSTOM_AMMO[id_or_name]
@@ -14,6 +22,8 @@ local function GetIDFromNameOrID(id_or_name)
 		return ca.index
 	end
 end
+
+-- ========== 重写客户端获取弹药数量 ==========
 
 function M_Player:GetAmmoCount(id_or_name)
 	if LocalPlayer() ~= self then return 0 end
@@ -26,6 +36,8 @@ function M_Player:GetAmmoCount(id_or_name)
 	return old_Player_GetAmmoCount(self, id_or_name)
 end
 
+-- ========== 重写客户端设置弹药数量 ==========
+
 function M_Player:SetAmmo(amount, id_or_name)
 	if LocalPlayer() ~= self then return end
 
@@ -36,6 +48,8 @@ function M_Player:SetAmmo(amount, id_or_name)
 		old_Player_SetAmmo(self, amount, id_or_name)
 	end
 end
+
+-- ========== 重写客户端移除弹药 ==========
 
 function M_Player:RemoveAmmo(amount, id_or_name)
 	if LocalPlayer() ~= self then return end
@@ -48,12 +62,16 @@ function M_Player:RemoveAmmo(amount, id_or_name)
 	end
 end
 
+-- ========== 接收服务端弹药数量更新 ==========
+
 net.Receive("cusammo", function(length)
 	local index = net.ReadUInt(6) + 128
 	local amount = net.ReadUInt(10)
 
 	CUSTOM_AMMO_COUNT[index] = amount
 end)
+
+-- ========== 接收服务端清除所有弹药指令 ==========
 
 net.Receive("cusammo_removeall", function(length)
 	CUSTOM_AMMO_COUNT = {}

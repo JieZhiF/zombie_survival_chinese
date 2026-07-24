@@ -1,5 +1,11 @@
 -- ============================================================================
--- 商店配置 (Shop Configuration) - (原版设计 + 价格 + 快速动画)
+-- PMutationShop - 突变/变异商店界面
+-- 允许僵尸玩家使用突变点数购买各种变异能力
+-- 包含商店配置、项目行(ItemRow)和主窗口(MutationShopFrame)
+-- ============================================================================
+
+-- ============================================================================
+-- 商店配置 (Shop Configuration)
 -- ============================================================================
 local ShopConfig = {
     Title = ""..translate.Get("mutation_MutationShop").."",
@@ -15,7 +21,7 @@ local ShopConfig = {
 
     ContentPadding = 10,
     
-    AnimationSpeed = 10, -- [[ MODIFIED ]] -- 动画速度乘数 (原为8)
+    AnimationSpeed = 10,
 
     Fonts = {
         Title = "ZSHUDFontSmall",
@@ -24,7 +30,7 @@ local ShopConfig = {
         ItemDesc = "ZSHUDFontTiny",
         Button = "ZSHUDFontTiny",
         CloseButton = "ZSHUDFontSmall",
-        ItemPrice = "ZSHUDFontSmall" -- [[ NEW ]] -- 价格字体
+        ItemPrice = "ZSHUDFontSmall"
     },
 
     Colors = {
@@ -34,7 +40,7 @@ local ShopConfig = {
         TextPrimary = Color(220, 221, 222),
         TextSecondary = Color(150, 152, 155),
         TextTitle = Color(200, 220, 255),
-        TextPrice = Color(255, 199, 71), -- [[ NEW ]] -- 价格颜色 (金色)
+        TextPrice = Color(255, 199, 71),
         Accent = Color(35, 180, 220),
         ButtonBuy = Color(40, 160, 90),
         ButtonBuyHover = Color(60, 190, 110),
@@ -48,7 +54,7 @@ local ShopConfig = {
     }
 }
 
--- 辅助函数：动画颜色
+-- 辅助函数：颜色插值
 local function LerpColor(fraction, from, to)
     local r = Lerp(fraction, from.r, to.r)
     local g = Lerp(fraction, from.g, to.g)
@@ -72,36 +78,43 @@ end
 
 
 -- ============================================================================
--- VGUI 面板: 单个突变项目行 (ZSMutationItemRow)
+-- ZSMutationItemRow - 单个突变项目行面板
 -- ============================================================================
 local PANEL = {}
 
+-- ============================================================================
+-- Init - 初始化项目行
+-- ============================================================================
 function PANEL:Init()
     self:SetTall(ShopConfig.ItemRowHeight)
     self:Dock(TOP)
     self:DockMargin(0, 0, 0, 5)
 
+    -- 突变图标
     self.Icon = vgui.Create("DImage", self)
     self.Icon:SetSize(ShopConfig.ItemIconSize, ShopConfig.ItemIconSize)
     
+    -- 突变名称
     self.NameLabel = vgui.Create("DLabel", self)
     self.NameLabel:SetFont(ShopConfig.Fonts.ItemName)
     self.NameLabel:SetTextColor(ShopConfig.Colors.TextPrimary)
     self.NameLabel:SetWrap(true)
     self.NameLabel:SetAutoStretchVertical(true)
 
+    -- 突变描述
     self.DescLabel = vgui.Create("DLabel", self)
     self.DescLabel:SetFont(ShopConfig.Fonts.ItemDesc)
     self.DescLabel:SetTextColor(ShopConfig.Colors.TextSecondary)
     self.DescLabel:SetWrap(true)
     self.DescLabel:SetAutoStretchVertical(true)
     
-    -- [[ NEW ]] -- 创建价格标签
+    -- 价格标签
     self.PriceLabel = vgui.Create("DLabel", self)
     self.PriceLabel:SetFont(ShopConfig.Fonts.ItemPrice)
     self.PriceLabel:SetTextColor(ShopConfig.Colors.TextPrice)
-    self.PriceLabel:SetContentAlignment(5) -- 居中对齐
+    self.PriceLabel:SetContentAlignment(5)
 
+    -- 购买按钮
     self.PurchaseButton = vgui.Create("DButton", self)
     self.PurchaseButton:SetText(translate.Get("mutation_Purchase"))
     self.PurchaseButton:SetFont(ShopConfig.Fonts.Button)
@@ -117,22 +130,26 @@ function PANEL:Init()
         DrawVerticalGradient(0, 0, w, h * 0.5, Color(255, 255, 255, 20), Color(255, 255, 255, 0))
     end
 
+    -- 当前背景颜色（用于悬停动画）
     self.CurrentBGColor = ShopConfig.Colors.ListItem
 end
 
+-- ============================================================================
+-- PerformLayout - 布局项目行的各个元素
+-- ============================================================================
 function PANEL:PerformLayout(w, h)
     local iconMargin = (h - ShopConfig.ItemIconSize) / 2
     self.Icon:SetPos(10, iconMargin)
 
     self.PurchaseButton:SetPos(w - ShopConfig.ItemButtonWidth - 10, (h - ShopConfig.ItemButtonHeight) / 2)
     
-    -- [[ MODIFIED ]] -- 布局价格标签
+    -- 布局价格标签
     self.PriceLabel:SizeToContents()
     self.PriceLabel:SetPos(self.PurchaseButton.x - self.PriceLabel:GetWide() - 10, 0)
     self.PriceLabel:SetTall(h)
 
     local textStartX = self.Icon.x + self.Icon:GetWide() + 15
-    local textMaxWidth = self.PriceLabel.x - textStartX - 15 -- 调整文本宽度以避免与价格重叠
+    local textMaxWidth = self.PriceLabel.x - textStartX - 15
     
     self.NameLabel:SetWide(textMaxWidth)
     self.DescLabel:SetWide(textMaxWidth)
@@ -146,12 +163,18 @@ function PANEL:PerformLayout(w, h)
     self.DescLabel:SetPos(textStartX, textBlockStartY + nameHeight + 4)
 end
 
+-- ============================================================================
+-- Paint - 绘制项目行悬停背景
+-- ============================================================================
 function PANEL:Paint(w, h)
     local targetColor = self:IsHovered() and ShopConfig.Colors.ListItemHover or ShopConfig.Colors.ListItem
     self.CurrentBGColor = LerpColor(FrameTime() * ShopConfig.AnimationSpeed, self.CurrentBGColor, targetColor)
     draw.RoundedBox(4, 0, 0, w, h, self.CurrentBGColor)
 end
 
+-- ============================================================================
+-- SetMutation - 设置突变项目的数据
+-- ============================================================================
 function PANEL:SetMutation(mutationData)
     self.Data = mutationData
     if not self.Data then return end
@@ -162,7 +185,7 @@ function PANEL:SetMutation(mutationData)
     self.NameLabel:SetText(self.Data.Name)
     self.DescLabel:SetText(self.Data.Description)
     
-    -- [[ NEW ]] -- 设置价格文本
+    -- 设置价格文本
     self.PriceLabel:SetText(self.Data.Price or "??")
     
     self.Icon:SetVisible(true)
@@ -178,20 +201,22 @@ function PANEL:SetMutation(mutationData)
         if sig == self.Data.Signature then isOwned = true; break end
     end
     if isOwned then
-        self.PriceLabel:SetVisible(false) -- 如果已拥有，则隐藏价格
+        self.PriceLabel:SetVisible(false)
         self.PurchaseButton:SetText("已拥有")
         self.PurchaseButton:SetEnabled(false)
         self.PurchaseButton.Paint = function(btn, w, h) draw.RoundedBox(8, 0, 0, w, h, ShopConfig.Colors.ButtonOwned) end
     end
 end
 
+-- ============================================================================
+-- Purchase - 执行购买操作
+-- ============================================================================
 function PANEL:Purchase()
     if not self.Data then return end
     local myTokens = LocalPlayer():GetTokens() or 0
     local CanPurchase = gamemode.Call("ZombieCanPurchase", LocalPlayer())
     RunConsoleCommand("zs_mutationshop_click", self.Data.Signature)
     if myTokens >= self.Data.Price and CanPurchase then
-        --surface.PlaySound("buttons/button17.wav")
         table.insert(UsedMutations, self.Data.Signature)
         self:SetMutation(self.Data)
     end
@@ -200,21 +225,21 @@ vgui.Register("ZSMutationItemRow", PANEL, "DPanel")
 
 
 -- ============================================================================
--- VGUI 面板: 商店主窗口 (MutationShopFrame)
+-- MutationShopFrame - 突变商店主窗口
 -- ============================================================================
 local pMutationShop
+
+-- ============================================================================
+-- OpenMutationShop - 打开突变商店
+-- ============================================================================
 function OpenMutationShop(used)
     if IsValid(pMutationShop) then pMutationShop:Remove() end
-    -- [[ FIX START ]] --
-    -- 仅当传入新的 `used` 数据时才更新全局列表。
-    -- 这可以防止在没有新数据的情况下打开商店时（例如通过按键绑定）重置玩家的已拥有物品列表。
+
     if used then
         UsedMutations = used
     end
 
-    -- 确保 `UsedMutations` 至少被初始化为一个空表，以防万一。
     UsedMutations = UsedMutations or {}
-    -- [[ FIX END ]] --
 
     pMutationShop = vgui.Create("MutationShopFrame")
 end
@@ -223,6 +248,9 @@ PANEL = {}
 PANEL.TitleBarHeight = ShopConfig.TitleBarHeight
 PANEL.CategoryBarHeight = ShopConfig.CategoryBarHeight
 
+-- ============================================================================
+-- GetSortedCategories - 获取排序后的类别ID列表
+-- ============================================================================
 function PANEL:GetSortedCategories()
     local sortable = {}
     for id, data in pairs(GAMEMODE.ZombieShopCategories) do
@@ -234,6 +262,9 @@ function PANEL:GetSortedCategories()
     return sortedIDs
 end
 
+-- ============================================================================
+-- Init - 初始化主窗口
+-- ============================================================================
 function PANEL:Init()
     local BetterScreenScale = BetterScreenScale and BetterScreenScale() or 1
     local wid, hei = ScrW() * ShopConfig.WindowWidthScale * BetterScreenScale, ScrH() * ShopConfig.WindowHeightScale * BetterScreenScale
@@ -247,16 +278,19 @@ function PANEL:Init()
     self.CategoryTabs = {}
     self.ActiveCategory = nil
 
+    -- 标题
     self.TitleLabel = vgui.Create("DLabel", self)
     self.TitleLabel:SetText(ShopConfig.Title)
     self.TitleLabel:SetFont(ShopConfig.Fonts.Title)
     self.TitleLabel:SetTextColor(ShopConfig.Colors.TextTitle)
     self.TitleLabel:SetContentAlignment(5)
 
+    -- 突变点数显示
     self.MutationPointsLabel = vgui.Create("DLabel", self)
     self.MutationPointsLabel:SetFont(ShopConfig.Fonts.Title)
     self.MutationPointsLabel:SetTextColor(ShopConfig.Colors.TextPrimary)
 
+    -- 关闭按钮（X）
     self.CloseButton = vgui.Create("DButton", self)
     self.CloseButton:SetText("X")
     self.CloseButton:SetFont(ShopConfig.Fonts.CloseButton)
@@ -270,6 +304,7 @@ function PANEL:Init()
         draw.RoundedBox(0, 0, 0, w, h, btn.CurrentBGColor)
     end
 
+    -- 分类标签容器
     self.TabsContainer = vgui.Create("DPanel", self)
     self.TabsContainer:SetPaintBackground(false)
     self.TabsContainer.PerformLayout = function(container, w, h)
@@ -288,6 +323,7 @@ function PANEL:Init()
         currentX = currentX + tabW + (tabMargin * 2) end; inner:SetSize(currentX, h); inner:Center()
     end
 
+    -- 项目列表滚动面板
     self.ItemList = vgui.Create("DScrollPanel", self)
     local pad = ShopConfig.ContentPadding
     self.ItemList:GetCanvas():DockPadding(pad, pad, pad, pad)
@@ -299,11 +335,13 @@ function PANEL:Init()
     self:CreateCategoryTabs()
     self:Center()
 
-    -- [[ MODIFIED ]] -- 窗口出现动画时间改为0.1秒
     self:SetAlpha(0)
     self:AlphaTo(255, 0.1, 0)
 end
 
+-- ============================================================================
+-- Think - 每帧逻辑：更新突变点数显示
+-- ============================================================================
 function PANEL:Think()
     local Tokens = math.floor(LocalPlayer():GetTokens() or 0)
     self.MutationPointsLabel:SetText(translate.Get("mutation_MutationPoints").. Tokens)
@@ -314,6 +352,9 @@ function PANEL:Think()
     end
 end
 
+-- ============================================================================
+-- Paint - 绘制窗口背景和标题栏
+-- ============================================================================
 function PANEL:Paint(w, h)
     draw.RoundedBox(12, 0, 0, w, h, ShopConfig.Colors.Background)
     DrawVerticalGradient(0, 0, w, self.TitleBarHeight, ShopConfig.Colors.TitleBar, ShopConfig.Colors.CategoryBar)
@@ -321,6 +362,9 @@ function PANEL:Paint(w, h)
     surface.DrawRect(0, self.TitleBarHeight + self.CategoryBarHeight, w, 1)
 end
 
+-- ============================================================================
+-- PerformLayout - 布局主窗口元素
+-- ============================================================================
 function PANEL:PerformLayout(w, h)
     self.CloseButton:SetSize(self.TitleBarHeight, self.TitleBarHeight)
     self.CloseButton:SetPos(w - self.TitleBarHeight, 0)
@@ -338,6 +382,9 @@ function PANEL:PerformLayout(w, h)
     self.ItemList:SetSize(w, h - contentY)
 end
 
+-- ============================================================================
+-- CreateCategoryTabs - 创建分类标签
+-- ============================================================================
 function PANEL:CreateCategoryTabs()
     local sortedKeys = self:GetSortedCategories()
     local innerContainer = vgui.Create("DPanel", self.TabsContainer)
@@ -366,6 +413,9 @@ function PANEL:CreateCategoryTabs()
     end
 end
 
+-- ============================================================================
+-- SwitchCategory - 切换当前显示的分类
+-- ============================================================================
 function PANEL:SwitchCategory(categoryID, bForce)
     if not bForce and self.ActiveCategory == categoryID then return end
     self.ActiveCategory = categoryID
@@ -374,6 +424,9 @@ function PANEL:SwitchCategory(categoryID, bForce)
     self:PopulateItemList()
 end
 
+-- ============================================================================
+-- PopulateItemList - 填充当前分类下的突变项目列表
+-- ============================================================================
 function PANEL:PopulateItemList()
     self.ItemList:Clear()
     if not self.ActiveCategory then return end
@@ -388,6 +441,9 @@ function PANEL:PopulateItemList()
     self.ItemList:InvalidateLayout(true)
 end
 
+-- ============================================================================
+-- StyleScrollbar - 自定义滚动条样式
+-- ============================================================================
 function PANEL:StyleScrollbar()
     local scrollBar = self.ItemList:GetVBar()
     scrollBar.Paint = function(pnl, w, h) draw.RoundedBox(4, 0, 0, w, h, ShopConfig.Colors.ScrollbarTrack) end
@@ -399,8 +455,10 @@ function PANEL:StyleScrollbar()
     scrollBar.btnDown.Paint = function() end
 end
 
+-- ============================================================================
+-- Close - 关闭窗口（带淡出动画）
+-- ============================================================================
 function PANEL:Close()
-    -- [[ MODIFIED ]] -- 窗口关闭动画时间改为0.1秒
     self:AlphaTo(0, 0.15, 0, function() self:Remove() end)
 end
 

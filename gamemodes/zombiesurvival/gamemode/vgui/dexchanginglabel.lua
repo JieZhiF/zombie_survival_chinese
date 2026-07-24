@@ -1,36 +1,55 @@
+-- ============================================================================
+-- DEXChangingLabel - 动态文本标签组件
+-- 提供一个能自动检测值变化并更新显示的 DLabel 扩展
+-- 每帧调用提供的函数，在返回值变化时自动更新标签文本
+-- ============================================================================
+
 local PANEL = {}
-//这个不知道是干啥的，所以注释有可能不对或者看不懂。但应该是作者用来改变文本的。
-//注释状态：已完成，
+
 local function empty() end
 
-function PANEL:SetChangeFunction(func, autosize)//设置改变函数,里面参数是一个函数,返回值是一个字符串,如果autosize为true,则会自动调整大小
-	self.Think = function(me)//设置Think函数,每帧都会调用
-		local val = func()//调用函数
-		if self.LastValue ~= val and val ~= nil then//上一个值不等于新值并且新值不为空则
-			self.LastValue = val//设置上一个值为新值
+-- ============================================================================
+-- SetChangeFunction - 设置值变化检测函数
+-- @func: 返回要显示文本的函数（每帧被调用）
+-- @autosize: 如果为true，值变化时自动调整标签大小
+-- ============================================================================
+function PANEL:SetChangeFunction(func, autosize)
+	self.Think = function(me)
+		local val = func()
+		if self.LastValue ~= val and val ~= nil then
+			self.LastValue = val
 
-			self:SetText(val)//设置文本
+			self:SetText(val)
 
-			if autosize then//如果autosize为true则
-				self:SizeToContents()//自动调整大小
+			if autosize then
+				self:SizeToContents()
 			end
 
-			if self.OnChanged then//如果有OnChanged函数则
-				self:OnChanged(val)//调用OnChanged函数
+			if self.OnChanged then
+				self:OnChanged(val)
 			end
 		end
 	end
 end
 
-function PANEL:RemoveChangeFunction()//移除改变函数
+-- ============================================================================
+-- RemoveChangeFunction - 移除值变化检测
+-- ============================================================================
+function PANEL:RemoveChangeFunction()
 	self.Think = empty
 end
 
-function PANEL:SetChangedFunction(func)//设置改变函数,里面参数是一个函数,返回值是一个字符串
+-- ============================================================================
+-- SetChangedFunction - 设置值变化时的回调函数
+-- ============================================================================
+function PANEL:SetChangedFunction(func)
 	self.OnChanged = func
 end
 
-function PANEL:RemoveChangedFunction()//移除改变函数
+-- ============================================================================
+-- RemoveChangedFunction - 移除值变化回调
+-- ============================================================================
+function PANEL:RemoveChangedFunction()
 	self.OnChanged = empty
 end
 

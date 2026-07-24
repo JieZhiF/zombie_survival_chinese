@@ -1,73 +1,81 @@
--- Sometimes persistent ones don't get created.
+-- ==================== 客户端初始化入口 ====================
+-- 有时持久性ConVar不会被创建，这里做兼容处理
 local dummy = CreateClientConVar("_zs_dummyconvar", 1, false, false)
 local oldCreateClientConVar = CreateClientConVar
 function CreateClientConVar(...)
 	return oldCreateClientConVar(...) or dummy
 end
 
+-- ==================== 包含文件 ====================
 include("sh_globals.lua")
 
+-- 客户端实体/玩家/武器扩展
 include("obj_entity_extend_cl.lua")
 include("obj_player_extend_cl.lua")
 include("obj_weapon_extend_cl.lua")
 
+-- 模块加载器
 include("loader.lua")
 
+-- 核心文件
 include("shared.lua")
-include("cl_draw.lua")
-include("cl_util.lua")
-include("cl_options.lua")
-include("cl_fontdlc.lua")
-include("cl_scoreboard.lua")
-include("cl_targetid.lua")
-include("cl_postprocess.lua")
-include("cl_voicesets.lua")
-include("cl_net.lua")
-include("skillweb/cl_skillweb.lua")
+include("cl_draw.lua")  -- 客户端绘制
+include("cl_util.lua")  -- 客户端工具函数
+include("cl_options.lua")  -- 客户端选项
+include("cl_fontdlc.lua")  -- 字体DLC
+include("cl_scoreboard.lua")  -- 计分板
+include("cl_targetid.lua")  -- 目标标识
+include("cl_postprocess.lua")  -- 后处理特效
+include("cl_voicesets.lua")  -- 语音集
+include("cl_net.lua")  -- 网络消息
+include("skillweb/cl_skillweb.lua")  -- 技能树客户端
 
-include("vgui/dteamcounter.lua")
-include("vgui/dmodelpanelex.lua")
-include("vgui/dammocounter.lua")
-include("vgui/dteamheading.lua")
-include("vgui/dmodelkillicon.lua")
+-- VGUI组件
+include("vgui/dteamcounter.lua")  -- 队伍计数器
+include("vgui/dmodelpanelex.lua")  -- 模型面板扩展
+include("vgui/dammocounter.lua")  -- 弹药计数器
+include("vgui/dteamheading.lua")  -- 队伍标题
+include("vgui/dmodelkillicon.lua")  -- 击杀图标
 
-include("vgui/dexroundedpanel.lua")
-include("vgui/dexroundedframe.lua")
-include("vgui/dexrotatedimage.lua")
-include("vgui/dexnotificationslist.lua")
-include("vgui/dexchanginglabel.lua")
+include("vgui/dexroundedpanel.lua")  -- 圆角面板
+include("vgui/dexroundedframe.lua")  -- 圆角窗口
+include("vgui/dexrotatedimage.lua")  -- 旋转图像
+include("vgui/dexnotificationslist.lua")  -- 通知列表
+include("vgui/dexchanginglabel.lua")  -- 变化标签
 
-include("vgui/mainmenu.lua")
-include("vgui/pmainmenu.lua")
-include("vgui/poptions.lua")
-include("vgui/phelp.lua")
-include("vgui/pclassselect.lua")
-include("vgui/pweapons.lua")
-include("vgui/pendboard.lua")
-include("vgui/pworth.lua")
-include("vgui/parsenal.lua")
-include("vgui/premantle.lua")
-include("vgui/dpingmeter.lua")
-include("vgui/dsidemenu.lua")
-include("vgui/dspawnmenu.lua")
-include("vgui/zsgamestate.lua")
-include("vgui/zshealtharea.lua")
-include("vgui/zsstatusarea.lua")
+include("vgui/mainmenu.lua")  -- 主菜单
+include("vgui/pmainmenu.lua")  -- 主菜单面板
+include("vgui/poptions.lua")  -- 选项面板
+include("vgui/phelp.lua")  -- 帮助面板
+include("vgui/pclassselect.lua")  -- 职业选择
+include("vgui/pweapons.lua")  -- 武器面板
+include("vgui/pendboard.lua")  -- 结束面板
+include("vgui/pworth.lua")  -- 购物面板
+include("vgui/parsenal.lua")  -- 军械库
+include("vgui/premantle.lua")  -- 重铸面板
+include("vgui/dpingmeter.lua")  -- Ping表
+include("vgui/dsidemenu.lua")  -- 侧边菜单（保留作为 fallback）
+include("vgui/dspawnmenu.lua")  -- 出生菜单
+include("vgui/zsgamestate.lua")  -- 游戏状态
+include("vgui/zshealtharea.lua")  -- 血量区域
+include("vgui/zsstatusarea.lua")  -- 状态区域
 
-include("cl_dermaskin.lua")
-include("cl_deathnotice.lua")
-include("cl_floatingscore.lua")
-include("cl_hint.lua")
-include("cl_thirdperson.lua")
+include("cl_dermaskin.lua")  -- Derma皮肤
+include("cl_deathnotice.lua")  -- 死亡通知
+include("cl_floatingscore.lua")  -- 浮动分数
+include("cl_hint.lua")  -- 提示
+include("cl_thirdperson.lua")  -- 第三人称
 
-include("itemstocks/cl_stock.lua")
+include("itemstocks/cl_stock.lua")  -- 物品库存客户端
 
-include("cl_zombieescape.lua")
-include("vgui/pmutationshop.lua")
+include("cl_zombieescape.lua")  -- 僵尸逃跑模式
+include("vgui/pmutationshop.lua")  -- 变异商店
 
-UsedMutations = {}
-w, h = ScrW(), ScrH()
+-- ==================== 全局变量 ====================
+UsedMutations = {}  -- 已使用的变异
+w, h = ScrW(), ScrH()  -- 屏幕宽高缓存
 
+-- 本地玩家引用
 MySelf = MySelf or NULL
 hook.Add("InitPostEntity", "GetLocal", function()
 	MySelf = LocalPlayer()
@@ -79,10 +87,11 @@ hook.Add("InitPostEntity", "GetLocal", function()
 	MySelf:ApplySkills()
 end)
 
--- Remove when model decal crash is fixed.
+-- 移除以防止模型贴花崩溃
 --[[function util.Decal()
 end]]
 
+-- ==================== 局部函数/变量缓存（提升性能） ====================
 -- Save on global lookup time.
 local collectgarbage = collectgarbage
 local render = render
@@ -178,27 +187,28 @@ local draw_SimpleTextBlurry = draw.SimpleTextBlurry
 local draw_SimpleTextBlur = draw.SimpleTextBlur
 local draw_GetFontHeight = draw.GetFontHeight
 
-
-
+-- ==================== MetaTable缓存 ====================
 local M_Player = FindMetaTable("Player")
 local P_Team = M_Player.Team
 
-GM.LifeStatsBrainsEaten = 0
-GM.LifeStatsHumanDamage = 0
-GM.LifeStatsBarricadeDamage = 0
-GM.InputMouseX = 0
-GM.InputMouseY = 0
-GM.LastTimeDead = 0
-GM.LastTimeAlive = 0
-GM.HeartBeatTime = 0
-GM.FOVLerp = 1
-GM.HurtEffect = 0
-GM.PrevHealth = 0
-GM.SuppressArsenalTime = 0
-GM.ZombieThirdPerson = false
-GM.Beats = {}
-GM.CurrentRound = 1
+-- ==================== GM表初始化 ====================
+GM.LifeStatsBrainsEaten = 0  -- 本局吃脑数量
+GM.LifeStatsHumanDamage = 0  -- 本局对人类伤害
+GM.LifeStatsBarricadeDamage = 0  -- 本局对路障伤害
+GM.InputMouseX = 0  -- 鼠标输入X
+GM.InputMouseY = 0  -- 鼠标输入Y
+GM.LastTimeDead = 0  -- 上次死亡时间
+GM.LastTimeAlive = 0  -- 上次存活时间
+GM.HeartBeatTime = 0  -- 心跳时间
+GM.FOVLerp = 1  -- FOV插值
+GM.HurtEffect = 0  -- 受伤特效
+GM.PrevHealth = 0  -- 上一帧血量
+GM.SuppressArsenalTime = 0  -- 抑制军械库升级时间
+GM.ZombieThirdPerson = false  -- 僵尸第三人称
+GM.Beats = {}  -- 节拍表
+GM.CurrentRound = 1  -- 当前回合
 
+-- 迷雾参数
 GM.DeathFog = 0
 GM.FogStart = 0
 GM.FogEnd = 8000
@@ -206,25 +216,32 @@ GM.FogRed = 30
 GM.FogGreen = 30
 GM.FogBlue = 30
 
+-- ==================== 空函数占位 ====================
 function GM:ClickedPlayerButton(pl, button)
 end
 
 function GM:ClickedEndBoardPlayerButton(pl, button)
 end
 
+-- ==================== 通知系统 ====================
+-- 中央通知
 function GM:CenterNotify(...)
 	if self.CenterNotificationHUD and self.CenterNotificationHUD:IsValid() then
 		return self.CenterNotificationHUD:AddNotification(...)
 	end
 end
 
+-- 顶部通知
 function GM:TopNotify(...)
 	if self.TopNotificationHUD and self.TopNotificationHUD:IsValid() then
 		return self.TopNotificationHUD:AddNotification(...)
 	end
 end
 
+-- ==================== 输入处理 ====================
+-- 鼠标输入处理（用于操控物旋转等）
 function GM:_InputMouseApply(cmd, x, y, ang)
+	-- 按住WALK键时旋转操控物
 	if MySelf:KeyDown(IN_WALK) and MySelf:IsHolding() then
 		self.InputMouseX = math.NormalizeAngle(self.InputMouseX - x * 0.02 * GAMEMODE.PropRotationSensitivity)
 		self.InputMouseY = math.NormalizeAngle(self.InputMouseY - y * 0.02 * GAMEMODE.PropRotationSensitivity)
@@ -254,6 +271,7 @@ end
 function GM:AddExtraOptions(list, window)
 end
 
+-- ==================== 菜单开关 ====================
 function GM:SpawnMenuEnabled()
 	return false
 end
@@ -266,6 +284,8 @@ function GM:ContextMenuOpen()
 	return false
 end
 
+-- ==================== HUD事件 ====================
+-- 拾取武器提示
 function GM:_HUDWeaponPickedUp(wep)
 	if P_Team(MySelf) == TEAM_HUMAN and not wep.NoPickupNotification then
 		self:Rewarded(wep:GetClass())
@@ -278,6 +298,7 @@ end
 function GM:HUDAmmoPickedUp(itemname, amount)
 end
 
+-- ==================== 初始化后 ====================
 function GM:InitPostEntity()
 	self:CreateLateVGUI()
 
@@ -293,12 +314,14 @@ function GM:InitPostEntity()
 	RunConsoleCommand("pp_bloom", "0")
 end
 
-local fogstart = 0
-local fogend = 0
-local fogr = 0
-local fogg = 0
-local fogb = 0
+-- ==================== 迷雾系统 ====================
+local fogstart = 0  -- 迷雾开始距离
+local fogend = 0  -- 迷雾结束距离
+local fogr = 0  -- 迷雾红色分量
+local fogg = 0  -- 迷雾绿色分量
+local fogb = 0  -- 迷雾蓝色分量
 
+-- 设置迷雾参数
 function GM:SetupFog()
 	local power = self.DeathFog
 	local rpower = 1 - self.DeathFog
@@ -321,6 +344,7 @@ function GM:SetupFog()
 	end
 end
 
+-- 设置世界迷雾
 function GM:_SetupWorldFog()
 	if self.DeathFog == 0 and not MySelf.DimVision then return end
 
@@ -336,6 +360,7 @@ function GM:_SetupWorldFog()
 	return true
 end
 
+-- 设置天空盒迷雾
 function GM:_SetupSkyboxFog(skyboxscale)
 	if self.DeathFog == 0 and not MySelf.DimVision then return end
 
@@ -357,6 +382,7 @@ end
 
 local matSky = CreateMaterial("SkyOverride", "UnlitGeneric", {["$basetexture"] = "color/white", ["$vertexcolor"] = 1, ["$vertexalpha"] = 1, ["$model"] = 1})
 local colSky = Color(0, 30, 0)
+-- 绘制天空盒后（添加迷雾覆盖层）
 function GM:PostDrawSkyBox()
 	self.DrawingInSky = false
 
@@ -382,6 +408,7 @@ function GM:PostDrawSkyBox()
 	end
 end
 
+-- 获取地图默认迷雾数据
 function GM:GetFogData()
 	local _fogstart, _fogend = render_GetFogDistances()
 	local _fogr, _fogg, _fogb = render_GetFogColor()
@@ -393,6 +420,7 @@ function GM:GetFogData()
 	self.FogBlue = _fogb
 end
 
+-- ==================== 武器HUD模式 ====================
 function GM:ShouldDraw3DWeaponHUD()
 	return GAMEMODE.WeaponHUDMode ~= 1
 end
@@ -401,9 +429,11 @@ function GM:ShouldDraw2DWeaponHUD()
 	return GAMEMODE.WeaponHUDMode >= 1 or self:UseOverTheShoulder()
 end
 
-local MedicalAuraDistance = 1200 ^ 2
+-- ==================== 医疗光环 ====================
+local MedicalAuraDistance = 1200 ^ 2  -- 医疗光环最远距离平方
 local matAura = Material("models/debug/debugwhite")
 local skip = false
+-- 在玩家模型上绘制医疗光环效果
 function GM.PostPlayerDrawMedical(pl)
 	if not skip and P_Team(pl) == TEAM_HUMAN and pl ~= MySelf then
 		local eyepos = EyePos()
@@ -430,6 +460,7 @@ function GM.PostPlayerDrawMedical(pl)
 	end
 end
 
+-- ==================== 重载与本地玩家 ====================
 function GM:OnReloaded()
 	self.BaseClass.OnReloaded(self)
 
@@ -437,7 +468,7 @@ function GM:OnReloaded()
 end
 
 -- The whole point of this is so we don't need to check if the local player is valid 1000 times a second.
--- Empty functions get filled when the local player is found.
+-- 所有函数初始为空，找到本地玩家后才填充真实函数
 function GM:Think() end
 GM.HUDWeaponPickedUp = GM.Think
 GM.Think = GM._Think
@@ -455,6 +486,7 @@ GM.PostPlayerDraw = GM.Think
 GM.InputMouseApply = GM.Think
 GM.GUIMousePressed = GM.Think
 GM.HUDWeaponPickedUp = GM.Think
+-- 当找到本地玩家时，将占位函数替换为真实实现
 function GM:LocalPlayerFound()
 	self.Think = self._Think
 	self.HUDShouldDraw = self._HUDShouldDraw
@@ -482,8 +514,10 @@ function GM:LocalPlayerFound()
 	end
 end
 
+-- ==================== 恐惧计与符文绘制 ====================
 local LastSigilCorrupted = -math.huge
 local LastSigilUncorrupted = -math.huge
+-- 绘制符文眼睛闪光效果
 local function DrawEyeFlash(x, y, size, islast)
 	local curtime = CurTime()
 	local bsize = size * (1 + curtime * 2 % 1)
@@ -509,8 +543,8 @@ local function DrawEyeFlash(x, y, size, islast)
 	end
 end
 
-local currentpower = 0
-local spawngreen = 0
+local currentpower = 0  -- 当前恐惧值（带平滑）
+local spawngreen = 0  -- 动态出生点绿色指示
 local matFearMeter = Material("zombiesurvival/fearometer")
 local matNeedle = Material("zombiesurvival/fearometerneedle")
 local matEyeGlow = Material("Sprites/light_glow02_add_noz")
@@ -523,6 +557,7 @@ local matNest = Material("zombiesurvival/nest.png")
 local matHorderally = Material("zombiesurvival/horderally")
 --local matGradientRight = Material("vgui/gradient-r")
 --local matGradientLeft = CreateMaterial("gradient-l", "UnlitGeneric", {["$basetexture"] = "vgui/gradient-l", ["$vertexalpha"] = "1", ["$vertexcolor"] = "1", ["$ignorez"] = "1", ["$nomip"] = "1"})
+-- 绘制恐惧计
 function GM:DrawFearMeter(power, screenscale)
 	if currentpower < power then
 		currentpower = math.min(power, currentpower + FrameTime() * (math.tan(currentpower) * 2 + 0.05))
@@ -623,7 +658,7 @@ function GM:DrawFearMeter(power, screenscale)
 			end
 		end
 
-		local des = corruptsigils / self.MaxSigils --self:GetSigilsDestroyed() / self.MaxSigils
+		local des = corruptsigils / self.MaxSigils
 		if des >= 0.3333 then
 			surface_SetMaterial(matEyeGlow)
 
@@ -640,6 +675,7 @@ function GM:DrawFearMeter(power, screenscale)
 	end
 end
 
+-- ==================== 模式检测 ====================
 function GM:GetDynamicSpawning()
 	return not GetGlobalBool("DynamicSpawningDisabled", false)
 end
@@ -666,6 +702,7 @@ end
 function GM:PostRender()
 end
 
+-- ==================== Think（每帧更新） ====================
 local lastwarntim = -1
 --local NextGas = 0
 function GM:_Think()
@@ -778,6 +815,7 @@ function GM:_Think()
 	end
 end
 
+-- ==================== 背景音乐/节拍系统 ====================
 function GM:ShouldPlayBeats(teamid, fear)
 	return not self.RoundEnded and not self.ZombieEscape and not GetGlobalBool("beatsdisabled", false)
 end
@@ -785,6 +823,7 @@ end
 local cv_ShouldPlayMusic = CreateClientConVar("zs_playmusic", 1, true, false)
 local NextBeat = 0
 local LastBeatLevel = 0
+-- 播放心跳/背景音乐节拍
 function GM:PlayBeats(teamid, fear)
 	if RealTime() <= NextBeat or not gamemode.Call("ShouldPlayBeats", teamid, fear) then return end
 
@@ -809,8 +848,10 @@ function GM:PlayBeats(teamid, fear)
 	end
 end
 
+-- ==================== 进度条绘制 ====================
 local colPackUp = Color(20, 255, 20, 220)
 local colPackUpNotOwner = Color(255, 240, 10, 220)
+-- 绘制打包进度条
 function GM:DrawPackUpBar(x, y, fraction, notowner, screenscale)
 	local col = notowner and colPackUpNotOwner or colPackUp
 
@@ -829,6 +870,7 @@ function GM:DrawPackUpBar(x, y, fraction, notowner, screenscale)
 end
 
 local colSigilTeleport = Color(125, 215, 255, 220)
+-- 绘制符文传送进度条
 function GM:DrawSigilTeleportBar(x, y, fraction, target, screenscale)
 	local maxbarwidth = 270 * screenscale
 	local barheight = 11 * screenscale
@@ -853,6 +895,8 @@ function GM:DrawSigilTeleportBar(x, y, fraction, target, screenscale)
 	draw_SimpleText(translate.Get("press_shift_to_cancel"), "ZSHUDFontSmaller", x, y + draw_GetFontHeight("ZSHUDFontSmaller") - 16, colSigilTeleport, TEXT_ALIGN_CENTER)
 	draw_SimpleText(translate.Get("point_at_a_sigil_to_choose_destination"), "ZSHUDFontSmaller", x, y + draw_GetFontHeight("ZSHUDFontSmaller") * 2 - 16, colSigilTeleport, TEXT_ALIGN_CENTER)
 end
+
+-- ==================== 网络消息处理 ====================
 -- 将接收到的补给箱缓存数量存储在本地玩家对象上
 net.Receive("zs_stowagecaches", function()
     local caches = net.ReadInt(8)
@@ -860,9 +904,12 @@ net.Receive("zs_stowagecaches", function()
         MySelf.StowageCaches = caches
     end
 end)
+-- 接收下次补给箱使用时间
 net.Receive("zs_nextresupplyuse", function(length)
 	MySelf.NextUse = net.ReadFloat()
 end)
+
+-- ==================== 人类HUD ====================
 function GM:HumanHUD(screenscale)
 	local curtime = CurTime()
 	local w, h = ScrW(), ScrH()
@@ -934,6 +981,7 @@ function GM:HumanHUD(screenscale)
 	end
 end
 
+-- ==================== HUD绘制入口 ====================
 function GM:_HUDPaint()
 	if self.FilmMode then return end
 
@@ -957,6 +1005,7 @@ function GM:_HUDPaint()
 	end
 end
 
+-- ==================== 僵尸观察者HUD ====================
 function GM:ZombieObserverHUD(obsmode)
 	local w, h = ScrW(), ScrH()
 	local texh = draw_GetFontHeight("ZSHUDFontSmall")
@@ -991,6 +1040,7 @@ function GM:ZombieObserverHUD(obsmode)
 	draw_SimpleTextBlurry(translate.Get("press_jump_to_free_roam"), "ZSHUDFontSmall", x, y + space * 3, COLOR_GRAY, TEXT_ALIGN_CENTER)
 end
 
+-- ==================== 僵尸HUD ====================
 local colLifeStats = Color(255, 50, 50, 255)
 function GM:ZombieHUD()
 	if self.LifeStatsEndTime and CurTime() < self.LifeStatsEndTime and (self.LifeStatsBarricadeDamage > 0 or self.LifeStatsHumanDamage > 0 or self.LifeStatsBrainsEaten > 0) then
@@ -1042,6 +1092,7 @@ function GM:ZombieHUD()
 	end
 end
 
+-- ==================== 默认购物车 ====================
 function GM:RequestedDefaultCart()
 	local defaultcart = GetConVar("zs_defaultcart"):GetString()
 	if #defaultcart > 0 then
@@ -1060,6 +1111,7 @@ function GM:RequestedDefaultCart()
 	end
 end
 
+-- ==================== 3D世界提示绘制 ====================
 function GM:_PostDrawTranslucentRenderables()
 	if not self.DrawingInSky then
 		self:DrawPointWorldHints()
@@ -1074,7 +1126,8 @@ function GM:_PostDrawTranslucentRenderables()
 	end
 end
 
-function GM:DrawCrateIndicators() ////绘制弹药箱
+-- 绘制弹药箱
+function GM:DrawCrateIndicators() -- 绘制弹药箱
 	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(SKILL_INSIGHT) then return end
 
 	local pos, distance, ang, deployable, alpha
@@ -1090,7 +1143,7 @@ function GM:DrawCrateIndicators() ////绘制弹药箱
 		pos.z = pos.z + (arsenal:IsPlayer() and 32 or (deployable and 12 or -8))
 		distance = eyepos:DistToSqr(pos)
 
-		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then -- Limited to Scavenger's Eyes distance.
+		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
 			ang = (eyepos - pos):Angle()
 			ang:RotateAroundAxis(ang:Right(), 270)
 			ang:RotateAroundAxis(ang:Up(), 90)
@@ -1110,7 +1163,8 @@ function GM:DrawCrateIndicators() ////绘制弹药箱
 	end
 end
 
-function GM:DrawResupplyIndicators() ////绘制补给箱
+-- 绘制补给箱
+function GM:DrawResupplyIndicators() -- 绘制补给箱
 	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(SKILL_ACUITY) then return end
 
 	local pos, distance, ang, deployable, alpha
@@ -1126,7 +1180,7 @@ function GM:DrawResupplyIndicators() ////绘制补给箱
 		pos.z = pos.z + (resupply:IsPlayer() and 32 or (deployable and 12 or -8))
 		distance = eyepos:DistToSqr(pos)
 
-		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then -- Limited to Scavenger's Eyes distance.
+		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
 			ang = (eyepos - pos):Angle()
 			ang:RotateAroundAxis(ang:Right(), 270)
 			ang:RotateAroundAxis(ang:Up(), 90)
@@ -1148,7 +1202,8 @@ function GM:DrawResupplyIndicators() ////绘制补给箱
 	end
 end
 
-function GM:DrawRemantlerIndicators() ////绘制武器重铸
+-- 绘制武器重铸
+function GM:DrawRemantlerIndicators() -- 绘制武器重铸
 	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(SKILL_VISION) then return end
 
 	local pos, distance, ang, deployable, alpha
@@ -1164,7 +1219,7 @@ function GM:DrawRemantlerIndicators() ////绘制武器重铸
 		pos.z = pos.z + (remantler:IsPlayer() and 32 or (deployable and 12 or -8))
 		distance = eyepos:DistToSqr(pos)
 
-		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then -- Limited to Scavenger's Eyes distance.
+		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
 			ang = (eyepos - pos):Angle()
 			ang:RotateAroundAxis(ang:Right(), 270)
 			ang:RotateAroundAxis(ang:Up(), 90)
@@ -1184,7 +1239,8 @@ function GM:DrawRemantlerIndicators() ////绘制武器重铸
 	end
 end
 
-function GM:DrawNestIndicators() ////绘制巢穴
+-- 绘制巢穴
+function GM:DrawNestIndicators() -- 绘制巢穴
 	if P_Team(MySelf) ~= TEAM_ZOMBIE then return end
 
 	local pos, distance, ang, alpha
@@ -1224,7 +1280,8 @@ function GM:DrawNestIndicators() ////绘制巢穴
 	end
 end
 
-function GM:DrawSigilIndicators() --绘制符文
+-- 绘制符文
+function GM:DrawSigilIndicators() -- 绘制符文
 	if not self:GetUseSigils() then return end
 
 	local health, pos, distance, maxhealth, corrupted, damageflash, missinghealthfrac, ang, alpha
@@ -1276,10 +1333,9 @@ function GM:DrawSigilIndicators() --绘制符文
 	end
 end
 
-////////////// 僵
-function GM:DrawHorderallyIndicators() --绘制僵尸
+-- 绘制僵尸
+function GM:DrawHorderallyIndicators() -- 绘制僵尸
 	if P_Team(MySelf) ~= TEAM_HUMAN then return end
-
 
 	local pos, distance, ang, alpha
 	local eyepos = EyePos()
@@ -1293,7 +1349,7 @@ function GM:DrawHorderallyIndicators() --绘制僵尸
 			if self:GetWaveActive() then
 				continue
 			end
-			
+
 			if not ent:IsValid() then continue end
 
 			-- 限制显示数量
@@ -1323,7 +1379,7 @@ function GM:DrawHorderallyIndicators() --绘制僵尸
 			-- 检查是否已经显示过附近的个体
 			local alreadyDisplayed = false
 			for _, displayedPos in pairs(displayedPositions) do
-				if displayedPos and pos:DistToSqr(displayedPos) < 10000 then -- 10000 是一个平方距离阈值，可以根据需要调整
+				if displayedPos and pos:DistToSqr(displayedPos) < 10000 then
 					alreadyDisplayed = true
 					break
 				end
@@ -1334,7 +1390,7 @@ function GM:DrawHorderallyIndicators() --绘制僵尸
 				cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
 				surface_SetDrawColor(200, 20, 20, alpha)
 				surface_DrawTexturedRect(-128, -128, 256, 256)
-				draw_SimpleTextBlurry(""..translate.Get("game_ui_zombiegasmsg"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER) 
+				draw_SimpleTextBlurry(""..translate.Get("game_ui_zombiegasmsg"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
 
 				cam_End3D2D()
 				cam_IgnoreZ(false)
@@ -1346,7 +1402,6 @@ function GM:DrawHorderallyIndicators() --绘制僵尸
 				table.insert(displayedPositions, pos)
 			end
 		end
-
 
 	for i, nest in pairs(GAMEMODE.CachedNests) do
 			if self:GetWaveActive() then
@@ -1371,12 +1426,13 @@ function GM:DrawHorderallyIndicators() --绘制僵尸
 		cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
 		surface_SetDrawColor(200, 20, 20, alpha)
 		surface_DrawTexturedRect(-128, -128, 256, 256)
-		draw_SimpleTextBlurry(""..translate.Get("game_ui_zombiegasmsg"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER) 
+		draw_SimpleTextBlurry(""..translate.Get("game_ui_zombiegasmsg"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
 		cam_End3D2D()
 		cam_IgnoreZ(false)
 	end
 end
 
+-- ==================== 回合重置 ====================
 function GM:RestartRound()
 	self.TheLastHuman = nil
 	self.RoundEnded = nil
@@ -1394,6 +1450,7 @@ function GM:RestartRound()
 	self:RevertZombieClasses()
 end
 
+-- ==================== HUD显示控制 ====================
 function GM:_HUDShouldDraw(name)
 	if self.FilmMode and name ~= "CHudWeaponSelection" then return false end
 
@@ -1402,8 +1459,10 @@ function GM:_HUDShouldDraw(name)
 	and name ~= "CHudDamageIndicator"
 end
 
+-- ==================== 恐惧值缓存 ====================
 local Current = 0
 local NextCalculate = 0
+-- 每0.15秒更新一次恐惧值，避免每帧计算
 function GM:_CachedFearPower()
 	if CurTime() >= NextCalculate then
 		NextCalculate = CurTime() + 0.15
@@ -1413,6 +1472,7 @@ function GM:_CachedFearPower()
 	return Current
 end
 
+-- ==================== 字体创建辅助 ====================
 function surface.CreateLegacyFont(font, size, weight, antialias, additive, name, shadow, outline, blursize)
 	surface.CreateFont(name, {font = font, size = size, weight = weight, antialias = antialias, additive = additive, shadow = shadow, outline = outline, blursize = blursize})
 end
@@ -1424,6 +1484,7 @@ local fontfamily3d = "hidden"
 local fontsizeadd = 8
 local fontweight = 0
 
+-- ==================== 3D字体创建 ====================
 function GM:Create3DFonts()
 	local fontsizeadd3D = 0
 	local fontweight3D = 0
@@ -1457,6 +1518,7 @@ function GM:Create3DFonts()
 	surface.CreateFont("3D2D_Typenoksidi_SmallestBlur",{font=fontfamilynoksidi,blursize=4,extended=false,size=60,shadow=true,outline=true})
 end
 
+-- ==================== 非缩放字体创建 ====================
 function GM:CreateNonScaleFonts()
 	surface.CreateLegacyFont("tahoma", 96, 1000, true, false, "zshintfont", false, true)
 
@@ -1485,7 +1547,7 @@ function GM:CreateNonScaleFonts()
 	surface.CreateFont("ZS2DFontHarmonyBig", {font = "Harmony OS Sans SC",size=50,weight = 200 ,extended = true,antialias = true})
 end
 
-
+-- ==================== 字体创建完整示例（注释） ====================
 --这个createfont的完整中文示例
 --[[
 
@@ -1507,7 +1569,7 @@ surface.CreateFont("TextName",){
 }
 ]]
 
-
+-- ==================== 缩放字体创建 ====================
 function GM:CreateScalingFonts()
 	local fontaa = true
 	local fontshadow = false
@@ -1566,16 +1628,19 @@ function GM:CreateScalingFonts()
 	surface.CreateFont("ZSXPBar", {font = "tahoma", size = screenscale * 14, weight = 500, antialias = false, shadow = true})
 end
 
+-- ==================== 字体创建总入口 ====================
 function GM:CreateFonts()
     self:Create3DFonts()
     self:CreateNonScaleFonts()
     self:CreateScalingFonts()
-    
+
     -- 调用新模块的初始化函数
     if ZSFontDLC then
         ZSFontDLC.Initialize()
     end
 end
+
+-- ==================== 电影模式评估 ====================
 function GM:EvaluateFilmMode()
 	local visible = not self.FilmMode
 
@@ -1604,6 +1669,7 @@ function GM:EvaluateFilmMode()
 	end
 end
 
+-- ==================== VGUI创建 ====================
 function GM:CreateVGUI()
 	local screenscale = BetterScreenScale()
 	self.GameStatePanel = vgui.Create("ZSGameState")
@@ -1634,6 +1700,7 @@ function GM:CreateVGUI()
 	self.CenterNotificationHUD:ParentToHUD()
 end
 
+-- 创建延迟VGUI（血量、状态、经验HUD）
 function GM:CreateLateVGUI()
 	if not self.HealthHUD then
 		self.HealthHUD = vgui.Create("ZSHealthArea")
@@ -1649,6 +1716,7 @@ function GM:CreateLateVGUI()
 	end
 end
 
+-- ==================== 游戏模式初始化 ====================
 function GM:Initialize()
 	self:FixSkillConnections()
 	self:CreateFonts()
@@ -1668,6 +1736,7 @@ function GM:Initialize()
 	self:RefreshMapIsObjective()
 end
 
+-- ==================== 精灵材质创建 ====================
 -- These can be accessed without pointing to the IMaterial by using ! before the material string.
 function GM:CreateSpriteMaterials()
 	local params = {["$translucent"] = "1", ["$vertexcolor"] = "1", ["$vertexalpha"] = "1"}
@@ -1677,11 +1746,14 @@ function GM:CreateSpriteMaterials()
 	end
 end
 
+-- 关闭时恢复控制台变量
 function GM:ShutDown()
 	RunConsoleCommand("r_drawmodeldecals", "1")
 	RunConsoleCommand("r_dynamic", "1")
 end
 
+-- ==================== 节拍初始化 ====================
+-- 从文件列表中获取第一个有效音频文件
 local function FirstOfGoodType(a)
 	local ext
 
@@ -1693,6 +1765,7 @@ local function FirstOfGoodType(a)
 	end
 end
 
+-- 初始化背景音乐节拍
 function GM:InitializeBeats()
 	local _, dirs = file.Find("sound/zombiesurvival/beats/*", "GAME")
 	for _, dirname in pairs(dirs) do
@@ -1720,12 +1793,14 @@ function GM:InitializeBeats()
 	end
 end
 
+-- ==================== 空钩子占位 ====================
 function GM:PlayerDeath(pl, attacker)
 end
 
 function GM:ScalePlayerDamage(pl, hitgroup, dmginfo)
 end
 
+-- ==================== 最后一名人类 ====================
 function GM:LastHuman(pl)
 	if not IsValid(pl) then pl = nil end
 
@@ -1737,6 +1812,7 @@ function GM:LastHuman(pl)
 	end
 end
 
+-- 显示最后一名人类消息
 function GM:LastHumanMessage()
 	if self.RoundEnded or not MySelf:IsValid() then return end
 
@@ -1749,22 +1825,28 @@ function GM:LastHumanMessage()
 	end
 end
 
+-- ==================== 伤害判定 ====================
 function GM:PlayerShouldTakeDamage(pl, attacker)
 	return pl == attacker or not attacker:IsPlayer() or P_Team(pl) ~= P_Team(attacker) or pl.AllowTeamDamage or attacker.AllowTeamDamage
 end
 
+-- ==================== 波次设置 ====================
 function GM:SetWave(wave)
 	SetGlobalInt("wave", wave)
 end
 
+-- ==================== 绘制工具 ====================
 local matRing = Material("effects/select_ring")
+-- 绘制圆形
 function GM:DrawCircle(x, y, radius, color)
 	surface.SetMaterial(matRing)
 	surface.SetDrawColor(color)
 	surface.DrawTexturedRect(x - radius, y - radius, radius * 2, radius * 2)
 end
 
+-- ==================== HUD背景绘制 ====================
 local matFilmGrain = Material("zombiesurvival/filmgrain/filmgrain")
+-- 绘制HUD背景（胶片颗粒、武器HUD背景）
 function GM:_HUDPaintBackground()
 	if self.FilmGrainEnabled and P_Team(MySelf) ~= TEAM_UNDEAD then
 		surface_SetMaterial(matFilmGrain)
@@ -1778,37 +1860,69 @@ function GM:_HUDPaintBackground()
 	end
 end
 
+-- ==================== 武器交互函数 ====================
+-- 给予武器
 local function GiveWeapon()
 	if GAMEMODE.HumanMenuLockOn then
 		RunConsoleCommand("zsgiveweapon", GAMEMODE.HumanMenuLockOn:EntIndex(), GAMEMODE.InventoryMenu.SelInv)
 	end
 end
+-- 给予武器和弹夹
 local function GiveWeaponClip()
 	if GAMEMODE.HumanMenuLockOn then
 		RunConsoleCommand("zsgiveweaponclip", GAMEMODE.HumanMenuLockOn:EntIndex(), GAMEMODE.InventoryMenu.SelInv)
 	end
 end
+-- 丢弃武器
 local function DropWeapon()
 	RunConsoleCommand("zsdropweapon", GAMEMODE.InventoryMenu.SelInv)
 end
+-- 清空弹夹
 local function EmptyClip()
 	RunConsoleCommand("zsemptyclip")
 end
+-- 拆解武器
 local function DismantleWeapon()
 	RunConsoleCommand("zs_dismantle", GAMEMODE.InventoryMenu.SelInv)
 end
 
+-- 备用选中物品更新（使用当前手持武器名）
 local function AltSelItemUpd()
 	local activeweapon = MySelf:GetActiveWeapon()
 	if not activeweapon or not activeweapon:IsValid() then return end
 
 	local actwclass = activeweapon:GetClass()
-	GAMEMODE.HumanMenuPanel.SelectedItemLabel:SetText(weapons.Get(actwclass).PrintName)
+	local wepData = weapons.Get(actwclass)
+	if not wepData then return end
+
+	-- 安全访问 SelectedItemLabel（DHumanMenu 代理到 InfoPanel 的武器名标签）
+	if GAMEMODE.HumanMenuPanel and GAMEMODE.HumanMenuPanel:IsValid() and GAMEMODE.HumanMenuPanel.SelectedItemLabel then
+		GAMEMODE.HumanMenuPanel.SelectedItemLabel:SetText(wepData.PrintName)
+	end
 end
 
+-- 更新选中的物品显示
+-- 兼容武器类名（weapons.Get）与库存物品键（ZSInventoryItemData）两种数据源
 function GM:DoAltSelectedItemUpdate()
-	if self.InventoryMenu.SelInv then
-		self.HumanMenuPanel.SelectedItemLabel:SetText(self.ZSInventoryItemData[self.InventoryMenu.SelInv].PrintName)
+	if not self.HumanMenuPanel or not self.HumanMenuPanel:IsValid() then return end
+	if not self.HumanMenuPanel.SelectedItemLabel then return end
+
+	if self.InventoryMenu and self.InventoryMenu.SelInv then
+		local selInv = self.InventoryMenu.SelInv
+		local name = nil
+		-- 先查库存物品数据表（饰品/消耗品等）
+		if self.ZSInventoryItemData[selInv] then
+			name = self.ZSInventoryItemData[selInv].PrintName
+		else
+			-- 否则作为武器类名查询
+			local wepData = weapons.Get(selInv)
+			if wepData then
+				name = wepData.PrintName
+			end
+		end
+		if name then
+			self.HumanMenuPanel.SelectedItemLabel:SetText(name)
+		end
 	else
 		timer.Simple(0.25, AltSelItemUpd)
 	end
@@ -1927,6 +2041,7 @@ function GM:HumanMenu()
 	panel:OpenMenu()
 end
 
+-- ==================== 僵尸出生菜单 ====================
 function GM:ZombieSpawnMenu()
 	if self.ZombieEscape then return end
 
@@ -1944,6 +2059,7 @@ function GM:ZombieSpawnMenu()
 	panel:OpenMenu()
 end
 
+-- ==================== 按键绑定处理 ====================
 function GM:PlayerBindPress(pl, bind, wasin)
 	if bind == "gmod_undo" or bind == "undo" then
 		RunConsoleCommand("+zoom")
@@ -1961,6 +2077,7 @@ function GM:PlayerBindPress(pl, bind, wasin)
 	end
 end
 
+-- ==================== 是否绘制本地玩家 ====================
 function GM:_ShouldDrawLocalPlayer(pl)
 	return FROM_CAMERA or P_Team(pl) == TEAM_UNDEAD and (self.ZombieThirdPerson or pl:CallZombieFunction0("ShouldDrawLocalPlayer"))
 	or P_Team(pl) == TEAM_HUMAN and self:UseOverTheShoulder()
@@ -1969,6 +2086,7 @@ function GM:_ShouldDrawLocalPlayer(pl)
 	or pl.KnockedDown and pl.KnockedDown:IsValid()
 end
 
+-- ==================== 视角计算 ====================
 local roll = 0
 function GM:_CalcView(pl, origin, angles, fov, znear, zfar)
 	if pl.Confusion and pl.Confusion:IsValid() then
@@ -2053,23 +2171,28 @@ function GM:_CalcView(pl, origin, angles, fov, znear, zfar)
 	return self.BaseClass.CalcView(self, pl, origin, angles, fov, znear, zfar)
 end
 
+-- 嘲讽视角计算（拉近镜头）
 function GM:CalcViewTaunt(pl, origin, angles, fov, znear, zfar)
 	local tr = util.TraceHull({start = origin, endpos = origin - angles:Forward() * 72, mins = Vector(-2, -2, -2), maxs = Vector(2, 2, 2), mask = MASK_OPAQUE, filter = pl})
 	origin:Set(tr.HitPos + tr.HitNormal * 2)
 end
 
+-- 嘲讽移动（原地不动）
 function GM:CreateMoveTaunt(cmd)
 	cmd:ClearButtons(0)
 	cmd:ClearMovement()
 end
 
+-- 后处理权限
 function GM:PostProcessPermitted(str)
 	return false
 end
 
+-- ==================== 回合结束HUD ====================
 function GM:HUDPaintEndRound()
 end
 
+-- ==================== 视图模型绘制 ====================
 function GM:PreDrawViewModel(vm, pl, wep)
 	if pl and pl:IsValid() and (pl:IsHolding() or GAMEMODE.HideViewModels) then return true end
 
@@ -2078,6 +2201,7 @@ function GM:PreDrawViewModel(vm, pl, wep)
 	end
 end
 
+-- 绘制视图模型后（绘制手部模型）
 function GM:PostDrawViewModel(vm, pl, wep)
 	if wep and wep:IsValid() then
 		if wep.UseHands or not wep:IsScripted() then
@@ -2093,6 +2217,7 @@ function GM:PostDrawViewModel(vm, pl, wep)
 	end
 end
 
+-- ==================== 玩家绘制前/后处理 ====================
 local undo = false
 local matWhite = Material("models/debug/debugwhite")
 local lowhealthcolor = GM.AuraColorEmpty
@@ -2156,6 +2281,7 @@ function GM:_PrePlayerDraw(pl)
 	end
 end
 
+-- 玩家绘制后处理（目标指示器、队友环）
 local colFriend = Color(10, 255, 10, 60)
 local matFriendRing = Material("SGM/playercircle")
 local matTargetTri = Material("gui/point.png")
@@ -2205,6 +2331,8 @@ function GM:_PostPlayerDraw(pl)
 	end
 end
 
+-- ==================== 回合结束HUD背景 ====================
+-- 显示下一回合倒计时
 function GM:HUDPaintBackgroundEndRound()
 	local x, y = ScrW() / 2, ScrH() * 0.8
 	local timleft = math.max(0, self.EndTime + self.EndGameTime - CurTime())
@@ -2216,6 +2344,7 @@ function GM:HUDPaintBackgroundEndRound()
 	end
 end
 
+-- 回合结束视角（最后人类位置摄像机）
 local function EndRoundCalcView(pl, origin, angles, fov, znear, zfar)
 	if GAMEMODE.EndTime and CurTime() < GAMEMODE.EndTime + 5 then
 		local endposition = GAMEMODE.LastHumanPosition
@@ -2237,6 +2366,7 @@ local function EndRoundCalcView(pl, origin, angles, fov, znear, zfar)
 	hook.Remove("CalcView", "EndRoundCalcView")
 end
 
+-- 回合结束绘制本地玩家
 local function EndRoundShouldDrawLocalPlayer(pl)
 	if GAMEMODE.EndTime and CurTime() < GAMEMODE.EndTime + 5 then
 		return true
@@ -2245,6 +2375,7 @@ local function EndRoundShouldDrawLocalPlayer(pl)
 	hook.Remove("ShouldDrawLocalPlayer", "EndRoundShouldDrawLocalPlayer")
 end
 
+-- ==================== 回合结束 ====================
 function GM:EndRound(winner, nextmap)
 	if self.RoundEnded then return end
 	self.RoundEnded = true
@@ -2281,10 +2412,12 @@ function GM:EndRound(winner, nextmap)
 	end)
 end
 
+-- ==================== 武器部署 ====================
 function GM:WeaponDeployed(pl, wep)
 	self:DoChangeDeploySpeed(wep)
 end
 
+-- ==================== 本地玩家死亡 ====================
 function GM:LocalPlayerDied(attackername)
 	LASTDEATH = RealTime()
 
@@ -2297,6 +2430,7 @@ function GM:LocalPlayerDied(attackername)
 	end
 end
 
+-- ==================== 按键按下/释放 ====================
 function GM:KeyPress(pl, key)
 	if key == self.MenuKey then
 		local team = P_Team(pl)
@@ -2344,6 +2478,7 @@ function GM:KeyRelease(pl, key)
 	end
 end
 
+-- ==================== 脚步声时间 ====================
 function GM:PlayerStepSoundTime(pl, iType, bWalking)
 	local time = pl:CallZombieFunction2("PlayerStepSoundTime", iType, bWalking)
 	if time then
@@ -2369,16 +2504,19 @@ function GM:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume)
 	return pl:CallZombieFunction4("PlayerFootstep", vFootPos, iFoot, strSoundName, fVolume)
 end
 
+-- ==================== 购物检测 ====================
 function GM:PlayerCanCheckout(pl)
 	return pl:IsValid() and P_Team(pl) == TEAM_HUMAN and pl:Alive() and self:GetWave() <= 0
 end
 
+-- 打开购物面板
 function GM:OpenWorth()
 	if gamemode.Call("PlayerCanCheckout", MySelf) then
 		MakepWorth()
 	end
 end
 
+-- 关闭购物面板
 function GM:CloseWorth()
 	if pWorth and pWorth:IsValid() then
 		pWorth:Remove()
@@ -2386,10 +2524,12 @@ function GM:CloseWorth()
 	end
 end
 
+-- ==================== 军械库升级抑制 ====================
 function GM:SuppressArsenalUpgrades(suppresstime)
 	self.SuppressArsenalTime = math.max(CurTime() + suppresstime, self.SuppressArsenalTime)
 end
 
+-- ==================== 升级通知 ====================
 function GM:Rewarded(class, amount)
 	if CurTime() < self.SuppressArsenalTime then return end
 
@@ -2411,6 +2551,7 @@ function GM:Rewarded(class, amount)
 	end
 end
 
+-- ==================== 菜单音效 ====================
 function PlayMenuOpenSound()
 	MySelf:EmitSound("buttons/lightswitch2.wav", 100, 30)
 end

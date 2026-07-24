@@ -5,7 +5,7 @@ SWEP.PrintName = ""..translate.Get("weapon_zs_poisonzombie")
 SWEP.MeleeReach = 48
 SWEP.MeleeDelay = 0.9
 SWEP.MeleeSize = 4.5
-SWEP.MeleeDamage = 40
+SWEP.MeleeDamage = 30
 SWEP.MeleeDamageType = DMG_SLASH
 SWEP.MeleeAnimationDelay = 0.35
 
