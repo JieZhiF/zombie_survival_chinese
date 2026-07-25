@@ -56,13 +56,11 @@ end
 -- 参数：pl-被治疗玩家, amount-治疗量, pointmul-得分倍率, nobymsg-是否不显示消息, poisononly-是否只治疗中毒
 function meta:HealPlayer(pl, amount, pointmul, nobymsg, poisononly)
 	local healed, rmv = 0, 0
-	-- 获取玩家当前生命值、最大生命值、缺失生命值、中毒和流血伤害
 	local health, maxhealth = pl:Health(), pl:IsSkillActive(SKILL_D_FRAIL) and math.floor(pl:GetMaxHealth() * 0.25) or pl:GetMaxHealth()
 	local missing_health = maxhealth - health
 	local poison = pl:GetPoisonDamage()
 	local bleed = pl:GetBleedDamage()
 
-	-- 计算治疗倍率：基础倍率 + 治疗接收修正 - 幻影生命值惩罚 - 疾病惩罚
 	local healrec = (pl.HealingReceived or 1) - (pl:GetPhantomHealth() > 0.5 and 0.5 or 0) - (pl:GetStatus("sickness") and 0.5 or 0)
 	local healmul = self.MedicHealMul or 1
 	local multiplier = healmul + healrec - 1
@@ -86,20 +84,27 @@ function meta:HealPlayer(pl, amount, pointmul, nobymsg, poisononly)
 		amount = amount - rmv
 	end
 
-	-- 最后治疗缺失生命值
-	if not poisononly and missing_health > 0 and amount > 0 then
-		rmv = math.min(amount, missing_health)
-		pl:SetHealth(health + rmv)
-		healed = healed + rmv
-		amount = amount - rmv
+	-- 最后治疗缺失生命值（增加过量治疗判定）
+	if not poisononly and amount > 0 then
+		if self:IsSkillActive(SKILL_OVERMEDIC) then
+			-- 过量治疗：直接恢复所有剩余治疗量，允许超过最大生命值
+			rmv = amount
+			pl:SetHealth(health + rmv)
+			healed = healed + rmv
+			amount = 0
+		elseif missing_health > 0 then
+			-- 常规治疗：不能超过最大生命值
+			rmv = math.min(amount, missing_health)
+			pl:SetHealth(health + rmv)
+			healed = healed + rmv
+			amount = amount - rmv
+		end
 	end
 
-	-- 计算得分倍率（治疗效率影响得分）
 	pointmul = (pointmul or 1) / (math.max(healed, regamount) / regamount)
 
-	-- 如果治疗者是人类玩家，触发治疗队友事件并减少幻影生命值
 	if healed > 0 and self:IsPlayer() then
-		gamemode.Call("PlayerHealedTeamMember", self, pl, healed, self:GetActiveWeapon(), pointmul, nobymsg, 1) 
+		gamemode.Call("PlayerHealedTeamMember", self, pl, healed, self:GetActiveWeapon(), pointmul, nobymsg, 1)
 		pl:SetPhantomHealth(math.max(0, pl:GetPhantomHealth() - healed))
 	end
 

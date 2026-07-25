@@ -106,7 +106,7 @@ function PANEL:PopulateOptionsData()
             {name = "HUD", text = translate.Get("Category_HUD")},
             {name = "Crosshair", text = translate.Get("Category_Crosshair")},
             {name = "Color", text = translate.Get("Category_Color")},
-            {name = "Fonts", text = "字体设置（未完成）"},
+            {name = "Fonts", text = "字体设置"},
         }},
         { name = "Gameplay", text = "游戏性", subCategories = {
             {name = "Other", text = translate.Get("Category_Other")},

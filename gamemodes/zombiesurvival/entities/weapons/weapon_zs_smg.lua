@@ -25,8 +25,8 @@ SWEP.ViewModel = "models/weapons/cstrike/c_smg_mp5.mdl"
 SWEP.WorldModel = "models/weapons/w_smg_mp5.mdl"
 SWEP.ViewModelFlip = false
 SWEP.ShowWorldModel = false
-SWEP.ShowViewModel = true
---[[
+SWEP.ShowViewModel = false
+
 SWEP.ViewModelBoneMods = {
 	["v_weapon.MP5_Parent"] = { scale = Vector(0.009, 0.009, 0.009), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
@@ -117,7 +117,7 @@ SWEP.WElements = {
 	["body++++++++"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "body", pos = Vector(0, 1.095, -5.368), angle = Angle(0, 0, 0), size = Vector(0.054, 0.054, 0.202), color = Color(123, 123, 123, 255), surpresslightning = false, material = "silly/sillymaterialfix", skin = 0, bodygroup = {} },
 	["body+++++++"] = { type = "Model", model = "models/props_c17/oildrum001.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "body", pos = Vector(0, 0.144, -5.607), angle = Angle(0, 0, 0), size = Vector(0.059, 0.059, 0.24), color = Color(123, 123, 123, 255), surpresslightning = false, material = "silly/sillymaterialfix", skin = 0, bodygroup = {} }
 }
-]]
+
 SWEP.UseHands = true
 sound.Add( {
 	name = "Weapon_GA4.SingleHeavy",
@@ -157,7 +157,7 @@ SWEP.Tier = 3
 
 SWEP.IronSightsPos = Vector(-5.338, -4.637, 1.48)
 SWEP.IronSightsAng = Vector(0, 0, 0)
---[[
+
 function SWEP:Think()
 	self.BaseClass.Think(self)
 	if CLIENT then
@@ -166,7 +166,7 @@ function SWEP:Think()
 		end
 	end
 end
-]]
+
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_RELOAD_SPEED, 0.1)
 GAMEMODE:AddNewRemantleBranch(SWEP, 1, ""..translate.Get("weapon_zs_smg_r1"), ""..translate.Get("weapon_zs_smg_r1_description"), function(wept)
 	wept.Primary.Delay = 0.15

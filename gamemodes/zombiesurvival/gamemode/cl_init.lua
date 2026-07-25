@@ -1402,7 +1402,7 @@ function GM:DrawHorderallyIndicators() -- 绘制僵尸
 				table.insert(displayedPositions, pos)
 			end
 		end
-
+	--[[
 	for i, nest in pairs(GAMEMODE.CachedNests) do
 			if self:GetWaveActive() then
 				continue
@@ -1430,6 +1430,7 @@ function GM:DrawHorderallyIndicators() -- 绘制僵尸
 		cam_End3D2D()
 		cam_IgnoreZ(false)
 	end
+	]]
 end
 
 -- ==================== 回合重置 ====================

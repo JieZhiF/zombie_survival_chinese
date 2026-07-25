@@ -35,8 +35,8 @@ local VEC_OFFSET_LOW = Vector(0, 0, 50)
 local VEC_OFFSET_HIGH = Vector(0, 0, 80)
 
 -- 字体名称
-local FONT_MIDDLE = "ZS2DFontHarmonyMiddle"
-local FONT_NORMAL = "ZS2DFontHarmony"
+local FONT_MIDDLE = "weapon_name_ssp"
+local FONT_NORMAL = "weapon_name_ssp_small"
 
 --[[-------------------------------------------------------------------------
     辅助函数

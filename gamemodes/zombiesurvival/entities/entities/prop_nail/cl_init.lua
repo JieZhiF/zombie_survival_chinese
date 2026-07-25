@@ -39,7 +39,8 @@ end
 local matExpert = Material("zombiesurvival/padlock.png")
 local matHeart = Material("icon16/heart.png")
 local colNail = Color(0, 0, 5, 220)
-local colText = Color(240, 240, 240, 105)
+local colText = Color(240, 240, 240, 150)
+local colText_High = Color(240, 240, 240, 190)
 local colDead = Color(230, 80, 80, 95)
 function ENT:DrawTranslucent()
 	local parent = self:GetParent()
@@ -199,12 +200,12 @@ function ENT:DrawTranslucent()
 
 				if displayowner then
 					local col = redname and colDead or colText
-					col.a = 120 * vis
+					col.a = 150 * vis
 
-					draw.SimpleText(displayowner, "ZS2DFontHarmony", 0, y + 20, col, TEXT_ALIGN_CENTER)
-					draw.SimpleText(math.floor(nhp) .. "/" .. math.floor(self:GetMaxNailHealth()), "ZS2DFontHarmony", x + 40, y - 45, col, TEXT_ALIGN_CENTER)
+					draw.SimpleText(displayowner, "BarrierFont", 0, y + 20, colText, TEXT_ALIGN_CENTER)
+					draw.SimpleText(math.floor(nhp) .. "/" .. math.floor(self:GetMaxNailHealth()), "BarrierFont", x + 45, y - 45, colText_High, TEXT_ALIGN_CENTER)
 				end
-				draw.SimpleText("按[Z/B]来穿过", "ZS2DFontHarmony", x + 75, y +40, colText, TEXT_ALIGN_CENTER)
+				draw.SimpleText("按[Z/B]来穿过", "BarrierFont", x + 75, y +45, colText_High, TEXT_ALIGN_CENTER)
 			end
 		cam.End3D2D()
 

@@ -11,24 +11,28 @@ ZSFontDLC = ZSFontDLC or {}
 -- 在这里把你的 "Weapon Name" 等用途和实际代码里的 FontName 对应起来
 ZSFontDLC.FontDefinitions = {
     -- 武器/物品名字（3D显示）
-    ["TESTFONT"] = { 
+    ["weapon_name_ssp"] = { --SSP = Source Sans Pro
         name = "武器/物品名字 (3D显示)", 
-        default = { font = "Source Sans Pro", size = 80, weight = 500, extended = true, antialias = true } 
+        default = { font = "Source Sans Pro", size = 40, weight = 500, extended = true, antialias = true } 
     },
     -- 物品属性说明（小号字体）
-    ["1312451125"] = { 
+    ["weapon_name_ssp_small"] = { 
         name = "物品属性说明 (小号)", 
-        default = { font = "Source Sans Pro", size = 40, weight = 500, extended = true, antialias = true } 
+        default = { font = "Source Sans Pro", size = 36, weight = 500, extended = true, antialias = true } 
     },
     -- 屏幕HUD主要字体
     ["DAWD12"] = { 
-        name = "屏幕HUD主要字体", 
+        name = "屏幕HUD主要字体--无效", 
         default = { font = "HarmonyOS Sans SC", size = 32, weight = 500, extended = true, antialias = true } 
     },
     -- 屏幕HUD次要/小字体
     ["12411DFAGTH"] = { 
-        name = "屏幕HUD次要/小字体", 
+        name = "屏幕HUD次要/小字体--无效", 
         default = { font = "HarmonyOS Sans SC", size = 22, weight = 500, extended = true, antialias = true } 
+    },
+    ["BarrierFont"] = { 
+        name = "防线显示字体", 
+        default = { font = "HarmonyOS Sans SC", size = 36, weight = 500, extended = true, antialias = true } 
     },
     -- 你可以在这里继续添加你在 cl_init.lua 里 CreateFonts 创建的所有字体
 }

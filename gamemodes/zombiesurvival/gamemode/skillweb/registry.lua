@@ -287,7 +287,8 @@ SKILL_BLOODLUST = 122
 SKILL_SCOURER = 123
 SKILL_LANKYII = 124
 SKILL_U_ANTITODESHOT = 125
-SKILL_DISPERSION = 126
+--SKILL_DISPERSION = 126
+SKILL_OVERMEDIC = 126
 SKILL_MOTIONII = 127
 SKILL_MOTIONIII = 128
 SKILL_D_SLOW = 129
@@ -644,7 +645,7 @@ GM:AddSkill(SKILL_D_FRAIL, ""..translate.Get("Skill_D_FRAIL"), GOOD..""..transla
 
 -- 医疗云雾（解锁类，AlwaysActive）
 GM:AddSkill(SKILL_U_MEDICCLOUD, ""..translate.Get("Skill_U_MEDICCLOUD"), GOOD..""..translate.Get("Skill_U_MEDICCLOUD_Good"),
-																0,			-2,					{SKILL_DISPERSION}, TREE_SUPPORTTREE)
+																0,			-2,					{SKILL_OVERMEDIC}, TREE_SUPPORTTREE)
 .AlwaysActive = true
 
 -- 智能瞄准
@@ -666,9 +667,13 @@ GM:AddSkill(SKILL_WORTHINESS4, ""..translate.Get("Skill_WORTHINESS4"), GOOD.."".
 -- 解毒射击（解锁类）
 GM:AddSkill(SKILL_U_ANTITODESHOT, ""..translate.Get("Skill_U_ANTITODESHOT"), GOOD..""..translate.Get("Skill_U_ANTITODESHOT_Good"),
 																4,			-2,					{}, TREE_SUPPORTTREE)
-
+--[[
 -- 扩散
 GM:AddSkill(SKILL_DISPERSION, ""..translate.Get("Skill_DISPERSION"), GOOD..""..translate.Get("Skill_DISPERSION_Good")..BAD..""..translate.Get("Skill_DISPERSION_Bad"),
+																0,			-4,					{}, TREE_SUPPORTTREE)
+																]]
+--超量恢复
+GM:AddSkill(SKILL_OVERMEDIC, "超量恢复", GOOD.."解锁超量恢复，可使HP超过上限".."\n"..BAD.."已经超过的不可再恢复", --其实这个不算BAD，只是提示
 																0,			-4,					{}, TREE_SUPPORTTREE)
 
 -- ============================================================
@@ -933,7 +938,7 @@ GM:AddSkill(SKILL_BATTLERSP06, "磨炼 V", GOOD.."+2 初始菜单点数\n"..GOOD
 																5,			7,					{SKILL_BATTLERSP05}, TREE_MELEETREE)
 GM:AddSkill(SKILL_BATTLERSP07, "重斩", GOOD.."+20% 近战伤害\n"..BAD.."+8% 近战攻击延迟",
 																6,			7,					{SKILL_BATTLERSP06}, TREE_MELEETREE)
-
+--[[
 -- 究极天赋：良缘的庇佑
 GM:AddSkill(SKILL_BATTLERSP_114514, "究极天赋：良缘的庇佑", GOOD.."近战攻击时追加30%伤害\n"..GOOD.."空中攻击时.攻速增加300%且会每次攻击会滞留一段时间\n"..GOOD.."势不可挡:霸体",
 																3,			9,					{SKILL_BATTLERSP07}, TREE_MELEETREE)
@@ -945,7 +950,7 @@ GM:AddSkill(SKILL_COMBOKNUCKLESP02, "海虎爆破钳", GOOD.."-5% 拳头攻击�
 																9,			-4,					{SKILL_COMBOKNUCKLESP01}, TREE_MELEETREE)
 GM:AddSkill(SKILL_COMBOKNUCKLESP03, "次男道", GOOD.."-8% 拳头攻击间隔\n"..GOOD.."+20% 拳头伤害\n二十万匹力量！",
 																10,			-4,					{SKILL_COMBOKNUCKLESP02}, TREE_MELEETREE)
-
+]]
 -- 连携作战
 GM:AddSkill(SKILL_FIELDAMPSP01,"连携作战", GOOD.."-10% 电塔与维修立场攻击延迟\n"..GOOD.."+10% 电塔和维修立场攻击范围\n"..BAD.."-12 移动速度\n血肉苦痛，机械飞升！",
 																7,			4,					{SKILL_FIELDAMP}, TREE_BUILDINGTREE)
@@ -1563,11 +1568,11 @@ GM:AddSkillModifier(SKILL_CARDIOTONIC, SKILLMOD_BLOODARMOR_DMG_REDUCTION, -0.2)
 GM:AddSkillFunction(SKILL_SCOURER, function(pl, active)
 	pl.Scourer = active
 end)
-
+--[[
 -- 扩散
 GM:AddSkillModifier(SKILL_DISPERSION, SKILLMOD_CLOUD_RADIUS, 0.15)
 GM:AddSkillModifier(SKILL_DISPERSION, SKILLMOD_CLOUD_TIME, -0.1)
-
+]]
 -- 鲁莽 / 循环系统 / 乐观（多血质）
 GM:AddSkillModifier(SKILL_BRASH, SKILLMOD_MELEE_SWING_DELAY_MUL, -0.16)
 GM:AddSkillModifier(SKILL_BRASH, SKILLMOD_MELEE_MOVEMENTSPEED_ON_KILL, -15)

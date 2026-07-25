@@ -253,7 +253,7 @@ function SWEP:DrawCooldowns()
     local maximum = self:CooldownRingMaximumBinding()
     local ringSize = math.Clamp(CrosshairCoolPrimaryCircleSize, 0.5, 16) + coneGap
     local ringSpacing = math.Clamp(CrosshairCoolPrimaryCircleSize, 0, 16) + coneGap + self.CooldownExtraSize
-    local ringColor = Color(40, 255, 40, 255)
+    local ringColor = Color(255, 40, 40)
     local backgroundColor = Color(12, 12, 12, 30)
 
     if remaining > 0 and maximum > 0 and remaining ~= math.huge and maximum ~= math.huge then

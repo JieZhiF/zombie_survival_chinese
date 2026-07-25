@@ -400,8 +400,7 @@ function GM:AddResources()
 	resource.AddFile("resource/fonts/hidden.ttf")
 	resource.AddFile("resource/fonts/ghoulfriaoe.ttf")
 	resource.AddFile("resource/fonts/remingtonnoiseless.ttf")
-	resource.AddFile("resource/fonts/notosanssc_regular.ttf")
-	resource.AddFile("resource/fonts/harmonyossansregular3500.ttf")
+
 	resource.AddFile("particles/vman_explosion.pcf")
 
 	for _, filename in pairs(file.Find("materials/zombiesurvival/*.vmt", "GAME")) do
@@ -5228,7 +5227,7 @@ function GM:WaveStateChanged(newstate)
 			end
 		end
 	else
-		gamemode.Call("SetWaveStart", CurTime() + (GetGlobalBool("classicmode") and self.WaveIntermissionLengthClassic or self.WaveIntermissionLength))
+		gamemode.Call("SetWaveStart", CurTime() + (GetGlobalBool("classicmode") and self.WaveIntermissionLengthClassic or self.WaveIntermissionLength) + (self:GetWave() - 1) * self.WaveIntermissionLengthIncrease) --加上波次间隔时间和增加的间隔时间
 
 		net.Start("zs_waveend")
 			net.WriteInt(self:GetWave(), 16)

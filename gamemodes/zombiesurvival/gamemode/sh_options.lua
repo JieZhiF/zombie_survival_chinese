@@ -508,65 +508,65 @@ GM:AddPointShopItem("amigo",			ITEMCAT_GUNS,			35,				"weapon_zs_amigo")        
 GM:AddPointShopItem("hurricane",		ITEMCAT_GUNS,			35,				"weapon_zs_hurricane")                                                                                        -- 飓风冲锋枪
 
 -- Tier 3：三级武器（价格 60）
-GM:AddPointShopItem("deagle",			ITEMCAT_GUNS,			60,				"weapon_zs_deagle")                                                                                           -- 沙漠之鹰
-GM:AddPointShopItem("tempest",			ITEMCAT_GUNS,			60,				"weapon_zs_tempest")                                                                                          -- 暴风雨
+GM:AddPointShopItem("deagle",			ITEMCAT_GUNS,			70,				"weapon_zs_deagle")                                                                                           -- 沙漠之鹰
+GM:AddPointShopItem("tempest",			ITEMCAT_GUNS,			70,				"weapon_zs_tempest")                                                                                          -- 暴风雨
 --GM:AddPointShopItem("ender",			ITEMCAT_GUNS,			60,				"weapon_zs_ender")                                                                                           -- 终结者（已禁用）
-GM:AddPointShopItem("sg15",			    ITEMCAT_GUNS,			60,				"weapon_zs_htf_sg15")                                                                                         -- HTF SG15 霰弹枪
-GM:AddPointShopItem("shredder",			ITEMCAT_GUNS,			60,				"weapon_zs_smg")                                                                                              -- 粉碎者冲锋枪
-GM:AddPointShopItem("silencer",			ITEMCAT_GUNS,			60,				"weapon_zs_silencer")                                                                                         -- 消音步枪
-GM:AddPointShopItem("hunter",			ITEMCAT_GUNS,			60,				"weapon_zs_hunter")                                                                                           -- 猎人步枪
-GM:AddPointShopItem("onyx",				ITEMCAT_GUNS,			60,				"weapon_zs_onyx")                                                                                             -- 黑玛瑙
-GM:AddPointShopItem("charon",			ITEMCAT_GUNS,			60,				"weapon_zs_charon")                                                                                           -- 卡戎
-GM:AddPointShopItem("akbar",			ITEMCAT_GUNS,			60,				"weapon_zs_akbar")                                                                                            -- 阿克巴
-GM:AddPointShopItem("enderp",			ITEMCAT_GUNS,			60,				"weapon_zs_enderp")                                                                                           -- 终结者 P
-GM:AddPointShopItem("oberon",			ITEMCAT_GUNS,			60,				"weapon_zs_oberon")                                                                                           -- 奥伯龙
-GM:AddPointShopItem("hyena",			ITEMCAT_GUNS,			60,				"weapon_zs_hyena")                                                                                            -- 鬣狗
-GM:AddPointShopItem("pollutor",			ITEMCAT_GUNS,			60,				"weapon_zs_pollutor")                                                                                         -- 污染者
+GM:AddPointShopItem("sg15",			    ITEMCAT_GUNS,			70,				"weapon_zs_htf_sg15")                                                                                         -- HTF SG15 霰弹枪
+GM:AddPointShopItem("shredder",			ITEMCAT_GUNS,			70,				"weapon_zs_smg")                                                                                              -- 粉碎者冲锋枪
+GM:AddPointShopItem("silencer",			ITEMCAT_GUNS,			70,				"weapon_zs_silencer")                                                                                         -- 消音步枪
+GM:AddPointShopItem("hunter",			ITEMCAT_GUNS,			70,				"weapon_zs_hunter")                                                                                           -- 猎人步枪
+GM:AddPointShopItem("onyx",				ITEMCAT_GUNS,			70,				"weapon_zs_onyx")                                                                                             -- 黑玛瑙
+GM:AddPointShopItem("charon",			ITEMCAT_GUNS,			70,				"weapon_zs_charon")                                                                                           -- 卡戎
+GM:AddPointShopItem("akbar",			ITEMCAT_GUNS,			70,				"weapon_zs_akbar")                                                                                            -- 阿克巴
+GM:AddPointShopItem("enderp",			ITEMCAT_GUNS,			70,				"weapon_zs_enderp")                                                                                           -- 终结者 P
+GM:AddPointShopItem("oberon",			ITEMCAT_GUNS,			70,				"weapon_zs_oberon")                                                                                           -- 奥伯龙
+GM:AddPointShopItem("hyena",			ITEMCAT_GUNS,			70,				"weapon_zs_hyena")                                                                                            -- 鬣狗
+GM:AddPointShopItem("pollutor",			ITEMCAT_GUNS,			70,				"weapon_zs_pollutor")                                                                                         -- 污染者
 
 -- Tier 4：四级武器（价格 100-115）
-GM:AddPointShopItem("longarm",			ITEMCAT_GUNS,			100,			"weapon_zs_longarm")                                                                                          -- 长臂步枪
-GM:AddPointShopItem("dag",		    	ITEMCAT_GUNS,			100,			"weapon_zs_dag")                                                                                              -- DAG 步枪
-GM:AddPointShopItem("sweeper",			ITEMCAT_GUNS,			100,			"weapon_zs_sweepershotgun")                                                                                   -- 清扫者霰弹枪
-GM:AddPointShopItem("jackhammer",		ITEMCAT_GUNS,			100,			"weapon_zs_jackhammer")                                                                                       --  jackhammer 霰弹枪
-GM:AddPointShopItem("epsilon",		    ITEMCAT_GUNS,			100,			"weapon_zs_epsilon_shotgun")                                                                                  -- Epsilon 霰弹枪
-GM:AddPointShopItem("bulletstorm",		ITEMCAT_GUNS,			100,			"weapon_zs_bulletstorm")                                                                                      -- 弹幕风暴
-GM:AddPointShopItem("reaper",			ITEMCAT_GUNS,			100,			"weapon_zs_reaper")                                                                                           -- 死神
-GM:AddPointShopItem("quicksilver",		ITEMCAT_GUNS,			100,			"weapon_zs_quicksilver")                                                                                      -- 水银
-GM:AddPointShopItem("slugrifle",		ITEMCAT_GUNS,			100,			"weapon_zs_slugrifle")                                                                                        -- 独头步枪
-GM:AddPointShopItem("artemis",			ITEMCAT_GUNS,			100,			"weapon_zs_artemis")                                                                                          -- 阿尔忒弥斯
-GM:AddPointShopItem("zeus",				ITEMCAT_GUNS,			100,			"weapon_zs_zeus")                                                                                             -- 宙斯
-GM:AddPointShopItem("stalker",			ITEMCAT_GUNS,			100,			"weapon_zs_m4")                                                                                               -- 追踪者 M4
-GM:AddPointShopItem("inferno",			ITEMCAT_GUNS,			100,			"weapon_zs_inferno")                                                                                          -- 炼狱
-GM:AddPointShopItem("ebanator",			ITEMCAT_GUNS,			115,			"weapon_zs_htf_ebanator")                                                                                     -- HTF Ebanator
-GM:AddPointShopItem("quasar",			ITEMCAT_GUNS,			100,			"weapon_zs_quasar")                                                                                           -- 类星体
-GM:AddPointShopItem("gluon",			ITEMCAT_GUNS,			100,			"weapon_zs_gluon")                                                                                            -- 胶子枪
-GM:AddPointShopItem("barrage",			ITEMCAT_GUNS,			100,			"weapon_zs_barrage")                                                                                          -- 弹幕
-GM:AddPointShopItem("famass",			ITEMCAT_GUNS,			100,			"weapon_zs_famas_s")                                                                                          -- FAMAS
+GM:AddPointShopItem("longarm",			ITEMCAT_GUNS,			125,			"weapon_zs_longarm")                                                                                          -- 长臂步枪
+GM:AddPointShopItem("dag",		    	ITEMCAT_GUNS,			125,			"weapon_zs_dag")                                                                                              -- DAG 步枪
+GM:AddPointShopItem("sweeper",			ITEMCAT_GUNS,			125,			"weapon_zs_sweepershotgun")                                                                                   -- 清扫者霰弹枪
+GM:AddPointShopItem("jackhammer",		ITEMCAT_GUNS,			125,			"weapon_zs_jackhammer")                                                                                       --  jackhammer 霰弹枪
+GM:AddPointShopItem("epsilon",		    ITEMCAT_GUNS,			125,			"weapon_zs_epsilon_shotgun")                                                                                  -- Epsilon 霰弹枪
+GM:AddPointShopItem("bulletstorm",		ITEMCAT_GUNS,			125,			"weapon_zs_bulletstorm")                                                                                      -- 弹幕风暴
+GM:AddPointShopItem("reaper",			ITEMCAT_GUNS,			125,			"weapon_zs_reaper")                                                                                           -- 死神
+GM:AddPointShopItem("quicksilver",		ITEMCAT_GUNS,			125,			"weapon_zs_quicksilver")                                                                                      -- 水银
+GM:AddPointShopItem("slugrifle",		ITEMCAT_GUNS,			125,			"weapon_zs_slugrifle")                                                                                        -- 独头步枪
+GM:AddPointShopItem("artemis",			ITEMCAT_GUNS,			125,			"weapon_zs_artemis")                                                                                          -- 阿尔忒弥斯
+GM:AddPointShopItem("zeus",				ITEMCAT_GUNS,			125,			"weapon_zs_zeus")                                                                                             -- 宙斯
+GM:AddPointShopItem("stalker",			ITEMCAT_GUNS,			125,			"weapon_zs_m4")                                                                                               -- 追踪者 M4
+GM:AddPointShopItem("inferno",			ITEMCAT_GUNS,			125,			"weapon_zs_inferno")                                                                                          -- 炼狱
+GM:AddPointShopItem("ebanator",			ITEMCAT_GUNS,			125,			"weapon_zs_htf_ebanator")                                                                                     -- HTF Ebanator
+GM:AddPointShopItem("quasar",			ITEMCAT_GUNS,			125,			"weapon_zs_quasar")                                                                                           -- 类星体
+GM:AddPointShopItem("gluon",			ITEMCAT_GUNS,			125,			"weapon_zs_gluon")                                                                                            -- 胶子枪
+GM:AddPointShopItem("barrage",			ITEMCAT_GUNS,			125,			"weapon_zs_barrage")                                                                                          -- 弹幕
+GM:AddPointShopItem("famass",			ITEMCAT_GUNS,			125,			"weapon_zs_famas_s")                                                                                          -- FAMAS
 
 -- Tier 5：五级武器（价格 175，游戏中最强力的武器）
-GM:AddPointShopItem("novacolt",			ITEMCAT_GUNS,			175,			"weapon_zs_novacolt")                                                                                         -- 新星左轮
-GM:AddPointShopItem("bulwark",			ITEMCAT_GUNS,			175,			"weapon_zs_bulwark")                                                                                          -- 壁垒
+GM:AddPointShopItem("novacolt",			ITEMCAT_GUNS,			200,			"weapon_zs_novacolt")                                                                                         -- 新星左轮
+GM:AddPointShopItem("bulwark",			ITEMCAT_GUNS,			200,			"weapon_zs_bulwark")                                                                                          -- 壁垒
 --GM:AddPointShopItem("juggernaut",		ITEMCAT_GUNS,			175,			"weapon_zs_juggernaut")                                                                                      -- 主宰（已禁用）
-GM:AddPointShopItem("citadel",	    	ITEMCAT_GUNS,			175,			"weapon_zs_citadel")                                                                                          -- 堡垒
+GM:AddPointShopItem("citadel",	    	ITEMCAT_GUNS,			200,			"weapon_zs_citadel")                                                                                          -- 堡垒
 --GM:AddPointShopItem("scar",				ITEMCAT_GUNS,			175,			"weapon_zs_scar")                                                                                             -- SCAR（已禁用）
-GM:AddPointShopItem("nexus",			ITEMCAT_GUNS,		    175,			"weapon_zs_nexus")                                                                                            -- 核心 Nexus
-GM:AddPointShopItem("tokamak",			ITEMCAT_GUNS,	    	175,			"weapon_zs_tokamak")                                                                                          -- 托卡马克
-GM:AddPointShopItem("boomstick",		ITEMCAT_GUNS,			175,			"weapon_zs_boomstick")                                                                                        -- 爆破棍
-GM:AddPointShopItem("deathdlrs",		ITEMCAT_GUNS,			175,			"weapon_zs_deathdealers")                                                                                     -- 死亡交易者
-GM:AddPointShopItem("hammerdown",		ITEMCAT_GUNS,			175,			"weapon_zs_hammerdown")                                                                                       -- 锤击
-GM:AddPointShopItem("colossus",			ITEMCAT_GUNS,			175,			"weapon_zs_colossus")                                                                                         -- 巨像
-GM:AddPointShopItem("renegade",			ITEMCAT_GUNS,			175,			"weapon_zs_renegade")                                                                                         -- 叛徒
-GM:AddPointShopItem("crossbow",			ITEMCAT_GUNS,			175,			"weapon_zs_crossbow")                                                                                         -- 弩
-GM:AddPointShopItem("pulserifle",		ITEMCAT_GUNS,			175,			"weapon_zs_pulserifle")                                                                                       -- 脉冲步枪
-GM:AddPointShopItem("spinfusor",		ITEMCAT_GUNS,			175,			"weapon_zs_spinfusor")                                                                                        -- 旋涡
-GM:AddPointShopItem("broadside",		ITEMCAT_GUNS,			175,			"weapon_zs_broadside")                                                                                        -- 舷炮
-GM:AddPointShopItem("smelter",			ITEMCAT_GUNS,			175,			"weapon_zs_smelter")                                                                                          -- 熔炉
-GM:AddPointShopItem("magnum_a",			ITEMCAT_GUNS,			175,			"weapon_zs_magnum_a")                                                                                         -- 马格南 A
---GM:AddPointShopItem("hunter_bear",		ITEMCAT_GUNS,			175,			"weapon_zs_hunter_bear")                                                                                     -- 猎熊者（已禁用）
-GM:AddPointShopItem("青峰",			    ITEMCAT_GUNS,			175,			"weapon_zs_electron")                                                                                         -- 青峰（电子步枪）
---GM:AddPointShopItem("Eightyone",		ITEMCAT_GUNS,			175,			"weapon_zs_81")                                                                                              -- 八一（已禁用）
-GM:AddPointShopItem("vepr12",	    	ITEMCAT_GUNS,			175,			"weapon_zs_vepr12")                                                                                           -- VEPR12 霰弹枪
---GM:AddPointShopItem("m82a1",	    	ITEMCAT_GUNS,			175,			"weapon_zs_m82a3")                                                                                           -- M82A1（已禁用）
+GM:AddPointShopItem("nexus",			ITEMCAT_GUNS,		    200,			"weapon_zs_nexus")                                                                                            -- 核心 Nexus
+GM:AddPointShopItem("tokamak",			ITEMCAT_GUNS,	    	200,			"weapon_zs_tokamak")                                                                                          -- 托卡马克
+GM:AddPointShopItem("boomstick",		ITEMCAT_GUNS,			200,			"weapon_zs_boomstick")                                                                                        -- 爆破棍
+GM:AddPointShopItem("deathdlrs",		ITEMCAT_GUNS,			200,			"weapon_zs_deathdealers")                                                                                     -- 死亡交易者
+GM:AddPointShopItem("hammerdown",		ITEMCAT_GUNS,			200,			"weapon_zs_hammerdown")                                                                                       -- 锤击
+GM:AddPointShopItem("colossus",			ITEMCAT_GUNS,			200,			"weapon_zs_colossus")                                                                                         -- 巨像
+GM:AddPointShopItem("renegade",			ITEMCAT_GUNS,			200,			"weapon_zs_renegade")                                                                                         -- 叛徒
+GM:AddPointShopItem("crossbow",			ITEMCAT_GUNS,			200,			"weapon_zs_crossbow")                                                                                         -- 弩
+GM:AddPointShopItem("pulserifle",		ITEMCAT_GUNS,			200,			"weapon_zs_pulserifle")                                                                                       -- 脉冲步枪
+GM:AddPointShopItem("spinfusor",		ITEMCAT_GUNS,			200,			"weapon_zs_spinfusor")                                                                                        -- 旋涡
+GM:AddPointShopItem("broadside",		ITEMCAT_GUNS,			200,			"weapon_zs_broadside")                                                                                        -- 舷炮
+GM:AddPointShopItem("smelter",			ITEMCAT_GUNS,			200,			"weapon_zs_smelter")                                                                                          -- 熔炉
+GM:AddPointShopItem("magnum_a",			ITEMCAT_GUNS,			200,			"weapon_zs_magnum_a")                                                                                         -- 马格南 A
+--GM:AddPointShopItem("hunter_bear",		ITEMCAT_GUNS,			200,			"weapon_zs_hunter_bear")                                                                                     -- 猎熊者（已禁用）
+GM:AddPointShopItem("青峰",			    ITEMCAT_GUNS,			200,			"weapon_zs_electron")                                                                                         -- 青峰（电子步枪）
+--GM:AddPointShopItem("Eightyone",		ITEMCAT_GUNS,			200,			"weapon_zs_81")                                                                                              -- 八一（已禁用）
+GM:AddPointShopItem("vepr12",	    	ITEMCAT_GUNS,			200,			"weapon_zs_vepr12")                                                                                           -- VEPR12 霰弹枪
+--GM:AddPointShopItem("m82a1",	    	ITEMCAT_GUNS,			200,			"weapon_zs_m82a3")                                                                                           -- M82A1（已禁用）
 
 -- ============================================================
 -- AMMO_TYPES 弹药类型配置表
@@ -1029,6 +1029,7 @@ GM:AddDeployableInfo("prop_repairfield",		"Repair Field Emitter",	"weapon_zs_rep
 GM:AddDeployableInfo("prop_medicfield",		    "Medic Field Emitter",	"weapon_zs_medicfield")               -- 医疗场发射器
 GM:AddDeployableInfo("prop_zapper",				"Zapper",				"weapon_zs_zapper")                   -- 电击器
 GM:AddDeployableInfo("prop_zapper_arc",			"Arc Zapper",			"weapon_zs_zapper_arc")               -- 电弧电击器
+GM:AddDeployableInfo("prop_zapper_arc",			"Arc Zapper EX",		"weapon_zs_zapper_arc_ex")            -- 电弧电击器
 GM:AddDeployableInfo("prop_ffemitter",			"Force Field Emitter",	"weapon_zs_ffemitter")                -- 力场发射器
 GM:AddDeployableInfo("prop_manhack",			"Manhack",				"weapon_zs_manhack")                  -- 猎杀无人机
 GM:AddDeployableInfo("prop_manhack_saw",		"Sawblade Manhack",		"weapon_zs_manhack_saw")              -- 锯片猎杀无人机
@@ -1135,7 +1136,7 @@ GM.WaveZeroLength = 240
 -- 人类可以在波间自由活动，但不会有新的僵尸生成
 -- 已经死亡的僵尸会以乌鸦视角观战，存活中的僵尸继续保持
 GM.WaveIntermissionLength = 90
-
+GM.WaveIntermissionLengthIncrease = 10 -- 每增加一波额外增加的秒数
 -- 回合结束到换图之间的时间（秒）
 GM.EndGameTime = 50
 

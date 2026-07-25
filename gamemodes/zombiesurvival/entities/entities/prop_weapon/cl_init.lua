@@ -15,8 +15,8 @@ local CONFIG = {
     MAX_SCALE = 0.1,             -- 最大缩放比例 (在最近距离时)
 
     -- 字体
-    FONT_TITLE = "ZS2DFontHarmonyMiddle",
-    FONT_SUBTITLE = "ZS2DFontHarmony",
+    FONT_TITLE = "weapon_name_ssp",
+    FONT_SUBTITLE = "weapon_name_ssp_small",
 
     -- UI布局
     PADDING = 20,                -- 内容与边框的间距
