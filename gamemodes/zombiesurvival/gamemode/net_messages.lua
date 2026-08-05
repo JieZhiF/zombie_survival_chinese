@@ -1,0 +1,128 @@
+-- ============================================================
+-- net_messages.lua — 网络消息 ID 常量表（服务端/客户端共享）
+-- 集中定义所有 net.Start / net.Receive 使用的消息字符串。
+-- 新增消息：在此登记一行，并在调用处使用 NET_MSG 常量引用，
+-- 避免手写字符串拼写错误；注册顺序见 init.lua GM:AddNetworkStrings。
+-- ============================================================
+NET_MSG = {
+	-- 回合与游戏状态类消息
+	GAMESTATE = "zs_gamestate",
+	WAVESTART = "zs_wavestart",
+	WAVEEND = "zs_waveend",
+	LASTHUMAN = "zs_lasthuman",
+	GAMEMODECALL = "zs_gamemodecall",
+	TUTORIAL_DONE = "zs_tutorial_done",
+	LASTHUMANPOS = "zs_lasthumanpos",
+	ENDROUND = "zs_endround",
+	CENTERNOTIFY = "zs_centernotify",
+	TOPNOTIFY = "zs_topnotify",
+	ZVOLS = "zs_zvols",
+	NEXTBOSS = "zs_nextboss",
+	CLASSUNLOCK = "zs_classunlock",
+	-- 印记腐化/恢复与玩家状态类消息
+	SIGILCORRUPTED = "zs_sigilcorrupted",
+	SIGILUNCORRUPTED = "zs_sigiluncorrupted",
+	SURVIVOR = "zs_survivor",
+	ITEMSTOCK = "zs_itemstock",
+	PLAYERREDEEMED = "zs_playerredeemed",
+	DOHULLS = "zs_dohulls",
+	PENALTY = "zs_penalty",
+	NEXTRESUPPLYUSE = "zs_nextresupplyuse",
+	STOWAGECACHES = "zs_stowagecaches",
+	-- 生涯统计类消息
+	LIFESTATS = "zs_lifestats",
+	LIFESTATSBD = "zs_lifestatsbd",
+	LIFESTATSHD = "zs_lifestatshd",
+	LIFESTATSBE = "zs_lifestatsbe",
+	-- Boss 生成/击杀类消息
+	BOSS_SPAWNED = "zs_boss_spawned",
+	BOSS_SLAIN = "zs_boss_slain",
+	-- 得分与屏幕提示类消息
+	COMMISSION = "zs_commission",
+	HEALOTHER = "zs_healother",
+	HEALBY = "zs_healby",
+	BUFFBY = "zs_buffby",
+	BUFFWITH = "zs_buffwith",
+	REPAIROBJECT = "zs_repairobject",
+	WORLDHINT = "zs_worldhint",
+	HONMENTION = "zs_honmention",
+	FLOATSCORE = "zs_floatscore",
+	FLOATSCORE_VEC = "zs_floatscore_vec",
+	-- 伤害与部位损伤类消息
+	ZCLASS = "zs_zclass",
+	DMG = "zs_dmg",
+	DMG_PROP = "zs_dmg_prop",
+	LEGDAMAGE = "zs_legdamage",
+	ARMDAMAGE = "zs_armdamage",
+	-- 弹药与起始资产类消息
+	EXTRASTARTINGWORTH = "zs_extrastartingworth",
+	AMMOPICKUP = "zs_ammopickup",
+	AMMOGIVE = "zs_ammogive",
+	AMMOGIVEN = "zs_ammogiven",
+	-- 可部署物与消耗品类消息
+	DEPLOYABLELOST = "zs_deployablelost",
+	DEPLOYABLECLAIM = "zs_deployableclaim",
+	DEPLOYABLEOUT = "zs_deployableout",
+	TRINKETCONSUMED = "zs_trinketconsumed",
+	NAILREMOVED = "zs_nailremoved",
+	-- 重铸/换职业类消息
+	REMANTLERCONTENT = "zs_remantlercontent",
+	CLASSUNLOCKSTATE = "zs_classunlockstate",
+	CHANGECLASS = "zs_changeclass",
+	CURRENTROUND = "zs_currentround",
+	ZSFRIEND = "zs_zsfriend",
+	ZSFRIENDADDED = "zs_zsfriendadded",
+	-- 巢穴建造与观察类消息
+	REMANTLECONF = "zs_remantleconf",
+	NESTBUILT = "zs_nestbuilt",
+	NESTSPEC = "zs_nestspec",
+	TVCAMERA = "zs_tvcamera",
+	-- 变异与库存类消息
+	MUTATIONS_TABLE = "zs_mutations_table",
+	INVENTORYITEM = "zs_inventoryitem",
+	TRYCRAFT = "zs_trycraft",
+	UPDATEALTSELWEP = "zs_updatealtselwep",
+	INVITEM = "zs_invitem",
+	INVGIVEN = "zs_invgiven",
+	WIPEINVENTORY = "zs_wipeinventory",
+	-- 技能树类消息
+	SKILLS_ACTIVE = "zs_skills_active",
+	SKILLS_UNLOCKED = "zs_skills_unlocked",
+	SKILLS_DESIRED = "zs_skills_desired",
+	SKILL_IS_DESIRED = "zs_skill_is_desired",
+	SKILL_IS_UNLOCKED = "zs_skill_is_unlocked",
+	SKILLS_ALL_DESIRED = "zs_skills_all_desired",
+	SKILL_SET_DESIRED = "zs_skill_set_desired",
+	SKILLS_INIT = "zs_skills_init",
+	SKILLS_RESET = "zs_skills_reset",
+	SKILLS_REMORT = "zs_skills_remort",
+	SKILLS_NEXTRESET = "zs_skills_nextreset",
+	SKILLS_NOTIFY = "zs_skills_notify",
+	SKILLS_REFUNDED = "zs_skills_refunded",
+	-- 击杀反馈与状态类消息
+	CROW_KILL_CROW = "zs_crow_kill_crow",
+	PL_KILL_PL = "zs_pl_kill_pl",
+	PLS_KILL_PL = "zs_pls_kill_pl",
+	PL_KILL_SELF = "zs_pl_kill_self",
+	DEATH = "zs_death",
+	AFK_STATE = "zs_afk_state",
+	-- 钉枪配置与幽灵预览类消息
+	NAILPLACER_LEVELCFG = "zs_nailplacer_levelcfg",
+	NAILPLACER_LEVELRULES = "zs_nailplacer_levelrules",
+	NAILPLACER_GHOSTS = "zs_nailplacer_ghosts",
+	-- 自定义弹药与特殊武器类消息
+	CUSAMMO = "cusammo",
+	CUSAMMO_REMOVEALL = "cusammo_removeall",
+	ELECTROHAMMER_SKILL = "zs_electrohammer_skill",
+	TELEPORTDAGGERCOOLDOWN = "TeleportDaggerCooldown",
+	PLATINUM_STAR_WORLD = "zs_platinum_star_world",
+	THEWORLD_SCREENFX = "zs_theworld_screenfx",
+	THEWORLD_ENDFX = "zs_theworld_endfx",
+	-- 语音提示类消息（voice_ 前缀为语音预留）
+	VOICE_EYEPAIN = "voice_eyepain",
+	VOICE_GIVEAMMO = "voice_giveammo",
+	VOICE_DEATH = "voice_death",
+	VOICE_ZOMBIEDEATH = "voice_zombiedeath",
+	VOICE_PAIN = "voice_pain",
+	VOICE_ZOMBIEPAIN = "voice_zombiepain",
+}
