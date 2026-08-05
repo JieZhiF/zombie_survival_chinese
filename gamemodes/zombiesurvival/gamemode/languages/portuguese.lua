@@ -1,4 +1,4 @@
--- Translated by rui_troia (http://www.noxiousnet.com/forums/index.php?action=profile;u=6471)
+-- Translated by rui_troia (http:--www.noxiousnet.com/forums/index.php?action=profile;u=6471)
 
 translate.AddLanguage("pt-PT", "Portuguese")
 

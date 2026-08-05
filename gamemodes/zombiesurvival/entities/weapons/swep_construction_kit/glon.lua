@@ -1,6 +1,11 @@
 -- NOTE by Clavus: glon was removed from GMod 13, replaced by the util.TableToJSON etc functions
 -- In order to maintain compatability and not rewrite all that shit, I'm including it with the SCK.
 
+-- ============================================================================
+-- swep_construction_kit/glon.lua - GLON 序列化库（Lua 对象记号，GMod 13 移除后内置）
+-- 负责：把 Lua 表/向量/角度/实体等编码为字符串，及从字符串解码还原
+-- ============================================================================
+
 -- GLON: Garry's Mod Lua Object Notation
 -- A extension of LON: Lua Object Notation
 -- Made entirely by Deco Da Man
@@ -46,6 +51,7 @@ local decode_types
 local Write
 local Read
 
+-- ==== InDataEscape - 转义字符串中的控制字符与引号，便于安全传输 ====
 local function InDataEscape(s)
 	s = string.gsub(s, "([\1\2])", "\2%1")
 	s = string.gsub(s, "%z", "\2\3")
@@ -53,6 +59,7 @@ local function InDataEscape(s)
 	return s
 end
 
+-- 各类型编码器：返回 (数据串, 类型ID)
 encode_types = {
 	["nil"] = {nil, function()
 		return "", nil
@@ -165,6 +172,7 @@ encode_types = {
 	end},
 }
 
+-- ==== Write - 将任意类型数据编码为字符串（带类型标记） ====
 Write = function(data, rtabs)
 	local t = encode_types[type(data)]
 	if t then
@@ -190,6 +198,7 @@ local CEffectDataTranslation = {
 	s = "Start",
 	p = "SurfaceProp",
 }
+-- 各类型解码器：从读取器中解析数据并还原
 decode_types = {
 	-- \2\6omg\1\6omgavalue\1\1
 	[2	] = function(reader, rtabs) -- table
@@ -349,6 +358,7 @@ decode_types = {
 	end,
 }
 
+-- ==== Read - 从读取器中按类型标记解码一个值 ====
 Read = function(reader, rtabs)
 	local t, pos = reader:Peek()
 	if not t then
@@ -365,6 +375,7 @@ Read = function(reader, rtabs)
 	end
 end
 
+-- 读取器元表：顺序扫描字符串字节流
 local reader_meta = {}
 reader_meta.__index = reader_meta
 reader_meta.Next = function(self)
@@ -389,6 +400,7 @@ reader_meta.Peek = function(self)
 	return self.p, self.i+1
 end
 
+-- ==== glon.decode - 将 GLON 字符串解码为 Lua 数据 ====
 function glon.decode(data)
 	if type(data) == "nil" then
 		return nil
@@ -409,6 +421,7 @@ function glon.decode(data)
 	}, reader_meta), {})
 end
 
+-- ==== glon.encode - 将 Lua 数据编码为 GLON 字符串 ====
 function glon.encode(data)
 	return Write(data, {0}) -- to use the first key, to prevent it from interfereing with \1s. You can have up to 254 unique tables (including arrays)
 end

@@ -109,7 +109,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 90,//{80,85},
+	pitch = 90,--{80,85},
 	sound = "weapons/scout/scout_fire-1.wav"
 } )
 sound.Add( {
@@ -117,7 +117,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 200,//{80,85},
+	pitch = 200,--{80,85},
 	sound = "weapons/galil/galil-1.wav"
 } )
 SWEP.IronSightsPos = Vector(-7.1831, -10.834, 2.747)

@@ -1,16 +1,25 @@
-INC_CLIENT()
+-- ============================================================================
+-- weapon_zs_avelyn/cl_init.lua - 阿弗琳连弩（客户端部分）
+-- 负责：栏位设置与 HUD 3D 展示参数，用零件模型拼装出弩的外观
+-- ============================================================================
+INC_CLIENT() -- 客户端专用文件标记
 
+-- HUD 3D 武器展示图：绑定骨骼与位置/角度
 SWEP.HUD3DBone = "v_weapon.Glock_Slide"
 SWEP.HUD3DPos = Vector(1, 0, -1)
 SWEP.HUD3DAng = Angle(90, 0, -10)
 
-SWEP.ViewModelFOV = 49
-SWEP.ViewModelFlip = false
+SWEP.ViewModelFOV = 49 -- 第一人称视野大小
+SWEP.ViewModelFlip = false -- 不翻转第一人称模型
 
+-- 武器栏位：放入"特种武器"分类（Bolt 栏）
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
+-- 栏位组：特种武器栏
 SWEP.SlotGroup = WEPSELECT_BOLT
+-- 武器在栏位中的位置序号
 SWEP.SlotPos = 0
 
+-- 第一人称手持元素：用多种零件拼装出弩身（弓臂、握把、弦与箭槽等）
 SWEP.VElements = {
 	["t2_xbow+++++++++++"] = { type = "Model", model = "models/props_c17/lampfixture01a.mdl", bone = "v_weapon.Glock_Parent", rel = "t2_xbow", pos = Vector(3, 0, -2), angle = Angle(0, 0, 0), size = Vector(0.4, 0.15, 0.15), color = Color(156, 103, 92, 255), surpresslightning = false, material = "models/props_pipes/guttermetal01a", skin = 0, bodygroup = {} },
 	["t2_xbow++"] = { type = "Model", model = "models/weapons/w_pist_p228.mdl", bone = "v_weapon.Glock_Parent", rel = "t2_xbow", pos = Vector(-0.201, 0, -5.7), angle = Angle(0, 180, 0), size = Vector(0.699, 0.86, 0.899), color = Color(72, 37, 6, 255), surpresslightning = false, material = "models/props_pipes/pipemetal001a", skin = 0, bodygroup = {} },
@@ -26,6 +35,7 @@ SWEP.VElements = {
 	["t2_xbow++++++"] = { type = "Model", model = "models/props_pipes/pipe02_straight01_long.mdl", bone = "v_weapon.Glock_Parent", rel = "t2_xbow", pos = Vector(-6.2, 0, -1.4), angle = Angle(0, 0, 0), size = Vector(0.009, 0.3, 0.009), color = Color(255, 255, 255, 255), surpresslightning = false, material = "models/props_c17/metalladder003", skin = 0, bodygroup = {} }
 }
 
+-- 第三人称世界元素：同样的零件拼装，绑在玩家右手骨骼上
 SWEP.WElements = {
 	["t2_xbow+++++++++++"] = { type = "Model", model = "models/props_c17/lampfixture01a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "t2_xbow", pos = Vector(3, 0, -2), angle = Angle(0, 0, 0), size = Vector(0.4, 0.15, 0.15), color = Color(156, 103, 92, 255), surpresslightning = false, material = "models/props_pipes/guttermetal01a", skin = 0, bodygroup = {} },
 	["t2_xbow++"] = { type = "Model", model = "models/weapons/w_pist_p228.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "t2_xbow", pos = Vector(-0.201, 0, -5.7), angle = Angle(0, 180, 0), size = Vector(0.699, 0.86, 0.899), color = Color(72, 37, 6, 255), surpresslightning = false, material = "models/props_pipes/pipemetal001a", skin = 0, bodygroup = {} },

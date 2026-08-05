@@ -1,15 +1,24 @@
+-- ============================================================================
+-- explosion_cold.lua - 寒冰爆炸特效（客户端）
+-- 负责：寒冰爆炸瞬间播放霜冻音效与寒风呼啸声，高速喷射白色冰晶
+--       闪光粒子，并伴随快速膨胀的白色霜雾团，表现冰霜迸发
+-- ============================================================================
+
+-- ==== Init - 特效初始化：喷射冰晶与霜雾粒子 ====
 function EFFECT:Init(data)
 	local pos = data:GetOrigin()
 	local norm = data:GetNormal()
 
 	local particle
 
+	-- 播放霜冻破碎与寒风两种音效
 	sound.Play("nox/scatterfrost.ogg", pos, 75, math.Rand(95, 115))
 	sound.Play("ambient/wind/wind_hit"..math.random(3)..".wav", pos, 75, math.Rand(160, 180))
 
 	local emitter = ParticleEmitter(pos)
 	emitter:SetNearClip(16, 24)
 
+	-- 30~50 颗白色冰晶闪光，高速四散后受重力和空气阻力缓慢沉降
 	for i=1, math.random(30, 50) do
 		particle = emitter:Add("particle/sparkles", pos)
 		particle:SetVelocity(VectorRand():GetNormal() * math.random(400,520))
@@ -24,6 +33,7 @@ function EFFECT:Init(data)
 		particle:SetRollDelta(math.Rand(-6, 6))
 		particle:SetColor(255,255,255)
 	end
+	-- 16 团白色霜雾从中心快速膨胀消散
 	for i=1, 16 do
 		particle = emitter:Add("particle/smokesprites_000"..math.random(9), pos)
 		particle:SetVelocity(VectorRand():GetNormal() * 140)
@@ -40,6 +50,7 @@ function EFFECT:Init(data)
 
 end
 
+-- 纯粒子特效，无需逐帧更新
 function EFFECT:Think()
 	return false
 end

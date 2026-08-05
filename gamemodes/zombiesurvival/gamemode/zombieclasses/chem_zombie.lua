@@ -1,14 +1,14 @@
---[[
-==================================================================
-化学僵尸 (Chem Zombie) — 特殊僵尸职业（已禁用）
-特点：隐藏/禁用状态、死亡时产生化学爆炸、毒雾伤害、
-      使用毒僵尸模型、不可被玩家选择使用
-==================================================================
-]]
+-- ============================================================================
+-- 化学僵尸 (Chem Zombie) — 特殊僵尸职业（已禁用）
+-- 特点：隐藏/禁用状态、死亡时产生化学爆炸、毒雾伤害、
+--       使用毒僵尸模型、不可被玩家选择使用
+-- ============================================================================
 
 -- 隐藏/禁用状态
 CLASS.Hidden = true
+-- 禁用（不参与游戏）
 CLASS.Disabled = true
+-- 解锁（但被禁用）
 CLASS.Unlocked = true
 
 -- 职业显示名称
@@ -37,13 +37,16 @@ CLASS.Points = 3
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {Sound("npc/metropolice/knockout2.wav"), Sound("npc/metropolice/pain1.wav"), Sound("npc/metropolice/pain2.wav"), Sound("npc/metropolice/pain3.wav"), Sound("npc/metropolice/pain4.wav")}
+-- 死亡音效（煤气罐点燃声）
 CLASS.DeathSounds = {Sound("ambient/fire/gascan_ignite1.wav")}
 -- 语音音调
 CLASS.VoicePitch = 0.65
 
 -- 视角偏移和碰撞体积
 CLASS.ViewOffset = Vector(0, 0, 50)
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 64)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 35)}
 
 -- 缓存函数

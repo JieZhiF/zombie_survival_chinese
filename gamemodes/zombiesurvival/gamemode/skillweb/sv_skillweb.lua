@@ -7,7 +7,7 @@
 -- ============================================================
 -- 处理客户端发送的单个技能激活/停用请求
 -- ============================================================
-net.Receive("zs_skill_is_desired", function(length, pl)
+net.Receive(NET_MSG.SKILL_IS_DESIRED, function(length, pl)
 	local skillid = net.ReadUInt(16)
 	local desired = net.ReadBool()
 
@@ -17,7 +17,7 @@ end)
 -- ============================================================
 -- 处理客户端发送的完整期望技能列表（位标记方式）
 -- ============================================================
-net.Receive("zs_skills_desired", function(length, pl)
+net.Receive(NET_MSG.SKILLS_DESIRED, function(length, pl)
 	local desired = {}
 
 	for skillid in pairs(GAMEMODE.Skills) do
@@ -32,7 +32,7 @@ end)
 -- ============================================================
 -- 处理客户端发送的"全部激活/全部停用"请求
 -- ============================================================
-net.Receive("zs_skills_all_desired", function(length, pl)
+net.Receive(NET_MSG.SKILLS_ALL_DESIRED, function(length, pl)
     local desired = {}
     if net.ReadBool() then
         -- 全部激活：将所有已解锁技能设为期望
@@ -54,8 +54,11 @@ end)
 -- ============================================================
 -- 处理客户端发送的"加载配装"请求（从保存的配装中读取）
 -- ============================================================
-net.Receive("zs_skill_set_desired", function(length, pl)
+net.Receive(NET_MSG.SKILL_SET_DESIRED, function(length, pl)
     local skillset = net.ReadTable()
+    -- 校验客户端数据：必须是表且为技能ID映射（防恶意畸形包 DoS）
+    if type(skillset) ~= "table" then return end
+
     local assoc = table.ToAssoc(skillset)
 
     local desired = {}
@@ -72,7 +75,7 @@ end)
 -- 处理客户端发送的技能解锁请求
 -- 检查：技能是否存在、是否已解锁、技能点是否充足、是否可解锁、是否被禁用
 -- ============================================================
-net.Receive("zs_skill_is_unlocked", function(length, pl)
+net.Receive(NET_MSG.SKILL_IS_UNLOCKED, function(length, pl)
     local skillid = net.ReadUInt(16)
     local activate = net.ReadBool()
     local skill = GAMEMODE.Skills[skillid]
@@ -92,7 +95,7 @@ end)
 -- ============================================================
 -- 处理客户端发送的转生请求
 -- ============================================================
-net.Receive("zs_skills_remort", function(length, pl)
+net.Receive(NET_MSG.SKILLS_REMORT, function(length, pl)
     if pl:CanSkillsRemort() then
         pl:SkillsRemort()
     end
@@ -102,7 +105,7 @@ end)
 -- 处理客户端发送的技能重置请求
 -- 检查：等级不低于10、冷却时间是否已过
 -- ============================================================
-net.Receive("zs_skills_reset", function(length, pl)
+net.Receive(NET_MSG.SKILLS_RESET, function(length, pl)
     if pl:GetZSLevel() < 10 then
         pl:SkillNotify(translate.Get("must_be_level_10"))
         return
@@ -116,7 +119,7 @@ net.Receive("zs_skills_reset", function(length, pl)
 
     pl:SkillsReset()
 
-    net.Start("zs_skills_nextreset")
+    net.Start(NET_MSG.SKILLS_NEXTRESET)
         net.WriteUInt(pl.NextSkillReset - time, 32)
     net.Send(pl)
 end)
@@ -125,7 +128,7 @@ end)
 -- 处理客户端发送的"检查退款状态"请求
 -- 通知玩家是否有技能点被退还（因技能树变更）
 -- ============================================================
-net.Receive("zs_skills_refunded", function(length, pl)
+net.Receive(NET_MSG.SKILLS_REFUNDED, function(length, pl)
     if pl.SkillsRefunded then
         pl:SkillNotify(translate.Get("skill_tree_changed_refunded"))
     end
@@ -159,7 +162,7 @@ if not meta then return end
 -- 向客户端发送通知消息（带颜色标记）
 -- ============================================================
 function meta:SkillNotify(message, green)
-	net.Start("zs_skills_notify")
+	net.Start(NET_MSG.SKILLS_NOTIFY)
 	net.WriteString(message)
 	net.WriteBool(not not green)
 	net.Send(self)
@@ -260,7 +263,7 @@ end
 -- 向客户端发送某技能期望状态变更
 -- ============================================================
 function meta:SendSkillDesired(skillid, desired)
-	net.Start("zs_skill_is_desired")
+	net.Start(NET_MSG.SKILL_IS_DESIRED)
 		net.WriteUInt(skillid, 16)
 		net.WriteBool(desired)
 	net.Send(self)
@@ -270,7 +273,7 @@ end
 -- 向客户端发送某技能解锁状态变更
 -- ============================================================
 function meta:SendSkillUnlocked(skillid, unlocked)
-	net.Start("zs_skill_is_unlocked")
+	net.Start(NET_MSG.SKILL_IS_UNLOCKED)
 		net.WriteUInt(skillid, 16)
 		net.WriteBool(unlocked)
 	net.Send(self)
@@ -283,7 +286,7 @@ function meta:SetDesiredActiveSkills(skills, nosend)
 	self.DesiredActiveSkills = table.ToKeyValues(skills)
 
 	if not nosend then
-		net.Start("zs_skills_desired")
+		net.Start(NET_MSG.SKILLS_DESIRED)
 		GAMEMODE:WriteSkillBits(skills)
 		net.Send(self)
 	end
@@ -296,7 +299,7 @@ function meta:SetActiveSkills(skills, nosend)
 	self.ActiveSkills = table.ToAssoc(skills)
 
 	if not nosend then
-		net.Start("zs_skills_active")
+		net.Start(NET_MSG.SKILLS_ACTIVE)
 		GAMEMODE:WriteSkillBits(skills)
 		net.Send(self)
 	end
@@ -309,7 +312,7 @@ function meta:SetUnlockedSkills(skills, nosend)
 	self.UnlockedSkills = table.ToKeyValues(skills)
 
 	if not nosend then
-		net.Start("zs_skills_unlocked")
+		net.Start(NET_MSG.SKILLS_UNLOCKED)
 		GAMEMODE:WriteSkillBits(skills)
 		net.Send(self)
 	end

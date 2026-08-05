@@ -126,7 +126,7 @@ end
 function ENT:OnRemove()
 	if self.Destroyed and self:GetNestBuilt() then
 		for _, pl in pairs(team.GetPlayers(TEAM_UNDEAD)) do
-			pl:CenterNotify(COLOR_RED, translate.ClientFormat(pl, "nest_destroyed", name))
+			pl:CenterNotify(COLOR_RED, translate.ClientFormat(pl, "nest_destroyed"))
 		end
 
 		local pos = self:WorldSpaceCenter()

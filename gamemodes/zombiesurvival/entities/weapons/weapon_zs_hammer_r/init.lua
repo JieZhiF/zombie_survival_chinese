@@ -1,5 +1,10 @@
+-- ============================================================================
+-- weapon_zs_hammer_r/init.lua - 锤子 R（服务器端）：钉钉/拆钉/维修逻辑
+-- 负责：右键钉钉子、重载拆钉子、近战命中维修物体
+-- ============================================================================
 INC_SERVER()
 
+-- ==== Reload - 重载拆钉：从命中物体上撬下最近的一根钉子 ====
 function SWEP:Reload()
 	if CurTime() < self:GetNextPrimaryFire() then return end
 
@@ -58,6 +63,7 @@ function SWEP:Reload()
 	end
 end
 
+-- ==== OnMeleeHit - 近战命中：为已钉固物体恢复生命值（维修） ====
 function SWEP:OnMeleeHit(hitent, hitflesh, tr)
 	if not hitent:IsValid() then return end
 
@@ -93,6 +99,7 @@ function SWEP:OnMeleeHit(hitent, hitflesh, tr)
 	end
 end
 
+-- ==== SecondaryAttack - 右键钉钉：检测目标合法性与材质，焊接后生成钉子 ====
 function SWEP:SecondaryAttack()
     if self:GetPrimaryAmmoCount() <= 0 or CurTime() < self:GetNextPrimaryFire() or self:GetOwner():GetBarricadeGhosting() then return end
 

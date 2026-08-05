@@ -1,14 +1,25 @@
+-- ============================================================================
+-- explosion_extinctionspore.lua - 灭绝孢囊爆炸特效（客户端）
+-- 负责：爆炸瞬间播放燃气罐点燃音效，喷出暗红色浓烟团与橙色扩散烟尘，
+--       并额外触发 8 次 doomball_skull 骷髅头特效叠加视觉冲击
+-- ============================================================================
+
+-- ==== Init - 特效初始化：喷射红色浓烟并触发骷髅头附加特效 ====
 function EFFECT:Init(data)
+	-- 爆炸位置与主方向（法线取反作为喷发方向）
 	local pos = data:GetOrigin()
 	local normal = data:GetNormal() * -1
 
+	-- 出生点沿法线微抬，避免粒子嵌在表面内部
 	pos = pos + normal
 
+	-- 播放燃气罐点燃音效（低音调模拟爆炸轰鸣）
 	sound.Play("ambient/fire/gascan_ignite1.wav", pos, 75, math.Rand(50, 55))
 
 	local emitter = ParticleEmitter(pos)
 	emitter:SetNearClip(24, 32)
 
+	-- 5 个暗红色巨型烟团原地膨胀消散，形成爆炸初期的烟柱
 	for i=1, 5 do
 		local particle = emitter:Add("particles/smokey", pos)
 		particle:SetDieTime(math.Rand(1, 2))
@@ -21,6 +32,7 @@ function EFFECT:Init(data)
 		particle:SetColor(130, 0, 0)
 	end
 
+	-- 70 个橙色烟尘粒子向四周随机高速扩散，模拟爆炸冲击波掀起的尘雾
 	for i=1, 70 do
 		local heading = VectorRand()
 		heading:Normalize()
@@ -42,6 +54,7 @@ function EFFECT:Init(data)
 
 	emitter:Finish() emitter = nil collectgarbage("step", 64)
 
+	-- 在爆炸位置重复触发 8 次骷髅头光效，叠加成炫目的爆炸核心
 	local effectdata = EffectData()
 	effectdata:SetOrigin(pos)
 	for i=1, 8 do
@@ -49,9 +62,11 @@ function EFFECT:Init(data)
 	end
 end
 
+-- ==== Think - 特效思考：一次性粒子效果，无需持续更新 ====
 function EFFECT:Think()
 	return false
 end
 
+-- ==== Render - 无自定义渲染，粒子由引擎粒子系统绘制 ====
 function EFFECT:Render()
 end

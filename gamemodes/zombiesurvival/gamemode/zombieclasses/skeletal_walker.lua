@@ -1,10 +1,8 @@
---[[
-==================================================================
-骷髅行者 (Skeletal Walker) — 僵尸职业
-特点：骷髅模型、可装死、子弹伤害减免64%、非斩击/棍棒减免55%、
-      无血液、使用小刀动作集
-==================================================================
-]]
+-- ============================================================================
+-- 骷髅行者 (Skeletal Walker) — 僵尸职业
+-- 特点：骷髅模型、可装死、子弹伤害减免64%、非斩击/棍棒减免55%、
+--       无血液、使用小刀动作集
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Skeletal Walker"
@@ -19,7 +17,9 @@ CLASS.Help = "controls_skeletal_walker"
 CLASS.Wave = 2 / 6
 
 -- 生命值/速度
+-- 生命值
 CLASS.Health = 100
+-- 移动速度
 CLASS.Speed = 150
 
 -- 可嘲讽
@@ -48,9 +48,11 @@ CLASS.BloodColor = -1
 
 -- 骷髅标记
 CLASS.Skeletal = true
+-- 骷髅抗性（骨骼减伤）
 CLASS.SkeletalRes = true
 
 -- 缓存
+-- 缓存函数与常量
 local math_random = math.random
 local math_min = math.min
 local math_max = math.max
@@ -71,6 +73,7 @@ function CLASS:KnockedDown(pl, status, exists)
 end
 
 -- 脚步声
+-- 自定义脚步声（藤壶折颈音效）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if math_random(2) == 1 then
 		pl:EmitSound("npc/barnacle/neck_snap1.wav", 65, math_random(135, 150), 0.27)
@@ -86,6 +89,7 @@ function CLASS:PlayPainSound(pl)
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound(string_format("npc/zombie/zombie_die%d.wav", math_random(3)), 75, math_random(122, 128))
 	return true
@@ -154,9 +158,11 @@ end
 
 -- 服务端逻辑
 if SERVER then
+	-- 备用使用键触发装死
 	function CLASS:AltUse(pl)
 		pl:StartFeignDeath()
 	end
+	-- 伤害处理：骨骼减伤
 	function CLASS:ProcessDamage(pl, dmginfo)
 		if bit_band(dmginfo:GetDamageType(), DMG_BULLET) ~= 0 then
 			dmginfo:SetDamage(dmginfo:GetDamage() * 0.36)

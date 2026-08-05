@@ -1,10 +1,8 @@
---[[
-==================================================================
-吸血猎头蟹 (Bloodsucker Headcrab) — 僵尸职业
-继承自：fast_headcrab
-特点：快速猎头蟹的进阶版、暗红色调皮肤、稍高的生命值
-==================================================================
-]]
+-- ============================================================================
+-- 吸血猎头蟹 (Bloodsucker Headcrab) — 僵尸职业
+-- 继承自：fast_headcrab
+-- 特点：快速猎头蟹的进阶版、暗红色调皮肤、稍高的生命值
+-- ============================================================================
 
 -- 基础职业为"快速猎头蟹"
 CLASS.Base = "fast_headcrab"
@@ -43,11 +41,13 @@ CLASS.IconColor = Color(175, 100, 100)
 
 -- 使用水蛭皮肤材质
 local matSkin = Material("models/leech/leech.vtf")
+-- 绘制前：覆盖为水蛭皮肤并调制暗红色
 function CLASS:PrePlayerDraw(pl)
 	render.ModelMaterialOverride(matSkin)
 	render.SetColorModulation(0.68, 0.39, 0.39)
 end
 
+-- 绘制后：恢复材质与颜色
 function CLASS:PostPlayerDraw(pl)
 	render.ModelMaterialOverride()
 	render.SetColorModulation(1, 1, 1)

@@ -1,4 +1,4 @@
--- Translated by Raptor (http://www.noxiousnet.com/forums/index.php?action=profile;u=5280)
+-- Translated by Raptor (http:--www.noxiousnet.com/forums/index.php?action=profile;u=5280)
 
 translate.AddLanguage("de", "German")
 

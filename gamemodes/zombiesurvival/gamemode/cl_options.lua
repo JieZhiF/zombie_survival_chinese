@@ -5,6 +5,52 @@
 -- 这些 ConVar 以 "zs_" 为前缀，部分以 "zsw_" 为前缀。
 -- ============================================================
 
+-- ============================================================
+-- 客户端 ConVar 注册辅助：创建 ConVar、初始化 GM 字段、注册变更回调。
+-- 用法：
+--   RegisterClientConVar("zs_名称", "默认值", "GM字段名", "描述", "bool|int|float|string", [转换函数], [副作用回调])
+-- 转换函数接收原始值（初始化时传入数字/布尔，回调时传入字符串），返回存入 GM 字段的值；
+-- 副作用回调仅在 ConVar 被修改时触发（初始化不触发），保持与原代码行为一致。
+-- ============================================================
+local function RegisterClientConVar(name, default, field, desc, ctype, transform, onchange)
+	local cvar = CreateClientConVar(name, default, true, false, desc)
+
+	-- 捕获 gamemode 表引用：两端 GM/GAMEMODE 别名可用性不一致，取其一
+	local gm = GM or GAMEMODE
+
+	local function apply(value, notify)
+		if transform then
+			value = transform(value)
+		elseif ctype == "bool" then
+			value = value == true or (tonumber(value) or 0) == 1
+		elseif ctype == "string" then
+			value = tostring(value)
+		else
+			value = tonumber(value)
+		end
+
+		gm[field] = value
+
+		if notify and onchange then
+			onchange(value)
+		end
+	end
+
+	if ctype == "string" then
+		apply(cvar:GetString(), false)
+	elseif ctype == "bool" then
+		apply(cvar:GetBool(), false)
+	elseif ctype == "int" then
+		apply(cvar:GetInt(), false)
+	else
+		apply(cvar:GetFloat(), false)
+	end
+
+	cvars.AddChangeCallback(name, function(_, _, newvalue)
+		apply(newvalue, true)
+	end)
+end
+
 -- 默认的人类/僵尸BGM（背景音乐）设置名称
 GM.BeatSetHumanDefault = "defaulthuman"
 GM.BeatSetZombieDefault = "defaultzombiev2"
@@ -63,18 +109,22 @@ GM.AmmoToPurchaseNames = {
 -- 武器统计信息的UI显示配置表
 -- 每项：{内部键名, 翻译文本, 最小值, 最大值, 是否反比显示, (可选)子分类}
 GM.WeaponStatBarVals = {
-    -- 近战属性
-    {"MeleeDamage", translate.Get("option_weapon_MeleeDamage"), 2, 140, false},
-    {"MeleeRange", translate.Get("option_weapon_MeleeRange"), 30, 100, false},
-    {"MeleeSize", translate.Get("option_weapon_MeleeSize"), 0.2, 3, false},
-    -- 主武器基础属性
+    -- 武器品质与基础属性（Tier 取值 1~5，min=0 使 Tier1 显示 20%、Tier5 显示 100%）
+    {"Tier", translate.Get("option_weapon_Tier"), 0, 5, false},
     {"Damage", translate.Get("option_weapon_Damage"), 1, 105, false, "Primary"},
+    {"HeadshotMulti", translate.Get("option_weapon_Headshot"), 1, 5, false},
     {"Delay", translate.Get("option_weapon_AttackDelay"), 0.05, 2, true, "Primary"},
+    {"ReloadSpeed", translate.Get("option_weapon_ReloadSpeed"), 0.3, 1.5, false},
     {"ClipSize", translate.Get("option_weapon_ClipSize"), 1, 35, false, "Primary"},
+    {"Pierces", translate.Get("option_weapon_Pierces"), 0, 5, false},
     -- 精度与机动性
     {"ConeMin", translate.Get("option_weapon_MinSpread"), 0, 5, true},
     {"ConeMax", translate.Get("option_weapon_MaxSpread"), 1.5, 7, true},
-    {"WalkSpeed", translate.Get("option_weapon_MoveSpeed"), 200, 250, false}
+    {"WalkSpeed", translate.Get("option_weapon_MoveSpeed"), 200, 250, false},
+    -- 近战属性
+    {"MeleeDamage", translate.Get("option_weapon_MeleeDamage"), 2, 140, false},
+    {"MeleeRange", translate.Get("option_weapon_MeleeRange"), 30, 100, false},
+    {"MeleeSize", translate.Get("option_weapon_MeleeSize"), 0.2, 3, false}
 }
 
 -- 当局统计数据（LifeStats）在屏幕上显示的持续时间（秒）
@@ -102,12 +152,7 @@ cvars.AddChangeCallback("zs_crosshair_colb2", function(cvar, oldvalue, newvalue)
 cvars.AddChangeCallback("zs_crosshair_cola2", function(cvar, oldvalue, newvalue) GAMEMODE.CrosshairColor2.a = tonumber(newvalue) or 255 end)
 
 -- 电影模式开关（隐藏HUD），启用时触发 EvaluateFilmMode 回调
-GM.FilmMode = CreateClientConVar("zs_filmmode", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_filmmode", function(cvar, oldvalue, newvalue)
-	GAMEMODE.FilmMode = tonumber(newvalue) == 1
-
-	gamemode.Call("EvaluateFilmMode")
-end)
+RegisterClientConVar("zs_filmmode", "0", "FilmMode", "电影模式（隐藏HUD）", "bool", nil, function() gamemode.Call("EvaluateFilmMode") end)
 
 -- 玩家自动行为偏好：不兑换 / 总是当志愿者 / 不选Boss / 不使用提交 / 不捡道具
 CreateClientConVar("zs_noredeem", "0", true, true)
@@ -115,102 +160,54 @@ CreateClientConVar("zs_alwaysvolunteer", "0", true, true)
 CreateClientConVar("zs_nobosspick", "0", true, true)
 CreateClientConVar("zs_nousetodeposit", "0", true, true)
 CreateClientConVar("zs_nopickupprops", "0", true, true)
-
+CreateClientConVar("zs_nailplacer_ghostmode", "1", true, true) -- 钉子放置器幽灵预显模式：0 = 仅显示当前等级，1 = 全部显示（超出等级的为红色）
 -- 禁用武器瞄准镜功能
-GM.DisableScopes = CreateClientConVar("zs_disablescopes", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_disablescopes", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DisableScopes = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_disablescopes", "0", "DisableScopes", "禁用武器瞄准镜功能", "bool")
 
 -- 一键解锁功能开关
-GM.OneClickUnlock = CreateClientConVar("zs_one_click_unlock", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_one_click_unlock", function(cvar, oldvalue, newvalue)
-	GAMEMODE.OneClickUnlock = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_one_click_unlock", "1", "OneClickUnlock", "一键解锁功能开关", "bool")
 
 -- 机械瞄准（Ironsight）时的缩放比例（0~1）
-GM.IronsightZoomScale = math.Clamp(CreateClientConVar("zs_ironsightzoom", 1, true, false):GetFloat(), 0, 1)
-cvars.AddChangeCallback("zs_ironsightzoom", function(cvar, oldvalue, newvalue)
-	GAMEMODE.IronsightZoomScale = math.Clamp(tonumber(newvalue) or 1, 0, 1)
-end)
+RegisterClientConVar("zs_ironsightzoom", 1, "IronsightZoomScale", "机械瞄准缩放比例（0~1）", "float", function(v) return math.Clamp(tonumber(v) or 1, 0, 1) end)
 
 -- 被击倒时是否切换到第三人称视角
-GM.ThirdPersonKnockdown = CreateClientConVar("zs_thirdpersonknockdown", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_thirdpersonknockdown", function(cvar, oldvalue, newvalue)
-	GAMEMODE.ThirdPersonKnockdown = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_thirdpersonknockdown", "1", "ThirdPersonKnockdown", "被击倒时切换到第三人称视角", "bool")
 
 -- 更换职业时是否自动自杀
-GM.SuicideOnChangeClass = CreateClientConVar("zs_suicideonchange", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_suicideonchange", function(cvar, oldvalue, newvalue)
-	GAMEMODE.SuicideOnChangeClass = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_suicideonchange", "1", "SuicideOnChangeClass", "更换职业时自动自杀", "bool")
 
 -- BGM（背景音乐）总开关
-GM.BeatsEnabled = CreateClientConVar("zs_beats", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_beats", function(cvar, oldvalue, newvalue)
-	GAMEMODE.BeatsEnabled = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_beats", "1", "BeatsEnabled", "BGM总开关", "bool")
 
 -- 伤害数字是否穿墙显示
-GM.DamageNumberThroughWalls = CreateClientConVar("zs_damagefloaterswalls", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_damagefloaterswalls", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DamageNumberThroughWalls = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_damagefloaterswalls", "0", "DamageNumberThroughWalls", "伤害数字穿墙显示", "bool")
 
 -- BGM 音量（0~100 映射到 0.0~1.0）
-GM.BeatsVolume = math.Clamp(CreateClientConVar("zs_beatsvolume", 80, true, false):GetInt(), 0, 100) / 100
-cvars.AddChangeCallback("zs_beatsvolume", function(cvar, oldvalue, newvalue)
-	GAMEMODE.BeatsVolume = math.Clamp(tonumber(newvalue) or 0, 0, 100) / 100
-end)
+RegisterClientConVar("zs_beatsvolume", 80, "BeatsVolume", "BGM音量（0~100）", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, 100) / 100 end)
 
 -- 准星线条数量（2~8条）
-GM.CrosshairLines = math.Clamp(CreateClientConVar("zs_crosshairlines", 4, true, false):GetInt(), 2, 8)
-cvars.AddChangeCallback("zs_crosshairlines", function(cvar, oldvalue, newvalue)
-	GAMEMODE.CrosshairLines = math.Clamp(tonumber(newvalue) or 4, 2, 8)
-end)
+RegisterClientConVar("zs_crosshairlines", 4, "CrosshairLines", "准星线条数量（2~8）", "int", function(v) return math.Clamp(tonumber(v) or 4, 2, 8) end)
 
 -- 准星偏移量（线条末端与中心的距离，0~90像素）
-GM.CrosshairOffset = math.Clamp(CreateClientConVar("zs_crosshairoffset", 0, true, false):GetInt(), 0, 90)
-cvars.AddChangeCallback("zs_crosshairoffset", function(cvar, oldvalue, newvalue)
-	GAMEMODE.CrosshairOffset = math.Clamp(tonumber(newvalue) or 0, 0, 90)
-end)
+RegisterClientConVar("zs_crosshairoffset", 0, "CrosshairOffset", "准星偏移量（0~90）", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, 90) end)
 
 -- 准星线条粗细（0.5~2像素）
-GM.CrosshairThickness = math.Clamp(CreateClientConVar("zs_crosshairthickness", 1, true, false):GetFloat(), 0.5, 2)
-cvars.AddChangeCallback("zs_crosshairthickness", function(cvar, oldvalue, newvalue)
-	GAMEMODE.CrosshairThickness = math.Clamp(tonumber(newvalue) or 1, 0.5, 2)
-end)
+RegisterClientConVar("zs_crosshairthickness", 1, "CrosshairThickness", "准星线条粗细（0.5~2）", "float", function(v) return math.Clamp(tonumber(v) or 1, 0.5, 2) end)
 
 -- 拖拽道具时的旋转灵敏度（0.1~4）
-GM.PropRotationSensitivity = math.Clamp(CreateClientConVar("zs_proprotationsens", 1, true, false):GetFloat(), 0.1, 4)
-cvars.AddChangeCallback("zs_proprotationsens", function(cvar, oldvalue, newvalue)
-	GAMEMODE.PropRotationSensitivity = math.Clamp(tonumber(newvalue) or 1, 0.1, 4)
-end)
+RegisterClientConVar("zs_proprotationsens", 1, "PropRotationSensitivity", "拖拽道具旋转灵敏度（0.1~4）", "float", function(v) return math.Clamp(tonumber(v) or 1, 0.1, 4) end)
 
 -- 拖拽道具时的旋转吸附角度（0~45度，0=无吸附）
-GM.PropRotationSnap = math.Clamp(CreateClientConVar("zs_proprotationsnap", 0, true, false):GetInt(), 0, 45)
-cvars.AddChangeCallback("zs_proprotationsnap", function(cvar, oldvalue, newvalue)
-	GAMEMODE.PropRotationSnap = math.Clamp(tonumber(newvalue) or 0, 0, 45)
-end)
+RegisterClientConVar("zs_proprotationsnap", 0, "PropRotationSnap", "拖拽道具旋转吸附角度（0~45）", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, 45) end)
 
 -- 伤害数字大小缩放（0.5~2倍）
-GM.DamageNumberScale = math.Clamp(CreateClientConVar("zs_dmgnumberscale", 1, true, false):GetFloat(), 0.5, 2)
-cvars.AddChangeCallback("zs_dmgnumberscale", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DamageNumberScale = math.Clamp(tonumber(newvalue) or 1, 0.5, 2)
-end)
+RegisterClientConVar("zs_dmgnumberscale", 1, "DamageNumberScale", "伤害数字大小缩放（0.5~2）", "float", function(v) return math.Clamp(tonumber(v) or 1, 0.5, 2) end)
 
 -- 伤害数字移动速度（0~1）
-GM.DamageNumberSpeed = math.Clamp(CreateClientConVar("zs_dmgnumberspeed", 1, true, false):GetFloat(), 0, 1)
-cvars.AddChangeCallback("zs_dmgnumberspeed", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DamageNumberSpeed = math.Clamp(tonumber(newvalue) or 1, 0, 1)
-end)
+RegisterClientConVar("zs_dmgnumberspeed", 1, "DamageNumberSpeed", "伤害数字移动速度（0~1）", "float", function(v) return math.Clamp(tonumber(v) or 1, 0, 1) end)
 
 -- 伤害数字显示寿命（0.2~1.5秒）
-GM.DamageNumberLifetime = math.Clamp(CreateClientConVar("zs_dmgnumberlife", 1, true, false):GetFloat(), 0.2, 1.5)
-cvars.AddChangeCallback("zs_dmgnumberlife", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DamageNumberLifetime = math.Clamp(tonumber(newvalue) or 1, 0.2, 1.5)
-end)
+RegisterClientConVar("zs_dmgnumberlife", 1, "DamageNumberLifetime", "伤害数字显示寿命（0.2~1.5）", "float", function(v) return math.Clamp(tonumber(v) or 1, 0.2, 1.5) end)
 
 -- UI界面整体大小比例（0.7~1.5倍）
 GM.InterfaceSize = math.Clamp(CreateClientConVar("zs_interfacesize", 1, true, false):GetFloat(), 0.7, 1.5)
@@ -240,107 +237,58 @@ cvars.AddChangeCallback("zs_interfacesize", function(cvar, oldvalue, newvalue)
 end)
 
 -- 是否总是显示钉子数量
-GM.AlwaysShowNails = CreateClientConVar("zs_alwaysshownails", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_alwaysshownails", function(cvar, oldvalue, newvalue)
-	GAMEMODE.AlwaysShowNails = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_alwaysshownails", "0", "AlwaysShowNails", "总是显示钉子数量", "bool")
 
 -- 是否总是使用快速购买（无需长按）
-GM.AlwaysQuickBuy = CreateClientConVar("zs_alwaysquickbuy", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_alwaysquickbuy", function(cvar, oldvalue, newvalue)
-	GAMEMODE.AlwaysQuickBuy = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_alwaysquickbuy", "0", "AlwaysQuickBuy", "总是使用快速购买", "bool")
 
 -- 禁用机械瞄准功能
-GM.NoIronsights = CreateClientConVar("zs_noironsights", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_noironsights", function(cvar, oldvalue, newvalue)
-	GAMEMODE.NoIronsights = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_noironsights", "0", "NoIronsights", "禁用机械瞄准功能", "bool")
 
 -- 禁用准星旋转（默认禁用）
-GM.NoCrosshairRotate = CreateClientConVar("zs_nocrosshairrotate", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_nocrosshairrotate", function(cvar, oldvalue, newvalue)
-	GAMEMODE.NoCrosshairRotate = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_nocrosshairrotate", "1", "NoCrosshairRotate", "禁用准星旋转", "bool")
 -- 准星圆圈效果开关（无回调，仅作为存储）
 CreateClientConVar("zs_crosshair_cicrle", "1", true, false)
 
 -- 隐藏玩家第一人称手臂和武器模型
-GM.HideViewModels = CreateClientConVar("zs_hideviewmodels", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_hideviewmodels", function(cvar, oldvalue, newvalue)
-	GAMEMODE.HideViewModels = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_hideviewmodels", "0", "HideViewModels", "隐藏第一人称手臂和武器模型", "bool")
 
 -- 玩家透明效果相关：最大半径和当前半径
 GM.TransparencyRadiusMax = 8192
 GM.TransparencyRadius = 0
 
 -- 第一人称视角下玩家模型的透明半径（平方值）
-GM.TransparencyRadius1p = math.Clamp(CreateClientConVar("zs_transparencyradius", 140, true, false):GetInt(), 0, GM.TransparencyRadiusMax) ^ 2
-cvars.AddChangeCallback("zs_transparencyradius", function(cvar, oldvalue, newvalue)
-	GAMEMODE.TransparencyRadius1p = math.Clamp(tonumber(newvalue) or 0, 0, GAMEMODE.TransparencyRadiusMax) ^ 2
-end)
+RegisterClientConVar("zs_transparencyradius", 140, "TransparencyRadius1p", "第一人称视角玩家模型透明半径", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, GM.TransparencyRadiusMax) ^ 2 end)
 
 -- 第三人称视角下玩家模型的透明半径（平方值）
-GM.TransparencyRadius3p = math.Clamp(CreateClientConVar("zs_transparencyradius3p", 140, true, false):GetInt(), 0, GM.TransparencyRadiusMax) ^ 2
-cvars.AddChangeCallback("zs_transparencyradius3p", function(cvar, oldvalue, newvalue)
-	GAMEMODE.TransparencyRadius3p = math.Clamp(tonumber(newvalue) or 0, 0, GAMEMODE.TransparencyRadiusMax) ^ 2
-end)
+RegisterClientConVar("zs_transparencyradius3p", 140, "TransparencyRadius3p", "第三人称视角玩家模型透明半径", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, GM.TransparencyRadiusMax) ^ 2 end)
 
 -- 启用或禁用移动时的视角倾斜效果
-GM.MovementViewRoll = CreateClientConVar("zs_movementviewroll", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_movementviewroll", function(cvar, oldvalue, newvalue)
-	GAMEMODE.MovementViewRoll = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_movementviewroll", "0", "MovementViewRoll", "移动时视角倾斜效果", "bool")
 
 -- 是否显示信息信标（消息标记）
-GM.MessageBeaconShow = CreateClientConVar("zs_messagebeaconshow", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_messagebeaconshow", function(cvar, oldvalue, newvalue)
-	GAMEMODE.MessageBeaconShow = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_messagebeaconshow", "1", "MessageBeaconShow", "显示信息信标", "bool")
 
 -- 武器HUD显示模式（整数值）
-GM.WeaponHUDMode = CreateClientConVar("zs_weaponhudmode", "2", true, false):GetInt()
-cvars.AddChangeCallback("zs_weaponhudmode", function(cvar, oldvalue, newvalue)
-	GAMEMODE.WeaponHUDMode = tonumber(newvalue) or 0
-end)
+RegisterClientConVar("zs_weaponhudmode", "2", "WeaponHUDMode", "武器HUD显示模式", "int", function(v) return tonumber(v) or 0 end)
 
 -- 目标生命值显示方式（整数值）
-GM.HealthTargetDisplay = CreateClientConVar("zs_healthtargetdisplay", "0", true, false):GetInt()
-cvars.AddChangeCallback("zs_healthtargetdisplay", function(cvar, oldvalue, newvalue)
-	GAMEMODE.HealthTargetDisplay = tonumber(newvalue) or 0
-end)
+RegisterClientConVar("zs_healthtargetdisplay", "0", "HealthTargetDisplay", "目标生命值显示方式", "int", function(v) return tonumber(v) or 0 end)
 
 -- 受伤时是否显示疼痛闪光效果
-GM.DrawPainFlash = CreateClientConVar("zs_drawpainflash", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_drawpainflash", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DrawPainFlash = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_drawpainflash", "1", "DrawPainFlash", "受伤疼痛闪光效果", "bool")
 
 -- 是否显示经验值HUD
-GM.DisplayXPHUD = CreateClientConVar("zs_drawxp", "1", true, false):GetBool()
-cvars.AddChangeCallback("zs_drawxp", function(cvar, oldvalue, newvalue)
-	GAMEMODE.DisplayXPHUD = tonumber(newvalue) == 1
-	gamemode.Call("EvaluateFilmMode")
-end)
+RegisterClientConVar("zs_drawxp", "1", "DisplayXPHUD", "显示经验值HUD", "bool", nil, function() gamemode.Call("EvaluateFilmMode") end)
 
 -- 启用或禁用字体特效（如文字模糊发光）
-GM.FontEffects = CreateClientConVar("zs_fonteffects", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_fonteffects", function(cvar, oldvalue, newvalue)
-	GAMEMODE.FontEffects = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_fonteffects", "0", "FontEffects", "字体特效", "bool")
 
 -- 隐藏背包装饰
-GM.HidePacks = CreateClientConVar("zs_hidepacks", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_hidepacks", function(cvar, oldvalue, newvalue)
-	GAMEMODE.HidePacks = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_hidepacks", "0", "HidePacks", "隐藏背包装饰", "bool")
 
 -- 是否始终高亮显示好友
-GM.AlwaysDrawFriend = CreateClientConVar("zs_showfriends", "0", true, false):GetBool()
-cvars.AddChangeCallback("zs_showfriends", function(cvar, oldvalue, newvalue)
-	GAMEMODE.AlwaysDrawFriend = tonumber(newvalue) == 1
-end)
+RegisterClientConVar("zs_showfriends", "0", "AlwaysDrawFriend", "始终高亮显示好友", "bool")
 
 -- GMod 内置的颜色控制 ConVar（用于自定义玩家与武器模型颜色）
 CreateConVar( "cl_playercolor", "0.24 0.34 0.41", { FCVAR_ARCHIVE, FCVAR_USERINFO }, "The value is a Vector - so between 0-1 - not between 0-255" )
@@ -423,345 +371,52 @@ end, "CrosshairTertiaryCooldown_cv")
 -- 以下每个 ConVar 控制一类武器在武器选择轮盘中的插槽位置。
 -- 值为 0 时隐藏该类别，1~6 对应武器槽 0~5（内部索引减1）。
 -- 这些 ConVar 与 Sunrust 通用，方便跨模式兼容。
+-- 数据驱动：新增/调整武器类别插槽只需在 WeaponSlotConfigs 中增改一行。
 -- ============================================================
 
--- 突击步枪插槽位置
-GM.WeaponSelectSlotAssaultRifles = math.Clamp(CreateClientConVar("zs_wepslot_assaultrifles", 3, true, false):GetInt(), 0, 6)
+-- 武器插槽配置表：{ConVar名, GM字段名, 插槽组常量, 默认槽位}
+local WeaponSlotConfigs = {
+	{"zs_wepslot_assaultrifles", "WeaponSelectSlotAssaultRifles", WEPSELECT_ASSAULT_RIFLE, 3},
+	{"zs_wepslot_rifles", "WeaponSelectSlotRifles", WEPSELECT_RIFLE, 4},
+	{"zs_wepslot_shotguns", "WeaponSelectSlotShotguns", WEPSELECT_SHOTGUN, 4},
+	{"zs_wepslot_smgs", "WeaponSelectSlotSMGs", WEPSELECT_SMG, 3},
+	{"zs_wepslot_pistols", "WeaponSelectSlotPistols", WEPSELECT_PISTOL, 2},
+	{"zs_wepslot_unarmed", "WeaponSelectSlotUnarmed", WEPSELECT_UNARMED, 1},
+	{"zs_wepslot_melee", "WeaponSelectSlotMelee", WEPSELECT_MELEE, 1},
+	{"zs_wepslot_medkits", "WeaponSelectSlotMedkits", WEPSELECT_MEDKIT, 5},
+	{"zs_wepslot_trinkets", "WeaponSelectSlotTrinkets", WEPSELECT_TRINKET, 5},
+	{"zs_wepslot_food", "WeaponSelectSlotFood", WEPSELECT_FOOD, 6},
+	{"zs_wepslot_flasks", "WeaponSelectSlotFlasks", WEPSELECT_FLASK, 5},
+	{"zs_wepslot_deployables", "WeaponSelectSlotDeployables", WEPSELECT_DEPLOYABLE, 5},
+	{"zs_wepslot_misctools", "WeaponSelectSlotMiscTools", WEPSELECT_MISCTOOL, 5},
+	{"zs_wepslot_repairtools", "WeaponSelectSlotRepairTools", WEPSELECT_REPAIRTOOL, 1},
+	{"zs_wepslot_medicaltools", "WeaponSelectSlotMedicalTools", WEPSELECT_MEDICALTOOL, 4},
+	{"zs_wepslot_consupportive", "WeaponSelectSlotConSupportive", WEPSELECT_CONSUMABLE_SUPPORTIVE, 6},
+	{"zs_wepslot_conoffensive", "WeaponSelectSlotConOffensive", WEPSELECT_CONSUMABLE_OFFENSIVE, 5},
+	{"zs_wepslot_explosives", "WeaponSelectSlotExplosives", WEPSELECT_EXPLOSIVE, 5},
+	{"zs_wepslot_bolt", "WeaponSelectSlotBolt", WEPSELECT_BOLT, 4},
+	{"zs_wepslot_potions", "WeaponSelectSlotPotions", WEPSELECT_POTION, 6},
+}
 
-cvars.AddChangeCallback("zs_wepslot_assaultrifles", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotAssaultRifles = math.Clamp(tonumber(new_value) or 3, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotAssaultRifles
-    -- 遍历所有已注册武器，更新属于该组的武器插槽值
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_ASSAULT_RIFLE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                -- 插槽为0时设为-2（隐藏），否则设为 new_slot - 1（内部从0开始）
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
+-- 循环注册：创建 ConVar、初始化 GM 字段、注册回调（更新同组武器的插槽值）
+for _, cfg in ipairs(WeaponSlotConfigs) do
+	local cvarname, fieldname, slotgroup, defaultslot = cfg[1], cfg[2], cfg[3], cfg[4]
+	local gm = GM or GAMEMODE
 
--- 步枪插槽位置
-GM.WeaponSelectSlotRifles = math.Clamp(CreateClientConVar("zs_wepslot_rifles", 4, true, false):GetInt(), 0, 6)
+	gm[fieldname] = math.Clamp(CreateClientConVar(cvarname, defaultslot, true, false):GetInt(), 0, 6)
 
-cvars.AddChangeCallback("zs_wepslot_rifles", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotRifles = math.Clamp(tonumber(new_value) or 4, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotRifles
+	cvars.AddChangeCallback(cvarname, function(convar_name, old_value, new_value)
+		gm[fieldname] = math.Clamp(tonumber(new_value) or defaultslot, 0, 6)
+		local new_slot = gm[fieldname]
 
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_RIFLE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 霰弹枪插槽位置
-GM.WeaponSelectSlotShotguns = math.Clamp(CreateClientConVar("zs_wepslot_shotguns", 4, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_shotguns", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotShotguns = math.Clamp(tonumber(new_value) or 4, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotShotguns
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_SHOTGUN then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 冲锋枪插槽位置
-GM.WeaponSelectSlotSMGs = math.Clamp(CreateClientConVar("zs_wepslot_smgs", 3, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_smgs", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotSMGs = math.Clamp(tonumber(new_value) or 3, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotSMGs
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_SMG then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 手枪插槽位置
-GM.WeaponSelectSlotPistols = math.Clamp(CreateClientConVar("zs_wepslot_pistols", 2, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_pistols", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotPistols = math.Clamp(tonumber(new_value) or 2, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotPistols
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_PISTOL then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 空手插槽位置
-GM.WeaponSelectSlotUnarmed = math.Clamp(CreateClientConVar("zs_wepslot_unarmed", 1, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_unarmed", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotUnarmed = math.Clamp(tonumber(new_value) or 1, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotUnarmed
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_UNARMED then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 近战武器插槽位置
-GM.WeaponSelectSlotMelee = math.Clamp(CreateClientConVar("zs_wepslot_melee", 1, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_melee", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotMelee = math.Clamp(tonumber(new_value) or 1, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotMelee
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MELEE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 医疗包插槽位置
-GM.WeaponSelectSlotMedkits = math.Clamp(CreateClientConVar("zs_wepslot_medkits", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_medkits", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotMedkits = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotMedkits
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MEDKIT then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 饰品/小配件插槽位置
-GM.WeaponSelectSlotTrinkets = math.Clamp(CreateClientConVar("zs_wepslot_trinkets", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_trinkets", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotTrinkets = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotTrinkets
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_TRINKET then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 食物插槽位置
-GM.WeaponSelectSlotFood = math.Clamp(CreateClientConVar("zs_wepslot_food", 6, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_food", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotFood = math.Clamp(tonumber(new_value) or 6, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotFood
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_FOOD then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 药水瓶/烧瓶插槽位置
-GM.WeaponSelectSlotFlasks = math.Clamp(CreateClientConVar("zs_wepslot_flasks", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_flasks", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotFlasks = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotFlasks
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_FLASK then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 可部署物品插槽位置
-GM.WeaponSelectSlotDeployables = math.Clamp(CreateClientConVar("zs_wepslot_deployables", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_deployables", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotDeployables = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotDeployables
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_DEPLOYABLE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 杂项工具插槽位置
-GM.WeaponSelectSlotMiscTools = math.Clamp(CreateClientConVar("zs_wepslot_misctools", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_misctools", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotMiscTools = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotMiscTools
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MISCTOOL then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 维修工具插槽位置
-GM.WeaponSelectSlotRepairTools = math.Clamp(CreateClientConVar("zs_wepslot_repairtools", 1, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_repairtools", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotRepairTools = math.Clamp(tonumber(new_value) or 1, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotRepairTools
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_REPAIRTOOL then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 医疗工具插槽位置
-GM.WeaponSelectSlotMedicalTools = math.Clamp(CreateClientConVar("zs_wepslot_medicaltools", 4, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_medicaltools", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotMedicalTools = math.Clamp(tonumber(new_value) or 4, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotMedicalTools
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_MEDICALTOOL then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 消耗品-支援型插槽位置
-GM.WeaponSelectSlotConSupportive = math.Clamp(CreateClientConVar("zs_wepslot_consupportive", 6, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_consupportive", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotConSupportive = math.Clamp(tonumber(new_value) or 6, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotConSupportive
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_CONSUMABLE_SUPPORTIVE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 消耗品-进攻型插槽位置
-GM.WeaponSelectSlotConOffensive = math.Clamp(CreateClientConVar("zs_wepslot_conoffensive", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_conoffensive", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotConOffensive = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotConOffensive
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_CONSUMABLE_OFFENSIVE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 爆炸物插槽位置
-GM.WeaponSelectSlotExplosives = math.Clamp(CreateClientConVar("zs_wepslot_explosives", 5, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_explosives", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotExplosives = math.Clamp(tonumber(new_value) or 5, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotExplosives
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_EXPLOSIVE then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 栓动步枪/弩插槽位置
-GM.WeaponSelectSlotBolt = math.Clamp(CreateClientConVar("zs_wepslot_bolt", 4, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_bolt", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotBolt = math.Clamp(tonumber(new_value) or 4, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotBolt
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_BOLT then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
-
--- 药剂插槽位置
-GM.WeaponSelectSlotPotions = math.Clamp(CreateClientConVar("zs_wepslot_potions", 6, true, false):GetInt(), 0, 6)
-
-cvars.AddChangeCallback("zs_wepslot_potions", function(convar_name, old_value, new_value)
-    GAMEMODE.WeaponSelectSlotPotions = math.Clamp(tonumber(new_value) or 6, 0, 6)
-    local new_slot = GAMEMODE.WeaponSelectSlotPotions
-
-    for _, wep_data in pairs(weapons.GetList()) do
-        if wep_data.SlotGroup and wep_data.SlotGroup == WEPSELECT_POTION then
-            local stored_wep = weapons.GetStored(wep_data.ClassName)
-            if stored_wep then
-                stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
-            end
-        end
-    end
-end)
+		for _, wep_data in pairs(weapons.GetList()) do
+			if wep_data.SlotGroup and wep_data.SlotGroup == slotgroup then
+				local stored_wep = weapons.GetStored(wep_data.ClassName)
+				if stored_wep then
+					-- 插槽为0时设为-2（隐藏），否则设为 new_slot - 1（内部从0开始）
+					stored_wep.Slot = (new_slot == 0) and -2 or (new_slot - 1)
+				end
+			end
+		end
+	end)
+end

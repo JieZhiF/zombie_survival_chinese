@@ -201,7 +201,7 @@ concommand.Add("zs_pointsshopbuy", function(sender, command, arguments)
 				if commission > 0 then
 					owner:AddPoints(commission, nil, nil, true)
 
-					net.Start("zs_commission")
+					net.Start(NET_MSG.COMMISSION)
 						net.WriteEntity(nearest)
 						net.WriteEntity(sender)
 						net.WriteFloat(commission)
@@ -258,7 +258,7 @@ concommand.Add("zs_dismantle", function(sender, command, arguments)
 
 	-- 计算拆解获得的废料数量并给予玩家
 	local scrap = GAMEMODE:GetDismantleScrap(wtbl or GAMEMODE.ZSInventoryItemData[invitem], invitem)
-	net.Start("zs_ammopickup")
+	net.Start(NET_MSG.AMMOPICKUP)
 		net.WriteUInt(scrap, 16)
 		net.WriteString("scrap")
 	net.Send(sender)
@@ -285,7 +285,7 @@ concommand.Add("zs_dismantle", function(sender, command, arguments)
 	if potinv and potinv.Result then
 		sender:AddInventoryItem(potinv.Result)
 
-		net.Start("zs_invitem")
+		net.Start(NET_MSG.INVITEM)
 			net.WriteString(potinv.Result)
 		net.Send(sender)
 	end
@@ -364,7 +364,7 @@ concommand.Add("zs_upgrade", function(sender, command, arguments)
 			sender:GiveAmmo(1, wep.Primary.Ammo)
 		end
 
-		net.Start("zs_remantleconf")
+		net.Start(NET_MSG.REMANTLECONF)
 		net.Send(sender)
 
 		-- 记录升级统计
@@ -577,13 +577,13 @@ concommand.Add("zsgiveammo", function(sender, command, arguments)
 			sender:RestartGesture(ACT_GMOD_GESTURE_ITEM_GIVE)
 
 			-- 通知给予者和接收者
-			net.Start("zs_ammogive")
+			net.Start(NET_MSG.AMMOGIVE)
 				net.WriteUInt(desiredgive, 16)
 				net.WriteString(ammotype)
 				net.WriteEntity(ent)
 			net.Send(sender)
 
-			net.Start("zs_ammogiven")
+			net.Start(NET_MSG.AMMOGIVEN)
 				net.WriteUInt(desiredgive, 16)
 				net.WriteString(ammotype)
 				net.WriteEntity(sender)
@@ -796,22 +796,23 @@ concommand.Add("zs_mutationshop_click", function(sender, command, arguments)
 		local tab = FindMutation(id)
 		
 		if tab and not hasalready[id] then
-			-- 修复 #1: 必须使用大写的 'Price'，因为在 AddMutation 函数中定义的是 'Price'
-			print("Received zs_mutationshop_click concommand from")
 			if tab.Price and tab.Callback then
-				-- 修复 #2: 同样，这里也必须使用大写的 'Price'
 				cost = tab.Price
 				hasalready[id] = true
 				
-				-- 增加一层保护：确保玩家有足够的钱再执行购买逻辑
-				if tokens >= cost then
+				-- 每次购买前重新读取代币余额，防止一次命令内多次购买时透支
+				if sender:GetTokens() >= cost then
 
 					tab.Callback(sender)
 					sender:TakeTokens(cost)
 					sender:PrintTranslatedMessage(HUD_PRINTTALK, "purchased_x_for_y_btokens", tab.Name, cost)
 					sender:SendLua("surface.PlaySound(\"ambient/levels/labs/coinslot1.wav\")")
-					sender.UsedMutations = sender.UsedMutations or {}
-					table.insert(sender.UsedMutations, tab.Signature)
+					-- 可重复购买项（如迷你BOSS变身）不记入 UsedMutations，
+					-- 这样每次购买后界面不会显示"已拥有"，允许重复购买
+					if not tab.Repeatable then
+						sender.UsedMutations = sender.UsedMutations or {}
+						table.insert(sender.UsedMutations, tab.Signature)
+					end
 
 				else
 					-- 如果钱不够，可以给玩家一个提示
@@ -824,43 +825,8 @@ concommand.Add("zs_mutationshop_click", function(sender, command, arguments)
 		end
 	end
 
-	-- 这一行现在已经不是必需的了，因为检查已经移到循环内部，但保留也无妨
-	if cost and cost > tokens then return end
-	
-	local itemtab
-	local id = arguments[1]
-	local num = tonumber(id)
-	
-	-- 根据编号或签名查找变异技能
-	if num then
-		itemtab = GAMEMODE.Mutations[num]
-	else
-		for i, tab in pairs(GAMEMODE.Mutations) do
-			if tab.Signature == id then
-				itemtab = tab
-				break
-			end
-		end
-	end
-	
-	-- 注释掉的旧代码：单独的价格检查逻辑
-	--[[if itemtab.Worth then
-	
-		local tokens = sender:GetTokens()
-		local cost = itemtab.Worth
-		
-		cost = math.ceil(cost)
-										-- FIX THIS LATER
-		if tokens < cost  then
-			sender:CenterNotify(COLOR_RED, translate.ClientGet(sender, "you_dont_have_enough_btokens"))
-			sender:SendLua("surface.PlaySound(\"buttons/button10.wav\")")
-			return
-		end
-	
-	end]]
-	
 	-- 向客户端发送已使用的变异技能列表以更新UI
-	net.Start("zs_mutations_table")
+	net.Start(NET_MSG.MUTATIONS_TABLE)
 		net.WriteTable(sender.UsedMutations)
 	net.Send(sender)
 

@@ -3,6 +3,27 @@
 -- 分"武器"和"合成品"两个标签页，以树状列表展示所有武器
 -- 点击武器后右侧显示详细信息和属性统计
 -- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 武器数据库窗口
+-- [位置] MakepWeapons()
+-- [作用] 创建主框架，可复用已有窗口淡入显示
+-- [常改] 窗口尺寸、标题
+--
+-- [区域] 分类标签页
+-- [位置] MakepWeapons() 中 DPropertySheet / ConfigureMenuTabs
+-- [作用] "武器"与"合成品"两个标签页
+-- [常改] 标签高度、样式
+--
+-- [区域] 武器树列表
+-- [位置] WeaponsTree / CraftsTree / WeaponButtonDoClick()
+-- [作用] 树状节点展示商店武器与合成武器，点击切换详情
+-- [常改] 节点排序、缩进
+--
+-- [区域] 详情查看器
+-- [位置] SetWeaponViewerSWEP()
+-- [作用] 右侧显示武器模型/描述/属性条/弹药/合成配方
+-- [常改] 查看器位置尺寸、统计条
+-- ============================================================================
 
 -- ============================================================================
 -- WeaponButtonDoClick - 武器树节点点击回调
@@ -165,7 +186,7 @@ function MakepWeapons(silent)
 	local y = 8
 
 	-- 标题
-	local title = EasyLabel(frame, "Weapon Database", "ZSHUDFont", color_white)
+	local title = EasyLabel(frame, translate.Get("weapons_database_title"), "ZSHUDFont", color_white)
 	title:SetPos(wid * 0.5 - title:GetWide() * 0.5, y)
 	y = y + title:GetTall() + 8
 

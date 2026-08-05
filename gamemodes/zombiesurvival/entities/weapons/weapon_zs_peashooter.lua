@@ -121,7 +121,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 150,//{80,85},
+	pitch = 150,--{80,85},
 	sound = "weapons/357_fire2.wav"
 } )
 --[[
@@ -141,7 +141,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 0.7,
 	level = 100,
-	pitch = 140,//{80,85},
+	pitch = 140,--{80,85},
 	sound = "weapons/m4a1/m4a1-1.wav"
 } )
 SWEP.UseHands = true

@@ -1,10 +1,8 @@
---[[
-==================================================================
-骷髅蹒跚者 (Skeletal Shambler) — 僵尸职业
-特点：骷髅模型、子弹伤害减免64%、非斩击/棍棒伤害减免55%、
-      可装死、复活机制、无血液
-==================================================================
-]]
+-- ============================================================================
+-- 骷髅蹒跚者 (Skeletal Shambler) — 僵尸职业
+-- 特点：骷髅模型、子弹伤害减免64%、非斩击/棍棒伤害减免55%、
+--       可装死、复活机制、无血液
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Skeletal Shambler"
@@ -19,7 +17,9 @@ CLASS.Help = "controls_skeletal_shambler"
 CLASS.Wave = 5 / 6
 
 -- 生命值/速度
+-- 生命值
 CLASS.Health = 180
+-- 移动速度
 CLASS.Speed = 155
 
 -- 可嘲讽
@@ -45,9 +45,10 @@ CLASS.BloodColor = -1
 
 -- 骷髅标记
 CLASS.Skeletal = true
+-- 骷髅抗性（骨骼减伤）
 CLASS.SkeletalRes = true
 
--- 缓存函数
+-- 缓存函数与常量
 local math_random = math.random
 local math_ceil = math.ceil
 local math_min = math.min
@@ -70,6 +71,7 @@ function CLASS:KnockedDown(pl, status, exists)
 end
 
 -- 脚步声
+-- 自定义脚步声（藤壶折颈音效）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if math_random(2) == 1 then
 		pl:EmitSound("npc/barnacle/neck_snap1.wav", 65, math_random(105, 110), 0.27)
@@ -85,6 +87,7 @@ function CLASS:PlayPainSound(pl)
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound(string_format("npc/zombie/zombie_die%d.wav", math_random(3)), 75, math_random(122, 128))
 	return true
@@ -175,9 +178,11 @@ end
 
 -- 服务端逻辑
 if SERVER then
+	-- 备用使用键触发装死
 	function CLASS:AltUse(pl)
 		pl:StartFeignDeath()
 	end
+	-- 伤害处理：骨骼减伤 + 致死时触发复活
 	function CLASS:ProcessDamage(pl, dmginfo)
 		if bit_band(dmginfo:GetDamageType(), DMG_BULLET) ~= 0 then
 			dmginfo:SetDamage(dmginfo:GetDamage() * 0.36)
@@ -210,14 +215,17 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/skeletal_walker"
+-- 图标颜色（骨色）
 CLASS.IconColor = Color(220, 200, 150)
 
 local render_SetColorModulation = render.SetColorModulation
 
+-- 绘制前：骨色调制
 function CLASS:PrePlayerDraw(pl)
 	render_SetColorModulation(0.6, 0.45, 0.4)
 end
 
+-- 绘制后：恢复颜色
 function CLASS:PostPlayerDraw(pl)
 	render_SetColorModulation(1, 1, 1)
 end

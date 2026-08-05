@@ -22,11 +22,6 @@ function SWEP:DrawWeaponSelection(x, y, w, h, alpha)
 	self:BaseDrawWeaponSelection(x, y, w, h, alpha)
 end
 
-function SWEP:DrawHUD()
-	if GetConVar("crosshair"):GetInt() ~= 1 then return end
-	self:DrawCrosshairDot()
-end
-
 function SWEP:OnRemove()
 	self:Anim_OnRemove()
 end
@@ -131,7 +126,7 @@ function SWEP:GetViewModelPosition(pos, ang)
 	return pos, ang
 end
 
-// -- COOLDOWWNWNNN
+-- -- COOLDOWWNWNNN
 function SWEP:CooldownRingBinding()
 	return self:GetNextPrimaryFire()-CurTime() 
 end
@@ -369,8 +364,8 @@ function SWEP:DrawBlockHUD()
 	local hsize = size/2
 	local matGlow = Material("sprites/glow04_noz")
     local texDownEdge = surface.GetTextureID("vgui/gradient-r") --vgui/hud/healthbar_ticks_withglow_white
-    local colHealth = Color(0, 0, 0, defalpha)
     local defalpha = 230
+    local colHealth = Color(0, 0, 0, defalpha)
 
 	local shieldMat = Material( "icon16/shield.png", "smooth" )
 
@@ -391,15 +386,15 @@ function SWEP:DrawBlockHUD()
 		end
 	end
 
-	if GetBlockDefense() < GetBlockDefenseDefault() then
-		draw.SimpleText(math.Round(GetBlockDefense()*30,0),font,x,y+150,Color(0,255,0,defalpha),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
-		draw.SimpleText(math.Round(GetBlockDefense()*30,0),fontblur,x,y+150,Color(0,255,0,defalpha),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+	if self.DefendingDamageBlocked < self.DefendingDamageBlockedDefault then
+		draw.SimpleText(math.Round(self.DefendingDamageBlocked*30,0),font,x,y+150,Color(0,255,0,defalpha),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+		draw.SimpleText(math.Round(self.DefendingDamageBlocked*30,0),fontblur,x,y+150,Color(0,255,0,defalpha),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 		draw.SimpleText("DEF",font,x-90,y+182,Color(0,255,0,defalpha),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 		draw.SimpleText("DEF",fontblur,x-90,y+182,Color(0,255,0,defalpha),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 
 
-		local blockdef = math.Clamp(GetBlockDefense()*30,0,GetBlockDefenseDefault()*30)
-		local blockdefdefault = GetBlockDefenseDefault()*30
+		local blockdef = math.Clamp(self.DefendingDamageBlocked*30,0,self.DefendingDamageBlockedDefault*30)
+		local blockdefdefault = self.DefendingDamageBlockedDefault*30
 		surface.SetDrawColor(0, 0, 0, defalpha)
 		surface.DrawRect(x - 60, y + 170, blockdefdefault, hsize-6)
 

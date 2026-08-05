@@ -130,3 +130,37 @@ GM:AddMutationItem(
     "icon16/arrow_up.png", 
     function(pl) pl.m_Zombie_MoanGuard = true end
 )
+
+-- ============================================================================
+-- 迷你BOSS购买项（Mini Boss Purchases）
+-- 通过 BTokens 在僵尸商店"迷你BOSS"分类下购买，购买后立即变身为对应迷你BOSS。
+-- 与普通变异不同：迷你BOSS变身是一次性的，死亡后恢复原职业，因此
+-- Repeatable = true 标记使其可重复购买（不记入 UsedMutations，界面不显示"已拥有"）。
+-- 服务器端 GM:SpawnMiniBoss 负责实际变身流程（init.lua）。
+-- ============================================================================
+local function AddMiniBossPurchase(signature, classname, translationnamekey, price)
+    local tab = GM:AddMutationItem(
+        signature,
+        ""..translate.Get(translationnamekey).."",
+        ""..translate.Get("zshop_miniboss_purchase_desc").."",
+        GM.ZombieShopCategories["MiniBoss"],
+        price,
+        "icon16/user_red.png",
+        function(pl)
+            local ct = GAMEMODE.ZombieClasses[classname]
+            if ct and ct.MiniBoss then
+                GAMEMODE:SpawnMiniBoss(pl, classname)
+            end
+        end
+    )
+    -- 可重复购买标记：购买后不记入 UsedMutations，界面不显示"已拥有"
+    tab.Repeatable = true
+    tab.MiniBossClass = classname
+end
+
+AddMiniBossPurchase("m_miniboss_asskicker", "Ass Kicker", "class_asskicker", 1000)
+AddMiniBossPurchase("m_miniboss_shitslapper", "Shit Slapper", "class_shitslapper", 1500)
+AddMiniBossPurchase("m_miniboss_gigagorechild", "Giga Gore Child", "class_giga_gore_child", 1000)
+AddMiniBossPurchase("m_miniboss_gigashadowchild", "Giga Shadow Child", "class_giga_shadow_child", 900)
+AddMiniBossPurchase("m_miniboss_nightbutcher", "噩梦屠夫", "class_butcher_night", 1200)
+AddMiniBossPurchase("m_miniboss_humantraitor", "humantraitor", "class_humantraitor", 600)

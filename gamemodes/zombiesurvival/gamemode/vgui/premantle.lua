@@ -3,6 +3,37 @@
 -- 支持武器品质升级、分支变体选择和拆解功能
 -- 包含 3D 渲染的升级路径视图 (ZSRemantlePath)
 -- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 改造主窗口
+-- [位置] GM:OpenRemantlerMenu()
+-- [作用] 顶部标题/底部废料栏 + 属性表(改造/饰品/弹药标签页)
+-- [常改] 窗口尺寸、标签页内容、废料显示
+--
+-- [区域] 3D 升级路径
+-- [位置] ZSRemantlePath / Init() / Paint() / OnMousePressed()
+-- [作用] 3D 渲染品质节点与连接光束，悬停显示信息，点击升级
+-- [常改] 节点颜色、光束样式、相机参数
+--
+-- [区域] 悬停信息面板
+-- [位置] Paint() 末段 / Top / Bottom
+-- [作用] 顶部品质名+描述，底部废料消耗
+-- [常改] 文字字体、颜色、透明度动画
+--
+-- [区域] 饰品/弹药浏览
+-- [位置] GM:OpenRemantlerMenu() 循环内
+-- [作用] 按子分类网格展示可购饰品与弹药
+-- [常改] 网格列数、卡片尺寸
+--
+-- [区域] 拆解操作
+-- [位置] DismantleClick() / 拆解按钮
+-- [作用] 确认后发送 zs_dismantle 拆解当前武器
+-- [常改] 确认对话框文案
+--
+-- [区域] 自动关闭
+-- [位置] hook.Add("Think", "RemantlerMenuThink") / RemantlerCenterMouse()
+-- [作用] 鼠标移出窗口自动隐藏，锁鼠标到窗口中心
+-- [常改] 边距阈值
+-- ============================================================================
 
 -- ============================================================================
 -- ScrapLabelThink - 实时刷新废料数量标签
@@ -481,7 +512,7 @@ function PANEL:Paint(w, h)
 end
 
 -- 接收服务器确认升级的网络消息
-net.Receive("zs_remantleconf", function()
+net.Receive(NET_MSG.REMANTLECONF, function()
 	if not (GAMEMODE.RemantlerInterface and GAMEMODE.RemantlerInterface:IsValid() and hovquality and hovbranch) then return end
 
 	local ri = GAMEMODE.RemantlerInterface

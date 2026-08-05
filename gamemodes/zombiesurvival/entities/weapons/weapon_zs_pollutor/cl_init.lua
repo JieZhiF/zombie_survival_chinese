@@ -1,18 +1,27 @@
+-- ============================================================================
+-- weapon_zs_pollutor/cl_init.lua - 生化喷射枪「污染者」（Pollutor）客户端
+-- 负责：3D HUD 与 SCK 拼装的生化枪体外观（含发光生化液管）
+-- ============================================================================
+
 INC_CLIENT()
 
+-- 3D HUD 中展示武器模型的绑定骨骼与位置/角度/缩放
 SWEP.HUD3DBone = "v_weapon.ump45_Release"
 SWEP.HUD3DPos = Vector(-1.6, -4, 5)
 SWEP.HUD3DAng = Angle(0, 0, 0)
 SWEP.HUD3DScale = 0.02
 
+-- 隐藏官方模型，改用 SCK 自定义外观；FOV 52、不翻转
 SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 SWEP.ViewModelFOV = 52
 SWEP.ViewModelFlip = false
 
+-- 武器栏槽位 4（特殊武器）与槽位序号 0
 SWEP.Slot = 4
 SWEP.SlotPos = 0
 
+-- SCK 元素（第一人称）：实验室零件拼装的生化枪体（含发光生化液管 bio++++++ 等）
 SWEP.VElements = {
 	["bio+++"] = { type = "Model", model = "models/props_wasteland/laundry_washer001a.mdl", bone = "v_weapon.ump45_Parent", rel = "bio", pos = Vector(0, 0, 12), angle = Angle(0, 0, 0), size = Vector(0.05, 0.05, 0.019), color = Color(69, 62, 36, 255), surpresslightning = false, material = "models/weapons/w_shotgun/w_shotgun", skin = 0, bodygroup = {} },
 	["bio+++++++++++++"] = { type = "Model", model = "models/props_pipes/pipecluster32d_003a.mdl", bone = "v_weapon.ump45_Parent", rel = "bio", pos = Vector(0.3, 2, 7), angle = Angle(0, 0, 90), size = Vector(0.019, 0.05, 0.019), color = Color(64, 79, 97, 255), surpresslightning = false, material = "models/props_c17/substation_transformer01a", skin = 0, bodygroup = {} },
@@ -31,6 +40,7 @@ SWEP.VElements = {
 	["bio+++++++++"] = { type = "Model", model = "models/props_phx/construct/metal_wire_angle360x2.mdl", bone = "v_weapon.ump45_Clip", rel = "", pos = Vector(0.1, 3, -2), angle = Angle(0, 0, 90), size = Vector(0.025, 0.025, 0.039), color = Color(34, 44, 55, 255), surpresslightning = false, material = "models/props_c17/substation_transformer01a", skin = 0, bodygroup = {} }
 }
 
+-- SCK 元素（第三人称）：与第一人称一致的生化枪体外观
 SWEP.WElements = {
 	["bio+++"] = { type = "Model", model = "models/props_wasteland/laundry_washer001a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bio", pos = Vector(0, 0, 12), angle = Angle(0, 0, 0), size = Vector(0.05, 0.05, 0.019), color = Color(69, 62, 36, 255), surpresslightning = false, material = "models/weapons/w_shotgun/w_shotgun", skin = 0, bodygroup = {} },
 	["bio+++++++++++++"] = { type = "Model", model = "models/props_pipes/pipecluster32d_003a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "bio", pos = Vector(0.3, 2, 7), angle = Angle(0, 0, 90), size = Vector(0.019, 0.05, 0.019), color = Color(64, 79, 97, 255), surpresslightning = false, material = "models/props_c17/substation_transformer01a", skin = 0, bodygroup = {} },

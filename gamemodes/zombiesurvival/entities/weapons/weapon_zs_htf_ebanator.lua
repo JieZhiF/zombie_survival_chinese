@@ -1,6 +1,6 @@
 AddCSLuaFile()
 DEFINE_BASECLASS("weapon_zs_base")
-SWEP.PrintName = "Ebanator-1000"
+SWEP.PrintName = ""..translate.Get("weapon_zs_htf_ebanator")
 SWEP.Description = "Heavy rifle used by Kargen operators"
 
 
@@ -25,7 +25,7 @@ end
 SWEP.Base = "weapon_zs_base"
 
 SWEP.HoldType = "ar2"
-//schitalochka 文字显示
+--schitalochka 文字显示
 SWEP.ShowViewModel = true
 SWEP.ShowWorldModel = false
 SWEP.ViewModelBoneMods = {
@@ -106,7 +106,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 0.65,
 	level = 60,
-	pitch = 210,//{80,85},
+	pitch = 210,--{80,85},
 	sound = "weapons/ar2/npc_ar2_altfire.wav"
 } )
 SWEP.WeaponType = "rifle"

@@ -1,10 +1,8 @@
---[[
-==================================================================
-屠夫EX (The Butcher ex) — 进阶僵尸职业
-特点：较低的波次出现、免疫击退、可嘲讽、
-      自定义步行/攻击动画、红色发光眼睛
-==================================================================
-]]
+-- ============================================================================
+-- 屠夫EX (The Butcher ex) — 进阶僵尸职业
+-- 特点：较低的波次出现、免疫击退、可嘲讽、
+--       自定义步行/攻击动画、红色发光眼睛
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "The Butcher ex"
@@ -44,6 +42,7 @@ CLASS.VoicePitch = 0.65
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"npc/zombie/zombie_pain1.wav", "npc/zombie/zombie_pain2.wav", "npc/zombie/zombie_pain3.wav", "npc/zombie/zombie_pain4.wav", "npc/zombie/zombie_pain5.wav", "npc/zombie/zombie_pain6.wav"}
+-- 死亡音效
 CLASS.DeathSounds = {"npc/zombie/zombie_die1.wav", "npc/zombie/zombie_die2.wav", "npc/zombie/zombie_die3.wav"}
 
 -- 缓存函数

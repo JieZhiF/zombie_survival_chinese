@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "修罗剑"
+SWEP.PrintName = ""..translate.Get("weapon_zs_boss_longsword")
 SWEP.Description = "."
 
 if CLIENT then

@@ -88,10 +88,10 @@ end
 -- 快速创建并配置一个 VGUI 按钮（DButton）的辅助函数
 -- parent：父面板  text：显示文本  xpadding/ypadding：内边距（增加按钮尺寸）
 -- 返回值：创建好的 DButton 实例
-function EasyButton(parent, text, xpadding, ypadding)
+function EasyButton(parent, text, xpadding, ypadding, textcolor)
 	local dpanel = vgui.Create("DButton", parent)
 	if textcolor then
-		dpanel:SetFGColor(textcolor or color_white)
+		dpanel:SetFGColor(textcolor)
 	end
 	if text then
 		dpanel:SetText(text)

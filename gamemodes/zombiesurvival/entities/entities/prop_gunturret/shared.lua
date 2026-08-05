@@ -67,7 +67,7 @@ function ENT:IsValidTarget(target)
 	and not target:GetZombieClassTable().NoTurretTarget -- 排除不可被锁定的僵尸
 	and not target:GetStatus("zombiespawnbuff")        -- 排除有出生Buff的目标
 	and self:GetForward():Dot(self:GetAnglesToTarget(target):Forward()) >= self.MinimumAimDot -- 视野检查
-	and TrueVisibleFilters(self:ShootPos(), self:GetTargetPos(target), self, self.Hitbox)      -- 视线阻挡检查
+	and TrueVisibleFiltered(self:ShootPos(), self:GetTargetPos(target), self, self.Hitbox)      -- 视线阻挡检查
 end
 
 ----------------------------------------

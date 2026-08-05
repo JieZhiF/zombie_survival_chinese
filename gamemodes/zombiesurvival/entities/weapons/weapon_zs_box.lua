@@ -1,6 +1,6 @@
 AddCSLuaFile()
 --weapon_zs_box <<武器代码
-SWEP.PrintName = "奖励箱"
+SWEP.PrintName = ""..translate.Get("weapon_zs_box")
 SWEP.Description = "打开后随机获得不同品质的武器"
 
 SWEP.Slot = 2

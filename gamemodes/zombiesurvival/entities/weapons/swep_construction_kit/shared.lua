@@ -1,4 +1,8 @@
 
+-- ============================================================================
+-- swep_construction_kit/shared.lua - SCK 武器构造工具包（共享）
+-- 负责：SWEP 基础属性、机瞄/第三人称切换、机瞄视角插值、辅助函数
+-- ============================================================================
 if SERVER then
 	AddCSLuaFile("shared.lua")
 	AddCSLuaFile("client.lua")
@@ -77,6 +81,7 @@ SWEP.IronsightTime = 0.2
 SWEP.IronSightsPos = Vector(0, 0, 0)
 SWEP.IronSightsAng = Vector(0, 0, 0)
 
+-- ==== Initialize - 初始化持枪姿势、机瞄状态与数据目录 ====
 function SWEP:Initialize()
 	self:SetWeaponHoldType(self.HoldType)
 
@@ -99,10 +104,12 @@ function SWEP:Initialize()
 	sck_class = self:GetClass()
 end
 
+-- ==== Equip - 装备武器时重置丢弃标记 ====
 function SWEP:Equip()
 	self.Dropped = false
 end
 
+-- ==== PrimaryAttack - 左键：打开 SCK 编辑菜单 ====
 function SWEP:PrimaryAttack()
 	self:SetNextPrimaryFire(CurTime() + 0.2)
 
@@ -115,6 +122,7 @@ function SWEP:PrimaryAttack()
 
 end
 
+-- ==== SecondaryAttack - 右键：打开 SCK 编辑菜单 ====
 function SWEP:SecondaryAttack()
 	self:SetNextSecondaryFire(CurTime() + 0.2)
 
@@ -127,23 +135,28 @@ function SWEP:SecondaryAttack()
 end
 
 
+-- ==== SetupDataTables - 注册机瞄与第三人称网络变量 ====
 function SWEP:SetupDataTables()
 	self:DTVar( "Bool", 0, "ironsights" )
 	self:DTVar( "Bool", 1, "thirdperson" )
 end
 
+-- ==== ToggleIronSights - 切换机瞄开关 ====
 function SWEP:ToggleIronSights()
 	self.dt.ironsights = !self.dt.ironsights
 end
 
+-- ==== SetIronSights - 设置机瞄状态 ====
 function SWEP:SetIronSights( b )
 	self.dt.ironsights = b
 end
 
+-- ==== GetIronSights - 获取机瞄状态 ====
 function SWEP:GetIronSights()
 	return self.dt.ironsights
 end
 
+-- ==== ResetIronSights - 将机瞄偏移全部归零 ====
 function SWEP:ResetIronSights()
 	RunConsoleCommand("_sp_ironsight_x", 0)
 	RunConsoleCommand("_sp_ironsight_y", 0)
@@ -153,10 +166,12 @@ function SWEP:ResetIronSights()
 	RunConsoleCommand("_sp_ironsight_roll", 0)
 end
 
+-- ==== ToggleThirdPerson - 切换第三人称视角 ====
 function SWEP:ToggleThirdPerson()
 	self:SetThirdPerson( !self.dt.thirdperson )
 end
 
+-- ==== SetThirdPerson - 设置第三人称：切换视角实体并隐藏准星 ====
 function SWEP:SetThirdPerson( b )
 	self.dt.thirdperson = b
 
@@ -173,10 +188,12 @@ function SWEP:SetThirdPerson( b )
 	end
 end
 
+-- ==== GetThirdPerson - 获取第三人称状态 ====
 function SWEP:GetThirdPerson()
 	return self.dt.thirdperson
 end
 
+-- ==== GetViewModelPosition - 计算机瞄插值后的第一人称视角位置/角度 ====
 function SWEP:GetViewModelPosition(pos, ang)
 	--if true then return pos, ang end
 	--SCKDebugRepeat( "SWEP:VMPos", "Getting viewmodel pos" )
@@ -264,12 +281,14 @@ SWEP.ir_p = CreateConVar( "_sp_ironsight_pitch", 0.0 )
 SWEP.ir_yw = CreateConVar( "_sp_ironsight_yaw", 0.0 )
 SWEP.ir_r = CreateConVar( "_sp_ironsight_roll", 0.0 )
 
+-- ==== GetIronSightCoordination - 从 ConVar 读取当前机瞄偏移量 ====
 function SWEP:GetIronSightCoordination()
 	local vec = Vector( self.ir_x:GetFloat(), self.ir_y:GetFloat(), self.ir_z:GetFloat() )
 	local ang = Vector( self.ir_p:GetFloat(), self.ir_yw:GetFloat(), self.ir_r:GetFloat() )
 	return vec, ang
 end
 
+-- ==== GetHoldTypes - 返回支持的持枪姿势列表 ====
 function SWEP:GetHoldTypes()
 	return self.HoldTypes
 end
@@ -279,6 +298,7 @@ SWEP.LastOwner = nil
 	Helper functions
 **************************]]
 SWEP.IsSCK = true
+-- ==== GetSCKSWEP - 查找玩家当前持有的 SCK 武器 ====
 function GetSCKSWEP( pl, includeall )
 	local wep = pl:GetActiveWeapon()
 	if (IsValid(wep) and wep.IsSCK) then

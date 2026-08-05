@@ -1,3 +1,8 @@
+-- ============================================================================
+-- swep_construction_kit/base_code.lua - SCK 基础渲染代码（客户端核心）
+-- 负责：VElements/WElements 自定义元素创建、第一/第三人称渲染、
+--       骨骼定位、骨骼缩放修改、模型/精灵/Quad/裁剪平面绘制
+-- ============================================================================
 --[[*******************************************************
 	SWEP Construction Kit base code
 		Created by Clavus
@@ -18,6 +23,7 @@
 		and only have to be visible to the client.
 *******************************************************]]
 
+-- ==== Initialize - 初始化：复制元素表、创建客户端模型、处理第一人称可见性 ====
 function SWEP:Initialize()
 
 	-- other initialize code goes here
@@ -57,6 +63,7 @@ function SWEP:Initialize()
 
 end
 
+-- ==== Holster - 收起时复位骨骼位置 ====
 function SWEP:Holster()
 
 	if CLIENT and IsValid(self:GetOwner()) then
@@ -69,6 +76,7 @@ function SWEP:Holster()
 	return true
 end
 
+-- ==== OnRemove - 移除时收起并复位 ====
 function SWEP:OnRemove()
 	self:Holster()
 end
@@ -76,6 +84,7 @@ end
 if CLIENT then
 
 	SWEP.vRenderOrder = nil
+	-- ==== ViewModelDrawn - 每帧渲染第一人称自定义元素 ====
 	function SWEP:ViewModelDrawn()
 
 		local vm = self:GetOwner():GetViewModel()
@@ -274,6 +283,7 @@ if CLIENT then
 	end
 
 	SWEP.wRenderOrder = nil
+	-- ==== DrawWorldModel - 每帧渲染第三人称自定义元素 ====
 	function SWEP:DrawWorldModel()
 
 		if (self.ShowWorldModel == nil or self.ShowWorldModel) then
@@ -472,6 +482,7 @@ if CLIENT then
 
 	end
 
+	-- ==== GetBoneOrientation - 计算元素在骨骼/相对父级上的世界位置与角度 ====
 	function SWEP:GetBoneOrientation( basetab, tab, ent, bone_override )
 
 		local bone, pos, ang
@@ -514,6 +525,7 @@ if CLIENT then
 		return pos, ang
 	end
 
+	-- ==== CreateModels - 创建客户端模型/精灵材质（渲染钩子中不允许创建） ====
 	function SWEP:CreateModels( tab )
 
 		if (!tab) then return end
@@ -561,6 +573,7 @@ if CLIENT then
 	local allbones
 	local hasGarryFixedBoneScalingYet = false
 
+	-- ==== UpdateBonePositions - 应用 ViewModelBoneMods 骨骼缩放/角度/位移修改 ====
 	function SWEP:UpdateBonePositions(vm)
 
 		if self.ViewModelBoneMods then
@@ -625,6 +638,7 @@ if CLIENT then
 
 	end
 
+	-- ==== ResetBonePositions - 将所有骨骼修改复位为默认值 ====
 	function SWEP:ResetBonePositions(vm)
 		-- New code
 		vm:SetColor(color_white)

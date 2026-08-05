@@ -3,6 +3,37 @@
 -- 包含物品列表（按类别分页）、物品详情查看器、购买/快速购买系统
 -- 以及物品统计条和弹药购买等完整功能
 -- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 商店主窗口
+-- [位置] GM:OpenArsenalMenu()
+-- [作用] 创建积分商店框架，鼠标移出自动隐藏，锁鼠标居中
+-- [常改] 窗口尺寸、顶部/底部栏
+--
+-- [区域] 分类标签页
+-- [位置] GM:OpenArsenalMenu() 类别循环 / GM:ConfigureMenuTabs()
+-- [作用] 按物品类别分页，枪支/近战/饰品带 Tier/子类筛选按钮
+-- [常改] 标签高度、网格列数、子分类按钮
+--
+-- [区域] 物品卡片
+-- [位置] GM:AddShopItem() / ItemPanelThink() / ItemPanelPaint() / ItemPanelDoClick()
+-- [作用] 图标/名称/价格/库存卡片，可购买性变色，点击选购买
+-- [常改] 卡片尺寸、边框颜色、右键菜单
+--
+-- [区域] 详情查看器
+-- [位置] GM:CreateItemInfoViewer() / GM:SupplyItemViewerDetail() / GM:ViewerStatBarUpdate()
+-- [作用] 标题/模型/描述/属性条/弹药信息/购买按钮
+-- [常改] 查看器布局、属性行数、购买按钮
+--
+-- [区域] 属性条组件
+-- [位置] ZSItemStatBar / Paint()
+-- [作用] 平滑渐变的属性对比条
+-- [常改] 条体颜色、渐变材质
+--
+-- [区域] 快速购买开关
+-- [位置] QuickBuyButton / quickbuyDoClick()
+-- [作用] iOS 风格开关，切换 zs_alwaysquickbuy
+-- [常改] 开关配色、动画速度
+-- ============================================================================
 
 -- ============================================================================
 -- pointslabelThink - 刷新剩余积分显示
@@ -80,6 +111,9 @@ end
 -- 更新购买状态（文字颜色）和库存显示
 -- ============================================================================
 local function ItemPanelThink(self)
+	-- 菜单关闭（SetVisible(false)）时 Think 仍每帧调用，直接跳过
+	if not self:IsVisible() then return end
+
 	local itemtab = FindItem(self.ID)
 	if itemtab then
 		local newstate = CanBuy(itemtab, self)
@@ -146,61 +180,69 @@ end
 -- ViewerStatBarUpdate - 更新物品详情查看器的统计条
 -- ============================================================================
 function GM:ViewerStatBarUpdate(viewer, display, sweptable)
-	local done, statshow = {}
 	local speedtotext = GAMEMODE.SpeedToText
-	for i = 1, 6 do
-		if display then
-			viewer.ItemStats[i]:SetText("")
-			viewer.ItemStatValues[i]:SetText("")
-			viewer.ItemStatBars[i]:SetVisible(false)
-			continue
-		end
-		local statshowbef = statshow
-		for k, stat in pairs(GAMEMODE.WeaponStatBarVals) do
-			local statval = stat[6] and sweptable[stat[6]][stat[1]] or sweptable[stat[1]]
-			if not done[stat] and statval and statval ~= -1 then
-				statshow = stat
-				done[stat] = true
-				break
+
+	-- 先清空所有属性行
+	for i = 1, 10 do
+		viewer.ItemStats[i]:SetText("")
+		viewer.ItemStatValues[i]:SetText("")
+		viewer.ItemStatBars[i]:SetVisible(false)
+	end
+
+	if display then return end
+
+	-- 固定显示前 10 个 WeaponStatBarVals，缺失值显示 0
+	for i = 1, 10 do
+		local stat = GAMEMODE.WeaponStatBarVals[i]
+		if not stat then break end
+
+		local statnum = 0
+		if stat[6] then
+			local sub = sweptable[stat[6]]
+			if sub and sub[stat[1]] and sub[stat[1]] ~= -1 then
+				statnum = sub[stat[1]]
 			end
+		elseif sweptable[stat[1]] and sweptable[stat[1]] ~= -1 then
+			statnum = sweptable[stat[1]]
 		end
-		
-		if statshowbef and statshowbef[1] == statshow[1] then
-			viewer.ItemStats[i]:SetText("")
-			viewer.ItemStatValues[i]:SetText("")
-			viewer.ItemStatBars[i]:SetVisible(false)
-			continue
-		end
-		
-		local statnum, stattext = statshow[6] and sweptable[statshow[6]][statshow[1]] or sweptable[statshow[1]]
-		if statshow[1] == "Damage" and sweptable.Primary.NumShots and sweptable.Primary.NumShots > 1 then
+
+		local stattext
+		if stat[1] == "Damage" and sweptable.Primary and sweptable.Primary.NumShots and sweptable.Primary.NumShots > 1 then
 			stattext = statnum .. " x " .. sweptable.Primary.NumShots
-		elseif statshow[1] == "WalkSpeed" then
+		elseif stat[1] == "HeadshotMulti" then
+			local damage = sweptable.Primary and sweptable.Primary.Damage or sweptable.Damage or 0
+			stattext = math.Round(damage * statnum)
+			statnum = damage * statnum
+		elseif stat[1] == "WalkSpeed" then
 			stattext = speedtotext[SPEED_NORMAL]
-			if speedtotext[sweptable[statshow[1]]] then
-				stattext = speedtotext[sweptable[statshow[1]]]
-			elseif sweptable[statshow[1]] < SPEED_SLOWEST then
+			if speedtotext[sweptable[stat[1]]] then
+				stattext = speedtotext[sweptable[stat[1]]]
+			elseif sweptable[stat[1]] and sweptable[stat[1]] < SPEED_SLOWEST then
 				stattext = speedtotext[-1]
 			end
-		elseif statshow[1] == "ClipSize" then
-			stattext = statnum / sweptable.RequiredClip
+		elseif stat[1] == "ClipSize" then
+			local requiredclip = sweptable.RequiredClip or 1
+			stattext = statnum / requiredclip
 		else
 			stattext = statnum
 		end
 
-		viewer.ItemStats[i]:SetText(statshow[2])
+		viewer.ItemStats[i]:SetText(stat[2])
 		viewer.ItemStatValues[i]:SetText(stattext)
 
-		if statshow[1] == "Damage" then
+		if stat[1] == "Damage" and sweptable.Primary and sweptable.Primary.NumShots then
 			statnum = statnum * sweptable.Primary.NumShots
-		elseif statshow[1] == "ClipSize" then
-			statnum = statnum / sweptable.RequiredClip
+		elseif stat[1] == "ClipSize" then
+			statnum = statnum / (sweptable.RequiredClip or 1)
+		elseif stat[1] == "HeadshotMulti" then
+			local damage = sweptable.Primary and sweptable.Primary.Damage or sweptable.Damage or 0
+			statnum = damage * statnum
 		end
 
 		viewer.ItemStatBars[i].Stat = statnum
-		viewer.ItemStatBars[i].StatMin = statshow[3]
-		viewer.ItemStatBars[i].StatMax = statshow[4]
-		viewer.ItemStatBars[i].BadHigh = statshow[5]
+		viewer.ItemStatBars[i].StatMin = stat[3]
+		viewer.ItemStatBars[i].StatMax = stat[4]
+		viewer.ItemStatBars[i].BadHigh = stat[5]
 		viewer.ItemStatBars[i]:SetVisible(true)
 	end
 end
@@ -223,40 +265,54 @@ function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 	viewer.m_Title:PerformLayout()
 
 	local desctext = sweptable.Description or ""
-	if not self.ZSInventoryItemData[shoptbl.SWEP] then
-		if IsValid(viewer.ModelPanel) and viewer.ModelPanel.SetWeaponPreview then
-			viewer.ModelPanel:SetWeaponPreview(sweptable)
-			if viewer.ModelPanel.Entity and IsValid(viewer.ModelPanel.Entity) then
-				local mins, maxs = viewer.ModelPanel.Entity:GetRenderBounds()
-				viewer.ModelPanel:SetCamPos(mins:Distance(maxs) * Vector(1.15, 0.75, 0.5))
-				viewer.ModelPanel:SetLookAt((mins + maxs) / 2)
+	
+	if viewer.IconDisplay then
+		if IsValid(viewer.m_Icon) then viewer.m_Icon:Remove() end
+		if IsValid(viewer.m_Padlock) then viewer.m_Padlock:Remove() end
 
-			end
-		else
-			viewer.ModelPanel:SetModel(sweptable.WorldModel)
+		local iconname = self.ZSInventoryItemData[shoptbl.SWEP] and "weapon_zs_craftables" or shoptbl.SWEP or shoptbl.Model
+		local kitbl = iconname and killicon.Get(iconname) or nil
+		kitbl = kitbl or killicon.Get("default")
+		if kitbl then
+			self:AttachKillicon(kitbl, viewer, viewer.IconDisplay, false, false)
 		end
-		local mins, maxs = viewer.ModelPanel.Entity:GetRenderBounds()
-		viewer.ModelPanel:SetCamPos(mins:Distance(maxs) * Vector(1.15, 0.75, 0.5))
-		viewer.ModelPanel:SetLookAt((mins + maxs) / 2)
+
 		viewer.m_VBG:SetVisible(true)
-
-		if sweptable.NoDismantle then
-			desctext = desctext .. "\n" .. translate.Get("arsenal_CannotDismantle")
+		if not self.ZSInventoryItemData[shoptbl.SWEP] then
+			if sweptable.NoDismantle then
+				desctext = desctext .. "\n" .. translate.Get("arsenal_CannotDismantle")
+			end
+			viewer.m_Desc:SetFont("ZSBodyTextFont")
+		else
+			viewer.m_Desc:SetFont("ZSBodyTextFontBig")
 		end
-
-		viewer.m_Desc:MoveBelow(viewer.m_VBG, 8)
-		viewer.m_Desc:SetFont("ZSBodyTextFont")
 	else
-		viewer.ModelPanel:SetModel("")
-		viewer.m_VBG:SetVisible(false)
+		if not self.ZSInventoryItemData[shoptbl.SWEP] then
+			viewer.ModelPanel:SetModel(sweptable.WorldModel)
+			local mins, maxs = viewer.ModelPanel.Entity:GetRenderBounds()
+			viewer.ModelPanel:SetCamPos(mins:Distance(maxs) * Vector(1.15, 0.75, 0.5))
+			viewer.ModelPanel:SetLookAt((mins + maxs) / 2)
+			viewer.m_VBG:SetVisible(true)
 
-		viewer.m_Desc:MoveBelow(viewer.m_Title, 20)
-		viewer.m_Desc:SetFont("ZSBodyTextFontBig")
+			if sweptable.NoDismantle then
+				desctext = desctext .. "\n" .. translate.Get("arsenal_CannotDismantle")
+			end
+
+			viewer.m_Desc:MoveBelow(viewer.m_VBG, 8)
+			viewer.m_Desc:SetFont("ZSBodyTextFont")
+		else
+			viewer.ModelPanel:SetModel("")
+			viewer.m_VBG:SetVisible(false)
+
+			viewer.m_Desc:MoveBelow(viewer.m_Title, 20)
+			viewer.m_Desc:SetFont("ZSBodyTextFontBig")
+		end
 	end
 
-	viewer.m_Desc:SetText(desctext)
-
 	self:ViewerStatBarUpdate(viewer, shoptbl.Category ~= ITEMCAT_GUNS and shoptbl.Category ~= ITEMCAT_MELEE, sweptable)
+
+	viewer.m_Desc:SetText(desctext)
+	viewer.m_Desc:MoveBelow(viewer.ItemStats[10], 8)
 
 	if self:HasPurchaseableAmmo(sweptable) and self.AmmoNames[string.lower(sweptable.Primary.Ammo)] then
 		local lower = string.lower(sweptable.Primary.Ammo)
@@ -381,12 +437,23 @@ function GM:AttachKillicon(kitbl, itempan, mdlframe, ammo, missing_skill)
 	elseif #kitbl == 3 then
 		local label = vgui.Create("DLabel", mdlframe)
 		label:SetText(kitbl[2])
-		label:SetFont(kitbl[1] .. "pa" or DefaultFont)
+		local screenscale = BetterScreenScale()
+		local basefont = kitbl[1]:match("cs$") and "csd" or "HL2MP"
+		local iconfont = kitbl[1] .. "pa"
+		-- pa 字体(72px)超出卡片图标区高度(52px)，按区域高度动态缩放字号
+		surface.SetFont(iconfont)
+		local _, fh = surface.GetTextSize(kitbl[2])
+		local maxh = mdlframe:GetTall() - 4
+		if fh > maxh then
+			iconfont = kitbl[1] .. "pafit"
+			surface.CreateFont(iconfont, {font = basefont, size = math.max(8, math.ceil(72 * screenscale * maxh / fh)), weight = 100, antialias = true})
+		end
+		label:SetFont(iconfont)
 		label:SetTextColor(kitbl[3] or color_white)
 		label:SizeToContents()
-		label:SetContentAlignment(8)
-		label:DockMargin(0, label:GetTall() * 0.05, 0, 0)
-		label:Dock(FILL)
+		-- 与材质图标一致：绝对居中（原为中下对齐+Dock，导致字体图标位置偏移）
+		label:SetContentAlignment(5)
+		label:SetPos((mdlframe:GetWide() - label:GetWide()) / 2, (mdlframe:GetTall() - label:GetTall()) / 2)
 		itempan.m_Icon = label
 	end
 
@@ -565,13 +632,15 @@ function PANEL:Paint(w, h)
 		progress = 1 - progress
 	end
 
+	local barh = math.max(2, h)
+
 	surface.SetDrawColor(0, 0, 0, 220)
-	surface.DrawRect(0, 0, w, 5)
+	surface.DrawRect(0, 0, w, barh)
 	surface.SetDrawColor(250, 250, 250, 20)
-	surface.DrawRect(math.min(w * 0.95, w * progress), 0, 1, 5)
+	surface.DrawRect(math.min(w * 0.95, w * progress), 0, 1, barh)
 	surface.SetDrawColor(200 * (1 - progress), 200 * progress, 10, 160)
 	surface.SetMaterial(matGradientLeft)
-	surface.DrawTexturedRect(0, 0, w * progress, 4)
+	surface.DrawTexturedRect(0, 0, w * progress, barh - 1)
 end
 vgui.Register("ZSItemStatBar", PANEL, "Panel")
 
@@ -579,16 +648,19 @@ vgui.Register("ZSItemStatBar", PANEL, "Panel")
 -- CreateItemViewerGenericElems - 创建物品查看器的通用 UI 元素
 -- 包括标题、弹药类型、弹药图标、模型面板、描述、统计条
 -- ============================================================================
-function GM:CreateItemViewerGenericElems(viewer)
+function GM:CreateItemViewerGenericElems(viewer, style)
 	local screenscale = BetterScreenScale()
 
 	local vtitle = EasyLabel(viewer, "", "ZSHUDFontSmaller", COLOR_GRAY)
-	vtitle:SetContentAlignment(8)
-	vtitle:SetSize(viewer:GetWide(), 24 * screenscale)
+	vtitle:SetContentAlignment(2)
+	vtitle:SetSize(viewer:GetWide(), 40 * screenscale)
+	vtitle:SetWrap(true)
+	vtitle:SetMultiline(true)
+	vtitle:SetAutoStretchVertical(true)
 	viewer.m_Title = vtitle
 
 	local vammot = EasyLabel(viewer, "", "ZSBodyTextFontBig", COLOR_GRAY)
-	vammot:SetContentAlignment(8)
+	vammot:SetContentAlignment(2)
 	vammot:SetSize(viewer:GetWide(), 16 * screenscale)
 	vammot:MoveBelow(vtitle, 20)
 	vammot:CenterHorizontal(0.35)
@@ -601,20 +673,60 @@ function GM:CreateItemViewerGenericElems(viewer)
 	viewer.m_AmmoIcon = vammoi
 
 	local vbg = vgui.Create("DPanel", viewer)
-	vbg:SetSize(200 * screenscale, 100 * screenscale)
+	vbg:SetSize(240 * screenscale, 140 * screenscale)
 	vbg:CenterHorizontal()
 	vbg:MoveBelow(vammot, 24)
 	vbg:SetBackgroundColor(Color(0, 0, 0, 255))
 	vbg:SetVisible(false)
 	viewer.m_VBG = vbg
 
-	local modelpanel = vgui.Create("DModelPanelEx", vbg)
-	modelpanel:SetModel("")
-	modelpanel:AutoCam()
-	modelpanel:Dock(FILL)
-	modelpanel:SetDirectionalLight(BOX_TOP, Color(100, 255, 100))
-	modelpanel:SetDirectionalLight(BOX_FRONT, Color(255, 100, 100))
-	viewer.ModelPanel = modelpanel
+	if style then
+		local iconWidth = style.iconW <= 1 and viewer:GetWide() * style.iconW or style.iconW * screenscale
+		vbg:SetSize(iconWidth, style.iconH * screenscale)
+		vbg:CenterHorizontal()
+		vbg:SetBackgroundColor(Color(0, 0, 0, 150))
+		-- 标题/弹药类型已移入 vbg 内部，上移 vbg 消除初始布局（vtitle+vammot）留下的顶部空隙
+		vbg:AlignTop(8)
+	end
+
+	if style then
+		local bx, by = vbg:GetPos()
+		if style.titleFont then
+			vtitle:SetFont(style.titleFont)
+		end
+		vtitle:SetPos(bx + 8 * screenscale, by + 6 * screenscale)
+		vtitle:SetSize(vbg:GetWide() - 16 * screenscale, 42 * screenscale)
+		vtitle:SetWrap(true)
+		vtitle:SetMultiline(true)
+		vtitle:SetAutoStretchVertical(false)
+		vtitle:SetContentAlignment(4)
+		vtitle:SetTextInset(0, 0)
+		vtitle:SetZPos(10)
+
+		vammot:SetPos(bx + 8 * screenscale, by + vbg:GetTall() - 20 * screenscale)
+		vammot:SetSize(vbg:GetWide() - 48 * screenscale, 16 * screenscale)
+		vammot:SetContentAlignment(6)
+		vammot:SetTextInset(0, 0)
+		vammot:SetZPos(10)
+
+		vammoi:SetSize(24 * screenscale, 24 * screenscale)
+		vammoi:SetPos(bx + vbg:GetWide() - 32 * screenscale, by + vbg:GetTall() - 28 * screenscale)
+		vammoi:SetZPos(10)
+
+		local icondisplay = vgui.Create("DPanel", vbg)
+		icondisplay:SetPos(8 * screenscale, 50 * screenscale)
+		icondisplay:SetSize(vbg:GetWide() - 16 * screenscale, vbg:GetTall() - 74 * screenscale)
+		icondisplay.Paint = function() end
+		viewer.IconDisplay = icondisplay
+	else
+		local modelpanel = vgui.Create("DModelPanelEx", vbg)
+		modelpanel:SetModel("")
+		modelpanel:AutoCam()
+		modelpanel:Dock(FILL)
+		modelpanel:SetDirectionalLight(BOX_TOP, Color(100, 255, 100))
+		modelpanel:SetDirectionalLight(BOX_FRONT, Color(255, 100, 100))
+		viewer.ModelPanel = modelpanel
+	end
 
 	local itemdesc = vgui.Create("DLabel", viewer)
 	itemdesc:SetFont("ZSBodyTextFont")
@@ -622,6 +734,7 @@ function GM:CreateItemViewerGenericElems(viewer)
 	itemdesc:SetMultiline(true)
 	itemdesc:SetWrap(true)
 	itemdesc:SetAutoStretchVertical(true)
+	itemdesc:SetTextInset(0, 0)
 	itemdesc:SetWide(viewer:GetWide() - 16)
 	itemdesc:CenterHorizontal()
 	itemdesc:SetText("")
@@ -629,33 +742,100 @@ function GM:CreateItemViewerGenericElems(viewer)
 	viewer.m_Desc = itemdesc
 
 	local itemstats, itemsbs, itemsvs = {}, {}, {}
-	for i = 1, 6 do
+	for i = 1, 10 do
 		local itemstat = vgui.Create("DLabel", viewer)
 		itemstat:SetFont("ZSBodyTextFont")
 		itemstat:SetTextColor(COLOR_GRAY)
 		itemstat:SetWide(viewer:GetWide() * 0.35)
 		itemstat:SetText("")
 		itemstat:CenterHorizontal(0.2)
-		itemstat:SetContentAlignment(8)
-		itemstat:MoveBelow(i == 1 and vbg or itemstats[i-1], (i == 1 and 100 or 8) * screenscale)
-		table.insert(itemstats, itemstat)
-
+		itemstat:SetContentAlignment(4)
+		
 		local itemsb = vgui.Create("ZSItemStatBar", viewer)
 		itemsb:SetWide(viewer:GetWide() * 0.35)
-		itemsb:SetTall(8 * screenscale)
+		itemsb:SetTall(6 * screenscale)
 		itemsb:CenterHorizontal(0.55)
 		itemsb:SetVisible(false)
-		itemsb:MoveBelow(i == 1 and vbg or itemstats[i-1], ((i == 1 and 100 or 8) + 6) * screenscale)
-		table.insert(itemsbs, itemsb)
-
+		
 		local itemsv = vgui.Create("DLabel", viewer)
 		itemsv:SetFont("ZSBodyTextFont")
 		itemsv:SetTextColor(COLOR_GRAY)
 		itemsv:SetWide(viewer:GetWide() * 0.3)
 		itemsv:SetText("")
 		itemsv:CenterHorizontal(0.85)
-		itemsv:SetContentAlignment(8)
-		itemsv:MoveBelow(i == 1 and vbg or itemstats[i-1], (i == 1 and 100 or 8) * screenscale)
+		itemsv:SetContentAlignment(6)
+		
+		if style then
+			-- 新样式布局
+			local _, vbgY = vbg:GetPos()
+			local rowy = vbgY + vbg:GetTall() + style.iconGap * screenscale + (i - 1) * style.statRowH * screenscale
+			-- 视觉分组：从 groupStart 行起额外下移并绘制分组线
+			if style.groupStart and i >= style.groupStart then
+				rowy = rowy + style.groupGap * screenscale
+			end
+			
+			-- 设置标题样式
+			if style.titleFont then
+				vtitle:SetFont(style.titleFont)
+			end
+			if style.titleColor then
+				vtitle:SetTextColor(style.titleColor)
+			end
+			
+			-- 属性文字加大（原 15px 过小），数值列加宽避免显示不全
+			itemstat:SetFont("zs_wortharsenal")
+			itemsv:SetFont("zs_wortharsenal")
+			itemstat:SetTextInset(0, 0)
+			itemsv:SetTextInset(0, 0)
+			
+			-- 设置统计条高度
+			itemsb:SetTall(style.barTall * screenscale)
+			
+			-- 分组分隔线（位于分组起点上方）
+			if style.groupStart and i == style.groupStart then
+				local gline = vgui.Create("DPanel", viewer)
+				gline:SetPos(8 * screenscale, rowy - style.groupGap * screenscale * 0.5 - 1)
+				gline:SetSize(viewer:GetWide() - 16 * screenscale, 1)
+				gline.Paint = function(self, w, h)
+					surface.SetDrawColor(255, 255, 255, 70)
+					surface.DrawRect(0, 0, w, h)
+				end
+			end
+			
+			-- 设置位置
+			itemstat:SetPos(8 * screenscale, rowy)
+			itemstat:SetWide(viewer:GetWide() * 0.28)
+			
+			local barx = viewer:GetWide() * 0.40
+			local bary = rowy + (style.statRowH * screenscale - itemsb:GetTall()) / 2
+			itemsb:SetPos(barx, bary)
+			itemsb:SetWide(viewer:GetWide() * 0.30)
+			
+			local valx = viewer:GetWide() - 8 * screenscale - viewer:GetWide() * 0.24
+			itemsv:SetPos(valx, rowy)
+			itemsv:SetWide(viewer:GetWide() * 0.24)
+			
+			-- 分隔符
+			if style.separator then
+				local separator = vgui.Create("DLabel", viewer)
+				separator:SetFont("ZSBodyTextFont")
+				separator:SetText("-----")
+				separator:SetTextColor(Color(110, 110, 110, 200))
+				separator:SetPos(viewer:GetWide() * 0.30, rowy + 2)
+				separator:SetWide(viewer:GetWide() * 0.07)
+				separator:SetContentAlignment(5)
+			end
+		else
+			-- 旧样式布局（保持向后兼容）
+			itemstat:MoveBelow(i == 1 and vbg or itemstats[i-1], (i == 1 and 140 or 6) * screenscale)
+			
+			itemsb:MoveBelow(i == 1 and vbg or itemstats[i-1], ((i == 1 and 140 or 6) + 5) * screenscale)
+			
+			itemsv:MoveBelow(i == 1 and vbg or itemstats[i-1], (i == 1 and 140 or 6) * screenscale)
+		end
+		
+		table.insert(itemstats, itemstat)
+		table.insert(itemsbs, itemsb)
 		table.insert(itemsvs, itemsv)
 	end
 	viewer.ItemStats = itemstats
@@ -671,7 +851,7 @@ MENU_REMANTLER = 3
 -- ============================================================================
 -- CreateItemInfoViewer - 创建物品信息查看器框架
 -- ============================================================================
-function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, menutype)
+function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, menutype, viewerWidth, tabHeight)
 	local __, topy = topspace:GetPos()
 	local ___, boty = bottomspace:GetPos()
 	local screenscale = BetterScreenScale()
@@ -682,21 +862,54 @@ function GM:CreateItemInfoViewer(frame, propertysheet, topspace, bottomspace, me
 	local viewer = vgui.Create("DPanel", frame)
 
 	viewer:SetPaintBackground(false)
-	viewer:SetSize(
-		remantler and 320 * screenscale
-			or frame:GetWide() - propertysheet:GetWide() + (worthmenu and 312 or -16) * screenscale,
-		boty - topy - 8 - topspace:GetTall() - (worthmenu and 32 or 0)
-	)
+	if worthmenu then
+		viewer.Paint = function(self, w, h)
+			draw.RoundedBox(4, 0, 0, w, h, Color(0, 0, 0, 110))
+		end
+	end
+	local viewerwid
+	if remantler then
+		viewerwid = frame:GetWide() * 0.40
+	elseif worthmenu then
+		viewerwid = viewerWidth or frame:GetWide() * 0.30
+	else
+		viewerwid = frame:GetWide() - propertysheet:GetWide() - 16 * screenscale
+	end
+	viewer:SetSize(viewerwid, boty - topy - 8 - topspace:GetTall())
 
-	viewer:MoveBelow(topspace, 4 + (worthmenu and 32 or 0))
-	if menutype == MENU_POINTSHOP or worthmenu then
-		viewer:MoveRightOf(propertysheet, 8 - (worthmenu and 328 or 0) * screenscale)
+	viewer:MoveBelow(topspace, 4)
+	if worthmenu then
+		viewer:AlignRight(8)
+		if tabHeight then
+			local x, y = viewer:GetPos()
+			viewer:SetPos(x, y + tabHeight + 2)
+			viewer:SetTall(viewer:GetTall() - tabHeight - 2)
+		end
+	elseif menutype == MENU_POINTSHOP then
+		viewer:MoveRightOf(propertysheet, 8)
 	else
 		viewer:Dock(RIGHT)
 	end
 	frame.Viewer = viewer
 
-	self:CreateItemViewerGenericElems(viewer)
+	-- 为价值菜单创建样式表
+	local viewerstyle
+	if worthmenu then
+		viewerstyle = {
+			titleFont = "ZSHUDFontTiny",
+			titleColor = COLOR_WHITE,
+			-- Worth 菜单使用 2D 图标而不是 3D 模型
+			iconW = 0.96, -- 图标宽度（相对于查看器宽度的比例）
+			iconH = 300,    -- 图标高度
+			iconGap = 12, -- 图标与属性条之间的间距
+			statRowH = 24, -- 每行属性条高度
+			barTall = 8, -- 属性条高度
+			separator = false,
+			groupStart = 0,  -- 第 8 行（精度/机动组）前插入视觉分组
+			groupGap = 12,
+		}
+	end
+	self:CreateItemViewerGenericElems(viewer, viewerstyle)
 
 	-- 购买按钮
 	local purchaseb = vgui.Create("DButton", viewer)

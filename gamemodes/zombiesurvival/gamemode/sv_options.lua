@@ -23,6 +23,7 @@
 -- zs_repairpointsperhealth 通过修理建筑获得点数的效率。
 -- GetMostKey 一个辅助函数，用于查找在某个特定统计数据上值最高的玩家。
 -- GetMostFunc 一个辅助函数，通过调用一个函数来计算并查找值最高的玩家。
+-- RegisterGameConVar 一个辅助函数，用于统一注册游戏 ConVar（创建 + 初始化 GM 字段 + 变更回调）。
 -- GM.HonorableMentions 定义了各种回合结束荣誉称号的评定逻辑，例如：
 -- HM_MOSTZOMBIESKILLED 击杀僵尸最多
 -- HM_MOSTBRAINSEATEN 吃掉大脑最多
@@ -63,104 +64,100 @@ GM.StartLoadouts = {
 	{"sling", "xbow1", "xbow2", "2sgcp", "3sgcp"}
 }
 
+-- ============================================================
+-- ConVar 注册辅助：创建 ConVar、初始化 GM 字段、注册变更回调。
+-- 用法：
+--   RegisterGameConVar("zs_名称", "默认值", "GM字段名", "描述", "bool|int|float", [转换函数], [副作用回调], [flags])
+-- 转换函数接收原始值（初始化时传入数字，回调时传入字符串），返回存入 GM 字段的值；
+-- 副作用回调仅在 ConVar 被修改时触发（初始化不触发），保持与原代码行为一致。
+-- flags 缺省为 FCVAR_ARCHIVE + FCVAR_NOTIFY，与原代码一致；特殊需求可显式传入。
+-- ============================================================
+local function RegisterGameConVar(name, default, field, desc, ctype, transform, onchange, flags)
+	local cvar = CreateConVar(name, default, flags or (FCVAR_ARCHIVE + FCVAR_NOTIFY), desc)
+
+	-- 捕获 gamemode 表引用：运行期 GM 别名可能为 nil（GLMVS 等会重置全局），GAMEMODE 恒可用
+	local gm = GM or GAMEMODE
+
+	local function apply(value, notify)
+		if transform then
+			value = transform(value)
+		elseif ctype == "bool" then
+			value = value == true or (tonumber(value) or 0) == 1
+		else
+			value = tonumber(value)
+		end
+
+		gm[field] = value
+
+		if notify and onchange then
+			onchange(value)
+		end
+	end
+
+	-- 初始化：尊重已存档的用户设置（不触发副作用回调）
+	if ctype == "bool" then
+		apply(cvar:GetBool(), false)
+	elseif ctype == "int" then
+		apply(cvar:GetInt(), false)
+	else
+		apply(cvar:GetFloat(), false)
+	end
+
+	cvars.AddChangeCallback(name, function(_, _, newvalue)
+		apply(newvalue, true)
+	end)
+end
+
+-- Enable/Disable the melee blocking feature
+CreateConVar("zsw_enable_block", 1, {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Enable or disable the melee blocking feature")
 
 -- zs_bosszombies：是否在每波休息期间生成一个BOSS僵尸（默认启用）
-GM.BossZombies = CreateConVar("zs_bosszombies", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "是否在每波休息期间生成一个BOSS僵尸"):GetBool()
--- 监听 zs_bosszombies 变量变化，实时更新游戏模式设置
-cvars.AddChangeCallback("zs_bosszombies", function(cvar, oldvalue, newvalue)
-	GAMEMODE.BossZombies = tonumber(newvalue) == 1
-end)
+RegisterGameConVar("zs_bosszombies", "1", "BossZombies", "是否在每波休息期间生成一个BOSS僵尸", "bool")
+
+-- zs_bosses_spawned：每波休息期生成的Boss数量（默认2，与原硬编码一致）
+RegisterGameConVar("zs_bosses_spawned", "2", "BossSpawnCount", "每波休息期生成Boss僵尸的数量", "int", function(v) return math.max(0, tonumber(v) or 2) end)
 
 -- zs_outnumberedhealthbonus：当僵尸数量少时给予额外血量加成（默认4，设为0禁用）
-GM.OutnumberedHealthBonus = CreateConVar("zs_outnumberedhealthbonus", "4", FCVAR_ARCHIVE + FCVAR_NOTIFY, "如果僵尸数量少于或等于此数值，给予僵尸额外的最大生命值。设为0禁用"):GetInt()
--- 监听人数劣势血量加成变量变化
-cvars.AddChangeCallback("zs_outnumberedhealthbonus", function(cvar, oldvalue, newvalue)
-	GAMEMODE.OutnumberedHealthBonus = tonumber(newvalue) or 0
-end)
+RegisterGameConVar("zs_outnumberedhealthbonus", "4", "OutnumberedHealthBonus", "如果僵尸数量少于或等于此数值，给予僵尸额外的最大生命值。设为0禁用", "int", function(v) return tonumber(v) or 0 end)
 
 -- zs_pantsmode：趣味裤子模式（默认关闭）
-GM.PantsMode = CreateConVar("zs_pantsmode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "裤子模式：只有死者才能从这种邪恶中得到安息"):GetBool()
--- 监听裤子模式变量变化
-cvars.AddChangeCallback("zs_pantsmode", function(cvar, oldvalue, newvalue)
-	GAMEMODE:SetPantsMode(tonumber(newvalue) == 1)
-end)
+RegisterGameConVar("zs_pantsmode", "0", "PantsMode", "裤子模式：只有死者才能从这种邪恶中得到安息", "bool", nil, function(v) GAMEMODE:SetPantsMode(v) end)
 
 -- zs_classicmode：经典模式，无钉子无职业（默认关闭）
-GM.ClassicMode = CreateConVar("zs_classicmode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "经典模式：无钉子，无职业选择，只有终极目的地"):GetBool()
--- 监听经典模式变量变化
-cvars.AddChangeCallback("zs_classicmode", function(cvar, oldvalue, newvalue)
-	GAMEMODE:SetClassicMode(tonumber(newvalue) == 1)
-end)
+RegisterGameConVar("zs_classicmode", "0", "ClassicMode", "经典模式：无钉子，无职业选择，只有终极目的地", "bool", nil, function(v) GAMEMODE:SetClassicMode(v) end)
 
 -- zs_babymode：宝宝简单模式（默认关闭）
-GM.BabyMode = CreateConVar("zs_babymode", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "宝宝模式"):GetBool()
--- 监听宝宝模式变量变化
-cvars.AddChangeCallback("zs_babymode", function(cvar, oldvalue, newvalue)
-	GAMEMODE:SetBabyMode(tonumber(newvalue) == 1)
-end)
+RegisterGameConVar("zs_babymode", "0", "BabyMode", "宝宝模式", "bool", nil, function(v) GAMEMODE:SetBabyMode(v) end)
 
 -- zs_lowplayermode：低人数模式，优化游戏体验（默认启用）
-GM.LowPlayerMode = CreateConVar("zs_lowplayermode", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "人数低的时候启用，达到最好的游玩效果"):GetBool()
--- 监听低人数模式变量变化
-cvars.AddChangeCallback("zs_lowplayermode", function(cvar, oldvalue, newvalue)
-	GAMEMODE:SetLowPlayerMode(tonumber(newvalue) == 1)
-end)
+RegisterGameConVar("zs_lowplayermode", "1", "LowPlayerMode", "人数低的时候启用，达到最好的游玩效果", "bool", nil, function(v) GAMEMODE:SetLowPlayerMode(v) end)
+
+-- zs_afk_time：人类AFK判定时间（秒，0=禁用）。超过该秒数未移动则判定为AFK，TAB记分板显示提示
+RegisterGameConVar("zs_afk_time", "90", "AFKTime", "人类玩家在指定秒数内未移动则判定为AFK（TAB记分板显示提示）。设为0禁用", "float", function(v) return tonumber(v) or 0 end)
 
 -- zs_endwavehealthbonus：每波结束后人类获得的生命值奖励（默认0，设为0禁用）
-GM.EndWaveHealthBonus = CreateConVar("zs_endwavehealthbonus", "0", FCVAR_ARCHIVE + FCVAR_NOTIFY, "每波结束后人类将获得此数值的生命值。设为0禁用"):GetInt()
--- 监听波末血量奖励变量变化
-cvars.AddChangeCallback("zs_endwavehealthbonus", function(cvar, oldvalue, newvalue)
-	GAMEMODE.EndWaveHealthBonus = tonumber(newvalue) or 0
-end)
+RegisterGameConVar("zs_endwavehealthbonus", "0", "EndWaveHealthBonus", "每波结束后人类将获得此数值的生命值。设为0禁用", "int", function(v) return tonumber(v) or 0 end)
 
 -- zs_giblifetime：玩家碎尸留在世界中的秒数（默认25秒）
-GM.GibLifeTime = CreateConVar("zs_giblifetime", "25", FCVAR_ARCHIVE, "指定玩家碎尸(Gibs)在未被食用或破坏的情况下在世界中停留的秒数"):GetFloat()
--- 监听碎尸存留时间变量变化
-cvars.AddChangeCallback("zs_giblifetime", function(cvar, oldvalue, newvalue)
-	GAMEMODE.GibLifeTime = tonumber(newvalue) or 1
-end)
+RegisterGameConVar("zs_giblifetime", "25", "GibLifeTime", "指定玩家碎尸(Gibs)在未被食用或破坏的情况下在世界中停留的秒数", "float", function(v) return tonumber(v) or 1 end, nil, FCVAR_ARCHIVE)
 
 -- zs_grief_forgiveness：恶意破坏惩罚宽容度（默认0.5，数值越小越宽容）
-GM.GriefForgiveness = math.ceil(100 * CreateConVar("zs_grief_forgiveness", "0.5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "按此比例缩放对可破坏物体造成的伤害判定。这并不防止伤害，只决定给予玩家多少惩罚。数值越小越宽容，数值越大越严厉"):GetFloat()) * 0.01
--- 监听恶意破坏宽容度变量变化
-cvars.AddChangeCallback("zs_grief_forgiveness", function(cvar, oldvalue, newvalue)
-	GAMEMODE.GriefForgiveness = math.ceil(100 * (tonumber(newvalue) or 1)) * 0.01
-end)
+RegisterGameConVar("zs_grief_forgiveness", "0.5", "GriefForgiveness", "按此比例缩放对可破坏物体造成的伤害判定。这并不防止伤害，只决定给予玩家多少惩罚。数值越小越宽容，数值越大越严厉", "float", function(v) return math.ceil(100 * (tonumber(v) or 1)) * 0.01 end)
 
 -- zs_grief_strict：反恶意破坏系统开关（默认启用）
-GM.GriefStrict = CreateConVar("zs_grief_strict", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "防恶意破坏系统。给予破坏己方路障的人类扣分，最终给予生命值惩罚"):GetBool()
--- 监听恶意破坏严格模式变量变化
-cvars.AddChangeCallback("zs_grief_strict", function(cvar, oldvalue, newvalue)
-	GAMEMODE.GriefStrict = tonumber(newvalue) == 1
-end)
+RegisterGameConVar("zs_grief_strict", "1", "GriefStrict", "防恶意破坏系统。给予破坏己方路障的人类扣分，最终给予生命值惩罚", "bool")
 
 -- zs_grief_minimumhealth：反恶意破坏系统关注的最小生命值阈值（默认100）
-GM.GriefMinimumHealth = CreateConVar("zs_grief_minimumhealth", "100", FCVAR_ARCHIVE + FCVAR_NOTIFY, "物体被视为可被恶意破坏的最小生命值阈值"):GetInt()
--- 监听恶意破坏最小血量变量变化
-cvars.AddChangeCallback("zs_grief_minimumhealth", function(cvar, oldvalue, newvalue)
-	GAMEMODE.GriefMinimumHealth = tonumber(newvalue) or 100
-end)
+RegisterGameConVar("zs_grief_minimumhealth", "100", "GriefMinimumHealth", "物体被视为可被恶意破坏的最小生命值阈值", "int", function(v) return tonumber(v) or 100 end)
 
 -- zs_grief_damagemultiplier：人类对可破坏物的伤害倍率（默认0.5）
-GM.GriefDamageMultiplier = math.ceil(100 * CreateConVar("zs_grief_damagemultiplier", "0.5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "将人类对可破坏物体造成的伤害乘以该数值"):GetFloat()) * 0.01
--- 监听恶意破坏伤害倍率变量变化
-cvars.AddChangeCallback("zs_grief_damagemultiplier", function(cvar, oldvalue, newvalue)
-	GAMEMODE.GriefDamageMultiplier = math.ceil(100 * (tonumber(newvalue) or 0.5)) * 0.01
-end)
+RegisterGameConVar("zs_grief_damagemultiplier", "0.5", "GriefDamageMultiplier", "将人类对可破坏物体造成的伤害乘以该数值", "float", function(v) return math.ceil(100 * (tonumber(v) or 0.5)) * 0.01 end)
 
 -- zs_grief_reflectthreshold：恶意破坏分数低于此值时开始反弹伤害（默认-5）
-GM.GriefReflectThreshold = CreateConVar("zs_grief_reflectthreshold", "-5", FCVAR_ARCHIVE + FCVAR_NOTIFY, "如果玩家分数低于此数值，则开始反弹伤害"):GetInt()
--- 监听恶意破坏反弹阈值变量变化
-cvars.AddChangeCallback("zs_grief_reflectthreshold", function(cvar, oldvalue, newvalue)
-	GAMEMODE.GriefReflectThreshold = tonumber(newvalue) or -5
-end)
+RegisterGameConVar("zs_grief_reflectthreshold", "-5", "GriefReflectThreshold", "如果玩家分数低于此数值，则开始反弹伤害", "int", function(v) return tonumber(v) or -5 end)
 
 -- zs_maxpropsinbarricade：钉连装置中最大道具数量（默认2）
-GM.MaxPropsInBarricade = CreateConVar("zs_maxpropsinbarricade", "2", FCVAR_ARCHIVE + FCVAR_NOTIFY, "限制一个'钉连装置'中可以包含的道具数量"):GetInt()
--- 监听障碍物最大道具数量变量变化
-cvars.AddChangeCallback("zs_maxpropsinbarricade", function(cvar, oldvalue, newvalue)
-	GAMEMODE.MaxPropsInBarricade = tonumber(newvalue) or 8
-end)
+RegisterGameConVar("zs_maxpropsinbarricade", "2", "MaxPropsInBarricade", "限制一个'钉连装置'中可以包含的道具数量", "int", function(v) return tonumber(v) or 8 end)
 
 -- zs_maxdroppeditems：最大掉落物品数量（目前已注释并硬编码为48）
 GM.MaxDroppedItems = 48--[[CreateConVar("zs_maxdroppeditems", "48", FCVAR_ARCHIVE + FCVAR_NOTIFY, "掉落物品的最大数量。防止大量玩家死亡时出现刷屏或滞后"):GetInt()
@@ -169,18 +166,10 @@ cvars.AddChangeCallback("zs_maxdroppeditems", function(cvar, oldvalue, newvalue)
 end)]]
 
 -- zs_nailhealthperrepair：每次修复钉子恢复的生命值（默认10）
-GM.NailHealthPerRepair = CreateConVar("zs_nailhealthperrepair", "10", FCVAR_ARCHIVE + FCVAR_NOTIFY, "钉子被修复时获得的生命值"):GetInt()
--- 监听每次修复钉子恢复血量变量变化
-cvars.AddChangeCallback("zs_nailhealthperrepair", function(cvar, oldvalue, newvalue)
-	GAMEMODE.NailHealthPerRepair = tonumber(newvalue) or 1
-end)
+RegisterGameConVar("zs_nailhealthperrepair", "10", "NailHealthPerRepair", "钉子被修复时获得的生命值", "int", function(v) return tonumber(v) or 1 end)
 
 -- zs_nopropdamagefromhumanmelee：人类近战不对道具造成伤害（默认启用）
-GM.NoPropDamageFromHumanMelee = CreateConVar("zs_nopropdamagefromhumanmelee", "1", FCVAR_ARCHIVE + FCVAR_NOTIFY, "人类近战攻击不会对道具造成伤害"):GetBool()
--- 监听人类近战不伤道具变量变化
-cvars.AddChangeCallback("zs_nopropdamagefromhumanmelee", function(cvar, oldvalue, newvalue)
-	GAMEMODE.NoPropDamageFromHumanMelee = tonumber(newvalue) == 1
-end)
+RegisterGameConVar("zs_nopropdamagefromhumanmelee", "1", "NoPropDamageFromHumanMelee", "人类近战攻击不会对道具造成伤害", "bool")
 
 -- zs_medkitpointsperhealth：每点治疗量对应的得分系数（目前已注释并硬编码为3）
 GM.MedkitPointsPerHealth = 3--[[CreateConVar("zs_medkitpointsperhealth", "8", FCVAR_ARCHIVE + FCVAR_NOTIFY, "指定玩家获得1点积分所需的治疗量。用于医疗包等"):GetInt()
@@ -189,11 +178,7 @@ cvars.AddChangeCallback("zs_medkitpointsperhealth", function(cvar, oldvalue, new
 end)]]
 
 -- zs_repairpointsperhealth：每点修复量对应的得分系数（默认25）
-GM.RepairPointsPerHealth = CreateConVar("zs_repairpointsperhealth", "25", FCVAR_ARCHIVE + FCVAR_NOTIFY, "指定玩家获得1点积分所需的修复量。用于钉子等"):GetInt()
--- 监听修复得分系数变量变化
-cvars.AddChangeCallback("zs_repairpointsperhealth", function(cvar, oldvalue, newvalue)
-	GAMEMODE.RepairPointsPerHealth = tonumber(newvalue) or 1
-end)
+RegisterGameConVar("zs_repairpointsperhealth", "25", "RepairPointsPerHealth", "指定玩家获得1点积分所需的修复量。用于钉子等", "int", function(v) return tonumber(v) or 1 end)
 
 -- 辅助函数：遍历所有玩家，查找某个键值最大的玩家（如击杀数）
 local function GetMostKey(key, top)

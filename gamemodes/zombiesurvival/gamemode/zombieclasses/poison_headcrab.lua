@@ -1,10 +1,8 @@
---[[
-==================================================================
-毒猎头蟹 (Poison Headcrab) — 僵尸职业
-特点：黑色猎头蟹模型、可喷吐毒液、可扑击、远程攻击、
-      绿色血液、跳跃/喷吐时视角锁定
-==================================================================
-]]
+-- ============================================================================
+-- 毒猎头蟹 (Poison Headcrab) — 僵尸职业
+-- 特点：黑色猎头蟹模型、可喷吐毒液、可扑击、远程攻击、
+--       绿色血液、跳跃/喷吐时视角锁定
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Poison Headcrab"
@@ -47,18 +45,26 @@ CLASS.Points = CLASS.Health/GM.HeadcrabZombiePointRatio
 
 -- 小型碰撞体积
 CLASS.Hull = {Vector(-12, -12, 0), Vector(12, 12, 18.1)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-12, -12, 0), Vector(12, 12, 18.1)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 10)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 10)
+-- 台阶高度
 CLASS.StepSize = 8
+-- 蹲伏行走速度倍率
 CLASS.CrouchedWalkSpeed = 1
+-- 质量
 CLASS.Mass = 40
 
 -- 不能蹲下
 CLASS.CantDuck = true
 
 -- 受伤/死亡音效
+-- 受伤音效
 CLASS.PainSounds = {"NPC_BlackHeadcrab.Pain"}
+-- 死亡音效
 CLASS.DeathSounds = {"NPC_BlackHeadcrab.Die"}
 
 -- 绿色血液
@@ -98,6 +104,7 @@ local StepSounds = {
 	"npc/headcrab_poison/ph_step4.wav"
 }
 
+-- 自定义脚步声
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	pl:EmitSound(StepSounds[math_random(#StepSounds)], 60)
 	return true

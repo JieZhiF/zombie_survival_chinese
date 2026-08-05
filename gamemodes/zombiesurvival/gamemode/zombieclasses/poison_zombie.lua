@@ -1,10 +1,8 @@
---[[
-==================================================================
-毒僵尸 (Poison Zombie) — 僵尸职业
-特点：毒僵尸模型、高血量、较高质量（不易被击退）、
-      缓慢行走动画、绿色血液
-==================================================================
-]]
+-- ============================================================================
+-- 毒僵尸 (Poison Zombie) — 僵尸职业
+-- 特点：毒僵尸模型、高血量、较高质量（不易被击退）、
+--       缓慢行走动画、绿色血液
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Poison Zombie"
@@ -40,14 +38,19 @@ CLASS.Mass = DEFAULT_MASS * 1.5
 CLASS.Points = CLASS.Health/GM.PoisonZombiePointRatio
 
 -- 受伤/死亡音效
+-- 受伤音效
 CLASS.PainSounds = {"npc/zombie_poison/pz_pain1.wav", "npc/zombie_poison/pz_pain2.wav", "npc/zombie_poison/pz_pain3.wav"}
+-- 死亡音效
 CLASS.DeathSounds = {"npc/zombie_poison/pz_die1.wav", "npc/zombie_poison/pz_die2.wav"}
 -- 语音音调
 CLASS.VoicePitch = 0.6
 
 -- 视角偏移和碰撞体积
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 50)
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 64)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 35)}
 
 -- 黄色血液
@@ -73,6 +76,7 @@ function CLASS:CalcMainActivity(pl, velocity)
 end
 
 -- 自定义脚步声
+-- 自定义脚步声（左右脚交替音效）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if iFoot == 0 and math_random(3) < 3 then
 		pl:EmitSound("npc/zombie_poison/pz_right_foot1.wav")

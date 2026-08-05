@@ -1,10 +1,8 @@
---[[
-==================================================================
-梦魇 (Nightmare) — BOSS僵尸职业
-特点：高速移动、免疫击退、可嘲讽、随机骨骼扭曲效果、 
-      死亡掉落武器箱、深色渲染
-==================================================================
-]]
+-- ============================================================================
+-- 梦魇 (Nightmare) — BOSS僵尸职业
+-- 特点：高速移动、免疫击退、可嘲讽、随机骨骼扭曲效果、
+--       死亡掉落武器箱、深色渲染
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Nightmare"
@@ -48,6 +46,7 @@ CLASS.VoicePitch = 0.65
 
 -- 受伤/死亡音效列表
 CLASS.PainSounds = {"npc/zombie/zombie_pain1.wav", "npc/zombie/zombie_pain2.wav", "npc/zombie/zombie_pain3.wav", "npc/zombie/zombie_pain4.wav", "npc/zombie/zombie_pain5.wav", "npc/zombie/zombie_pain6.wav"}
+-- 死亡音效列表
 CLASS.DeathSounds = {"npc/zombie/zombie_die1.wav", "npc/zombie/zombie_die2.wav", "npc/zombie/zombie_die3.wav"}
 
 -- 缓存函数

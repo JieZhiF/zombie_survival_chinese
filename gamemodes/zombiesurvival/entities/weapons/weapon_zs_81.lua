@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "'81式' 试用形"
+SWEP.PrintName = ""..translate.Get("weapon_zs_81")
 SWEP.Description = "按 Shift 切换形态，右键进行紧急射击（消耗手枪弹药）。"
 
 SWEP.SlotPos = 0

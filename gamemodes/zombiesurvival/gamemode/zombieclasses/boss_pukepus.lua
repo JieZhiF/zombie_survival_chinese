@@ -1,10 +1,8 @@
---[[
-==================================================================
-呕吐脓 (Puke Pus) — BOSS僵尸职业
-特点：毒僵尸模型、受伤时喷出毒肉块、无手臂骨骼缩放、
-      黄色血液、死亡时大规模毒肉块爆发
-==================================================================
-]]
+-- ============================================================================
+-- 呕吐脓 (Puke Pus) — BOSS僵尸职业
+-- 特点：毒僵尸模型、受伤时喷出毒肉块、无手臂骨骼缩放、
+--       黄色血液、死亡时大规模毒肉块爆发
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Puke Pus"
@@ -39,6 +37,7 @@ CLASS.Points = 40
 
 -- 受伤/死亡音效（毒僵尸专用）
 CLASS.PainSounds = {"NPC_PoisonZombie.Pain"}
+-- 死亡音效
 CLASS.DeathSounds = {Sound("npc/zombie_poison/pz_call1.wav")}
 
 -- 语音音调
@@ -238,10 +237,12 @@ CLASS.Icon = "zombiesurvival/killicons/pukepus"
 
 -- 藤壶皮肤材质
 local matSkin = Material("Models/Barnacle/barnacle_sheet")
+-- 绘制前覆盖材质为藤壶皮肤
 function CLASS:PrePlayerDraw(pl)
 	render.ModelMaterialOverride(matSkin)
 end
 
+-- 绘制后恢复材质
 function CLASS:PostPlayerDraw(pl)
 	render.ModelMaterialOverride()
 end

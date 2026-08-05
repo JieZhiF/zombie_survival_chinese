@@ -54,12 +54,12 @@ function ENT:Hit(vHitPos, vHitNormal, eHitEntity, vOldVelocity)
 
 					local txt = alt and "Strength Rifle" or "Medical Rifle"
 
-					net.Start("zs_buffby")
+					net.Start(NET_MSG.BUFFBY)
 						net.WriteEntity(owner)
 						net.WriteString(txt)
 					net.Send(eHitEntity)
 
-					net.Start("zs_buffwith")
+					net.Start(NET_MSG.BUFFWITH)
 						net.WriteEntity(eHitEntity)
 						net.WriteString(txt)
 					net.Send(owner)

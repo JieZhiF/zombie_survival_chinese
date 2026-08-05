@@ -1,11 +1,9 @@
---[[
-==================================================================
-暗影 (Shade) — BOSS僵尸职业
-特点：半透明幽灵效果、无摔伤、无阴影、无脚步声、
-      腿部/躯干子弹免疫、暗影护盾技能、隐藏腿部骨骼、
-      折射特效、死亡时触发暗影死亡特效
-==================================================================
-]]
+-- ============================================================================
+-- 暗影 (Shade) — BOSS僵尸职业
+-- 特点：半透明幽灵效果、无摔伤、无阴影、无脚步声、
+--       腿部/躯干子弹免疫、暗影护盾技能、隐藏腿部骨骼、
+--       折射特效、死亡时触发暗影死亡特效
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Shade"
@@ -62,6 +60,7 @@ CLASS.BloodColor = BLOOD_COLOR_MECH
 
 -- 受伤/死亡音效（藤壶拉拽音效）
 CLASS.PainSounds = {Sound("npc/barnacle/barnacle_pull1.wav"), Sound("npc/barnacle/barnacle_pull2.wav"), Sound("npc/barnacle/barnacle_pull3.wav"), Sound("npc/barnacle/barnacle_pull4.wav")}
+-- 死亡音效（幽灵哀嚎）
 CLASS.DeathSounds = {Sound("zombiesurvival/wraithdeath1.ogg"), Sound("zombiesurvival/wraithdeath2.ogg"), Sound("zombiesurvival/wraithdeath3.ogg"), Sound("zombiesurvival/wraithdeath4.ogg")}
 
 -- 缓存数学函数
@@ -214,6 +213,7 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/shadev2"
+-- 图标颜色（蓝色）
 CLASS.IconColor = Color(0, 50, 255)
 
 -- 需要缩到最小的腿部骨骼

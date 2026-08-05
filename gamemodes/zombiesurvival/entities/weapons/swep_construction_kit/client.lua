@@ -46,7 +46,7 @@ local playerBones = {
 	}
 
 local model_drag_modes = {
-	//["_x /y |z"] = { "x", "z", "y", "p", "r", "y" }, // this one is bad
+	--["_x /y |z"] = { "x", "z", "y", "p", "r", "y" }, -- this one is bad
 	["_y /x |z"] = { "y", "z", "x", "y", "r", "p" },
 	["view space"] = { "y", "z", "x", "y", "r", "p", vs = true },
 }
@@ -298,7 +298,7 @@ function SWEP:Think()
 	local mx, my = gui.MousePos()
 	local diffx, diffy = (mx - self.mlast_x), (my - self.mlast_y)
 
-	// model positioning
+	-- model positioning
 
 	local element_mode = input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_LSHIFT )
 	local vm = self:GetOwner():GetViewModel()
@@ -322,7 +322,7 @@ function SWEP:Think()
 						local p_pos, p_ang = self:GetBoneOrientation( tbl, self.selectedElement, ent )
 
 						local thirdperson_ang = self.thirdPersonAngleView * 1
-						//thirdperson_ang.y = thirdperson_ang.y + 90
+						--thirdperson_ang.y = thirdperson_ang.y + 90
 
 						local view_ang = self.useThirdPerson and thirdperson_ang or LocalPlayer():EyeAngles()
 
@@ -365,7 +365,7 @@ function SWEP:Think()
 				end
 			else
 				if input.IsKeyDown( KEY_LCONTROL ) then
-					// AAAAAAAAAaaaaaaaaaaaaaaaa
+					-- AAAAAAAAAaaaaaaaaaaaaaaaa
 					if cur_mode.vs and IsValid( ent ) then
 						local p_pos, p_ang = self:GetBoneOrientation( tbl, self.selectedElement, ent )
 
@@ -430,7 +430,7 @@ function SWEP:Think()
 		end
 
 	else
-		// normal ironsights and stuff
+		-- normal ironsights and stuff
 		if (input.IsMouseDown(MOUSE_RIGHT) and !(diffx > 40 or diffy > 40) and self.Frame and self.Frame:IsVisible()) then -- right mouse press without sudden jumps
 
 			if (self.useThirdPerson) then
@@ -1818,8 +1818,8 @@ local function CreateMenu( preset )
 
 		local inside = mx > x and mx < ( x + w ) and my > y and my < ( y + h ) and !( input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_LSHIFT ) )
 
-		//self:SetKeyboardInputEnabled( inside )
-		//self:SetMouseInputEnabled( inside )
+		--self:SetKeyboardInputEnabled( inside )
+		--self:SetMouseInputEnabled( inside )
 	end
 	--]]
 

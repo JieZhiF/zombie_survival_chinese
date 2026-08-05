@@ -1,7 +1,22 @@
 -- ============================================================================
--- DSideMenu - 侧边菜单面板（人类 ALT 菜单右侧界面）
--- 按下 ALT 键后从右侧滑入，显示弹药计数器列表
--- 根据弹药是否为空自动隐藏/显示对应的弹药行
+-- DZSSideMenuBase - 侧边菜单公共基类（DSideMenu 与 DZombieSpawnMenu 共享）
+-- 按下 ALT 键后从右侧滑入；子类自定义 Spacing/宽度/RefreshContents
+-- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 侧边菜单基类
+-- [位置] DZSSideMenuBase / Init() / OpenMenu() / CloseMenu() / Think()
+-- [作用] ALT 键从右侧滑入的菜单框架，管理项目增删与居中布局
+-- [常改] 菜单宽度、滑动时长、按键检测
+--
+-- [区域] 项目列表
+-- [位置] AddItem() / RemoveItem() / PerformLayout()
+-- [作用] 垂直居中排列可见项目
+-- [常改] 项目间距、排列方式
+--
+-- [区域] 人类弹药菜单
+-- [位置] DSideMenu / RefreshContents()
+-- [作用] 按弹药余量自动显示/隐藏对应的弹药计数器行
+-- [常改] 显隐判定条件
 -- ============================================================================
 
 local PANEL = {}
@@ -115,6 +130,53 @@ function PANEL:RemoveItem(item)
 end
 
 -- ============================================================================
+-- RefreshContents - 子类实现具体内容
+-- ============================================================================
+function PANEL:RefreshContents()
+end
+
+-- ============================================================================
+-- PerformLayout - 垂直居中排列所有可见项目
+-- ============================================================================
+function PANEL:PerformLayout()
+	local y = ScrH() / 2
+	for k, item in ipairs(self.Items) do
+		if item and item:IsValid() and item:IsVisible() then
+			y = y - (item:GetTall() + self.Spacing) / 2
+		end
+	end
+
+	for k, item in ipairs(self.Items) do
+		if item and item:IsValid() and item:IsVisible() then
+			item:SetPos(0, y)
+			item:CenterHorizontal()
+			y = y + item:GetTall() + self.Spacing
+		end
+	end
+end
+
+vgui.Register("DZSSideMenuBase", PANEL, "DPanel")
+
+-- ============================================================================
+-- DSideMenu - 侧边菜单面板（人类 ALT 菜单右侧界面）
+-- 按下 ALT 键后从右侧滑入，显示弹药计数器列表
+-- 根据弹药是否为空自动隐藏/显示对应的弹药行
+-- ============================================================================
+
+local PANEL = {}
+PANEL.Base = "DZSSideMenuBase"
+
+-- 每个项目之间的垂直间距
+PANEL.Spacing = 8
+
+-- ============================================================================
+-- RefreshSize - 根据屏幕 DPI 刷新菜单大小
+-- ============================================================================
+function PANEL:RefreshSize()
+	self:SetSize(BetterScreenScale() * 256, ScrH())
+end
+
+-- ============================================================================
 -- RefreshContents - 根据弹药数量显示/隐藏对应的弹药计数器
 -- ============================================================================
 function PANEL:RefreshContents()
@@ -139,24 +201,4 @@ function PANEL:RefreshContents()
 	end
 end
 
--- ============================================================================
--- PerformLayout - 垂直居中排列所有可见项目
--- ============================================================================
-function PANEL:PerformLayout()
-	local y = ScrH() / 2
-	for k, item in ipairs(self.Items) do
-		if item and item:IsValid() and item:IsVisible() then
-			y = y - (item:GetTall() + self.Spacing) / 2
-		end
-	end
-
-	for k, item in ipairs(self.Items) do
-		if item and item:IsValid() and item:IsVisible() then
-			item:SetPos(0, y)
-			item:CenterHorizontal()
-			y = y + item:GetTall() + self.Spacing
-		end
-	end
-end
-
-vgui.Register("DSideMenu", PANEL, "DPanel")
+vgui.Register("DSideMenu", PANEL, "DZSSideMenuBase")

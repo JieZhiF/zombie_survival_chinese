@@ -1,14 +1,15 @@
---[[
-==================================================================
-暗影腐化者 (Shadow Corruptor) — 僵尸职业（已禁用）
-特点：已禁用、娃娃模型+骷髅覆盖模型、可装死、半透明黑色渲染、
-      红色发光眼睛、自定义手部绘制
-==================================================================
-]]
+-- ============================================================================
+-- 暗影腐化者 (Shadow Corruptor) — 僵尸职业（已禁用）
+-- 特点：已禁用、娃娃模型+骷髅覆盖模型、可装死、半透明黑色渲染、
+--       红色发光眼睛、自定义手部绘制
+-- ============================================================================
 
 -- 隐藏/禁用
+-- 隐藏（不直接可选）
 CLASS.Hidden = true
+-- 禁用（不参与游戏）
 CLASS.Disabled = true
+-- 解锁（但被禁用）
 CLASS.Unlocked = true
 
 -- 职业显示名称
@@ -32,14 +33,18 @@ CLASS.Speed = 150
 CLASS.Points = 5
 
 -- 可嘲讽/可装死
+-- 可嘲讽
 CLASS.CanTaunt = true
+-- 可装死
 CLASS.CanFeignDeath = true
 
 -- 绑定的武器
 CLASS.SWEP = "weapon_zs_shadowcorruptor"
 
 -- 主模型（娃娃）+ 覆盖模型（骷髅）
+-- 主模型（娃娃）
 CLASS.Model = Model("models/vinrax/player/doll_player.mdl")
+-- 覆盖模型（骷髅）
 CLASS.OverrideModel = Model("models/player/skeleton.mdl")
 
 -- 语音音调
@@ -53,10 +58,15 @@ CLASS.ModelScale = 0.4
 
 -- 物理/碰撞属性
 CLASS.Mass = 30
+-- 视角偏移
 CLASS.ViewOffset = DEFAULT_VIEW_OFFSET * CLASS.ModelScale
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = DEFAULT_VIEW_OFFSET_DUCKED * CLASS.ModelScale
+-- 台阶高度
 CLASS.StepSize = 8
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0) * CLASS.ModelScale, Vector(16, 16, 100) * CLASS.ModelScale}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0) * CLASS.ModelScale, Vector(16, 16, 60) * CLASS.ModelScale}
 
 -- 缓存函数
@@ -84,6 +94,7 @@ local StepRightSounds = {
 	"npc/zombie/foot3.wav"
 }
 
+-- 自定义脚步声（高音调）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if iFoot == 0 then
 		pl:EmitSound(StepLeftSounds[math_random(#StepLeftSounds)], 55, 150)
@@ -159,6 +170,7 @@ function CLASS:PlayPainSound(pl)
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound(string_format("npc/zombie/zombie_die%d.wav", math_random(3)), 75, math_random(122, 128))
 	return true
@@ -182,13 +194,16 @@ end
 
 -- 服务端逻辑
 if SERVER then
+	-- 死亡时播放假死动画
 	function CLASS:OnKilled(pl, attacker, inflictor, suicide, headshot, dmginfo)
 		pl:FakeDeath(pl:LookupSequence("death_0"..math_random(4)), self.ModelScale)
 		return true
 	end
+	-- 备用使用键触发装死
 	function CLASS:AltUse(pl)
 		pl:StartFeignDeath()
 	end
+	-- 生成时创建自定义手部
 	function CLASS:OnSpawned(pl)
 		local oldhands = pl:GetHands()
 		if IsValid(oldhands) then
@@ -207,6 +222,7 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/gorechild"
+-- 图标颜色（黑色）
 CLASS.IconColor = Color(20, 20, 20)
 
 -- 渲染变量
@@ -237,22 +253,24 @@ function CLASS:DrawHands(pl, hands)
 	return true
 end
 
--- 绘制前
+-- 绘制前：半透明黑色
 function CLASS:PrePlayerDraw(pl)
 	render_SetBlend(0.45)
 	render_SetColorModulation(0.1, 0.1, 0.1)
 end
 
+-- 绘制后：恢复颜色与透明度
 function CLASS:PostPlayerDraw(pl)
 	render_SetBlend(1)
 	render_SetColorModulation(1, 1, 1)
 end
 
--- 覆盖模型绘制
+-- 覆盖模型绘制前：黑色材质
 function CLASS:PrePlayerDrawOverrideModel(pl)
 	render_ModelMaterialOverride(matBlack)
 end
 
+-- 覆盖模型绘制后：恢复材质并绘制红色发光眼睛
 function CLASS:PostPlayerDrawOverrideModel(pl)
 	render_ModelMaterialOverride(nil)
 	if pl == MySelf and not pl:ShouldDrawLocalPlayer() then return end

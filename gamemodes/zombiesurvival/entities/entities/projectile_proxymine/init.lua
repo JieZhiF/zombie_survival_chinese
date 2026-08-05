@@ -90,7 +90,7 @@ function ENT:Think()
 		for k,v in pairs(ents.FindInSphere(pos, 90)) do
 			if v:IsValidLivingZombie() and not v:IsHeadcrab() then
 				local nearest = v:NearestPoint(pos)
-				if TrueVisibleFilters(pos, nearest, self, v) then
+				if TrueVisibleFiltered(pos, nearest, self, v) then
 					self:SetExplodeTime(CurTime() + self.ExplosionDelay)
 					self:EmitSound("npc/scanner/combat_scan2.wav")
 

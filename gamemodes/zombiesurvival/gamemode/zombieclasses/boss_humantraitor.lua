@@ -16,6 +16,8 @@ CLASS.Help = "controls_humantraitor"
 
 -- 非正式BOSS（隐藏）
 CLASS.Boss = false
+-- 迷你BOSS（通过僵尸商店购买获得）
+CLASS.MiniBoss = true
 -- 隐藏职业
 CLASS.Hidden = true
 -- 未解锁

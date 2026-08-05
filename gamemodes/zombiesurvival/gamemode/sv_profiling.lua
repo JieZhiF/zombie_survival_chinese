@@ -204,7 +204,7 @@ function GM:LoadProfiler()
 
 	-- 如果启用了在线配置文件且 NDB 库未定义，则从在线 URL 获取节点数据
 	if self.UseOnlineProfiles and not NDB then
-		http.Fetch("http://www.noxiousnet.com/zs_nodes/" .. mapname .. ".txt", FetchNodes)
+		http.Fetch("https://www.noxiousnet.com/zs_nodes/" .. mapname .. ".txt", FetchNodes)
 	end
 
 	-- 尝试从本地 DATA 文件系统加载自动生成的节点文件

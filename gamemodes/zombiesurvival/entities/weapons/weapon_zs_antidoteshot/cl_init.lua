@@ -1,16 +1,21 @@
+-- ============================================================================
+-- cl_init.lua - 解毒剂注射枪（客户端）
+-- 负责：武器栏位设置、第一人称自定义拼装模型与视角偏移（治疗者持枪摇晃）
+-- ============================================================================
 INC_CLIENT()
 
-DEFINE_BASECLASS("weapon_zs_baseproj")
-SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotMedicalTools")
-SWEP.SlotGroup = WEPSELECT_MEDICAL_TOOL
-SWEP.ViewModelFlip = false
-SWEP.ViewModelFOV = 56
+DEFINE_BASECLASS("weapon_zs_baseproj") -- 定义基类引用
+SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotMedicalTools") -- 医疗工具武器栏
+SWEP.SlotGroup = WEPSELECT_MEDICAL_TOOL -- 武器选择组（医疗工具）
+SWEP.ViewModelFlip = false -- 不翻转第一人称模型
+SWEP.ViewModelFOV = 56 -- 第一人称镜头大小
 
-SWEP.HUD3DBone = "v_weapon.Deagle_Parent"
-SWEP.HUD3DPos = Vector(0.1, -4.2, 2.22)
-SWEP.HUD3DAng = Angle(0, 0, 0)
-SWEP.HUD3DScale = 0.016
+SWEP.HUD3DBone = "v_weapon.Deagle_Parent" -- 3D HUD 挂点骨骼
+SWEP.HUD3DPos = Vector(0.1, -4.2, 2.22) -- 3D HUD 位置偏移
+SWEP.HUD3DAng = Angle(0, 0, 0) -- 3D HUD 角度
+SWEP.HUD3DScale = 0.016 -- 3D HUD 缩放
 
+-- 第一人称自定义拼装模型部件（多个 props 零件组合成枪械外观）
 SWEP.VElements = {
 	["novacolt++++++"] = { type = "Model", model = "models/props_c17/furnituredrawer003a.mdl", bone = "v_weapon.Deagle_Parent", rel = "novacolt", pos = Vector(0.3, 6, 3), angle = Angle(90, -90, 0), size = Vector(0.15, 0.15, 0.15), color = Color(148, 152, 183, 255), surpresslightning = false, material = "models/props_c17/clockwood01", skin = 0, bodygroup = {} },
 	["novacolt++++++++++"] = { type = "Model", model = "models/props_lab/labpart.mdl", bone = "v_weapon.Deagle_Parent", rel = "novacolt", pos = Vector(3.2, 2.299, 0), angle = Angle(0, -43, 0), size = Vector(0.09, 0.129, 0.09), color = Color(59, 130, 99, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -24,6 +29,7 @@ SWEP.VElements = {
 	["novacolt++++"] = { type = "Model", model = "models/props_combine/combine_train02a.mdl", bone = "v_weapon.Deagle_Parent", rel = "novacolt", pos = Vector(0.1, -0.9, -4.6), angle = Angle(0, 180, 90), size = Vector(0.019, 0.019, 0.012), color = Color(127, 145, 163, 255), surpresslightning = false, material = "models/weapons/w_irifle/w_irifle", skin = 0, bodygroup = {} },
 	["novacolt++++++++"] = { type = "Model", model = "models/props_wasteland/laundry_washer001a.mdl", bone = "v_weapon.Deagle_Parent", rel = "novacolt", pos = Vector(0, 3, -0.35), angle = Angle(90, 0, 0), size = Vector(0.009, 0.009, 0.079), color = Color(156, 180, 206, 255), surpresslightning = false, material = "models/weapons/v_smg1/texture4", skin = 0, bodygroup = {} }
 }
+-- 第三人称自定义拼装模型部件（挂在右手骨骼上）
 SWEP.WElements = {
 	["novacolt++++++"] = { type = "Model", model = "models/props_c17/furnituredrawer003a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "novacolt", pos = Vector(0.3, 6, 3), angle = Angle(90, -90, 0), size = Vector(0.15, 0.15, 0.15), color = Color(148, 152, 183, 255), surpresslightning = false, material = "models/props_c17/clockwood01", skin = 0, bodygroup = {} },
 	["novacolt++++++++++"] = { type = "Model", model = "models/props_lab/labpart.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "novacolt", pos = Vector(3.2, 2.299, 0), angle = Angle(0, -43, 0), size = Vector(0.09, 0.129, 0.09), color = Color(59, 130, 99, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -38,14 +44,18 @@ SWEP.WElements = {
 	["novacolt++++++++"] = { type = "Model", model = "models/props_wasteland/laundry_washer001a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "novacolt", pos = Vector(0, 3, -0.35), angle = Angle(90, 0, 0), size = Vector(0.009, 0.009, 0.079), color = Color(156, 180, 206, 255), surpresslightning = false, material = "models/weapons/v_smg1/texture4", skin = 0, bodygroup = {} }
 }
 
-local ghostlerp = 0
+local ghostlerp = 0 -- 治疗者持枪下压的插值进度（0~1）
+-- ==== CalcViewModelView - 治疗者（持枪者处于幽灵/换弹状态时）镜头下压 ====
 function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
+	-- 持枪者处于搭建预览（幽灵）或换弹中时，平滑增大下压幅度
 	if self:GetOwner():GetBarricadeGhosting() or self:GetReloadFinish() > 0 then
 		ghostlerp = math.min(1, ghostlerp + FrameTime() * 0.1)
 	elseif ghostlerp > 0 then
+		-- 恢复正常状态时快速回弹
 		ghostlerp = math.max(0, ghostlerp - FrameTime() * 0.9)
 	end
 
+	-- 按下压幅度绕视角右轴旋转（枪口朝下）
 	if ghostlerp > 0 then
 		ang:RotateAroundAxis(ang:Right(), -65 * ghostlerp)
 	end

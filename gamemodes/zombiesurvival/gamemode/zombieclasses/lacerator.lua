@@ -1,11 +1,9 @@
---[[
-==================================================================
-撕裂者 (Lacerator) — 僵尸职业
-继承自：fast_zombie
-特点：快速僵尸的进阶版、更高血量速度、使用撕裂者模型、
-      自定义脚步（金属+重型）、自定义死亡/受伤音效
-==================================================================
-]]
+-- ============================================================================
+-- 撕裂者 (Lacerator) — 僵尸职业
+-- 继承自：fast_zombie
+-- 特点：快速僵尸的进阶版、更高血量速度、使用撕裂者模型、
+--       自定义脚步（金属+重型）、自定义死亡/受伤音效
+-- ============================================================================
 
 -- 基础职业为"快速僵尸"
 CLASS.Base = "fast_zombie"
@@ -35,9 +33,13 @@ CLASS.Speed = 270
 CLASS.SWEP = "weapon_zs_lacerator"
 
 -- 碰撞体积和视角
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 58)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 32)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 50)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 24)
 
 -- 击杀得分
@@ -59,6 +61,7 @@ local math_min = math.min
 local math_Clamp = math.Clamp
 local math_ceil = math.ceil
 local CurTime = CurTime
+-- 骨骼放大倍数（2倍）
 local BoneScale = Vector(2,2,2)
 local STEPSOUNDTIME_NORMAL = STEPSOUNDTIME_NORMAL
 local STEPSOUNDTIME_WATER_FOOT = STEPSOUNDTIME_WATER_FOOT

@@ -1,4 +1,9 @@
+-- ============================================================================
+-- weapon_zs_asmd/cl_init.lua - ASMD（客户端表现）
+-- 负责：武器栏位、HUD3D 挂载信息，以及用 SCK 元素拼装的独特枪体外观
+-- ============================================================================
 INC_CLIENT()
+-- 归类到螺栓（弹药）选择栏，隐藏原模型，第一人称视野 70
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
 SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.ViewModelFlip = false
@@ -6,11 +11,13 @@ SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 SWEP.ViewModelFOV = 70
 
+-- HUD3D：HUD 内武器图标的挂载骨骼、位置与缩放
 SWEP.HUD3DBone = "v_weapon.awm_parent"
 SWEP.HUD3DPos = Vector(-1.75, -4.5, -10)
 SWEP.HUD3DAng = Angle(0, 0, 0)
 SWEP.HUD3DScale = 0.02
 
+-- 第一人称视图附加元素：用各种零件模型拼装出的 ASMD 枪身（SCK 元素表）
 SWEP.VElements = {
 	["FRONT2FONT"] = { type = "Model", model = "models/props_junk/wood_crate001a.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "FRONT2+", pos = Vector(5.882, -0.225, 0), angle = Angle(0, 0, 0), size = Vector(0.05, 0.021, 0.041), color = Color(255, 255, 255, 255), surpresslightning = false, material = "models/weapons/V_stunbaton/w_shaft01a", skin = 0, bodygroup = {} },
 	["FRONTbacklol"] = { type = "Model", model = "models/weapons/w_smg_p90.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "FRONTBACK", pos = Vector(3.255, -4.786, -0.195), angle = Angle(0, -90, 90), size = Vector(0.512, 1.407, 0.584), color = Color(145, 145, 145, 255), surpresslightning = false, material = "models/props_canal/metalwall005b", skin = 0, bodygroup = {} },
@@ -25,6 +32,7 @@ SWEP.VElements = {
 	["FRONTbottom"] = { type = "Model", model = "models/props_combine/combinetrain01a.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "FRONT", pos = Vector(0, 0.787, 1.118), angle = Angle(90, -90, 180), size = Vector(0.014, 0.016, 0.009), color = Color(165, 165, 150, 255), surpresslightning = false, material = "models/props_pipes/pipemetal001a", skin = 0, bodygroup = {} }
 }
 
+-- 第三人称视图附加元素（同样的零件拼装外观）
 SWEP.WElements = {
 	["FRONTENERGY+++++++++++"] = { type = "Model", model = "models/props_junk/cardboard_box001a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "FRONTBACK", pos = Vector(-1.471, -6.709, 0), angle = Angle(0, 90, 90), size = Vector(0.153, 0.065, 0.067), color = Color(255, 0, 150, 255), surpresslightning = false, material = "models/props_combine/masterinterface01c", skin = 0, bodygroup = {} },
 	["FRONT2FONT"] = { type = "Model", model = "models/props_junk/wood_crate001a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "FRONT2+", pos = Vector(7.397, -0.08, 0), angle = Angle(0, 0, 0), size = Vector(0.039, 0.032, 0.046), color = Color(255, 255, 255, 255), surpresslightning = false, material = "models/weapons/V_stunbaton/w_shaft01a", skin = 0, bodygroup = {} },
@@ -39,6 +47,7 @@ SWEP.WElements = {
 	["FRONTbottom"] = { type = "Model", model = "models/props_combine/combinetrain01a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "FRONT", pos = Vector(0, 0.787, 1.118), angle = Angle(90, -90, 180), size = Vector(0.018, 0.019, 0.009), color = Color(165, 165, 150, 255), surpresslightning = false, material = "models/props_pipes/pipemetal001a", skin = 0, bodygroup = {} }
 }
 
+-- 骨骼修改：把 AWP 母骨骼后移，为自定义枪体腾出空间
 SWEP.ViewModelBoneMods = {
 	["v_weapon.awm_parent"] = { scale = Vector(1, 1, 1), pos = Vector(-10.822, 0, 0), angle = Angle(0, 0, 0) }
 }

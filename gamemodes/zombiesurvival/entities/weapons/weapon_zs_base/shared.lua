@@ -2,7 +2,7 @@
 
 ---------------- [武器基本属性] ----------------
 --SWEP.Base = "weapon_base"
-SWEP.PrintName = "ZS Modular Base"
+SWEP.PrintName = ""..translate.Get("weapon_zs_base")
 SWEP.Description = "武器母本"
 SWEP.DrawAmmo = true                      -- 是否绘制游戏默认的弹药 HUD。
 SWEP.DrawCrosshair = false                -- 是否绘制准星。

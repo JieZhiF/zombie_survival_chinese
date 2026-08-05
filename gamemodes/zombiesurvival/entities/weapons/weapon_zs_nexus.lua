@@ -2,7 +2,7 @@
 --                      基本定义 (Basic Definitions)
 -- =================================================================
 SWEP.Base					= "weapon_zs_base"
-SWEP.PrintName = "'纽带' 突击步枪"
+SWEP.PrintName = ""..translate.Get("weapon_zs_nexus")
 SWEP.Description = "带瞄准镜的突击步枪，射速、伤害和精度都更胜一筹。"
 SWEP.Slot					= 2
 SWEP.SlotPos				= 1

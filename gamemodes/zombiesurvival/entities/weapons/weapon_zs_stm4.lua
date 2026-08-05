@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 DEFINE_BASECLASS("weapon_zs_base")
-SWEP.PrintName = "'究极武器'SR-47"
+SWEP.PrintName = ""..translate.Get("weapon_zs_stm4")
 SWEP.Description = "加油吧"
 
 SWEP.SlotPos = 0

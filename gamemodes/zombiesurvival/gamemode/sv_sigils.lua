@@ -15,7 +15,7 @@ end
 
 -- Sigil被腐化时调用：向所有客户端广播当前已腐化的Sigil数量
 function GM:OnSigilCorrupted(ent, dmginfo)
-	net.Start("zs_sigilcorrupted") -- 开始一个网络消息
+	net.Start(NET_MSG.SIGILCORRUPTED) -- 开始一个网络消息
 		net.WriteUInt(self:NumCorruptedSigils(), 8) -- 写入当前腐化的Sigil数量 (8位无符号整数)
 	net.Broadcast() -- 广播给所有客户端
 end
@@ -26,7 +26,7 @@ end
 
 -- Sigil被净化时调用：向所有客户端广播净化事件
 function GM:OnSigilUncorrupted(ent, dmginfo)
-	net.Start("zs_sigiluncorrupted") -- 开始一个网络消息
+	net.Start(NET_MSG.SIGILUNCORRUPTED) -- 开始一个网络消息
 		--net.WriteUInt(self:NumCorruptedSigils(), 8) -- (这行被注释掉了，但原本可能用于发送净化后的数量)
 	net.Broadcast() -- 广播给所有客户端
 end

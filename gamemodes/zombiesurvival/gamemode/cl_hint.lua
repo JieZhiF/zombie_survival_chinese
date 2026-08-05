@@ -36,7 +36,7 @@ function GM:WorldHint(text, pos, ent, lifetime)
 end
 
 -- 网络接收：服务端发送的世界提示
-net.Receive("zs_worldhint", function(length)
+net.Receive(NET_MSG.WORLDHINT, function(length)
 	GAMEMODE:WorldHint(net.ReadString(), net.ReadVector(), net.ReadEntity(), net.ReadFloat())
 end)
 

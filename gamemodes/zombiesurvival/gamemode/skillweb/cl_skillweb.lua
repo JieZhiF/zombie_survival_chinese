@@ -17,7 +17,7 @@ local render_SuppressEngineLighting = render.SuppressEngineLighting
 -- ============================================================
 -- 接收服务端推送的通知消息（成功/失败）
 -- ============================================================
-net.Receive("zs_skills_notify", function(length)
+net.Receive(NET_MSG.SKILLS_NOTIFY, function(length)
 	if GAMEMODE.SkillWeb then
 		GAMEMODE.SkillWeb:DisplayMessage(net.ReadString(), net.ReadBool() and COLOR_RED or COLOR_GREEN)
 	end
@@ -27,7 +27,7 @@ end)
 -- 接收服务端更新的某个技能期望状态
 -- 播放音效并更新快速统计面板
 -- ============================================================
-net.Receive("zs_skill_is_desired", function(length)
+net.Receive(NET_MSG.SKILL_IS_DESIRED, function(length)
 	local skillid = net.ReadUInt(16)
 	local yesno = net.ReadBool()
 	
@@ -44,7 +44,7 @@ end)
 -- ============================================================
 -- 接收服务端更新的某个技能解锁状态
 -- ============================================================
-net.Receive("zs_skill_is_unlocked", function(length)
+net.Receive(NET_MSG.SKILL_IS_UNLOCKED, function(length)
 	local skillid = net.ReadUInt(16)
 	local yesno = net.ReadBool()
 	
@@ -56,7 +56,7 @@ end)
 -- ============================================================
 -- 接收服务端同步的当前激活技能列表（位标记格式）
 -- ============================================================
-net.Receive("zs_skills_active", function(length)
+net.Receive(NET_MSG.SKILLS_ACTIVE, function(length)
 	local t = {}
 	
 	for skillid in pairs(GAMEMODE.Skills) do
@@ -74,7 +74,7 @@ end)
 -- 接收服务端初始化同步（首次连接时的全量数据）
 -- 包含解锁列表、期望列表、激活列表
 -- ============================================================
-net.Receive("zs_skills_init", function(length)
+net.Receive(NET_MSG.SKILLS_INIT, function(length)
 	GAMEMODE.ReceivedInitialSkills = true
 	
 	local unlocked = {}
@@ -112,7 +112,7 @@ end)
 -- 接收服务端同步的完整期望技能列表
 -- 更新本地并刷新快速统计
 -- ============================================================
-net.Receive("zs_skills_desired", function(length)
+net.Receive(NET_MSG.SKILLS_DESIRED, function(length)
 	local t = {}
 	
 	for skillid in pairs(GAMEMODE.Skills) do
@@ -133,7 +133,7 @@ end)
 -- ============================================================
 -- 接收服务端同步的完整已解锁技能列表
 -- ============================================================
-net.Receive("zs_skills_unlocked", function(length)
+net.Receive(NET_MSG.SKILLS_UNLOCKED, function(length)
 	local t = {}
 	
 	for skillid in pairs(GAMEMODE.Skills) do
@@ -151,7 +151,7 @@ end)
 -- 接收服务端更新的下次重置倒计时
 -- 更新重置按钮的文字和启用状态
 -- ============================================================
-net.Receive("zs_skills_nextreset", function(length)
+net.Receive(NET_MSG.SKILLS_NEXTRESET, function(length)
     GAMEMODE.NextSkillReset = net.ReadUInt(32)
 
     if GAMEMODE.SkillWeb and GAMEMODE.SkillWeb:IsValid() then
@@ -331,7 +331,7 @@ local node_scale = {
 -- ============================================================
 local function ActivateSkill(self, skill) 
 	local name = GAMEMODE.Skills[skill].Name
-		net.Start("zs_skill_is_desired")
+		net.Start(NET_MSG.SKILL_IS_DESIRED)
 		net.WriteUInt(skill, 16)
 		net.WriteBool(true)
 	net.SendToServer()
@@ -344,7 +344,7 @@ end
 -- ============================================================
 local function DeactivateSkill(self, skill) 
 	local name = GAMEMODE.Skills[skill].Name
-		net.Start("zs_skill_is_desired")
+		net.Start(NET_MSG.SKILL_IS_DESIRED)
 		net.WriteUInt(skill, 16)
 		net.WriteBool(false)
 	net.SendToServer()
@@ -357,7 +357,7 @@ end
 -- ============================================================
 local function UnlockSkill(self, skill) 
 	local name = GAMEMODE.Skills[skill].Name
-	net.Start("zs_skill_is_unlocked")
+	net.Start(NET_MSG.SKILL_IS_UNLOCKED)
 	net.WriteUInt(skill, 16)
 	net.WriteBool(true)
 	net.SendToServer()
@@ -576,7 +576,7 @@ function PANEL:Init()
 
 		if not newloadout then return end
 
-		net.Start("zs_skill_set_desired")
+		net.Start(NET_MSG.SKILL_SET_DESIRED)
 			net.WriteTable(newloadout)		
 		net.SendToServer()
 
@@ -605,7 +605,7 @@ function PANEL:Init()
 			self:DisplayMessage(translate.Get("Skill_ui_all_activated"), COLOR_GREEN)
 		end
 	
-		net.Start("zs_skills_all_desired")
+		net.Start(NET_MSG.SKILLS_ALL_DESIRED)
 			net.WriteBool(true)
 		net.SendToServer()
 	end
@@ -627,7 +627,7 @@ function PANEL:Init()
 			self:DisplayMessage(translate.Get("Skill_ui_all_deactivated"), COLOR_RED)
 		end
 	
-		net.Start("zs_skills_all_desired")
+		net.Start(NET_MSG.SKILLS_ALL_DESIRED)
 			net.WriteBool(false)
 		net.SendToServer()
 	end
@@ -649,7 +649,7 @@ function PANEL:Init()
 			translate.Get("Skill_ui_reset_confirm"), 
 			translate.Get("Skill_ui_warning"),
 			translate.Get("Skill_ui_ok"),
-			function() net.Start("zs_skills_reset") net.SendToServer() end,
+			function() net.Start(NET_MSG.SKILLS_RESET) net.SendToServer() end,
 			translate.Get("Skill_ui_cancel"),
 			function() end
 		)
@@ -816,7 +816,7 @@ function PANEL:Init()
 	self:SetMouseInputEnabled(true)
 	self:SetKeyboardInputEnabled(false)
 	self:UpdateQuickStats()
-	net.Start("zs_skills_refunded")
+	net.Start(NET_MSG.SKILLS_REFUNDED)
 	net.SendToServer()
 end
 
@@ -1480,7 +1480,7 @@ function PANEL:OnMousePressed(mc)
 					translate.Get("Skill_ui_remort_warning"),
 					translate.Get("Skill_ui_warning_title"),
 					translate.Get("Skill_ui_ok"),
-					function() net.Start("zs_skills_remort") net.SendToServer() end,
+					function() net.Start(NET_MSG.SKILLS_REMORT) net.SendToServer() end,
 					translate.Get("Skill_ui_cancel"),
 					function() end
 				)

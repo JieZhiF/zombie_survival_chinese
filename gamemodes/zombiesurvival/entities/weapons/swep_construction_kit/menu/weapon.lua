@@ -373,7 +373,7 @@ local bonepanel = vgui.Create( "DPanel", pweapon )
 	bonepanel:SetVisible( true )
 	bonepanel:SetPaintBackground( true )
 	bonepanel.Paint = function() surface.SetDrawColor( 80, 80, 80, 255 ) surface.DrawRect( 0, 0, bonepanel:GetWide(), bonepanel:GetTall() ) end
-//bonepanel:SetTall(32*3*3)
+--bonepanel:SetTall(32*3*3)
 bonepanel:DockMargin( 0, 5, 0, 5 )
 bonepanel:DockPadding( 5, 5, 5, 5 )
 bonepanel:Dock(TOP)

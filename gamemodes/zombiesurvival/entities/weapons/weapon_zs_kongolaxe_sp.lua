@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "'背水一战' 重力机器"
+SWEP.PrintName = ""..translate.Get("weapon_zs_kongolaxe_sp")
 SWEP.Description = "当本局游戏内，没有其他真人玩家时，大幅度提升此武器造成的伤害."
 
 if CLIENT then

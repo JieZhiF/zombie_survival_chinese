@@ -1,16 +1,24 @@
+-- ============================================================================
+-- cl_init.lua - 投掷血肉投射物（客户端）：血液飞溅拖尾
+-- 负责：为飞行的血肉块持续喷发随机方向的血液飞溅粒子
+-- ============================================================================
 INC_CLIENT()
 
+-- 粒子发射节流时间（控制喷发频率）
 ENT.NextEmit = 0
 
+-- ==== Draw - 绘制：渲染模型并喷发血液粒子 ====
 function ENT:Draw()
 	local time = CurTime()
 
 	self:DrawModel()
 
+	-- 按节流频率喷发
 	if time < self.NextEmit then return end
 	self.NextEmit = time + 0.05
 
 	local pos = self:WorldSpaceCenter()
+	-- 随机方向飞溅
 	local dir = VectorRand()
 	dir:Normalize()
 	dir = dir * math.Rand(1, 4)

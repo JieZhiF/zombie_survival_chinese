@@ -2,7 +2,7 @@ AddCSLuaFile()
 
 SWEP.Base = "weapon_zs_t_doomorgan"
 --weapon_zs_theworld_humans
-SWEP.PrintName = "白金之星(时停)"
+SWEP.PrintName = ""..translate.Get("weapon_zs_theworld_humans")
 SWEP.Description = "左键使用后,召唤白金之星替身，然后发动时停."
 
 SWEP.Undroppable = true
@@ -33,7 +33,7 @@ function SWEP:PrimaryAttack()
         end
 
         -- 广播提示 + 灰屏
-        net.Start("zs_platinum_star_world")
+        net.Start(NET_MSG.PLATINUM_STAR_WORLD)
         net.WriteEntity(owner)
         net.Broadcast()
 
@@ -44,7 +44,7 @@ function SWEP:PrimaryAttack()
                 ply:Freeze(true)
 
                 -- 发送屏幕变灰指令
-                net.Start("zs_theworld_screenfx")
+                net.Start(NET_MSG.THEWORLD_SCREENFX)
                 net.Send(ply)
             end
         end
@@ -95,7 +95,7 @@ function SWEP:PrimaryAttack()
 
                 -- 通知客户端恢复屏幕颜色（只发给非幸存者）
                 if ply:Team() ~= TEAM_SURVIVORS then
-                    net.Start("zs_theworld_endfx")
+                    net.Start(NET_MSG.THEWORLD_ENDFX)
                     net.Send(ply)
                 end
             end
@@ -109,7 +109,7 @@ end
 if CLIENT then
     local grayEndTime = 0
 
-    net.Receive("zs_platinum_star_world", function()
+    net.Receive(NET_MSG.PLATINUM_STAR_WORLD, function()
         local ply = net.ReadEntity()
         if IsValid(ply) then
             chat.AddText(Color(0, 255, 255), "[时停] ", Color(255, 255, 255), ply:Nick(), " 召唤了白金之星替身。")
@@ -118,11 +118,11 @@ if CLIENT then
         end
     end)
 
-    net.Receive("zs_theworld_screenfx", function()
+    net.Receive(NET_MSG.THEWORLD_SCREENFX, function()
         grayEndTime = CurTime() + STOP_DURATION
     end)
 
-    net.Receive("zs_theworld_endfx", function()
+    net.Receive(NET_MSG.THEWORLD_ENDFX, function()
         grayEndTime = 0 -- 立即取消灰屏
     end)
 
@@ -142,8 +142,5 @@ if CLIENT then
         end
     end)
 else
-    -- 服务器注册网络消息
-    util.AddNetworkString("zs_platinum_star_world")
-    util.AddNetworkString("zs_theworld_screenfx")
-    util.AddNetworkString("zs_theworld_endfx")
+    -- 服务器网络消息注册统一在 GM:AddNetworkStrings
 end

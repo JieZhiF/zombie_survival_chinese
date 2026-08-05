@@ -344,7 +344,7 @@ function meta:PlayZombiePainSound()
 end
 
 -- 接收服务器发送的眼部受伤网络消息，播放对应音效
-net.Receive("voice_eyepain", function(len)
+net.Receive(NET_MSG.VOICE_EYEPAIN, function(len)
 	local ent = net.ReadEntity()
 	if ent:IsValid() then
 		ent:PlayEyePainSound()
@@ -352,7 +352,7 @@ net.Receive("voice_eyepain", function(len)
 end)
 
 -- 接收服务器发送的给予弹药网络消息，播放对应音效
-net.Receive("voice_giveammo", function(len)
+net.Receive(NET_MSG.VOICE_GIVEAMMO, function(len)
 	local ent = net.ReadEntity()
 	if ent:IsValid() then
 		ent:PlayGiveAmmoSound()
@@ -360,7 +360,7 @@ net.Receive("voice_giveammo", function(len)
 end)
 
 -- 接收服务器发送的死亡网络消息，播放对应音效
-net.Receive("voice_death", function(len)
+net.Receive(NET_MSG.VOICE_DEATH, function(len)
 	local ent = net.ReadEntity()
 	if ent:IsValid() then
 		ent:PlayDeathSound()
@@ -368,7 +368,7 @@ net.Receive("voice_death", function(len)
 end)
 
 -- 接收服务器发送的僵尸死亡网络消息，播放对应音效
-net.Receive("voice_zombiedeath", function(len)
+net.Receive(NET_MSG.VOICE_ZOMBIEDEATH, function(len)
 	local ent = net.ReadEntity()
 	if ent:IsValid() then
 		ent:PlayZombieDeathSound()
@@ -376,7 +376,7 @@ net.Receive("voice_zombiedeath", function(len)
 end)
 
 -- 接收服务器发送的受伤网络消息，附带生命值信息，播放对应程度的受伤音效
-net.Receive("voice_pain", function(len)
+net.Receive(NET_MSG.VOICE_PAIN, function(len)
 	local ent = net.ReadEntity()
 	-- 读取4位无符号整数作为生命值，乘以25得到实际生命值（0-375范围）
 	local health = net.ReadUInt(4) * 25
@@ -386,7 +386,7 @@ net.Receive("voice_pain", function(len)
 end)
 
 -- 接收服务器发送的僵尸受伤网络消息，播放对应音效
-net.Receive("voice_zombiepain", function(len)
+net.Receive(NET_MSG.VOICE_ZOMBIEPAIN, function(len)
 	local ent = net.ReadEntity()
 	if ent:IsValid() then
 		ent:PlayZombiePainSound()

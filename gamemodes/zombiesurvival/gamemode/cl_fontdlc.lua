@@ -21,18 +21,22 @@ ZSFontDLC.FontDefinitions = {
         default = { font = "Source Sans Pro", size = 36, weight = 500, extended = true, antialias = true } 
     },
     -- 屏幕HUD主要字体
-    ["DAWD12"] = { 
-        name = "屏幕HUD主要字体--无效", 
-        default = { font = "HarmonyOS Sans SC", size = 32, weight = 500, extended = true, antialias = true } 
+    ["zstutorial"] = { 
+        name = "屏幕HUD主要字体", 
+        default = { font = "HarmonyOS Sans SC", size = 64, weight = 500, extended = true, antialias = true } 
     },
     -- 屏幕HUD次要/小字体
-    ["12411DFAGTH"] = { 
-        name = "屏幕HUD次要/小字体--无效", 
-        default = { font = "HarmonyOS Sans SC", size = 22, weight = 500, extended = true, antialias = true } 
+    ["zstutorial_text"] = { 
+        name = "屏幕HUD次要/小字体", 
+        default = { font = "HarmonyOS Sans SC", size = 52, weight = 500, extended = true, antialias = true } 
     },
     ["BarrierFont"] = { 
         name = "防线显示字体", 
         default = { font = "HarmonyOS Sans SC", size = 36, weight = 500, extended = true, antialias = true } 
+    },
+    ["zs_wortharsenal"] = { 
+        name = "商店介绍字体", 
+        default = { font = "HarmonyOS Sans SC", size = 25, weight = 350, extended = true, antialias = true } 
     },
     -- 你可以在这里继续添加你在 cl_init.lua 里 CreateFonts 创建的所有字体
 }

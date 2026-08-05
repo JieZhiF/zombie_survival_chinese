@@ -52,7 +52,7 @@ function GM:ClassUnlocksUpdate(pl)
 	-- 遍历按顺序排列的僵尸职业列表（索引为数字）
 	for k,v in ipairs(GAMEMODE.ZombieClasses) do
 		-- 开始网络消息：职业解锁状态
-		net.Start("zs_classunlockstate")
+		net.Start(NET_MSG.CLASSUNLOCKSTATE)
 			-- 写入职业的索引编号（最多 255 个职业）
 			net.WriteInt(k, 8)
 			-- 写入该职业的解锁状态（布尔值）

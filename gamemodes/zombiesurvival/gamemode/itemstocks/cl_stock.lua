@@ -12,7 +12,7 @@ end
 -- ========== 接收服务端库存更新 ==========
 
 -- 从服务端接收单个物品的最新库存数量
-net.Receive("zs_itemstock", function(length)
+net.Receive(NET_MSG.ITEMSTOCK, function(length)
 	local itemid = net.ReadString()
 	local stock = net.ReadInt(16)
 

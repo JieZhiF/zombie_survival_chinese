@@ -1,4 +1,4 @@
--- Translated by Shinyshark (http://www.noxiousnet.com/forums/index.php?action=profile;u=8372)
+-- Translated by Shinyshark (http:--www.noxiousnet.com/forums/index.php?action=profile;u=8372)
 
 translate.AddLanguage("nl", "Dutch")
 

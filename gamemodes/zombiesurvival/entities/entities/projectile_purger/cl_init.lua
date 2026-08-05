@@ -1,12 +1,21 @@
+-- ============================================================================
+-- projectile_purger/cl_init.lua - 净化弹投射物（客户端）
+-- 负责：绘制绿色净化光粒拖尾；飞行时叠加发光精灵拖尾效果
+-- ============================================================================
 INC_CLIENT()
 
+-- 飞行拖尾材质（水花效果）
 local matGlow = Material("effects/splashwake1")
+-- 粒子和精灵发光材质
 local matGlow2 = Material("sprites/glow04_noz")
+-- 零向量常量（缓存避免重复构造）
 local vector_origin = vector_origin
 
+-- ==== Draw - 客户端绘制：生成绿色粒子拖尾，飞行中附加发光精灵 ====
 function ENT:Draw()
 	local pos = self:GetPos()
 
+	-- 在弹体位置生成 2 颗短命绿色光粒（随机速度扩散、渐隐）
 	local emitter = ParticleEmitter(pos)
 	emitter:SetNearClip(24, 32)
 	local particle
@@ -23,6 +32,7 @@ function ENT:Draw()
 	end
 	emitter:Finish() emitter = nil collectgarbage("step", 64)
 
+	-- 弹体飞行中（有速度）时绘制三层层叠发光精灵：外圈水花、中圈绿色光晕、内核白光
 	if self:GetVelocity() ~= vector_origin then
 		render.SetMaterial(matGlow)
 		render.DrawSprite(pos, 15, 15, Color(100, 170, 70, 100))

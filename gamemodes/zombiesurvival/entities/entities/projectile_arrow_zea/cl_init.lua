@@ -1,18 +1,29 @@
+-- ============================================================================
+-- projectile_arrow_zea - 宙斯（ZEA）电击箭投射物实体（客户端）
+-- 负责：以蓝色调绘制模型、电流拖尾光束与电光粒子，并维护拖尾轨迹点与渲染包围盒
+-- ============================================================================
 INC_CLIENT()
 
+-- 电流拖尾材质
 local matTrail = Material("trails/electric")
+-- 拖尾光束颜色（青色）
 local colTrail = Color(70, 255, 255)
+-- 电光发光材质（叠加混合）
 local matGlow = Material("sprites/light_glow02_add")
 
+-- 缓存零向量（性能优化）
 local vector_origin = vector_origin
 
+-- ==== Draw - 绘制蓝色着色模型、电流拖尾光束与电光粒子 ====
 function ENT:Draw()
+	-- 用白色材质覆盖模型并以蓝色调着色绘制
 	render.ModelMaterialOverride(matWhite)
 	render.SetColorModulation(0.5, 0.7, 1)
 	self:DrawModel()
 	render.SetColorModulation(1, 1, 1)
 	render.ModelMaterialOverride(nil)
 
+	-- 沿轨迹点绘制电流光束，透明度由新到旧递减
 	render.SetMaterial(matTrail)
 	for i=1, #self.TrailPositions do
 		if self.TrailPositions[i+1] then
@@ -22,6 +33,7 @@ function ENT:Draw()
 		end
 	end
 
+	-- 在箭尾方向随机散射 8 条短促电流
 	local velo = self:GetVelocity()
 	local heading = velo:GetNormal() * -1.3
 	local pos = self:GetPos() + heading * -10
@@ -30,13 +42,16 @@ function ENT:Draw()
 		render.DrawBeam(pos, pos + dir * 24, 8, i, 2 + i, Color(90, 120, 250))
 	end
 
+	-- 飞行速度足够快时：箭头朝向飞行方向并发射电光粒子
 	if velo:LengthSqr() > 100 then
 		self:SetAngles(self:GetVelocity():Angle())
 
+		-- 绘制两个十字交叉的电光精灵
 		render.SetMaterial(matGlow)
 		render.DrawSprite(pos, 95, 9, Color(60, 120, 250, 255))
 		render.DrawSprite(pos, 9, 95, Color(60, 120, 250, 255))
 
+		-- 发射短命电光粒子
 		local emitter = ParticleEmitter(pos)
 		emitter:SetNearClip(24, 32)
 		local particle
@@ -55,17 +70,20 @@ function ENT:Draw()
 	end
 end
 
+-- ==== Initialize - 初始化拖尾延迟与轨迹点表 ====
 function ENT:Initialize()
 	self.Trailing = CurTime() + 0.25
 	self.TrailPositions = {}
 end
 
+-- ==== Think - 记录最近 24 个轨迹点，并按最远轨迹点扩展渲染包围盒 ====
 function ENT:Think()
 	table.insert(self.TrailPositions, 1, self:GetPos())
 	if self.TrailPositions[24] then
 		table.remove(self.TrailPositions, 24)
 	end
 
+	-- 根据最远轨迹点扩展渲染包围盒，防止拖尾被视锥裁剪
 	local dist = 0
 	local mypos = self:GetPos()
 	for i=1, #self.TrailPositions do

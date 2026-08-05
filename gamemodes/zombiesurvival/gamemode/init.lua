@@ -3,7 +3,7 @@
 Zombie Survival
 by William "JetBoom" Moodhe
 williammoodhe@gmail.com -or- jetboom@noxiousnet.com
-http://www.noxiousnet.com/
+http:--www.noxiousnet.com/
 
 Further credits displayed by pressing F1 in-game.
 This was my first ever gamemode. A lot of stuff is from years ago and some stuff is very recent.
@@ -153,6 +153,7 @@ AddCSLuaFile("sh_translate.lua")
 AddCSLuaFile("sh_colors.lua")
 AddCSLuaFile("sh_serialization.lua")
 AddCSLuaFile("sh_globals.lua")
+AddCSLuaFile("net_messages.lua")
 AddCSLuaFile("sh_util.lua")
 AddCSLuaFile("sh_options.lua")
 AddCSLuaFile("sh_zombieshop.lua")
@@ -213,15 +214,21 @@ AddCSLuaFile("vgui/phelp.lua")
 AddCSLuaFile("vgui/pclassselect.lua")
 AddCSLuaFile("vgui/pweapons.lua")
 AddCSLuaFile("vgui/pendboard.lua")
-AddCSLuaFile("vgui/pmutationshop.lua")//随便放
+AddCSLuaFile("vgui/pmutationshop.lua")--随便放
 AddCSLuaFile("vgui/pworth.lua")
 AddCSLuaFile("vgui/parsenal.lua")
 AddCSLuaFile("vgui/premantle.lua")
 AddCSLuaFile("vgui/zshealtharea.lua")
 AddCSLuaFile("vgui/zsstatusarea.lua")
 AddCSLuaFile("vgui/zsgamestate.lua")
+AddCSLuaFile("vgui/ptutorial.lua")
+
+AddCSLuaFile("cl_recoil_handler.lua")
+AddCSLuaFile("sck/cl_materials.lua")
+AddCSLuaFile("sck/cl_util.lua")
 
 include("sh_globals.lua")
+include("net_messages.lua")
 
 include("obj_entity_extend_sv.lua")
 include("obj_player_extend_sv.lua")
@@ -239,6 +246,7 @@ include("sv_playerspawnentities.lua")
 include("sv_profiling.lua")
 include("sv_sigils.lua")
 include("sv_concommands.lua")
+include("sv_devreload.lua")
 
 include("itemstocks/sv_stock.lua")
 
@@ -248,7 +256,7 @@ include("skillweb/sv_registry.lua")
 include("skillweb/sv_skillweb.lua")
 
 include("sv_zombieescape.lua")
-include("sv_zombieshop.lua")//同上
+include("sv_zombieshop.lua")--同上
 
 include("zsbots/init.lua")
 
@@ -295,7 +303,7 @@ local P_GetPhantomHealth = M_Player.GetPhantomHealth
 	返回值：无
 ]]
 function GM:WorldHint(hint, pos, ent, lifetime, filter)
-	net.Start("zs_worldhint")
+	net.Start(NET_MSG.WORLDHINT)
 		net.WriteString(hint)
 		-- 确定位置：优先pos，其次ent的位置，最后原点
 		net.WriteVector(pos or ent and ent:IsValid() and ent:GetPos() or vector_origin)
@@ -766,14 +774,14 @@ end
 	参数：... 可变参数（颜色+文本）
 ]]
 function GM:CenterNotifyAll(...)
-	net.Start("zs_centernotify")
+	net.Start(NET_MSG.CENTERNOTIFY)
 		net.WriteTable({...})
 	net.Broadcast()
 end
 GM.CenterNotify = GM.CenterNotifyAll
 
 function GM:TopNotifyAll(...)
-	net.Start("zs_topnotify")
+	net.Start(NET_MSG.TOPNOTIFY)
 		net.WriteTable({...})
 	net.Broadcast()
 end
@@ -789,16 +797,16 @@ end
 	人类打开军火库（波数>0）或初始购买菜单；
 	僵尸打开变异商店（仅非ZE模式）。
 ]]
-function GM:ShowTeam(pl)//和上面的一样，不过你可以直接把整个函数复制覆盖。如果你有自定义，就只复制有标记的就行。
+function GM:ShowTeam(pl)--和上面的一样，不过你可以直接把整个函数复制覆盖。如果你有自定义，就只复制有标记的就行。
 	if pl:Team() == TEAM_HUMAN and not self.ZombieEscape then
 		pl:SendLua(self:GetWave() > 0 and "GAMEMODE:OpenArsenalMenu()" or "MakepWorth()")
 	elseif pl:Team() == TEAM_UNDEAD and not self.ZombieEscape then
 		pl:SendLua("OpenMutationShop()")
 	end
     --[[
-    if pl:Team() == TEAM_UNDEAD and not self.ZombieEscape then //标记
-		pl:SendLua("MakepMutationShop()")//标记
-	end//标记
+    if pl:Team() == TEAM_UNDEAD and not self.ZombieEscape then --标记
+		pl:SendLua("MakepMutationShop()")--标记
+	end--标记
     ]]
 end
 
@@ -1456,7 +1464,7 @@ function GM:SpawnBossZombie(bossplayer, silent, bossindex, triggerboss)
 	bossplayer.BossHealRemaining = 750
 
 	if not silent then
-		net.Start("zs_boss_spawned")
+		net.Start(NET_MSG.BOSS_SPAWNED)
 			net.WriteEntity(bossplayer)
 			net.WriteUInt(bossindex, 8)
 		net.Broadcast()
@@ -1471,7 +1479,7 @@ end
 function GM:SendZombieVolunteers(pl, nonemptyonly)
 	if nonemptyonly and #self.ZombieVolunteers == 0 then return end
 
-	net.Start("zs_zvols")
+	net.Start(NET_MSG.ZVOLS)
 		net.WriteUInt(#self.ZombieVolunteers, 8)
 		for _, p in ipairs(self.ZombieVolunteers) do
 			net.WriteEntity(p)
@@ -1578,6 +1586,13 @@ function GM:Think()
 	local time = CurTime()
 	local wave = self:GetWave()
 
+	self:ThinkWaveControl(time, wave)
+	self:ThinkPlayersFrame(time, wave)
+	self:ThinkPerSecond(time, wave)
+end
+
+function GM:ThinkWaveControl(time, wave)
+
 	if not self.RoundEnded then
 		if self:GetWaveActive() then
 			if self:GetWaveEnd() <= time and self:GetWaveEnd() ~= -1 then
@@ -1598,6 +1613,9 @@ function GM:Think()
 		end
 	end
 
+end
+
+function GM:ThinkPlayersFrame(time, wave)
 	local allplayers = player_GetAll()
 
 	for _, pl in pairs(allplayers) do
@@ -1624,6 +1642,11 @@ function GM:Think()
 	if wave == 0 then
 		self:CalculateZombieVolunteers()
 	end
+
+end
+
+function GM:ThinkPerSecond(time, wave)
+	local allplayers = player_GetAll()
 
 	if NextTick <= time then
 		NextTick = time + 1
@@ -1727,11 +1750,11 @@ function GM:Think()
 					pl.NextResupplyUse = time + self.ResupplyBoxCooldown * (pl.ResupplyDelayMul or 1) * (stockpiling and 2.12 or 1)
 					pl.StowageCaches = (pl.StowageCaches or 0) + (stockpiling and 2 or 1)
 
-					net.Start("zs_nextresupplyuse")
+					net.Start(NET_MSG.NEXTRESUPPLYUSE)
 						net.WriteFloat(pl.NextResupplyUse)
 					net.Send(pl)
 
-					net.Start("zs_stowagecaches")
+					net.Start(NET_MSG.STOWAGECACHES)
 						net.WriteInt(pl.StowageCaches, 8)
 					net.Send(pl)
 				end
@@ -1837,7 +1860,7 @@ function GM:CalculateNextBoss()
     -- 4. 广播下一个 Boss 是谁 (用于 UI 显示)
     -- 即使场上 Boss 满了，UI 显示“下一个是你”也是合理的，
     -- 这样一旦有 Boss 死亡，玩家知道自己是替补。
-    net.Start("zs_nextboss")
+    net.Start(NET_MSG.NEXTBOSS)
     net.WriteEntity(newboss)
     net.WriteString(newbossclass)
     net.Broadcast()
@@ -1927,7 +1950,7 @@ function GM:CalculateInfliction(victim, attacker)
 				end
 
 				if not self.PantsMode and not self:IsClassicMode() and not self:IsBabyMode() and not self.ZombieEscape and not v.Locked then
-					net.Start("zs_classunlockstate")
+					net.Start(NET_MSG.CLASSUNLOCKSTATE)
 					net.WriteInt(k, 8)
 					net.WriteBool(v.Unlocked)
 					net.Broadcast()
@@ -1962,7 +1985,7 @@ end
 ]]
 function GM:LastHuman(pl)
 	if not LASTHUMAN then
-		net.Start("zs_lasthuman")
+		net.Start(NET_MSG.LASTHUMAN)
 			net.WriteEntity(pl or NULL)
 		net.Broadcast()
 
@@ -1982,7 +2005,7 @@ end
 	参数：pl-治疗者，other-被治疗者，health-治疗量，
 	wep-武器，pointmul-点数倍率，nobymsg-不通知被治疗者
 ]]
-function GM:PlayerHealedTeamMember(pl, other, health, wep, pointmul, nobymsg, floater)//
+function GM:PlayerHealedTeamMember(pl, other, health, wep, pointmul, nobymsg, floater)--
 	health = health - other:RemoveUselessDamage(health)
 
 	if health <= 0 or pl == other then return end
@@ -1995,16 +2018,16 @@ function GM:PlayerHealedTeamMember(pl, other, health, wep, pointmul, nobymsg, fl
 
 		local points = health / hpperpoint * pointmul
 
-		pl:AddPoints(points) //增加点数
+		pl:AddPoints(points) --增加点数
 	end
-	net.Start("zs_healother")
+	net.Start(NET_MSG.HEALOTHER)
 		--net.WriteBool(floater)
 		net.WriteEntity(other)
 		net.WriteFloat(health)
 	net.Send(pl)
 	 
 	if not nobymsg then
-		net.Start("zs_healby")
+		net.Start(NET_MSG.HEALBY)
 			net.WriteFloat(health)
 			net.WriteEntity(pl)
 		net.Send(other)
@@ -2033,7 +2056,7 @@ function GM:PlayerRepairedObject(pl, other, health, wep)
 
 	pl:AddPoints(points)
 
-	net.Start("zs_repairobject")
+	net.Start(NET_MSG.REPAIROBJECT)
 		net.WriteEntity(other)
 		net.WriteFloat(health)
 	net.Send(pl)
@@ -2070,7 +2093,7 @@ function GM:DoHonorableMentions(filter)
 	self:CacheHonorableMentions()
 
 	for i, tab in pairs(self.CachedHMs) do
-		net.Start("zs_honmention")
+		net.Start(NET_MSG.HONMENTION)
 			net.WriteEntity(tab[1])
 			net.WriteUInt(tab[2], 8)
 			net.WriteInt(tab[3], 32)
@@ -2160,14 +2183,14 @@ GM.CurrentRound = 1
 function GM:RestartRound()
 	self.CurrentRound = self.CurrentRound + 1
 
-	net.Start("zs_currentround")
+	net.Start(NET_MSG.CURRENTROUND)
 		net.WriteUInt(self.CurrentRound, 6)
 	net.Broadcast()
 
 	self:RestartLua()
 	self:RestartGame()
 
-	net.Start("zs_gamemodecall")
+	net.Start(NET_MSG.GAMEMODECALL)
 		net.WriteString("RestartRound")
 	net.Broadcast()
 end
@@ -2319,7 +2342,7 @@ function GM:RestartGame()
 		if pl:Team() ~= TEAM_SPECTATOR then
 			pl:SetTokens(0)
 			pl.UsedMutations = {}
-			net.Start("zs_mutations_table")
+			net.Start(NET_MSG.MUTATIONS_TABLE)
 			net.WriteTable(pl.UsedMutations)
 			net.Send(pl)
 		end
@@ -2525,7 +2548,7 @@ function GM:EndRound(winner)
 		end
 	end
 
-	net.Start("zs_endround")
+	net.Start(NET_MSG.ENDROUND)
 		net.WriteUInt(winner or -1, 8)
 		net.WriteString(game.GetMapNext())
 	net.Broadcast()
@@ -2632,7 +2655,7 @@ function GM:PlayerReadyRound(pl)
 		end
 	end
 
-	net.Start("zs_currentround")
+	net.Start(NET_MSG.CURRENTROUND)
 		net.WriteUInt(self.CurrentRound, 6)
 	net.Send(pl)
 
@@ -2665,7 +2688,7 @@ end
 	参数：pl - 指定玩家（不传则广播）
 ]]
 function GM:FullGameUpdate(pl)
-	net.Start("zs_gamestate")
+	net.Start(NET_MSG.GAMESTATE)
 		net.WriteInt(self:GetWave(), 16)
 		net.WriteFloat(self:GetWaveStart())
 		net.WriteFloat(self:GetWaveEnd())
@@ -3050,7 +3073,7 @@ function GM:OnNailRemoved(nail, ent1, ent2, remover)
 			deployername = deployer:Name()
 
 			if deployer ~= remover then
-				net.Start("zs_nailremoved")
+				net.Start(NET_MSG.NAILREMOVED)
 					net.WriteEntity(remover)
 				net.Send(deployer)
 			end
@@ -3080,7 +3103,7 @@ end
 	函数名: GM:RemoveDuplicateAmmo (移除重复弹药)
 	功能: 当玩家有多把同弹药类型武器时，移除多余弹药防止双倍资源
 --]]
-function GM:RemoveDuplicateAmmo(pl)//初始菜单的武器给予弹药
+function GM:RemoveDuplicateAmmo(pl)--初始菜单的武器给予弹药
 	local AmmoCounts = {}
 	local WepAmmos = {}
 
@@ -4114,7 +4137,7 @@ function GM:PlayerHurt(victim, attacker, healthremaining, damage)
 			victim:SetBloodArmor(math.min(victim:GetBloodArmor() + (20 * victim.BloodarmorGainMul), victim.MaxBloodArmor + (20 * victim.MaxBloodArmorMul)))
 			victim:TakeInventoryItem("trinket_bloodpack")
 
-			net.Start("zs_trinketconsumed")
+			net.Start(NET_MSG.TRINKETCONSUMED)
 				net.WriteString("Blood Transfusion Pack")
 			net.Send(victim)
 		end
@@ -4536,7 +4559,7 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 		pl:PlayZombieDeathSound()
 
 		if classtable.Boss and not self.ObjectiveMap and pl.BossDeathNotification then
-			net.Start("zs_boss_slain")
+			net.Start(NET_MSG.BOSS_SLAIN)
 				net.WriteEntity(pl)
 				net.WriteUInt(classtable.Index, 8)
 			net.Broadcast()
@@ -4611,7 +4634,7 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 		if team.NumPlayers(TEAM_HUMAN) <= 1 then
 			self.LastHumanPosition = pl:WorldSpaceCenter()
 
-			net.Start("zs_lasthumanpos")
+			net.Start(NET_MSG.LASTHUMANPOS)
 				net.WriteVector(self.LastHumanPosition)
 			net.Broadcast()
 		end
@@ -4625,13 +4648,13 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 	if revive or pl:CallZombieFunction2("NoDeathMessage", attacker, dmginfo) or pl:IsSpectator() then return end
 
 	if attacker == pl then
-		net.Start("zs_pl_kill_self")
+		net.Start(NET_MSG.PL_KILL_SELF)
 			net.WriteEntity(pl)
 			net.WriteUInt(plteam, 8)
 		net.Broadcast()
 	elseif attacker:IsPlayer() then
 		if assistpl then
-			net.Start("zs_pls_kill_pl")
+			net.Start(NET_MSG.PLS_KILL_PL)
 				net.WriteEntity(pl)
 				net.WriteEntity(attacker)
 				net.WriteEntity(assistpl)
@@ -4643,7 +4666,7 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 
 			gamemode.Call("PlayerKilledByPlayer", pl, assistpl, inflictor, headshot, dmginfo, true)
 		else
-			net.Start("zs_pl_kill_pl")
+			net.Start(NET_MSG.PL_KILL_PL)
 				net.WriteEntity(pl)
 				net.WriteEntity(attacker)
 				net.WriteString(inflictor:GetClass())
@@ -4655,7 +4678,7 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 
 		gamemode.Call("PlayerKilledByPlayer", pl, attacker, inflictor, headshot, dmginfo)
 	else
-		net.Start("zs_death")
+		net.Start(NET_MSG.DEATH)
 			net.WriteEntity(pl)
 			net.WriteString(inflictor:GetClass())
 			net.WriteString(attacker:GetClass())
@@ -4837,7 +4860,7 @@ function GM:PlayerSpawn(pl)
 		if classtab.Boss then
 			pl:SetHealth(classtab.Health)
 		else
-			local lowundead = team.NumPlayers(TEAM_UNDEAD) < 4 //标记
+			local lowundead = team.NumPlayers(TEAM_UNDEAD) < 4 --标记
 			local wave = self:GetWave() 
 			local healthmulti = 1--(self.ObjectiveMap or self.ZombieEscape) and 1 or lowundead and 1.5 or 1
 			if wave <= 1 then
@@ -4936,7 +4959,7 @@ function GM:PlayerSpawn(pl)
 
 		pl.StowageCaches = 0
 
-		net.Start("zs_stowagecaches")
+		net.Start(NET_MSG.STOWAGECACHES)
 			net.WriteInt(pl.StowageCaches, 8)
 		net.Send(pl)
 
@@ -5048,7 +5071,7 @@ function GM:SetWave(wave)
 				end
 			end
 
-			net.Start("zs_classunlockstate")
+			net.Start(NET_MSG.CLASSUNLOCKSTATE)
 				net.WriteInt(classid, 8)
 				net.WriteBool(classtab.Unlocked)
 			net.Broadcast()
@@ -5063,7 +5086,7 @@ function GM:SetWave(wave)
 
 				table.insert(classnames, translate.ClientGet(pl, classtbl.TranslationName))
 			end
-			net.Start("zs_classunlock")
+			net.Start(NET_MSG.CLASSUNLOCK)
 				net.WriteString(string.AndSeparate(classnames))
 			net.Send(pl)
 		end
@@ -5134,7 +5157,7 @@ function GM:WaveStateChanged(newstate)
 			gamemode.Call("SetWaveEnd", self:GetWaveStart() + self:GetWaveOneLength() + (self:GetWave() - 1) * (GetGlobalBool("classicmode") and self.TimeAddedPerWaveClassic or self.TimeAddedPerWave))
 		end
 
-		net.Start("zs_wavestart")
+		net.Start(NET_MSG.WAVESTART)
 			net.WriteInt(self:GetWave(), 16)
 			net.WriteFloat(self:GetWaveEnd())
 		net.Broadcast()
@@ -5229,7 +5252,7 @@ function GM:WaveStateChanged(newstate)
 	else
 		gamemode.Call("SetWaveStart", CurTime() + (GetGlobalBool("classicmode") and self.WaveIntermissionLengthClassic or self.WaveIntermissionLength) + (self:GetWave() - 1) * self.WaveIntermissionLengthIncrease) --加上波次间隔时间和增加的间隔时间
 
-		net.Start("zs_waveend")
+		net.Start(NET_MSG.WAVEEND)
 			net.WriteInt(self:GetWave(), 16)
 			net.WriteFloat(self:GetWaveStart())
 		net.Broadcast()
@@ -5309,7 +5332,7 @@ end
 	网络消息: zs_changeclass (切换僵尸职业)
 	功能: 客户端请求切换僵尸职业，设置死亡职业或立即自杀切换
 --]]
-net.Receive("zs_changeclass", function(len, sender)
+net.Receive(NET_MSG.CHANGECLASS, function(len, sender)
 	if sender:Team() ~= TEAM_UNDEAD or sender.Revive or GAMEMODE.PantsMode or GAMEMODE:IsClassicMode() or GAMEMODE:IsBabyMode() or GAMEMODE.ZombieEscape then return end
 
 	local classname = GAMEMODE:GetBestAvailableZombieClass(net.ReadString())
@@ -5335,7 +5358,7 @@ end)
 	网络消息: zs_zsfriend (僵尸好友设置)
 	功能: 客户端设置好友关系，允许好友互相移除钉子
 --]]
-net.Receive("zs_zsfriend", function(len, sender)
+net.Receive(NET_MSG.ZSFRIEND, function(len, sender)
 	local zsfriendid = net:ReadString()
 	local zsfriendent = player.GetBySteamID(zsfriendid)
 
@@ -5343,7 +5366,7 @@ net.Receive("zs_zsfriend", function(len, sender)
 	local isfriend = net:ReadBool()
 	sender.ZSFriends[zsfriendent] = isfriend
 
-	net.Start("zs_zsfriendadded")
+	net.Start(NET_MSG.ZSFRIENDADDED)
 		net.WriteEntity(sender)
 		net.WriteBool(isfriend)
 	net.Send(zsfriendent)
@@ -5354,7 +5377,7 @@ end)
 	网络消息: zs_nestspec (巢穴旁观)
 	功能: 客户端请求旁观巢穴或作为Gore Child从巢穴重生
 --]]
-net.Receive("zs_nestspec", function(len, sender)
+net.Receive(NET_MSG.NESTSPEC, function(len, sender)
 	if not sender:IsValidZombie() then return end
 	if sender:GetObserverMode() == OBS_MODE_NONE then return end
 

@@ -173,34 +173,39 @@ end
 
 -- 核心HUD绘制函数：执行射线检测并绘制目标信息
 function GM:HUDDrawTargetID(teamid)
-	-- 获取玩家眼睛位置和朝向向量作为射线起点和方向
-	local start = EyePos()
-	trace.start = start
-	trace.endpos = start + EyeVector() * 2048
-	-- 设置射线过滤器：排除玩家自身以及观察目标
-	filter[1] = MySelf.TargetIDFilter or MySelf
-	filter[2] = MySelf:GetObserverTarget()
-	trace.filter = filter
+	-- 射线检测节流：每 0.1 秒一次（TraceTarget* 字段供钉子/目标辅助等外部读取，保持更新）
+	if CurTime() >= (self.NextTargetIDTrace or 0) then
+		self.NextTargetIDTrace = CurTime() + 0.1
 
-	-- 判断玩家是否为旁观者模式
-	local isspectator = MySelf:IsSpectator()
+		-- 获取玩家眼睛位置和朝向向量作为射线起点和方向
+		local start = EyePos()
+		trace.start = start
+		trace.endpos = start + EyeVector() * 2048
+		-- 设置射线过滤器：排除玩家自身以及观察目标
+		filter[1] = MySelf.TargetIDFilter or MySelf
+		filter[2] = MySelf:GetObserverTarget()
+		trace.filter = filter
 
-	-- 执行包围盒射线检测，获取射线命中的实体
-	local entity = util.TraceHull(trace).Entity
-	self.TraceTarget = entity
-	-- 执行纯射线检测（排除所有玩家），获取命中的非玩家实体
-	trace.filter = FuncFilterPlayers
-	self.TraceTargetNoPlayers = util.TraceLine(trace).Entity
+		-- 判断玩家是否为旁观者模式
+		local isspectator = MySelf:IsSpectator()
 
-	-- 如果玩家具有目标焦点（TargetLocus）能力，额外进行排除队友的射线检测
-	if MySelf.TargetLocus then
-		trace.filter = FuncFilterTeam
-		self.TraceTargetTeam = util.TraceLine(trace).Entity
-	end
+		-- 执行包围盒射线检测，获取射线命中的实体
+		local entity = util.TraceHull(trace).Entity
+		self.TraceTarget = entity
+		-- 执行纯射线检测（排除所有玩家），获取命中的非玩家实体
+		trace.filter = FuncFilterPlayers
+		self.TraceTargetNoPlayers = util.TraceLine(trace).Entity
 
-	-- 如果目标是有效的玩家（同队或旁观者）或者是符文，记录当前时间用于显示淡出
-	if entity:IsValid() and (entity:IsPlayer() and (entity:Team() == teamid or isspectator) or entity.Sigil) then
-		entitylist[entity] = CurTime()
+		-- 如果玩家具有目标焦点（TargetLocus）能力，额外进行排除队友的射线检测
+		if MySelf.TargetLocus then
+			trace.filter = FuncFilterTeam
+			self.TraceTargetTeam = util.TraceLine(trace).Entity
+		end
+
+		-- 如果目标是有效的玩家（同队或旁观者）或者是符文，记录当前时间用于显示淡出
+		if entity:IsValid() and (entity:IsPlayer() and (entity:Team() == teamid or isspectator) or entity.Sigil) then
+			entitylist[entity] = CurTime()
+		end
 	end
 
 	-- 遍历所有已记录的可见实体，根据当前时间决定绘制或移除

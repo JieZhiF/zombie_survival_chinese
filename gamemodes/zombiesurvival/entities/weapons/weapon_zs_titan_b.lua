@@ -2,7 +2,7 @@ AddCSLuaFile()
 
 SWEP.Base = "weapon_zs_zombie"
 
-SWEP.PrintName = "Titan2"
+SWEP.PrintName = ""..translate.Get("weapon_zs_titan_b")
 
 SWEP.MeleeDamage = 50
 SWEP.OriginalMeleeDamage = SWEP.MeleeDamage

@@ -194,7 +194,7 @@ end
 
 -- 获取玩家的代币数量
 function meta:GetTokens()
-	return self:GetNWInt('btokens', pts)
+	return self:GetNWInt('btokens', 0)
 end
 
 -- 预定义的flinching动画序列名称表

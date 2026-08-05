@@ -1,9 +1,19 @@
+-- ============================================================================
+-- perf/client/buffthefps.lua - 客户端绘制性能优化核心（BuffedFPS）
+-- 负责：以高性能实现重写 surface/draw 的部分绘制函数
+--       （draw.SimpleText/DrawText/RoundedBox/TextShadow 等），
+--       并缓存字体高度、材质 ID 等结果，避免逐帧重复测量与查询。
+-- 重要：本文件必须最先加载（位于 cl_init.lua 加载链最前），
+--       因为被重写的绘制函数不再返回有意义的值（除 GetFontHeight 外），
+--       后续所有代码都必须基于这一约定；服务端会直接跳过本文件。
+-- ============================================================================
 -- This rewrites a few drawing methods to be slightly faster.
 -- This file is to be included before everything else.
 
 -- WARNING: Removes the functionality of any drawing functions returning values (except GetFontHeight).
 -- This doesn't really matter in most cases because A: nobody uses it and B: they were returning wrong values most of the time anyway.
 
+-- 防重复加载守卫：服务端不需要这些绘制重写，客户端也保证只执行一次
 if SERVER or BuffedFPS then return end
 BuffedFPS = true
 
@@ -40,7 +50,9 @@ local Tex_Corner8 = surface_GetTextureID( "gui/corner8" )
 local Tex_Corner16 = surface_GetTextureID( "gui/corner16" )
 local Tex_white = surface_GetTextureID( "vgui/white" )
 
+-- 字体高度缓存表：避免重复调用 surface.GetTextSize 测量文本高度
 local CachedFontHeights = {}
+-- ==== draw_GetFontHeight - 获取（并缓存）指定字体的行高 ====
 local function draw_GetFontHeight(font)
 	if CachedFontHeights[font] then
 		return CachedFontHeights[font]
@@ -53,6 +65,8 @@ local function draw_GetFontHeight(font)
 	return h
 end
 
+-- ==== GM:EmptyCachedFontHeights - 清空字体高度缓存 ====
+-- 字体资源重载后（如字体 DLC 加载完成）需调用，避免使用过期行高
 function GM:EmptyCachedFontHeights()
 	CachedFontHeights = {}
 end
@@ -116,8 +130,14 @@ function draw.DrawText(text, font, x, y, colour, xalign)
 	end
 end
 
+-- ==== draw.RoundedBox - 高性能圆角矩形 ====
+-- 用四条矩形边 + 四角圆角纹理拼接，替代原版实现
 function draw.RoundedBox(bordersize, x, y, w, h, color)
-	surface_SetDrawColor(color)
+	if type(color) == "table" then
+		surface_SetDrawColor(color.r or 255, color.g or 255, color.b or 255, color.a or 255)
+	else
+		surface_SetDrawColor(color)
+	end
 
 	surface_DrawRect(x + bordersize, y, w - bordersize * 2, h)
 	surface_DrawRect(x, y + bordersize, bordersize, h - bordersize * 2)
@@ -130,6 +150,8 @@ function draw.RoundedBox(bordersize, x, y, w, h, color)
 	surface_DrawTexturedRectRotated( x + w - bordersize/2 , y + h - bordersize/2, bordersize, bordersize, 180 )
 end
 
+-- ==== draw.Text - 表格参数版文本绘制 ====
+-- 按原版 draw.Text 的参数结构（tab 表）转调优化后的 draw.SimpleText
 function draw.Text(tab)
     draw.SimpleText(
         tab.text,
@@ -142,6 +164,8 @@ function draw.Text(tab)
     )
 end
 
+-- ==== draw.WordBox - 带背景盒的文字绘制 ====
+-- 先按文本尺寸绘制圆角背景盒，再在盒内绘制文字
 function draw.WordBox( bordersize, x, y, text, font, color, fontcolor )
 	surface_SetFont( font )
 	local w, h = surface_GetTextSize( text )
@@ -153,6 +177,8 @@ function draw.WordBox( bordersize, x, y, text, font, color, fontcolor )
 	surface_DrawText( text )
 end
 
+-- ==== draw.TextShadow - 带投影的文字绘制 ====
+-- 先画偏移指定距离的黑色文字作投影，再在原位置画前景文字
 function draw.TextShadow( tab, distance, alpha )
 	alpha = alpha or 200
 
@@ -170,16 +196,22 @@ function draw.TextShadow( tab, distance, alpha )
 	draw.Text( tab )
 end
 
+-- ==== draw.TexturedQuad - 简化版贴图绘制 ====
+-- 表格参数版：设置纹理与颜色后直接绘制矩形
 function draw.TexturedQuad(tab)
 	surface_SetTexture(tab.texture)
 	surface_SetDrawColor(tab.color or color_white)
 	surface_DrawTexturedRect(tab.x, tab.y, tab.w, tab.h)
 end
 
+-- ==== draw.NoTexture - 切换到纯白贴图 ====
+-- 用于绘制纯色矩形前取消贴图状态（白色纹理与任意颜色混合即得该颜色）
 function draw.NoTexture()
 	surface_SetTexture( Tex_white )
 end
 
+-- ==== draw.RoundedBoxEx - 支持四角独立开关的圆角矩形 ====
+-- a/b/c/d 分别控制 左上/右上/左下/右下 是否使用圆角纹理，为 false 时画直角
 function draw.RoundedBoxEx( bordersize, x, y, w, h, color, a, b, c, d )
 	surface_SetDrawColor(color)
 
@@ -241,7 +273,7 @@ function draw.SimpleTextOutlined(text, font, x, y, colour, xalign, yalign, outli
 	end
     
     -- 绘制轮廓
-	surface_SetTextColor(outlinecolour.r, outlinecolour.g, outlinecolour.a, outlinecolour.a)
+	surface_SetTextColor(outlinecolour.r, outlinecolour.g, outlinecolour.b, outlinecolour.a)
     
     -- 八方向绘制，性能高于原版的嵌套循环
     surface_SetTextPos(alignedX - outlinewidth, alignedY - outlinewidth); surface_DrawText(text)
@@ -274,7 +306,9 @@ local SpeakFlexes = {
 }
 local GESTURE_SLOT_VCD = GESTURE_SLOT_VCD
 local ACT_GMOD_IN_CHAT = ACT_GMOD_IN_CHAT
+-- 动画相关优化保持不变（原版已是良好实现），在游戏初始化时安装说话动画函数
 hook.Add("Initialize", "InstallFunctions_Buffed", function()
+	-- ==== GAMEMODE:MouthMoveAnimation - 根据语音音量驱动嘴部 Flex 权重 ====
 	function GAMEMODE:MouthMoveAnimation( pl )
 		if pl:IsSpeaking() then
 			pl.m_bWasSpeaking = true
@@ -300,6 +334,7 @@ hook.Add("Initialize", "InstallFunctions_Buffed", function()
 		end
 	end
 
+	-- ==== GAMEMODE:GrabEarAnimation - 根据打字状态驱动聊天手势动画 ====
 	function GAMEMODE:GrabEarAnimation(pl)
         local isTyping = pl:IsTyping()
 		if isTyping then
@@ -320,9 +355,11 @@ hook.Add("Initialize", "InstallFunctions_Buffed", function()
 	end
 end)
 
+-- 清空驾驶（drive）相关回调：本模式不使用的移动钩子替换为空函数以减少开销
 local function empty() end
 drive.Move = empty
 drive.FinishMove = empty
 drive.StartMove = empty
 
+-- 加载完成提示（用于确认性能优化已生效）
 print("[BuffedFPS] Optimized drawing functions loaded (v2 - Fixed Alignment).")

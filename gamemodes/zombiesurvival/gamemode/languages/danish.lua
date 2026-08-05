@@ -1,4 +1,4 @@
--- Translated by The Special Duckling (http://www.noxiousnet.com/forums/index.php?action=profile;u=8557)
+-- Translated by The Special Duckling (http:--www.noxiousnet.com/forums/index.php?action=profile;u=8557)
 
 translate.AddLanguage("da", "Danish")
 

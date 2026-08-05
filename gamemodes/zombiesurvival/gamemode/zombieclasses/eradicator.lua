@@ -1,10 +1,8 @@
---[[
-==================================================================
-根除者 (Eradicator) — 僵尸职业
-特点：可装死（假死复活）、可嘲讽、自定义动画集合、
-      被伤害致死时触发复活机制、自定义死亡/受伤音效
-==================================================================
-]]
+-- ============================================================================
+-- 根除者 (Eradicator) — 僵尸职业
+-- 特点：可装死（假死复活）、可嘲讽、自定义动画集合、
+--       被伤害致死时触发复活机制、自定义死亡/受伤音效
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Eradicator"
@@ -256,14 +254,17 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/poisonzombie"
+-- 图标颜色（暗红色）
 CLASS.IconColor = Color(66, 0, 0)
 
 -- 覆盖模型材质
 local matSkin = Material("Models/charple/charple4_sheet.vtf")
+-- 绘制前覆盖模型材质
 function CLASS:PrePlayerDrawOverrideModel(pl)
 	render.ModelMaterialOverride(matSkin)
 end
 
+-- 绘制后恢复模型材质
 function CLASS:PostPlayerDrawOverrideModel(pl)
 	render.ModelMaterialOverride(nil)
 end

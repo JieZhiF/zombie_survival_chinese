@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "'英雄' AWP"
+SWEP.PrintName = ""..translate.Get("weapon_zs_hero_awp")
 SWEP.Description = "仅英雄使用，属于非法武器之一."
 
 SWEP.SlotPos = 0

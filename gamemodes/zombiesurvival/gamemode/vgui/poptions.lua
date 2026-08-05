@@ -3,6 +3,32 @@
 -- 包含界面/HUD、游戏性、环境与效果、武器设置等分类
 -- 支持复选框、滑块、颜色选择器、下拉框和字体编辑器
 -- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 设置主窗口
+-- [位置] ZSOptions / Init() / Paint() / MakepOptions()
+-- [作用] 创建圆角设置窗口，自动选中第一个大类
+-- [常改] 窗口比例、背景颜色、关闭按钮样式
+--
+-- [区域] 顶部大类栏
+-- [位置] CreateTopCategoryBar()
+-- [作用] 居中的大类按钮(界面/游戏性/环境/武器)，支持拖拽移动窗口
+-- [常改] 按钮尺寸、选中色、拖拽逻辑
+--
+-- [区域] 左侧子分类列表
+-- [位置] UpdateSubCategoryList()
+-- [作用] 当前大类的子分类按钮，选中带动画高亮
+-- [常改] 按钮高度、动画时长
+--
+-- [区域] 右侧设置项
+-- [位置] UpdateContent() / AddCheckbox() / AddSlider() / AddColorMixer() / AddComboBox() / AddFontUsageEntry()
+-- [作用] 按数据类型生成复选框/滑块/颜色/下拉/字体设置控件
+-- [常改] 控件样式、数据来源
+--
+-- [区域] 字体编辑器
+-- [位置] OpenRealtimeFontEditor()
+-- [作用] 实时预览并保存 ZSFontDLC 字体配置
+-- [常改] 编辑控件、保存逻辑
+-- ============================================================================
 
 local PANEL = {}
 
@@ -153,6 +179,7 @@ function PANEL:PopulateOptionsData()
             { type = "checkbox", label = "Option_FilmMode", convar = "zs_filmmode" },
             { type = "checkbox", label = "Option_HideViewModels", convar = "zs_hideviewmodels" },
             { type = "checkbox", label = "Option_DamageFloatersWalls", convar = "zs_damagefloaterswalls" },
+            { type = "checkbox", label = "Option_GhostMode", convar = "zs_nailplacer_ghostmode" },--预制防线显示
             { type = "slider", label = "Option_InterfaceHUDScale", convar = "zs_interfacesize", min = 0.7, max = 1.6, decimals = 1 },
             { type = "slider", label = "Option_IronsightZoom", convar = "zs_ironsightzoom", min = 0, max = 1, decimals = 2 },
             { type = "slider", label = "Option_FilmGrain", convar = "zs_filmgrainopacity", min = 0, max = 255, decimals = 0 },

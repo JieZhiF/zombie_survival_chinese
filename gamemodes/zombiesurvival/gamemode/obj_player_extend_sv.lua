@@ -632,7 +632,7 @@ function meta:SendLifeStats()
 	if self.LifeStatSend and self.LifeStatSend > CurTime() then return end
 	self.LifeStatSend = CurTime() + 0.33
 
-	net.Start("zs_lifestats")
+	net.Start(NET_MSG.LIFESTATS)
 		net.WriteUInt(math.ceil(self.LifeBarricadeDamage or 0), 16)
 		net.WriteUInt(math.ceil(self.LifeHumanDamage or 0), 16)
 		net.WriteUInt(self.LifeBrainsEaten or 0, 8)
@@ -713,14 +713,14 @@ end
 -- 支持向量位置和实体位置两种形式
 function meta:FloatingScore(victimorpos, effectname, frags, flags)
 	if type(victimorpos) == "Vector" then
-		net.Start("zs_floatscore_vec")
+		net.Start(NET_MSG.FLOATSCORE_VEC)
 			net.WriteVector(victimorpos)
 			net.WriteString(effectname)
 			net.WriteInt(frags, 24)
 			net.WriteUInt(flags, 8)
 		net.Send(self)
 	else
-		net.Start("zs_floatscore")
+		net.Start(NET_MSG.FLOATSCORE)
 			net.WriteEntity(victimorpos)
 			net.WriteString(effectname)
 			net.WriteInt(frags, 24)
@@ -767,14 +767,14 @@ end
 
 -- 向玩家屏幕中央发送通知
 function meta:CenterNotify(...)
-	net.Start("zs_centernotify")
+	net.Start(NET_MSG.CENTERNOTIFY)
 		net.WriteTable({...})
 	net.Send(self)
 end
 
 -- 向玩家屏幕顶部发送通知
 function meta:TopNotify(...)
-	net.Start("zs_topnotify")
+	net.Start(NET_MSG.TOPNOTIFY)
 		net.WriteTable({...})
 	net.Send(self)
 end
@@ -909,14 +909,14 @@ end
 
 -- 将腿部伤害数据同步到客户端
 function meta:UpdateLegDamage()
-	net.Start("zs_legdamage")
+	net.Start(NET_MSG.LEGDAMAGE)
 		net.WriteFloat(self.LegDamage)
 	net.Send(self)
 end
 
 -- 将手臂伤害数据同步到客户端
 function meta:UpdateArmDamage()
-	net.Start("zs_armdamage")
+	net.Start(NET_MSG.ARMDAMAGE)
 		net.WriteFloat(self.ArmDamage)
 	net.Send(self)
 end
@@ -1203,14 +1203,14 @@ function meta:Resupply(owner, obj)
 		-- 普通补给：设置冷却时间
 		self.NextResupplyUse = CurTime() + GAMEMODE.ResupplyBoxCooldown * (self.ResupplyDelayMul or 1) * (stockpiling and 2.12 or 1)
 
-		net.Start("zs_nextresupplyuse")
+		net.Start(NET_MSG.NEXTRESUPPLYUSE)
 			net.WriteFloat(self.NextResupplyUse)
 		net.Send(self)
 	else
 		-- 仓库补给：消耗一次使用次数
 		self.StowageCaches = self.StowageCaches - 1
 
-		net.Start("zs_stowagecaches")
+		net.Start(NET_MSG.STOWAGECACHES)
 			net.WriteInt(self.StowageCaches, 8)
 		net.Send(self)
 	end
@@ -1220,7 +1220,7 @@ function meta:Resupply(owner, obj)
 	local amount = GAMEMODE.AmmoCache[ammotype]
 
 	for i = 1, stockpiling and not stowage and 2 or 1 do
-		net.Start("zs_ammopickup")
+		net.Start(NET_MSG.AMMOPICKUP)
 			net.WriteUInt(amount, 16)
 			net.WriteString(ammotype)
 		net.Send(self)
@@ -1240,7 +1240,7 @@ function meta:Resupply(owner, obj)
 
 			owner:AddPoints(0.15, nil, nil, true)
 
-			net.Start("zs_commission")
+			net.Start(NET_MSG.COMMISSION)
 				net.WriteEntity(obj)
 				net.WriteEntity(self)
 				net.WriteFloat(0.15)
@@ -1349,7 +1349,7 @@ function meta:UpdateAllZombieClasses()
 		if pl ~= self and pl:Team() == TEAM_UNDEAD then
 			local id = pl:GetZombieClass()
 			if id and 0 < id then
-				net.Start("zs_zclass")
+				net.Start(NET_MSG.ZCLASS)
 					net.WriteEntity(pl)
 					net.WriteUInt(id, 8)
 				net.Send(self)
@@ -1381,7 +1381,7 @@ end
 function meta:SetZombieClass(cl, onlyupdate, filter)
 	if onlyupdate then
 		-- 仅向客户端发送更新
-		net.Start("zs_zclass")
+		net.Start(NET_MSG.ZCLASS)
 			net.WriteEntity(self)
 			net.WriteUInt(cl, 8)
 		if filter then
@@ -1404,7 +1404,7 @@ function meta:SetZombieClass(cl, onlyupdate, filter)
 		end
 		self:CallZombieFunction0("SwitchedTo")
 
-		net.Start("zs_zclass")
+		net.Start(NET_MSG.ZCLASS)
 			net.WriteEntity(self)
 			net.WriteUInt(cl, 8)
 		if filter then
@@ -1516,7 +1516,7 @@ function meta:DoHulls(classid, teamid)
 	end
 
 	-- 广播物理属性更新到所有客户端
-	net.Start("zs_dohulls")
+	net.Start(NET_MSG.DOHULLS)
 		net.WriteEntity(self)
 		net.WriteUInt(classid, 8)
 		net.WriteBool(teamid == TEAM_UNDEAD)
@@ -1573,7 +1573,7 @@ function meta:Redeem(silent, noequip)
 	self.SpawnedTime = CurTime()
 
 	if not silent then
-		net.Start("zs_playerredeemed")
+		net.Start(NET_MSG.PLAYERREDEEMED)
 			net.WriteEntity(self)
 		net.Broadcast()
 	end
@@ -1672,7 +1672,7 @@ end
 function meta:GivePointPenalty(amount)
 	self:SetFrags(self:Frags() - amount)
 
-	net.Start("zs_penalty")
+	net.Start(NET_MSG.PENALTY)
 		net.WriteUInt(amount, 16)
 	net.Send(self)
 end
@@ -1706,13 +1706,13 @@ function meta:GiveWeaponByType(weapon, plyr, ammo)
 				plyr:GiveAmmo(desiredgive, ammotype)
 
 				-- 通知双方
-				net.Start("zs_ammogive")
+				net.Start(NET_MSG.AMMOGIVE)
 					net.WriteUInt(desiredgive, 16)
 					net.WriteString(ammotype)
 					net.WriteEntity(plyr)
 				net.Send(self)
 
-				net.Start("zs_ammogiven")
+				net.Start(NET_MSG.AMMOGIVEN)
 					net.WriteUInt(desiredgive, 16)
 					net.WriteString(ammotype)
 					net.WriteEntity(self)
@@ -1841,7 +1841,7 @@ end
 function meta:PlayEyePainSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
-	net.Start("voice_eyepain")
+	net.Start(NET_MSG.VOICE_EYEPAIN)
 	net.WriteEntity(self)
 	net.Send(rf)
 end
@@ -1850,7 +1850,7 @@ end
 function meta:PlayGiveAmmoSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
-	net.Start("voice_giveammo")
+	net.Start(NET_MSG.VOICE_GIVEAMMO)
 	net.WriteEntity(self)
 	net.Send(rf)
 end
@@ -1859,7 +1859,7 @@ end
 function meta:PlayDeathSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
-	net.Start("voice_death")
+	net.Start(NET_MSG.VOICE_DEATH)
 	net.WriteEntity(self)
 	net.Send(rf)
 end
@@ -1868,7 +1868,7 @@ end
 function meta:PlayZombieDeathSound()
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
-	net.Start("voice_zombiedeath")
+	net.Start(NET_MSG.VOICE_ZOMBIEDEATH)
 	net.WriteEntity(self)
 	net.Send(rf)
 end
@@ -1880,7 +1880,7 @@ function meta:PlayPainSound()
 
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
-	net.Start("voice_pain")
+	net.Start(NET_MSG.VOICE_PAIN)
 	net.WriteEntity(self)
 	net.WriteUInt(math.ceil(self:Health() / 25), 4)
 	net.Send(rf)
@@ -1893,7 +1893,7 @@ function meta:PlayZombiePainSound()
 
 	local rf = RecipientFilter()
 	rf:AddPAS(self:GetPos())
-	net.Start("voice_zombiepain")
+	net.Start(NET_MSG.VOICE_ZOMBIEPAIN)
 	net.WriteEntity(self)
 	net.Send(rf)
 end
@@ -1993,7 +1993,7 @@ end
 
 -- 通知客户端更新其备用武器选择（用于快速切换）
 function meta:UpdateAltSelectedWeapon()
-	net.Start("zs_updatealtselwep")
+	net.Start(NET_MSG.UPDATEALTSELWEP)
 	net.Send(self)
 end
 
@@ -2002,7 +2002,7 @@ function meta:SendDeployableLostMessage(deployable)
 	local deployableclass = deployable:GetClass()
 	local deployableinfo = GAMEMODE.DeployableInfo[deployableclass]
 
-	net.Start("zs_deployablelost")
+	net.Start(NET_MSG.DEPLOYABLELOST)
 		net.WriteString(deployableinfo.Name)
 		net.WriteString(deployableinfo.WepClass)
 	net.Send(self)
@@ -2013,7 +2013,7 @@ function meta:SendDeployableClaimedMessage(deployable)
 	local deployableclass = deployable:GetClass()
 	local deployableinfo = GAMEMODE.DeployableInfo[deployableclass]
 
-	net.Start("zs_deployableclaim")
+	net.Start(NET_MSG.DEPLOYABLECLAIM)
 		net.WriteString(deployableinfo.Name)
 		net.WriteString(deployableinfo.WepClass)
 	net.Send(self)
@@ -2024,7 +2024,7 @@ function meta:SendDeployableOutOfAmmoMessage(deployable)
 	local deployableclass = deployable:GetClass()
 	local deployableinfo = GAMEMODE.DeployableInfo[deployableclass]
 
-	net.Start("zs_deployableout")
+	net.Start(NET_MSG.DEPLOYABLEOUT)
 		net.WriteString(deployableinfo.Name)
 		net.WriteString(deployableinfo.WepClass)
 	net.Send(self)

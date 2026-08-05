@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "'棕熊' AWP"
+SWEP.PrintName = ""..translate.Get("weapon_zs_hunter_bear")
 SWEP.Description = "聪明且充满野性的力量."
 
 SWEP.SlotPos = 0

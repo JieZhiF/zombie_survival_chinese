@@ -1,5 +1,5 @@
 
-SWEP.PrintName = "特斯拉武士刀"
+SWEP.PrintName = ""..translate.Get("weapon_zs_teslakatana")
 
 
 DEFINE_BASECLASS("weapon_zs_basemelee")
@@ -65,7 +65,7 @@ SWEP.HitAnim = ACT_VM_MISSCENTER -- ACT_VM_PRIMARYATTACK
 SWEP.MissAnim = ACT_VM_PRIMARYATTACK -- ACT_VM_MISSCENTER
 SWEP.SwingTime = 0
 SWEP.SwingRotation = Angle(0, 0, 0)
-SWEP.SwingOffset = Vector(0, 0, 0) //挥舞位置
+SWEP.SwingOffset = Vector(0, 0, 0) --挥舞位置
 
 function SWEP:PlayHitSound()
 	self:EmitSound("GlassBottle.ImpactHard")

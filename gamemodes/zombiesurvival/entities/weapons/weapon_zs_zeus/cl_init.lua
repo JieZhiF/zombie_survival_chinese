@@ -1,6 +1,11 @@
+-- ============================================================================
+-- weapon_zs_zeus/cl_init.lua - 宙斯（客户端表现）
+-- 负责：SCK 附加模型（能量弩箭/电环）、开镜渲染与装填时的电弧光束特效
+-- ============================================================================
 INC_CLIENT()
 DEFINE_BASECLASS("weapon_zs_base")
 
+-- 第一人称视图附加元素：能量螺栓、电环与发光片（SCK 元素表）
 SWEP.VElements = {
 	["bolt+"] = { type = "Model", model = "models/crossbow_bolt.mdl", bone = "ValveBiped.bolt", rel = "bolt", pos = Vector(0, 0, 0), angle = Angle(0, 0, 79.724), size = Vector(1.016, 1.062, 1.062), color = Color(0, 255, 255, 255), surpresslightning = false, material = "models/props_combine/tpballglow", skin = 1, bodygroup = {} },
 	["energy_stuff+"] = { type = "Model", model = "models/props_lab/teleportring.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "BASE", pos = Vector(8.802, -2.152, 6.893), angle = Angle(127.42, -180, -88.65), size = Vector(0.075, 0.23, 0.35), color = Color(115, 155, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -12,6 +17,7 @@ SWEP.VElements = {
 	["bolt"] = { type = "Model", model = "models/crossbow_bolt.mdl", bone = "ValveBiped.bolt", rel = "", pos = Vector(-0.12, -0.046, 17.42), angle = Angle(-90, 0, 0), size = Vector(1.016, 1.062, 1.062), color = Color(0, 255, 255, 255), surpresslightning = false, material = "models/props_combine/tpballglow", skin = 1, bodygroup = {} }
 }
 
+-- 第三人称视图附加元素（同样构成能量弓外观）
 SWEP.WElements = {
 	["bolt"] = { type = "Model", model = "models/crossbow_bolt.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(27.947, -2.761, -3.977), angle = Angle(0.462, -170.174, -177.191), size = Vector(1.016, 1.062, 1.062), color = Color(0, 255, 255, 255), surpresslightning = false, material = "models/props_combine/tpballglow", skin = 1, bodygroup = {} },
 	["electric_shit2++"] = { type = "Model", model = "models/props_combine/breenlight.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "BASE", pos = Vector(0.035, 2.154, 2.749), angle = Angle(0, -90, 0), size = Vector(0.522, 0.672, 0.754), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -23,6 +29,7 @@ SWEP.WElements = {
 	["BASE"] = { type = "Model", model = "models/props_debris/wood_board06a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(13.421, -0.245, -2.487), angle = Angle(180, 99.782, 90), size = Vector(0.975, 0.093, 0.319), color = Color(255, 255, 255, 255), surpresslightning = false, material = "models/props_combine/masterinterface_alert", skin = 0, bodygroup = {} }
 }
 
+-- 将原十字弓弓臂等骨骼缩放到极小，隐藏原模型只保留自定义元素
 SWEP.ViewModelBoneMods = {
 	["ValveBiped.bowr1"] = { scale = Vector(0.009, 0.009, 0.009), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },
 	["ValveBiped.pull"] = { scale = Vector(0.009, 0.009, 0.009), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },
@@ -31,17 +38,21 @@ SWEP.ViewModelBoneMods = {
 	["ValveBiped.bowl2"] = { scale = Vector(0.009, 0.009, 0.009), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
 
+-- HUD3D：HUD 内武器图标的挂载骨骼与位置缩放
 SWEP.HUD3DBone = "ValveBiped.Crossbow_base"
 SWEP.HUD3DPos = Vector(1.5, 0.5, 11)
 SWEP.HUD3DScale = 0.025
 
+-- 第一人称视野与模型翻转
 SWEP.ViewModelFOV = 65
 SWEP.ViewModelFlip = false
 
+-- 武器栏位：螺栓（弹药）选择栏
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
 SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.SlotPos = 0
 
+-- ==== GetViewModelPosition - 开镜时隐藏第一人称模型，避免遮挡瞄准画面 ====
 function SWEP:GetViewModelPosition(pos, ang)
 	if GAMEMODE.DisableScopes then return end
 
@@ -51,6 +62,7 @@ function SWEP:GetViewModelPosition(pos, ang)
 end
 
 
+-- ==== DrawHUDBackground - 开镜时绘制未来风格瞄准镜 HUD ====
 function SWEP:DrawHUDBackground()
 	if GAMEMODE.DisableScopes then return end
 	if not self:IsScoped() then return end
@@ -58,10 +70,15 @@ function SWEP:DrawHUDBackground()
 	self:DrawFuturisticScope()
 end
 
+-- 电弧光束材质
 local matBeam = Material("trails/electric")
+
+-- ==== PostDrawViewModel - 绘制 3D 武器 HUD；装填好后为能量螺栓充能并绘制电弧光束 ====
 function SWEP:PostDrawViewModel(vm, pl, wep)
+	-- 开镜时不绘制（避免干扰瞄准画面）
 	if self:IsScoped() then return end
 
+	-- 绘制 HUD3D 挂载信息（弹药状态等）
 	if self.HUD3DPos and GAMEMODE:ShouldDraw3DWeaponHUD() then
 		local pos, ang = self:GetHUD3DPos(vm)
 		if pos then
@@ -69,6 +86,7 @@ function SWEP:PostDrawViewModel(vm, pl, wep)
 		end
 	end
 
+	-- 未装填或仍在射击冷却时螺栓熄灭
 	local veles = self.VElements
 	local col1, col2 = Color(0, 0, 0, 0), Color(0, 155, 255, 255)
 	veles["bolt"].color = col1
@@ -76,9 +94,11 @@ function SWEP:PostDrawViewModel(vm, pl, wep)
 
 	if self:Clip1() < 1 or self:GetNextPrimaryFire() > CurTime() then return end
 
+	-- 已装填且可开火：螺栓点亮为蓝色能量态
 	veles["bolt"].color = col2
 	veles["bolt+"].color = col2
 
+	-- 计算电弧光束的两端位置（箭头尖与两侧能量环，加随机抖动）
 	local attachposlocal = vm:WorldToLocal(vm:GetAttachment(1).Pos)
 	local attachpos = vm:LocalToWorld(attachposlocal + Vector(6, 1, 0)) + VectorRand() * 2
 
@@ -90,6 +110,7 @@ function SWEP:PostDrawViewModel(vm, pl, wep)
 	offvec.y = -20
 	local parttwopos = vm:LocalToWorld(part.pos + offvec) + vecrand
 
+	-- 绘制两条跳动的绿色电弧
 	render.SetMaterial(matBeam)
 	render.DrawBeam(attachpos, partonepos, 1, math.random(2, 3), 1 + math.random(5, 8), Color(110, 255, 195))
 	render.DrawBeam(attachpos, parttwopos, 1, math.random(2, 3), 1 + math.random(5, 8), Color(110, 255, 195))

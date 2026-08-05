@@ -25,8 +25,8 @@ SWEP.HoldType = "ar2"
 
 SWEP.ViewModel = "models/weapons/cstrike/c_smg_ump45.mdl"
 SWEP.WorldModel = "models/htfovichi/invpistol.mdl"
-//mag_extend 武器弹容扩展
-//sosilence 消音器 tfa_htf_supp
+--mag_extend 武器弹容扩展
+--sosilence 消音器 tfa_htf_supp
 --[[
 瞄准镜
 	["pritsel"] = {
@@ -171,7 +171,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 250,//{80,85},
+	pitch = 250,--{80,85},
 	sound = "weapons/galil/galil-1.wav"
 } )
 sound.Add( {
@@ -179,7 +179,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 250,//{80,85},
+	pitch = 250,--{80,85},
 	sound = "weapons/357_fire2.wav"
 } )
 

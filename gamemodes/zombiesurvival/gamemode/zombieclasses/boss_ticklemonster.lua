@@ -1,10 +1,8 @@
---[[
-==================================================================
-挠痒怪 (The Tickle Monster) — BOSS僵尸职业
-特点：高血量、大型碰撞体积、可嘲讽、无腿部/头部伤害判定、
-      手臂伸缩攻击效果（攻击时手臂变长）、死亡掉落武器箱
-==================================================================
-]]
+-- ============================================================================
+-- 挠痒怪 (The Tickle Monster) — BOSS僵尸职业
+-- 特点：高血量、大型碰撞体积、可嘲讽、无腿部/头部伤害判定、
+--       手臂伸缩攻击效果（攻击时手臂变长）、死亡掉落武器箱
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "The Tickle Monster"
@@ -48,12 +46,16 @@ CLASS.VoicePitch = 0.8
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"npc/zombie/zombie_pain1.wav", "npc/zombie/zombie_pain2.wav", "npc/zombie/zombie_pain3.wav", "npc/zombie/zombie_pain4.wav", "npc/zombie/zombie_pain5.wav", "npc/zombie/zombie_pain6.wav"}
+-- 死亡音效
 CLASS.DeathSounds = {"npc/zombie/zombie_die1.wav", "npc/zombie/zombie_die2.wav", "npc/zombie/zombie_die3.wav"}
 
 -- 视角偏移和碰撞体积（大型）
 CLASS.ViewOffset = Vector(0, 0, 80)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 50)
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 86)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 48)}
 
 -- 缓存函数

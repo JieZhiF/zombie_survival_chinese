@@ -1,10 +1,8 @@
---[[
-==================================================================
-猎头蟹 (Headcrab) — 僵尸职业
-特点：经典猎头蟹模型、挖地潜行（钻地）、可扑击、
-      跳跃时扑击视角锁定、不产生恐惧（钻地时）、小型碰撞体积
-==================================================================
-]]
+-- ============================================================================
+-- 猎头蟹 (Headcrab) — 僵尸职业
+-- 特点：经典猎头蟹模型、挖地潜行（钻地）、可扑击、
+--       跳跃时扑击视角锁定、不产生恐惧（钻地时）、小型碰撞体积
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Headcrab"
@@ -20,6 +18,7 @@ CLASS.Model = Model("models/headcrabclassic.mdl")
 
 -- 初始可用
 CLASS.Wave = 0
+-- 初始解锁
 CLASS.Unlocked = true
 
 -- 绑定的武器
@@ -27,12 +26,14 @@ CLASS.SWEP = "weapon_zs_headcrab"
 
 -- 生命值
 CLASS.Health = 70
--- 移动/跳跃
+-- 移动速度
 CLASS.Speed = 175
+-- 跳跃力
 CLASS.JumpPower = 100
 
--- 无摔落伤害/减速
+-- 无摔落伤害
 CLASS.NoFallDamage = true
+-- 无摔落减速
 CLASS.NoFallSlowdown = true
 
 -- 击杀得分
@@ -40,11 +41,17 @@ CLASS.Points = CLASS.Health/GM.HeadcrabZombiePointRatio
 
 -- 小型碰撞体积
 CLASS.Hull = {Vector(-12, -12, 0), Vector(12, 12, 18.1)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-12, -12, 0), Vector(12, 12, 18.1)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 10)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 10)
+-- 台阶高度
 CLASS.StepSize = 8
+-- 蹲伏行走速度倍率
 CLASS.CrouchedWalkSpeed = 1
+-- 质量（轻）
 CLASS.Mass = 25
 
 -- 不能蹲下
@@ -55,6 +62,7 @@ CLASS.IsHeadcrab = true
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"NPC_HeadCrab.Pain"}
+-- 死亡音效
 CLASS.DeathSounds = {"NPC_HeadCrab.Die"}
 
 -- 黄色血液

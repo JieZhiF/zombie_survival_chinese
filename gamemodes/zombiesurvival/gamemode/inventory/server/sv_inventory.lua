@@ -16,9 +16,9 @@ function meta:AddInventoryItem(item)
 	end
 
 	-- 通知客户端更新该物品数量
-	net.Start("zs_inventoryitem")
+	net.Start(NET_MSG.INVENTORYITEM)
 		net.WriteString(item)
-		net.WriteInt(self.ZSInventory[item], 5)
+		net.WriteUInt(self.ZSInventory[item], 8)
 	net.Send(self)
 
 	return true
@@ -44,9 +44,9 @@ function meta:TakeInventoryItem(item)
 	end
 
 	-- 通知客户端更新
-	net.Start("zs_inventoryitem")
+	net.Start(NET_MSG.INVENTORYITEM)
 		net.WriteString(item)
-		net.WriteInt(self.ZSInventory[item] or 0, 5)
+		net.WriteUInt(self.ZSInventory[item] or 0, 8)
 	net.Send(self)
 
 	return true
@@ -61,14 +61,14 @@ function meta:WipePlayerInventory()
 	self.ZSInventory = {}
 	self:ApplyTrinkets()
 
-	net.Start("zs_wipeinventory")
+	net.Start(NET_MSG.WIPEINVENTORY)
 	net.Send(self)
 end
 
 -- ========== 处理客户端合成请求 ==========
 
 -- 接收客户端发送的合成请求网络消息
-net.Receive("zs_trycraft", function(len, pl)
+net.Receive(NET_MSG.TRYCRAFT, function(len, pl)
 	local component = net:ReadString()
 	local weapon = net:ReadString()
 
@@ -219,7 +219,7 @@ function meta:GiveInventoryItemByType(itype, plyr)
 	self:UpdateAltSelectedWeapon()
 
 	-- 通知目标玩家接收物品
-	net.Start("zs_invgiven")
+	net.Start(NET_MSG.INVGIVEN)
 		net.WriteString(itype)
 		net.WriteEntity(self)
 	net.Send(plyr)

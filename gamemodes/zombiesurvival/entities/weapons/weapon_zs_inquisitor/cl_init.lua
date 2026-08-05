@@ -1,16 +1,24 @@
+-- ============================================================================
+-- weapon_zs_inquisitor/cl_init.lua - 审判者（客户端逻辑）
+-- 负责：HUD 3D 预览、武器栏位以及第一/第三人称拼接模型元素
+-- ============================================================================
 INC_CLIENT()
 
+-- HUD 3D 预览：绑定骨骼、位置与角度
 SWEP.HUD3DBone = "v_weapon.Glock_Slide"
 SWEP.HUD3DPos = Vector(1, 0, -1)
 SWEP.HUD3DAng = Angle(90, 0, -10)
 
+-- 第一人称视野大小与模型翻转
 SWEP.ViewModelFOV = 49
 SWEP.ViewModelFlip = false
 
+-- 武器选择栏位（弩箭类）与栏内位置
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
 SWEP.SlotGroup = WEPSELECT_BOLT
 SWEP.SlotPos = 0
 
+-- 第一人称拼接模型元素（用道具模型组合出弩的外形，绑定 Glock 骨骼）
 SWEP.VElements = {
 	["t2_xbow+++"] = { type = "Model", model = "models/props_c17/lamp_bell_on.mdl", bone = "v_weapon.Glock_Parent", rel = "t2_xbow", pos = Vector(4, -0.101, -0.201), angle = Angle(90, 1.169, 0), size = Vector(0.05, 0.05, 0.15), color = Color(69, 85, 115, 255), surpresslightning = false, material = "models/props_pipes/guttermetal01a", skin = 0, bodygroup = {} },
 	["t2_xbow++"] = { type = "Model", model = "models/weapons/w_pist_p228.mdl", bone = "v_weapon.Glock_Parent", rel = "t2_xbow", pos = Vector(-0.201, 0, -5.7), angle = Angle(0, 180, 0), size = Vector(0.699, 0.86, 0.899), color = Color(36, 41, 44, 255), surpresslightning = false, material = "models/props_pipes/pipemetal001a", skin = 0, bodygroup = {} },
@@ -22,6 +30,7 @@ SWEP.VElements = {
 	["t2_xbow+++++++"] = { type = "Model", model = "models/props_pipes/pipe02_straight01_long.mdl", bone = "v_weapon.Glock_Parent", rel = "t2_xbow", pos = Vector(-6.5, -2.701, -0.101), angle = Angle(0, 62.285, 0), size = Vector(0.007, 0.27, 0.007), color = Color(255, 255, 255, 255), surpresslightning = false, material = "models/props_c17/metalladder003", skin = 0, bodygroup = {} }
 }
 
+-- 第三人称拼接模型元素（绑定右手骨骼）
 SWEP.WElements = {
 	["t2_xbow+++++++"] = { type = "Model", model = "models/props_pipes/pipe02_straight01_long.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "t2_xbow", pos = Vector(-6.5, -2.701, -0.101), angle = Angle(0, 62.285, 0), size = Vector(0.007, 0.239, 0.007), color = Color(255, 255, 255, 255), surpresslightning = false, material = "models/props_c17/metalladder003", skin = 0, bodygroup = {} },
 	["t2_xbow+++"] = { type = "Model", model = "models/props_c17/lamp_bell_on.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "t2_xbow", pos = Vector(4, -0.101, -0.201), angle = Angle(90, 1.169, 0), size = Vector(0.05, 0.05, 0.15), color = Color(69, 85, 115, 255), surpresslightning = false, material = "models/props_pipes/guttermetal01a", skin = 0, bodygroup = {} },

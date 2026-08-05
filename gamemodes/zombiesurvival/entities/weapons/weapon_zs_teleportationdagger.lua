@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "传送匕首"
+SWEP.PrintName = ""..translate.Get("weapon_zs_teleportationdagger")
 SWEP.Description = "刀刃上刻印着看不懂的符文，按R记录当前位置，再次按R传送至记录地."
 
 if CLIENT then
@@ -61,8 +61,6 @@ function SWEP:PostOnMeleeHit(hitent, hitflesh, tr)
 end
 
 if SERVER then
-    util.AddNetworkString("TeleportDaggerCooldown")
-
     function SWEP:InitializeHoldType()
         self.ActivityTranslate = {}
         self.ActivityTranslate[ACT_HL2MP_IDLE] = ACT_HL2MP_IDLE_KNIFE

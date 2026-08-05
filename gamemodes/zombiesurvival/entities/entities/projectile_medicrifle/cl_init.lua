@@ -1,6 +1,12 @@
+-- ============================================================================
+-- cl_init.lua - 医疗步枪子弹投射物（客户端）：双模式药剂外观
+-- 负责：按强化模式标记创建红色/绿色药剂模型，并喷发对应颜色的粒子
+-- ============================================================================
 INC_CLIENT()
 
+-- ==== Initialize - 初始化：按模式创建附着的药剂模型 ====
 function ENT:Initialize()
+	-- GetDTBool(0) 为"活力强化"分支标记：true 为强化模式（伤害弹），false 为治疗模式
 	local alt = self:GetDTBool(0)
 	local cmodel = ClientsideModel("models/healthvial.mdl")
 	if cmodel:IsValid() then
@@ -18,22 +24,28 @@ function ENT:Initialize()
 	end
 end
 
+-- 材质覆盖（反光材质，配合染色实现发光效果）
 local matOverride = Material("models/shiny")
+-- ==== Draw - 绘制：按模式染色并喷发对应颜色粒子 ====
 function ENT:Draw()
 	local alt = self:GetDTBool(0)
+	-- 强化模式偏红，治疗模式偏蓝
 	render.SetColorModulation(alt and 1 or 0.3, 0.4, alt and 0.3 or 1)
 	render.ModelMaterialOverride(matOverride)
 
 	self:DrawModel()
 
+	-- 恢复默认渲染状态
 	render.ModelMaterialOverride()
 	render.SetColorModulation(1, 1, 1)
 
+	-- 子弹停止移动后不再喷发粒子
 	if self:GetMoveType() == MOVETYPE_NONE or CurTime() < self.NextEmit then return end
 	self.NextEmit = CurTime() + 0.01
 
 	local pos = self:GetPos()
 
+	-- 喷发反向飘散的烟雾粒子
 	local emitter = ParticleEmitter(pos)
 	emitter:SetNearClip(24, 32)
 

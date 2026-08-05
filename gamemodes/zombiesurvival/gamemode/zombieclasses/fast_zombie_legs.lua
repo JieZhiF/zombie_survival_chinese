@@ -1,10 +1,8 @@
---[[
-==================================================================
-快速僵尸腿 (Fast Zombie Legs) — 特殊僵尸职业
-特点：快速僵尸死亡后分裂出的下半身、仅腿部受伤判定、
-      高跳跃力、可装死、踢腿攻击骨骼动画、无头部/上半身渲染
-==================================================================
-]]
+-- ============================================================================
+-- 快速僵尸腿 (Fast Zombie Legs) — 特殊僵尸职业
+-- 特点：快速僵尸死亡后分裂出的下半身、仅腿部受伤判定、
+--       高跳跃力、可装死、踢腿攻击骨骼动画、无头部/上半身渲染
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Fast Zombie Legs"
@@ -22,8 +20,11 @@ CLASS.NoHead = true
 
 -- 初始可用/隐藏
 CLASS.Wave = 0
+-- 阈值（0 表示无需任何条件）
 CLASS.Threshold = 0
+-- 初始解锁
 CLASS.Unlocked = true
+-- 隐藏（由分裂触发，不直接可选）
 CLASS.Hidden = true
 
 -- 生命值
@@ -41,14 +42,20 @@ CLASS.Points = CLASS.Health/GM.LegsZombiePointRatio
 
 -- 小型碰撞体积（无上半身）
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 32)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 32)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 32)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 32)
+-- 质量（为默认一半，较轻）
 CLASS.Mass = DEFAULT_MASS * 0.5
+-- 蹲伏行走速度倍率
 CLASS.CrouchedWalkSpeed = 1
 
 -- 不能蹲下/不能装死
 CLASS.CantDuck = true
+-- 不能装死
 CLASS.CanFeignDeath = false
 
 -- 语音音调
@@ -181,6 +188,7 @@ CLASS.Icon = "zombiesurvival/killicons/fast_legs"
 
 -- 裁剪上半身的贴花
 local undo = false
+-- 绘制前：裁剪掉脊柱以上部分，只渲染腿部
 function CLASS:PrePlayerDraw(pl)
 	local boneid = pl:LookupBone("ValveBiped.Bip01_Spine")
 	if boneid and boneid > 0 then
@@ -194,6 +202,7 @@ function CLASS:PrePlayerDraw(pl)
 	end
 end
 
+-- 绘制后：取消裁剪平面
 function CLASS:PostPlayerDraw(pl)
 	if undo then
 		render.PopCustomClipPlane()

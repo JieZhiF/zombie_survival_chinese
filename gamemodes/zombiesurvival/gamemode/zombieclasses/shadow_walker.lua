@@ -1,10 +1,8 @@
---[[
-==================================================================
-暗影行者 (Shadow Walker) — 僵尸职业
-特点：骷髅覆盖模型、可装死、半透明黑色渲染、
-      近战伤害减半、红色发光眼睛、骨骼属性
-==================================================================
-]]
+-- ============================================================================
+-- 暗影行者 (Shadow Walker) — 僵尸职业
+-- 特点：骷髅覆盖模型、可装死、半透明黑色渲染、
+--       近战伤害减半、红色发光眼睛、骨骼属性
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Shadow Walker"
@@ -19,7 +17,9 @@ CLASS.Help = "controls_shadow_lurker"
 CLASS.BetterVersion = "Frigid Revenant"
 
 -- 主模型（尸体）+ 覆盖模型（骷髅）
+-- 主模型（尸体）
 CLASS.Model = Model("models/player/corpse1.mdl")
+-- 覆盖模型（骷髅）
 CLASS.OverrideModel = Model("models/player/skeleton.mdl")
 
 -- 可嘲讽
@@ -32,7 +32,9 @@ CLASS.SWEP = "weapon_zs_shadowwalker"
 CLASS.Wave = 2 / 6
 
 -- 生命值/速度
+-- 生命值
 CLASS.Health = 220
+-- 移动速度
 CLASS.Speed = 180
 
 -- 击杀得分
@@ -68,6 +70,7 @@ function CLASS:KnockedDown(pl, status, exists)
 end
 
 -- 脚步声
+-- 自定义脚步声（藤壶折颈音效）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if math_random(2) == 1 then
 		pl:EmitSound("npc/barnacle/neck_snap1.wav", 65, math_random(135, 150), 0.27)
@@ -92,6 +95,7 @@ function CLASS:PlayPainSound(pl)
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound("npc/antlion/pain"..math_random(2)..".wav", 70, math_random(190, 200))
 	return true
@@ -160,9 +164,11 @@ end
 
 -- 服务端逻辑
 if SERVER then
+	-- 备用使用键触发装死
 	function CLASS:AltUse(pl)
 		pl:StartFeignDeath()
 	end
+	-- 近战伤害减半
 	function CLASS:ProcessDamage(pl, dmginfo)
 		if dmginfo:GetInflictor().IsMelee then
 			dmginfo:SetDamage(dmginfo:GetDamage() / 2)
@@ -175,6 +181,7 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/skeletal_walker"
+-- 图标颜色（深灰色）
 CLASS.IconColor = Color(50, 50, 50)
 
 -- 渲染变量
@@ -192,20 +199,24 @@ local matBlack = CreateMaterial("shadowlurkersheet", "UnlitGeneric", {["$basetex
 local vecEyeLeft = Vector(5, -3.5, -1)
 local vecEyeRight = Vector(5, -3.5, 1)
 
+-- 主模型绘制前：半透明深灰
 function CLASS:PrePlayerDraw(pl)
 	render_SetBlend(0.45)
 	render_SetColorModulation(0.2, 0.2, 0.2)
 end
 
+-- 主模型绘制后：恢复颜色与透明度
 function CLASS:PostPlayerDraw(pl)
 	render_SetBlend(1)
 	render_SetColorModulation(1, 1, 1)
 end
 
+-- 覆盖模型绘制前：黑色材质
 function CLASS:PrePlayerDrawOverrideModel(pl)
 	render_ModelMaterialOverride(matBlack)
 end
 
+-- 覆盖模型绘制后：恢复材质并绘制红色发光眼睛
 function CLASS:PostPlayerDrawOverrideModel(pl)
 	render_ModelMaterialOverride(nil)
 	if pl == MySelf and not pl:ShouldDrawLocalPlayer() or pl.SpawnProtection then return end

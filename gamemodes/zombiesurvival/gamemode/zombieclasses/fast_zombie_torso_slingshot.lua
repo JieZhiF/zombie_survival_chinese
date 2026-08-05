@@ -1,11 +1,9 @@
---[[
-==================================================================
-弹弓僵尸躯干 (Slingshot Zombie Torso) — 特殊僵尸职业
-继承自：zombie_torso
-特点：弹弓僵尸死亡后分裂出的上半身、可扑击、无摔落伤害、
-      扑击时视角锁定、暗红色调
-==================================================================
-]]
+-- ============================================================================
+-- 弹弓僵尸躯干 (Slingshot Zombie Torso) — 特殊僵尸职业
+-- 继承自：zombie_torso
+-- 特点：弹弓僵尸死亡后分裂出的上半身、可扑击、无摔落伤害、
+--       扑击时视角锁定、暗红色调
+-- ============================================================================
 
 -- 基础职业为"僵尸躯干"
 CLASS.Base = "zombie_torso"
@@ -25,6 +23,7 @@ CLASS.Model = Model("models/zombie/fast_torso.mdl")
 
 -- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 28)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 28)}
 
 -- 绑定的武器
@@ -42,6 +41,7 @@ CLASS.Points = CLASS.Health/GM.TorsoZombiePointRatio
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"NPC_FastZombie.Pain"}
+-- 死亡音效
 CLASS.DeathSounds = {"npc/fast_zombie/leap1.wav"}
 
 -- 语音音调
@@ -52,6 +52,7 @@ CLASS.IsTorso = true
 
 -- 无摔落伤害/减速
 CLASS.NoFallDamage = true
+-- 无摔落减速
 CLASS.NoFallSlowdown = true
 
 -- 缓存函数
@@ -104,6 +105,7 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/fast_torso"
+-- 图标颜色（锈红色）
 CLASS.IconColor = Color(163, 94, 99)
 
 -- 客户端移动指令：扑击时视角锁定
@@ -128,11 +130,13 @@ end
 -- 皮肤材质和颜色
 local matSkin = Material("models/barnacle/barnacle_sheet")
 
+-- 绘制前：覆盖藤壶材质并调色
 function CLASS:PrePlayerDraw(pl)
 	render.ModelMaterialOverride(matSkin)
 	render.SetColorModulation(0.64, 0.37, 0.39)
 end
 
+-- 绘制后：恢复材质和颜色
 function CLASS:PostPlayerDraw(pl)
 	render.ModelMaterialOverride()
 	render.SetColorModulation(1, 1, 1)

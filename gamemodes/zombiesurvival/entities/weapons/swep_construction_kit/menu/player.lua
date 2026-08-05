@@ -1,6 +1,12 @@
+-- ============================================================================
+-- swep_construction_kit/menu/player.lua - SCK 玩家编辑面板（客户端）
+-- 负责：玩家模型显示/覆盖/动画覆盖、模型缩放、颜色与材质调整
+-- ============================================================================
+-- 获取当前持有的 SCK 武器与其玩家面板
 local wep = GetSCKSWEP( LocalPlayer() )
 local pplayer = wep.pplayer
 
+-- 显示/隐藏玩家模型复选框
 local hpbox = vgui.Create( "DCheckBoxLabel", pplayer )
 	hpbox:SetTall( 20 )
 	hpbox:SetText( "Show player" )
@@ -19,6 +25,7 @@ hpbox:Dock(TOP)
 local next_p_model = ""
 
 -- Override player model
+-- 覆盖玩家模型：文本输入 + 模型浏览器按钮
 local pplayer_model = SimplePanel( pplayer )
 
 	local label = vgui.Create( "DLabel", pplayer_model )
@@ -49,6 +56,7 @@ local pplayer_model = SimplePanel( pplayer )
 pplayer_model:DockMargin(0,0,0,5)
 pplayer_model:Dock(TOP)
 
+-- 覆盖玩家动画：序列列表，右键取消覆盖
 local panim = SimplePanel(pplayer)
 
 local alabel = vgui.Create( "DLabel", panim )
@@ -167,6 +175,7 @@ panim:DockPadding(0,5,0,5)
 panim:Dock( TOP )
 panim.PerformLayout = function(s) s:SizeToChildren(false, true) end
 
+-- 玩家模型缩放滑条
 local scslider = vgui.Create( "DNumSlider", pplayer )
 	scslider:SetText( "Player model scale:" )
 	scslider:SetMinMax( 0.1, 10 )
@@ -179,6 +188,7 @@ local scslider = vgui.Create( "DNumSlider", pplayer )
 scslider:DockMargin(0,0,0,10)
 scslider:Dock(TOP)
 
+-- 玩家颜色调整器
 local pcolor = SimplePanel(pplayer)
 pcolor:SetTall(32*5)
 
@@ -211,6 +221,7 @@ local collabel = vgui.Create( "DLabel", pcolor )
 pcolor:DockMargin(0,0,0,5)
 pcolor:Dock(TOP)
 
+-- 玩家材质覆盖：文本输入 + 材质浏览器按钮
 local pmat = SimplePanel(pplayer)
 pmat:SetTall(20)
 

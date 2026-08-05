@@ -1,7 +1,7 @@
 AddCSLuaFile()
 DEFINE_BASECLASS("weapon_zs_base")
 
-SWEP.PrintName = "自瞄步枪"
+SWEP.PrintName = ""..translate.Get("weapon_zs_spm4")
 SWEP.Description = ""..translate.Get("weapon_zs_m4_description")
 SWEP.Slot = 2
 SWEP.SlotPos = 0
@@ -342,7 +342,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 120,//{80,85},
+	pitch = 120,--{80,85},
 	sound = "weapons/m4a1/m4a1_unsil-1.wav"
 } )
 sound.Add( {
@@ -350,7 +350,7 @@ sound.Add( {
 	channel = CHAN_WEAoPON,
 	volume = 0.7,
 	level = 75,
-	pitch = 150,//{80,85},
+	pitch = 150,--{80,85},
 	sound = "weapons/usp/usp_unsil-1.wav"
 } )
 sound.Add( {
@@ -358,7 +358,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 1,
 	level = 100,
-	pitch = 150,//{80,85},
+	pitch = 150,--{80,85},
 	sound = "weapons/sg550/sg550-1.wav"
 } )
 SWEP.Primary.Sound = Sound("Weapon_PyatnadtsatSosilence.SingleHeavy") 

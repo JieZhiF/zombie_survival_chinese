@@ -1,18 +1,26 @@
+-- ============================================================================
+-- projectile_bloodshot/cl_init.lua - 血弹（客户端）
+-- 负责：将血弹渲染为暗红色，并在销毁时爆发大量血液飞溅粒子并播放音效
+-- ============================================================================
 INC_CLIENT()
 
+-- ==== Draw - 绘制：整体调暗颜色后绘制模型 ====
 function ENT:Draw()
 	render.SetColorModulation(0.2, 0.2, 0.2)
 	self:DrawModel()
 	render.SetColorModulation(1, 1, 1)
 end
 
+-- ==== OnRemove - 爆炸表现：播放音效并喷射血液粒子 ====
 function ENT:OnRemove()
+	-- 播放充能完成的提示音（音量 75，音调 80）
 	self:EmitSound("items/suitchargeok1.wav", 75, 80)
 
 	local pos = self:GetPos()
 	local emitter = ParticleEmitter(pos)
 	emitter:SetNearClip(12, 16)
 
+	-- 10 个方向各喷出 40 个血液粒子，模拟大范围血液飞溅
 	for i = 1, 10 do
 		local axis = AngleRand()
 		for j=1, 40 do
@@ -34,6 +42,7 @@ function ENT:OnRemove()
 			particle:SetCollide(true)
 		end
 
+		-- 中心处的 5 个血色光团，表现爆炸核心
 		for j=1, 5 do
 			particle = emitter:Add("sprites/glow04_noz", pos)
 			particle:SetVelocity(VectorRand() * 8)
@@ -46,5 +55,6 @@ function ENT:OnRemove()
 			particle:SetRoll(math.Rand(0, 360))
 		end
 	end
+	-- 结束发射器并释放内存
 	emitter:Finish() emitter = nil collectgarbage("step", 64)
 end

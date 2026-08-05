@@ -1,10 +1,8 @@
---[[
-==================================================================
-血肉爬行者 (Flesh Creeper) — 僵尸职业
-特点：蚁狮模型、可挖地突进、可扑击、后退时减速、
-      死亡时播放假死动画、自定义攻击动画、肉材质皮肤
-==================================================================
-]]
+-- ============================================================================
+-- 血肉爬行者 (Flesh Creeper) — 僵尸职业
+-- 特点：蚁狮模型、可挖地突进、可扑击、后退时减速、
+--       死亡时播放假死动画、自定义攻击动画、肉材质皮肤
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Flesh Creeper"
@@ -17,8 +15,11 @@ CLASS.Help = "controls_flesh_creeper"
 
 -- 初始可用/隐藏/非随机起始
 CLASS.Wave = 0
+-- 隐藏（不直接可选）
 CLASS.Hidden = true
+-- 初始解锁
 CLASS.Unlocked = true
+-- 不作为随机起始职业
 CLASS.NotRandomStart = true
 
 -- 生命值
@@ -27,8 +28,9 @@ CLASS.Health = 175
 CLASS.SWEP = "weapon_zs_fleshcreeper"
 -- 蚁狮模型
 CLASS.Model = Model("models/antlion.mdl")
--- 移动/跳跃
+-- 移动速度
 CLASS.Speed = 160
+-- 跳跃力
 CLASS.JumpPower = 220
 
 -- 击杀得分
@@ -39,17 +41,22 @@ CLASS.VoicePitch = 0.55
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {Sound("npc/barnacle/barnacle_pull1.wav"), Sound("npc/barnacle/barnacle_pull2.wav"), Sound("npc/barnacle/barnacle_pull3.wav"), Sound("npc/barnacle/barnacle_pull4.wav")}
+-- 死亡音效
 CLASS.DeathSounds = {Sound("npc/barnacle/barnacle_die1.wav"), Sound("npc/barnacle/barnacle_die2.wav")}
 
 -- 模型缩放
 CLASS.ModelScale = 0.65
 
+-- 缓存缩放值（用于碰撞体积计算）
 local scale = CLASS.ModelScale
 -- 碰撞体积（根据缩放调整）
 CLASS.Hull = {Vector(-16 / scale, -16 / scale, 0), Vector(16 / scale, 16 / scale, 36 / scale)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16 / scale, -16 / scale, 0), Vector(16 / scale, 16 / scale, 36 / scale)}
 
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 35.5)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 35.5)
 
 -- 缓存函数
@@ -175,10 +182,12 @@ CLASS.Icon = "zombiesurvival/killicons/fleshcreeper"
 
 -- 肉材质
 local matFlesh = Material("models/flesh")
+-- 绘制前：覆盖为生肉材质
 function CLASS:PrePlayerDraw(pl)
 	render.ModelMaterialOverride(matFlesh)
 end
 
+-- 绘制后：恢复材质
 function CLASS:PostPlayerDraw(pl)
 	render.ModelMaterialOverride()
 end

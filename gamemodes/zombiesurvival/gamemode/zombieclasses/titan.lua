@@ -1,10 +1,8 @@
---[[
-==================================================================
-泰坦 (Titan) — 僵尸职业
-特点：高血量、大型模型、高跳跃力、可嘲讽、不可装死、
-      缓慢笨重动画（速度减半）、重型脚步声、自定义手部模型
-==================================================================
-]]
+-- ============================================================================
+-- 泰坦 (Titan) — 僵尸职业
+-- 特点：高血量、大型模型、高跳跃力、可嘲讽、不可装死、
+--       缓慢笨重动画（速度减半）、重型脚步声、自定义手部模型
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Titan"
@@ -16,7 +14,9 @@ CLASS.Description = "description_titan"
 CLASS.Help = "controls_titan"
 
 -- 生命值/速度
+-- 生命值
 CLASS.Health = 600
+-- 移动速度
 CLASS.Speed = 120
 -- 击杀得分
 CLASS.Points = 25
@@ -38,6 +38,7 @@ CLASS.Unlocked = false
 CLASS.CanFeignDeath = false
 -- 可嘲讽
 CLASS.CanTaunt = true
+-- 隐藏（不直接可选）
 CLASS.Hidden = true
 -- 语音音调
 CLASS.VoicePitch = 1.0
@@ -47,10 +48,15 @@ CLASS.ModelScale = 1.45
 
 -- 物理/碰撞属性
 CLASS.Mass = 500
+-- 视角偏移
 CLASS.ViewOffset = DEFAULT_VIEW_OFFSET * CLASS.ModelScale
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = DEFAULT_VIEW_OFFSET_DUCKED * CLASS.ModelScale
+-- 台阶高度
 CLASS.StepSize = 25
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 72)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 36)}
 
 -- 缓存函数
@@ -60,6 +66,7 @@ local math_max = math.max
 local math_ceil = math.ceil
 local CurTime = CurTime
 
+-- 缓存动作常量
 local DIR_BACK = DIR_BACK
 local ACT_HL2MP_ZOMBIE_SLUMP_RISE = ACT_HL2MP_ZOMBIE_SLUMP_RISE
 local ACT_HL2MP_SWIM_PISTOL = ACT_HL2MP_SWIM_PISTOL
@@ -74,6 +81,7 @@ local StepSounds = {
 	"npc/zombie/foot3.wav"
 }
 
+-- 自定义脚步声（普通脚步+重型踩踏声）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	pl:EmitSound(StepSounds[math_random(#StepSounds)], 77, 50)
 	if iFoot == 0 then
@@ -93,6 +101,7 @@ function CLASS:PlayDeathSound(pl)
 	return true
 end
 
+-- 自定义受伤音效
 function CLASS:PlayPainSound(pl)
 	pl:EmitSound("ambient/voices/citizen_beaten"..math_random(5)..".wav", 70, math_random(50, 60))
 	pl.NextPainSound = CurTime() + 1.25
@@ -224,6 +233,7 @@ if not CLIENT then return end
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/zombie"
 
+-- 自定义手部绘制（娃娃材质）
 local render_ModelMaterialOverride = render.ModelMaterialOverride
 local matSheet = Material("models/props_c17/doll01")
 function CLASS:DrawHands(pl, hands)

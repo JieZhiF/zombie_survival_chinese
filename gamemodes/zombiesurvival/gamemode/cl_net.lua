@@ -29,23 +29,23 @@ local function AltSelItemUpd()
 end
 
 -- 接收服务器发来的腿部伤害值
-net.Receive("zs_legdamage", function(length)
+net.Receive(NET_MSG.LEGDAMAGE, function(length)
 	MySelf.LegDamage = net.ReadFloat()
 end)
 
 -- 接收服务器发来的手臂伤害值
-net.Receive("zs_armdamage", function(length)
+net.Receive(NET_MSG.ARMDAMAGE, function(length)
 	MySelf.ArmDamage = net.ReadFloat()
 end)
 
 -- 接收下一个 Boss 的信息（实体和职业名）
-net.Receive("zs_nextboss", function(length)
+net.Receive(NET_MSG.NEXTBOSS, function(length)
 	GAMEMODE.NextBossZombie = net.ReadEntity()
 	GAMEMODE.NextBossZombieClass = net.ReadString()
 end)
 
 -- 接收僵尸志愿者列表（多人可同时当僵尸）
-net.Receive("zs_zvols", function(length)
+net.Receive(NET_MSG.ZVOLS, function(length)
 	local volunteers = {}
 	local count = net.ReadUInt(8)
 	for i=1, count do
@@ -56,7 +56,7 @@ net.Receive("zs_zvols", function(length)
 end)
 
 -- 接收对玩家造成的伤害数据，用于显示伤害数字
-net.Receive("zs_dmg", function(length)
+net.Receive(NET_MSG.DMG, function(length)
 	local damage = net.ReadUInt(16)
 	local pos = net.ReadVector()
 
@@ -70,7 +70,7 @@ net.Receive("zs_dmg", function(length)
 end)
 
 -- 接收对道具/障碍物造成的伤害数据，用于显示伤害数字（scale=1 标记为道具伤害）
-net.Receive("zs_dmg_prop", function(length)
+net.Receive(NET_MSG.DMG_PROP, function(length)
 	local damage = net.ReadUInt(16)
 	local pos = net.ReadVector()
 
@@ -84,7 +84,7 @@ net.Receive("zs_dmg_prop", function(length)
 end)
 
 -- 接收玩家的当局完整统计数据（障碍物伤害、人类伤害、吃掉的大脑数）
-net.Receive("zs_lifestats", function(length)
+net.Receive(NET_MSG.LIFESTATS, function(length)
 	local barricadedamage = net.ReadUInt(16)
 	local humandamage = net.ReadUInt(16)
 	local brainseaten = net.ReadUInt(8)
@@ -97,7 +97,7 @@ net.Receive("zs_lifestats", function(length)
 end)
 
 -- 单独更新障碍物伤害统计
-net.Receive("zs_lifestatsbd", function(length)
+net.Receive(NET_MSG.LIFESTATSBD, function(length)
 	local barricadedamage = net.ReadUInt(16)
 
 	GAMEMODE.LifeStatsEndTime = CurTime() + GAMEMODE.LifeStatsLifeTime
@@ -106,7 +106,7 @@ net.Receive("zs_lifestatsbd", function(length)
 end)
 
 -- 单独更新对人类伤害统计
-net.Receive("zs_lifestatshd", function(length)
+net.Receive(NET_MSG.LIFESTATSHD, function(length)
 	local humandamage = net.ReadUInt(16)
 
 	GAMEMODE.LifeStatsEndTime = CurTime() + GAMEMODE.LifeStatsLifeTime
@@ -115,7 +115,7 @@ net.Receive("zs_lifestatshd", function(length)
 end)
 
 -- 单独更新吃掉的大脑数统计
-net.Receive("zs_lifestatsbe", function(length)
+net.Receive(NET_MSG.LIFESTATSBE, function(length)
 	local brainseaten = net.ReadUInt(8)
 
 	GAMEMODE.LifeStatsEndTime = CurTime() + GAMEMODE.LifeStatsLifeTime
@@ -124,7 +124,7 @@ net.Receive("zs_lifestatsbe", function(length)
 end)
 
 -- 接收回合结束时的荣誉提名信息（玩家、提名ID、额外数据）
-net.Receive("zs_honmention", function(length)
+net.Receive(NET_MSG.HONMENTION, function(length)
 	local pl = net.ReadEntity()
 	local mentionid = net.ReadUInt(8)
 	local etc = net.ReadInt(32)
@@ -135,7 +135,7 @@ net.Receive("zs_honmention", function(length)
 end)
 
 -- 接收当前生效的突变列表（随便放就行）
-net.Receive("zs_mutations_table", function(len)
+net.Receive(NET_MSG.MUTATIONS_TABLE, function(len)
 	local mutationstable = net.ReadTable()
 	if mutationstable then
 		UsedMutations = mutationstable
@@ -143,7 +143,7 @@ net.Receive("zs_mutations_table", function(len)
 end)
 
 -- 接收波数开始事件：更新波数、时间，显示通知并播放音乐
-net.Receive("zs_wavestart", function(length)
+net.Receive(NET_MSG.WAVESTART, function(length)
 	local wave = net.ReadInt(16)
 	local time = net.ReadFloat()
 
@@ -167,12 +167,12 @@ net.Receive("zs_wavestart", function(length)
 end)
 
 -- 接收新职业解锁通知
-net.Receive("zs_classunlock", function(length)
+net.Receive(NET_MSG.CLASSUNLOCK, function(length)
 	GAMEMODE:CenterNotify(COLOR_GREEN, translate.Format("x_unlocked", net.ReadString()))
 end)
 
 -- 接收波数结束事件：更新下一波开始时间，显示生存奖励和剩余技能点提示
-net.Receive("zs_waveend", function(length)
+net.Receive(NET_MSG.WAVEEND, function(length)
 	local wave = net.ReadInt(16)
 	local time = net.ReadFloat()
 
@@ -203,7 +203,7 @@ net.Receive("zs_waveend", function(length)
 end)
 
 -- 同步当前的游戏状态（波数、波开始时间、波结束时间）
-net.Receive("zs_gamestate", function(length)
+net.Receive(NET_MSG.GAMESTATE, function(length)
 	local wave = net.ReadInt(16)
 	local wavestart = net.ReadFloat()
 	local waveend = net.ReadFloat()
@@ -214,7 +214,7 @@ net.Receive("zs_gamestate", function(length)
 end)
 
 -- 接收 Boss 生成事件：显示通知，玩家若成为 Boss 则有特殊提示
-net.Receive("zs_boss_spawned", function(length)
+net.Receive(NET_MSG.BOSS_SPAWNED, function(length)
 	local ent = net.ReadEntity()
 	local classindex = net.ReadUInt(8)
 	local classtbl = GAMEMODE.ZombieClasses[classindex]
@@ -235,7 +235,7 @@ net.Receive("zs_boss_spawned", function(length)
 end)
 
 -- 接收 Boss 被击杀事件：显示通知并播放音效
-net.Receive("zs_boss_slain", function(length)
+net.Receive(NET_MSG.BOSS_SLAIN, function(length)
 	local ent = net.ReadEntity()
 	local classindex = net.ReadUInt(8)
 	local classtbl = GAMEMODE.ZombieClasses[classindex]
@@ -251,7 +251,7 @@ net.Receive("zs_boss_slain", function(length)
 end)
 
 -- 更新特定僵尸职业的解锁状态
-net.Receive("zs_classunlockstate", function(length)
+net.Receive(NET_MSG.CLASSUNLOCKSTATE, function(length)
 	local clstr = net.ReadInt(8)
 	local class = GAMEMODE.ZombieClasses[clstr]
 	local unlocked = net.ReadBool()
@@ -261,21 +261,21 @@ net.Receive("zs_classunlockstate", function(length)
 end)
 
 -- 在屏幕中央显示通知（从服务器接收表格参数）
-net.Receive("zs_centernotify", function(length)
+net.Receive(NET_MSG.CENTERNOTIFY, function(length)
 	local tab = net.ReadTable()
 
 	GAMEMODE:CenterNotify(unpack(tab))
 end)
 
 -- 在屏幕顶部显示通知（从服务器接收表格参数）
-net.Receive("zs_topnotify", function(length)
+net.Receive(NET_MSG.TOPNOTIFY, function(length)
 	local tab = net.ReadTable()
 
 	GAMEMODE:TopNotify(unpack(tab))
 end)
 
 -- 处理玩家幸存事件：显示顶部通知，存活者为自己时触发白屏淡出效果
-net.Receive("zs_survivor", function(length)
+net.Receive(NET_MSG.SURVIVOR, function(length)
 	local ent = net.ReadEntity()
 
 	if ent:IsValidPlayer() then
@@ -288,24 +288,31 @@ net.Receive("zs_survivor", function(length)
 end)
 
 -- 接收最后一名人类玩家的信息
-net.Receive("zs_lasthuman", function(length)
+net.Receive(NET_MSG.LASTHUMAN, function(length)
 	local pl = net.ReadEntity()
 
 	gamemode.Call("LastHuman", pl)
 end)
 
 -- 远程调用一个游戏模式函数（函数名由服务器发送）
-net.Receive("zs_gamemodecall", function(length)
-	gamemode.Call(net.ReadString())
+-- 白名单限制：仅允许服务器已知安全的下发调用，防滥用
+local AllowedGamemodeCalls = {
+	RestartRound = true,
+}
+net.Receive(NET_MSG.GAMEMODECALL, function(length)
+	local funcname = net.ReadString()
+	if AllowedGamemodeCalls[funcname] then
+		gamemode.Call(funcname)
+	end
 end)
 
 -- 接收最后一名人类玩家的位置坐标
-net.Receive("zs_lasthumanpos", function(length)
+net.Receive(NET_MSG.LASTHUMANPOS, function(length)
 	GAMEMODE.LastHumanPosition = net.ReadVector()
 end)
 
 -- 接收回合结束事件：包含胜利方和下一张地图名
-net.Receive("zs_endround", function(length)
+net.Receive(NET_MSG.ENDROUND, function(length)
 	local winner = net.ReadUInt(8)
 	local nextmap = net.ReadString()
 
@@ -313,7 +320,7 @@ net.Receive("zs_endround", function(length)
 end)
 
 -- 接收治疗其他玩家的通知：显示浮动数字和中央提示
-net.Receive("zs_healother", function(length)
+net.Receive(NET_MSG.HEALOTHER, function(length)
 	local healed_player = net.ReadEntity()
 	local health_amount = net.ReadFloat()
 
@@ -325,17 +332,17 @@ net.Receive("zs_healother", function(length)
 end)
 
 -- 接收修复物体的事件通知
-net.Receive("zs_repairobject", function(length)
+net.Receive(NET_MSG.REPAIROBJECT, function(length)
 	gamemode.Call("RepairedObject", net.ReadEntity(), net.ReadFloat())
 end)
 
 -- 接收收到佣金的事件通知
-net.Receive("zs_commission", function(length)
+net.Receive(NET_MSG.COMMISSION, function(length)
 	gamemode.Call("ReceivedCommission", net.ReadEntity(), net.ReadEntity(), net.ReadFloat())
 end)
 
 -- 接收印记被腐化的事件：播放音效序列，显示通知
-net.Receive("zs_sigilcorrupted", function(length)
+net.Receive(NET_MSG.SIGILCORRUPTED, function(length)
 	local corrupted = net.ReadUInt(8)
 
 	LastSigilCorrupted = CurTime()
@@ -364,7 +371,7 @@ net.Receive("zs_sigilcorrupted", function(length)
 end)
 
 -- 接收印记被净化的事件：播放音效并显示通知
-net.Receive("zs_sigiluncorrupted", function(length)
+net.Receive(NET_MSG.SIGILUNCORRUPTED, function(length)
 	LastSigilUncorrupted = CurTime()
 
 	if MySelf:IsValid() then
@@ -378,7 +385,7 @@ net.Receive("zs_sigiluncorrupted", function(length)
 end)
 
 -- 显示拾取弹药的通知
-net.Receive("zs_ammopickup", function(length)
+net.Receive(NET_MSG.AMMOPICKUP, function(length)
 	local amount = net.ReadUInt(16)
 	local ammotype = net.ReadString()
 	local ico = GAMEMODE.AmmoIcons[ammotype] or "weapon_zs_resupplybox"
@@ -389,7 +396,7 @@ net.Receive("zs_ammopickup", function(length)
 end)
 
 -- 显示给予其他玩家弹药的通知
-net.Receive("zs_ammogive", function(length)
+net.Receive(NET_MSG.AMMOGIVE, function(length)
 	local amount = net.ReadUInt(16)
 	local ammotype = net.ReadString()
 	local ent = net.ReadEntity()
@@ -403,7 +410,7 @@ net.Receive("zs_ammogive", function(length)
 end)
 
 -- 显示从其他玩家处收到弹药的通知
-net.Receive("zs_ammogiven", function(length)
+net.Receive(NET_MSG.AMMOGIVEN, function(length)
 	local amount = net.ReadUInt(16)
 	local ammotype = net.ReadString()
 	local ent = net.ReadEntity()
@@ -417,7 +424,7 @@ net.Receive("zs_ammogiven", function(length)
 end)
 
 -- 显示可部署物品丢失的通知
-net.Receive("zs_deployablelost", function(length)
+net.Receive(NET_MSG.DEPLOYABLELOST, function(length)
 	local deploy = net.ReadString()
 	local class = net.ReadString()
 
@@ -425,7 +432,7 @@ net.Receive("zs_deployablelost", function(length)
 end)
 
 -- 显示可部署物品被领取的通知
-net.Receive("zs_deployableclaim", function(length)
+net.Receive(NET_MSG.DEPLOYABLECLAIM, function(length)
 	local deploy = net.ReadString()
 	local class = net.ReadString()
 
@@ -433,31 +440,32 @@ net.Receive("zs_deployableclaim", function(length)
 end)
 
 -- 显示可部署物品弹药耗尽的通知
-net.Receive("zs_deployableout", function(length)
+net.Receive(NET_MSG.DEPLOYABLEOUT, function(length)
 	local deploy = net.ReadString()
 	local class = net.ReadString()
 
 	GAMEMODE:CenterNotify({killicon = class}, " ", COLOR_RED, translate.Format("ran_out_of_ammo", deploy))
 end)
 
--- 显示饰品充能完毕的通知并播放音效
-net.Receive("zs_trinketrecharged", function(length)
-	local trinket = net.ReadString()
-	MySelf:EmitSound("buttons/button3.wav", 75, 50)
-
-	GAMEMODE:CenterNotify({killicon = "weapon_zs_trinket"}, " ", COLOR_RORANGE, translate.Format("trinket_recharged", trinket))
-end)
-
 -- 显示饰品被消耗的通知并播放音效
-net.Receive("zs_trinketconsumed", function(length)
+net.Receive(NET_MSG.TRINKETCONSUMED, function(length)
 	local trinket = net.ReadString()
 	MySelf:EmitSound("buttons/button3.wav", 75, 50)
 
 	GAMEMODE:CenterNotify({killicon = "weapon_zs_trinket"}, " ", COLOR_RORANGE, translate.Format("trinket_consumed", trinket))
 end)
 
+-- 接收AFK状态更新（TAB记分板显示AFK提示，类似特殊身份图标）
+net.Receive(NET_MSG.AFK_STATE, function(length)
+	local pl = net.ReadEntity()
+	local afk = net.ReadBool()
+	if pl:IsValid() then
+		pl.ZSAFK = afk
+	end
+end)
+
 -- 显示获得物品栏物品的通知
-net.Receive("zs_invitem", function(length)
+net.Receive(NET_MSG.INVITEM, function(length)
 	local invitemt = net.ReadString()
 	local inviname = GAMEMODE.ZSInventoryItemData[invitemt].PrintName
 	local category = GAMEMODE:GetInventoryItemType(invitemt)
@@ -467,7 +475,7 @@ net.Receive("zs_invitem", function(length)
 end)
 
 -- 显示从其他玩家处获得物品栏物品的通知
-net.Receive("zs_invgiven", function(length)
+net.Receive(NET_MSG.INVGIVEN, function(length)
 	local invitemt = net.ReadString()
 	local inviname = GAMEMODE.ZSInventoryItemData[invitemt].PrintName
 	local category = GAMEMODE:GetInventoryItemType(invitemt)
@@ -479,7 +487,7 @@ net.Receive("zs_invgiven", function(length)
 end)
 
 -- 显示被其他玩家治疗的通知
-net.Receive("zs_healby", function(length)
+net.Receive(NET_MSG.HEALBY, function(length)
 	local amount = net.ReadFloat()
 	local ent = net.ReadEntity()
 
@@ -489,7 +497,7 @@ net.Receive("zs_healby", function(length)
 end)
 
 -- 显示被其他玩家施加增益效果的通知
-net.Receive("zs_buffby", function(length)
+net.Receive(NET_MSG.BUFFBY, function(length)
 	local ent = net.ReadEntity()
 	local buff = net.ReadString()
 
@@ -499,7 +507,7 @@ net.Receive("zs_buffby", function(length)
 end)
 
 -- 显示为其他玩家施加增益效果的通知
-net.Receive("zs_buffwith", function(length)
+net.Receive(NET_MSG.BUFFWITH, function(length)
 	local ent = net.ReadEntity()
 	local buff = net.ReadString()
 
@@ -509,7 +517,7 @@ net.Receive("zs_buffwith", function(length)
 end)
 
 -- 显示自己的木板被其他玩家移除的通知
-net.Receive("zs_nailremoved", function(length)
+net.Receive(NET_MSG.NAILREMOVED, function(length)
 	local ent = net.ReadEntity()
 	if not ent:IsValidPlayer() then return end
 
@@ -517,19 +525,19 @@ net.Receive("zs_nailremoved", function(length)
 end)
 
 -- 接收并更新当前回合数
-net.Receive("zs_currentround", function(length)
+net.Receive(NET_MSG.CURRENTROUND, function(length)
 	GAMEMODE.CurrentRound = net.ReadUInt(6)
 end)
 
 -- 更新人类菜单中当前选中武器的显示（延迟执行确保界面已就绪）
-net.Receive("zs_updatealtselwep", function(length)
+net.Receive(NET_MSG.UPDATEALTSELWEP, function(length)
 	if MySelf:Alive() and P_Team(MySelf) == TEAM_HUMAN and GAMEMODE.HumanMenuPanel and GAMEMODE.HumanMenuPanel:IsValid() and not (GAMEMODE.InventoryMenu and GAMEMODE.InventoryMenu.SelInv) then
 		timer.Simple(0.25, AltSelItemUpd)
 	end
 end)
 
 -- 刷新僵尸出生菜单以响应巢穴建成
-net.Receive("zs_nestbuilt", function(length)
+net.Receive(NET_MSG.NESTBUILT, function(length)
 	if GAMEMODE.ZSpawnMenu and GAMEMODE.ZSpawnMenu:IsValid() then
 		GAMEMODE.ZSpawnMenu:RefreshContents()
 	end

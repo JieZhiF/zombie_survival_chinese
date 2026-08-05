@@ -24,7 +24,7 @@ SWEP.ViewModelBoneMods = {
 	["v_weapon.slide_left"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) },
 	["v_weapon.slide_right"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
-SWEP.PrintName = "'大卫与歌利亚' 双能量手枪"
+SWEP.PrintName = ""..translate.Get("weapon_zs_dag")
 SWEP.Description = "一对强大的能量手枪。不准确但伤害高。"
 SWEP.Base					= "weapon_zs_base"
 SWEP.UseHands = true

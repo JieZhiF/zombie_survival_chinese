@@ -1,10 +1,8 @@
---[[
-==================================================================
-新鲜死者 (Fresh Dead) — 僵尸职业
-特点：基础僵尸、使用玩家阵亡前的模型、可装死（假死）、
-      可嘲讽、隐藏职业（作为其他职业的基类）
-==================================================================
-]]
+-- ============================================================================
+-- 新鲜死者 (Fresh Dead) — 僵尸职业
+-- 特点：基础僵尸、使用玩家阵亡前的模型、可装死（假死）、
+--       可嘲讽、隐藏职业（作为其他职业的基类）
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Fresh Dead"
@@ -17,7 +15,9 @@ CLASS.Help = "controls_fresh_dead"
 
 -- 初始可用/隐藏
 CLASS.Wave = 0
+-- 初始解锁
 CLASS.Unlocked = true
+-- 隐藏（作为基类不直接可选）
 CLASS.Hidden = true
 
 -- 生命值
@@ -39,6 +39,7 @@ CLASS.SWEP = "weapon_zs_freshdead"
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"npc/zombie/zombie_pain1.wav", "npc/zombie/zombie_pain2.wav", "npc/zombie/zombie_pain3.wav", "npc/zombie/zombie_pain4.wav", "npc/zombie/zombie_pain5.wav", "npc/zombie/zombie_pain6.wav"}
+-- 死亡音效
 CLASS.DeathSounds = {"npc/zombie/zombie_die1.wav", "npc/zombie/zombie_die2.wav", "npc/zombie/zombie_die3.wav"}
 
 -- 语音音调
@@ -185,6 +186,7 @@ function CLASS:PrePlayerDraw(pl)
 	render.SetColorModulation(0.5, 0.9, 0.5)
 end
 
+-- 绘制后恢复颜色调制
 function CLASS:PostPlayerDraw(pl)
 	render.SetColorModulation(1, 1, 1)
 end

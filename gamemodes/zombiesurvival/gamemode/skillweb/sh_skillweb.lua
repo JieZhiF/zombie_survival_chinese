@@ -219,7 +219,7 @@ function meta:ApplySkills(override)
 
 	if SERVER and self.ExtraStartingWorth ~= self.LastSentESW then
 		self.LastSentESW = self.ExtraStartingWorth
-		net.Start("zs_extrastartingworth")
+		net.Start(NET_MSG.EXTRASTARTINGWORTH)
 			net.WriteUInt(self.ExtraStartingWorth, 16)
 		net.Send(self)
 	end

@@ -1,10 +1,8 @@
---[[
-==================================================================
-快速猎头蟹 (Fast Headcrab) — 僵尸职业
-特点：快速移动、高跳跃力、无摔伤、小型碰撞体积、
-      可扑击、扑击时视角锁定、黄色血液
-==================================================================
-]]
+-- ============================================================================
+-- 快速猎头蟹 (Fast Headcrab) — 僵尸职业
+-- 特点：快速移动、高跳跃力、无摔伤、小型碰撞体积、
+--       可扑击、扑击时视角锁定、黄色血液
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Fast Headcrab"
@@ -36,6 +34,7 @@ CLASS.JumpPower = 100
 
 -- 无摔落伤害/减速
 CLASS.NoFallDamage = true
+-- 无摔落减速
 CLASS.NoFallSlowdown = true
 
 -- 击杀得分
@@ -43,11 +42,17 @@ CLASS.Points = CLASS.Health/GM.HeadcrabZombiePointRatio
 
 -- 小型碰撞体积
 CLASS.Hull = {Vector(-12, -12, 0), Vector(12, 12, 18.1)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-12, -12, 0), Vector(12, 12, 18.1)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 10)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 10)
+-- 台阶高度
 CLASS.StepSize = 8
+-- 蹲伏行走速度倍率
 CLASS.CrouchedWalkSpeed = 1
+-- 质量（轻）
 CLASS.Mass = 16
 
 -- 不能蹲下
@@ -58,6 +63,7 @@ CLASS.IsHeadcrab = true
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"NPC_FastHeadcrab.Pain"}
+-- 死亡音效
 CLASS.DeathSounds = {"NPC_FastHeadcrab.Die"}
 
 -- 黄色血液

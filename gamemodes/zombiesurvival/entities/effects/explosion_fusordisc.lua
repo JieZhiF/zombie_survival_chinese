@@ -1,17 +1,28 @@
+-- ============================================================================
+-- explosion_fusordisc.lua - 熔断圆盘爆炸特效（客户端）
+-- 负责：爆炸瞬间播放能量分解与爆炸音效，喷射蓝色光线、蓝色火花与
+--       扩散烟团，并生成两层扩散的蓝色光环，表现圆盘瓦解的冲击
+-- ============================================================================
+
+-- ==== Init - 特效初始化：播放音效并喷射三层粒子与光环 ====
 function EFFECT:Init(effectdata)
+	-- 爆炸位置与光环朝向（命中法线）
 	local pos = effectdata:GetOrigin()
 	local normal = effectdata:GetNormal()
 
 	local particle
 
+	-- 播放能量分解音效（随机 4/5 号之一）与能量爆炸音效
 	sound.Play("weapons/physcannon/energy_disintegrate"..math.random(4, 5)..".wav", pos, 80, math.random(70, 90))
 	sound.Play("weapons/physcannon/energy_sing_explosion2.wav", pos, 80, math.random(105, 120))
 
+	-- 两个发射器：主发射器喷粒子，第二个（带圆环标志）绘制光环
 	local emitter = ParticleEmitter(pos)
 	local emitter2 = ParticleEmitter(pos, true)
 	emitter:SetNearClip(24, 32)
 	emitter2:SetNearClip(24, 32)
 
+	-- 100 条蓝色光线朝随机方向高速射出，形成爆炸的放射状冲击
 	for i=1, 100 do
 		particle = emitter:Add("effects/splash2", pos)
 		particle:SetDieTime(0.3)
@@ -24,6 +35,7 @@ function EFFECT:Init(effectdata)
 		particle:SetEndLength(60)
 		particle:SetVelocity(VectorRand():GetNormal() * 220)
 	end
+	-- 160 个蓝色火花沿随机方向高速飞散，构成爆炸核心
 	for i=1, 160 do
 		particle = emitter:Add("effects/blueflare1", pos)
 		particle:SetDieTime(0.3)
@@ -34,6 +46,7 @@ function EFFECT:Init(effectdata)
 		particle:SetEndSize(9)
 		particle:SetVelocity(VectorRand():GetNormal() * 366)
 	end
+	-- 12 个蓝色烟团在爆炸点附近快速膨胀消散，补充能量余波
 	for i=1, 12 do
 		particle = emitter:Add("particles/smokey", pos + Vector(math.Rand(-10, 10), math.Rand(-10, 10), math.Rand(0, 10)))
 		particle:SetVelocity(VectorRand():GetNormal() * 240)
@@ -45,6 +58,7 @@ function EFFECT:Init(effectdata)
 		particle:SetRollDelta(math.Rand(-4.5, 4.5))
 		particle:SetColor(50, 150, 255)
 	end
+	-- 6 个蓝色光环：从爆炸点沿法线展开，交错延迟膨胀到 50/70 大小
 	local ringstart = pos + normal * -3
 	for i=1, 3 do
 		particle = emitter2:Add("effects/select_ring", ringstart)
@@ -69,9 +83,11 @@ function EFFECT:Init(effectdata)
 	emitter2:Finish()
 end
 
+-- ==== Think - 特效思考：一次性粒子效果，无需持续更新 ====
 function EFFECT:Think()
 	return false
 end
 
+-- ==== Render - 无自定义渲染，粒子由引擎粒子系统绘制 ====
 function EFFECT:Render()
 end

@@ -1,7 +1,7 @@
 AddCSLuaFile()
 DEFINE_BASECLASS("weapon_zs_base")
 
-SWEP.PrintName = "Aldarhtf"
+SWEP.PrintName = ""..translate.Get("weapon_zs_htf_amt")
 SWEP.Description = "Magnum pistol from famous action movie"
 
 SWEP.SlotPos = 0
@@ -19,7 +19,7 @@ SWEP.WeaponType = "pistol"
 	SWEP.HUD3DScale = 0.015
 end
 --[[
-//sosilence 消音器 tfa_htf_supp
+--sosilence 消音器 tfa_htf_supp
 红点瞄准镜 rumor
 	["VElements"] = {
 	["slide_base+++++"] = {
@@ -204,7 +204,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 0.7,
 	level = 100,
-	pitch = 150,//{80,85},
+	pitch = 150,--{80,85},
 	sound = "weapons/aug/aug-1.wav"
 } )
 SWEP.IronSightsPos = Vector(-6.05, -6.532, 2.2)
@@ -220,7 +220,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 0.7,
 	level = 100,
-	pitch = 150,//{80,85},
+	pitch = 150,--{80,85},
 	sound = "weapons/sg550/sg550-1.wav"
 } )
 SWEP.UseHands = true

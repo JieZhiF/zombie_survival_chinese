@@ -1,8 +1,3 @@
--- ========== 注册自定义弹药网络消息 ==========
-
-util.AddNetworkString("cusammo")
-util.AddNetworkString("cusammo_removeall")
-
 -- ========== 获取Player元表 ==========
 
 local M_Player = FindMetaTable("Player")
@@ -104,7 +99,7 @@ function M_Player:RemoveAllAmmo()
 	self.ca = nil
 	old_Player_RemoveAllAmmo(self)
 
-	net.Start("cusammo_removeall")
+	net.Start(NET_MSG.CUSAMMO_REMOVEALL)
 	net.Send(self)
 end
 
@@ -115,7 +110,7 @@ function M_Player:StripAmmo()
 	self.ca = nil
 	old_Player_StripAmmo(self)
 
-	net.Start("cusammo_removeall")
+	net.Start(NET_MSG.CUSAMMO_REMOVEALL)
 	net.Send(self)
 end
 
@@ -123,7 +118,7 @@ end
 
 -- 将指定弹药的最新数量发送给玩家客户端
 function M_Player:UpdateCustomAmmoCount(index)
-	net.Start("cusammo")
+	net.Start(NET_MSG.CUSAMMO)
 	net.WriteUInt(index - 128, 6)
 	net.WriteUInt(self.ca and self.ca[index] or 0, 10)
 	net.Send(self)

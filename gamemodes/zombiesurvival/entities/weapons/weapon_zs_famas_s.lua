@@ -23,7 +23,7 @@ SWEP.ViewModelBoneMods = {
 	["v_weapon.famas"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
 
-SWEP.PrintName = "'背水一战' 等离子法玛斯突击步枪"
+SWEP.PrintName = ""..translate.Get("weapon_zs_famas_s")
 SWEP.Description = "当本局游戏内，没有其他真人玩家时，大幅度提升此武器造成的伤害。"
 SWEP.Base					= "weapon_zs_base"
 

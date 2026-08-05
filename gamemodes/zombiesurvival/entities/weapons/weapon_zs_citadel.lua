@@ -32,7 +32,7 @@ SWEP.ViewModelBoneMods = {
 	["v_weapon.receiver"] = { scale = Vector(0.01, 0.01, 0.01), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
 
-SWEP.PrintName = "'堡垒' 等离子机枪"
+SWEP.PrintName = ""..translate.Get("weapon_zs_citadel")
 SWEP.Description = "轻型等离子机枪，威力大、射速快，但后坐力大。"
 SWEP.Base					= "weapon_zs_base"
 

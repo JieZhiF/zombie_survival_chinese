@@ -8,15 +8,17 @@
 
 -- 职业显示名称
 CLASS.Name = "噩梦屠夫"
--- 翻译键名（直接使用中文）
-CLASS.TranslationName = "噩梦屠夫"
--- 描述文本
-CLASS.Description = "暂定"
+-- 翻译键名
+CLASS.TranslationName = "class_butcher_night"
+-- 描述文本键名
+CLASS.Description = "description_butcher_night"
 -- 控制帮助文本
 CLASS.Help = ""
 
 -- 非正式BOSS（隐藏）
 CLASS.Boss = false
+-- 迷你BOSS（通过僵尸商店购买获得）
+CLASS.MiniBoss = true
 -- 隐藏职业
 CLASS.Hidden = true
 -- 完全免疫击退

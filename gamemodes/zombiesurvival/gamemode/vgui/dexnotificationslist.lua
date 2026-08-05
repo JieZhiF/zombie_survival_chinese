@@ -1,3 +1,24 @@
+-- ============================================================================
+-- DEXNotificationsList - 通知提示列表（击杀提示/状态提示）
+-- 包含两条注册类：DEXNotification（单条通知，图标+文本+堆叠计数）
+-- 与 DEXNotificationsList（通知容器，自动淡出与相同内容堆叠）
+-- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 单条通知内容
+-- [位置] DEXNotification / SetNotification() / AddLabel() / AddImage() / AddKillIcon()
+-- [作用] 按参数构建头像/图标/文字，支持堆叠计数标签
+-- [常改] 字体、图标尺寸、堆叠显示格式
+--
+-- [区域] 通知列表容器
+-- [位置] DEXNotificationsList / AddNotification() / Think()
+-- [作用] 追加通知并排列，相同 key 的通知堆叠刷新，到期自动移除
+-- [常改] 对齐方向、淡入淡出时长、通知高度
+--
+-- [区域] 堆叠与布局
+-- [位置] RelayoutNotification() / SetStackCount() / BuildNotifyKey()
+-- [作用] 计算通知宽度调整内边距，序列化参数生成去重 key
+-- [常改] 内边距计算、key 生成规则
+-- ============================================================================
 GM.NotifyFadeTime = 8
 
 local DefaultFont = "ZSHUDFontSmallest"
@@ -224,7 +245,7 @@ function PANEL:AddNotification(...)
 
 	local FadeTime = GAMEMODE.NotifyFadeTime
 	for k, v in pairs(args) do
-		if type(v) == "table" and v.CustomTime and type(v.CustomTime == "number") then
+		if type(v) == "table" and v.CustomTime and type(v.CustomTime) == "number" then
 			FadeTime = v.CustomTime
 			break
 		end

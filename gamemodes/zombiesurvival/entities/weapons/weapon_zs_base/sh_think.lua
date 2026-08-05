@@ -1,5 +1,9 @@
--- sh_think.lua
+-- ============================================================================
+-- weapon_zs_base/sh_think.lua - 武器母本 Think 逻辑（共享）
+-- 负责：机瞄释放、换弹完成处理、待机动画、客户端后坐力消散与镜头平滑
+-- ============================================================================
 
+-- ==== Think - 每帧更新：释放机瞄、完成换弹、播放待机动画、驱动后坐力消散 ====
 function SWEP:Think()
 	local owner = self:GetOwner()
 	if not IsValid(owner) then return end
@@ -23,6 +27,7 @@ function SWEP:Think()
 	end
 end
 
+-- ==== ThinkRecoil - 后坐力冷却消散、连射计数重置与镜头平滑回正 ====
 function SWEP:ThinkRecoil()
 	local ct = CurTime()
 	local ft = FrameTime()

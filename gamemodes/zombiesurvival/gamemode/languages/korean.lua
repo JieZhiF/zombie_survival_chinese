@@ -1,4 +1,4 @@
--- Translated by honsal (http://www.noxiousnet.com/forums/index.php?action=profile;u=6435)
+-- Translated by honsal (http:--www.noxiousnet.com/forums/index.php?action=profile;u=6435)
 
 translate.AddLanguage("ko", "Korean")
 

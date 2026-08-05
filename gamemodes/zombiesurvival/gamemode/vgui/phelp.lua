@@ -3,6 +3,17 @@
 -- 包含 MakepHelp（帮助窗口，分页显示游戏指南）
 -- 和 MakepCredits（致谢窗口，显示所有贡献者名单）
 -- ============================================================================
+-- 区域地图（VGUI 四字段）
+-- [区域] 帮助窗口
+-- [位置] MakepHelp() / GM:BuildHelpMenu()
+-- [作用] 分页帮助文档，每页用 DHTML 渲染指南内容，底部致谢按钮
+-- [常改] 窗口尺寸、HTML 模板、帮助数据
+--
+-- [区域] 致谢窗口
+-- [位置] MakepCredits()
+-- [作用] 逐行显示贡献者名单
+-- [常改] 行布局、字体
+-- ============================================================================
 
 -- 帮助内容定义
 GM.Help = {
@@ -104,7 +115,7 @@ function MakepHelp()
 	Window:SetCursor("pointer")
 	pHelp = Window
 
-	local label = EasyLabel(Window, "Help", "ZSHUDFont", color_white)
+	local label = EasyLabel(Window, translate.Get("help_title"), "ZSHUDFont", color_white)
 	label:CenterHorizontal()
 	label:AlignTop(8)
 

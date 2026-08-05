@@ -22,7 +22,7 @@ function ENT:Initialize()
 
 	end
     for i=0, #self:GetMaterials() do
-        self:SetSubMaterial(i, "models/effects/vol_light001") //透明材质
+        self:SetSubMaterial(i, "models/effects/vol_light001") --透明材质
 		
     end
 
@@ -78,7 +78,7 @@ function ENT:GiveToActivator(activator, caller)
 
 			activator:GiveAmmo(self:GetAmmo(), self:GetAmmoType())
 
-			net.Start("zs_ammopickup")
+			net.Start(NET_MSG.AMMOPICKUP)
 				net.WriteUInt(self:GetAmmo(), 16)
 				net.WriteString(self:GetAmmoType())
 			net.Send(activator)

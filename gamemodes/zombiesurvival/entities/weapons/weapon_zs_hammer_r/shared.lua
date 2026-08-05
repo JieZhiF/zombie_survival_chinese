@@ -1,6 +1,6 @@
 SWEP.Base = "weapon_zs_basemelee"
 
-SWEP.PrintName = "奉献之锤"
+SWEP.PrintName = ""..translate.Get("weapon_zs_hammer_r")
 SWEP.Description = "赞颂那些无私的奉献者."
 
 SWEP.DamageType = DMG_CLUB

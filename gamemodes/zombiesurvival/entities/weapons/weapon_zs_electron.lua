@@ -5,7 +5,7 @@ AddCSLuaFile()
 
 -- 仅在客户端设置的信息
 if CLIENT then
-   SWEP.PrintName = "'青峰'电子加速器" -- 武器在菜单中显示的名称
+   SWEP.PrintName = ""..translate.Get("weapon_zs_electron") -- 武器在菜单中显示的名称
    
     SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotAssaultRifles")
 	SWEP.WeaponType = "rifle"

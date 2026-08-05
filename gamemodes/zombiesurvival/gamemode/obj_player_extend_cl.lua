@@ -271,14 +271,14 @@ timer.Create("CacheResupplyAmmoType", 0.3333, 0, function()
 end)
 
 -- 接收服务器消息：对本地玩家执行惩罚效果
-net.Receive("zs_penalty", function(length)
+net.Receive(NET_MSG.PENALTY, function(length)
 	local penalty = net.ReadUInt(16)
 
 	MySelf:GivePenalty(penalty)
 end)
 
 -- 接收服务器消息：更新指定玩家的物理属性（DoHulls）
-net.Receive("zs_dohulls", function(length)
+net.Receive(NET_MSG.DOHULLS, function(length)
 	local ent = net.ReadEntity()
 	local classid = net.ReadUInt(8)
 	local is_zombie = net.ReadBool()
@@ -289,7 +289,7 @@ net.Receive("zs_dohulls", function(length)
 end)
 
 -- 接收服务器消息：设置指定玩家的僵尸职业
-net.Receive("zs_zclass", function(length)
+net.Receive(NET_MSG.ZCLASS, function(length)
 	local ent = net.ReadEntity()
 	local id = net.ReadUInt(8)
 
@@ -299,7 +299,7 @@ net.Receive("zs_zclass", function(length)
 end)
 
 -- 接收服务器消息：在目标实体位置显示浮动分数
-net.Receive("zs_floatscore", function(length)
+net.Receive(NET_MSG.FLOATSCORE, function(length)
 	local victim = net.ReadEntity()
 	local effectname = net.ReadString()
 	local frags = net.ReadInt(24)
@@ -311,7 +311,7 @@ net.Receive("zs_floatscore", function(length)
 end)
 
 -- 接收服务器消息：在指定三维坐标位置显示浮动分数
-net.Receive("zs_floatscore_vec", function(length)
+net.Receive(NET_MSG.FLOATSCORE_VEC, function(length)
 	local pos = net.ReadVector()
 	local effectname = net.ReadString()
 	local frags = net.ReadInt(24)

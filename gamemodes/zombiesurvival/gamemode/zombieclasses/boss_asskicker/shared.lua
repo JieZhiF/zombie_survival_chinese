@@ -6,6 +6,7 @@ CLASS.Description = "description_asskicker"
 CLASS.Help = "controls_asskicker"
 
 CLASS.Boss = false
+CLASS.MiniBoss = true
 CLASS.Hidden = true
 
 CLASS.KnockbackScale = 0

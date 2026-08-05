@@ -113,7 +113,11 @@ function SWEP:Holster()
 		owner.m_EnergyChargeTrail:Remove()
 		owner.m_EnergyChargeTrail = nil
 	end
-	return self.BaseClass.Holster(self)
+	if self.BaseClass and self.BaseClass.Holster then
+		return self.BaseClass.Holster(self)
+	end
+
+	return true
 end
 
 
@@ -234,7 +238,9 @@ function SWEP:Think()
 		end
 		self.m_LastViewAngles = nil
 	end
-	self.BaseClass.Think(self)
+	if self.BaseClass and self.BaseClass.Think then
+		self.BaseClass.Think(self)
+	end
 	self:NextThink(curtime)
 	return true
 end

@@ -2,7 +2,7 @@ AddCSLuaFile()
 
 SWEP.Base                = "weapon_zs_base"
 
-SWEP.PrintName           = "死亡袭击"
+SWEP.PrintName           = ""..translate.Get("weapon_zs_suicidebomb")
 SWEP.Description         = "发动自爆时，会进入短暂的无敌时间，发生自爆后你和范围内的僵尸都会死"
 
 SWEP.Slot                = 3

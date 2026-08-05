@@ -1,4 +1,4 @@
--- Translated by Kradar (http://www.noxiousnet.com/forums/index.php?action=profile;u=6103)
+-- Translated by Kradar (http:--www.noxiousnet.com/forums/index.php?action=profile;u=6103)
 
 translate.AddLanguage("it", "Italian")
      

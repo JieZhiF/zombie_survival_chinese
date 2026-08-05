@@ -53,7 +53,7 @@ function ENT:Draw()
 	self:RenderInfo(self:LocalToWorld(vOffset2), self:LocalToWorldAngles(aOffset2), owner)
 end
 
-net.Receive("zs_remantlercontent", function(length)
+net.Receive(NET_MSG.REMANTLERCONTENT, function(length)
 	local ent = net.ReadEntity()
 	local readstring = net.ReadString()
 

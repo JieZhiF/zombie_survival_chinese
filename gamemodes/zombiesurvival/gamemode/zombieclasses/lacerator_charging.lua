@@ -1,10 +1,8 @@
---[[
-==================================================================
-冲锋者 (Charger) — 僵尸职业
-特点：撕裂者变体、可蓄力冲锋、冲锋时加速、后退减速、
-      无腿部伤害判定、自定义死亡/受伤音效
-==================================================================
-]]
+-- ============================================================================
+-- 冲锋者 (Charger) — 僵尸职业
+-- 特点：撕裂者变体、可蓄力冲锋、冲锋时加速、后退减速、
+--       无腿部伤害判定、自定义死亡/受伤音效
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Charger"
@@ -29,9 +27,13 @@ CLASS.Speed = 220
 CLASS.SWEP = "weapon_zs_lacerator_charging"
 
 -- 碰撞体积和视角
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 58)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 32)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0, 0, 50)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0, 0, 24)
 
 -- 击杀得分
@@ -204,6 +206,7 @@ if SERVER then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/lacerator"
+-- 图标颜色（橙红色）
 CLASS.IconColor = Color(180, 45, 0)
 
 -- 客户端移动指令：冲锋时视角锁定
@@ -226,10 +229,12 @@ function CLASS:CreateMove(pl, cmd)
 end
 
 -- 颜色调制
+-- 绘制前颜色调制（橙红色）
 function CLASS:PrePlayerDraw(pl)
 	render.SetColorModulation(0.7, 0.17, 0)
 end
 
+-- 绘制后恢复颜色
 function CLASS:PostPlayerDraw(pl)
 	render.SetColorModulation(1, 1, 1)
 end

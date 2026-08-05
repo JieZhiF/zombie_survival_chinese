@@ -64,7 +64,7 @@ end
 
 -- ========== 接收服务端弹药数量更新 ==========
 
-net.Receive("cusammo", function(length)
+net.Receive(NET_MSG.CUSAMMO, function(length)
 	local index = net.ReadUInt(6) + 128
 	local amount = net.ReadUInt(10)
 
@@ -73,6 +73,6 @@ end)
 
 -- ========== 接收服务端清除所有弹药指令 ==========
 
-net.Receive("cusammo_removeall", function(length)
+net.Receive(NET_MSG.CUSAMMO_REMOVEALL, function(length)
 	CUSTOM_AMMO_COUNT = {}
 end)

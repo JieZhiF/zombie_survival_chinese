@@ -29,9 +29,9 @@ end
 -- ========== 处理服务器发送的库存更新 ==========
 
 -- 接收服务器发来的单个库存物品数量更新
-net.Receive("zs_inventoryitem", function()
+net.Receive(NET_MSG.INVENTORYITEM, function()
 	local item = net.ReadString()
-	local count = net.ReadInt(5)
+	local count = net.ReadUInt(8)
 	local prevcount = GAMEMODE.ZSInventory[item] or 0
 
 	GAMEMODE.ZSInventory[item] = count
@@ -54,7 +54,7 @@ end)
 -- ========== 处理服务器发送的库存清空 ==========
 
 -- 接收服务器清空库存指令
-net.Receive("zs_wipeinventory", function()
+net.Receive(NET_MSG.WIPEINVENTORY, function()
 	GAMEMODE.ZSInventory = {}
 
 	if GAMEMODE.InventoryMenu and GAMEMODE.InventoryMenu:IsValid() then
@@ -68,7 +68,7 @@ end)
 
 -- 将玩家选择的合成配方发送至服务器处理
 local function TryCraftWithComponent(me)
-	net.Start("zs_trycraft")
+	net.Start(NET_MSG.TRYCRAFT)
 		net.WriteString(me.Item)
 		net.WriteString(me.WeaponCraft)
 	net.SendToServer()

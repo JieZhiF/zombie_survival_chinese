@@ -226,7 +226,7 @@ function PANEL:Paint() --这个绘制的是背景
 	local wid, hei = self:GetSize()
 	local barw = 64
 
-	surface.SetDrawColor(5, 5, 5, 180)--(5,5,5,180) //背景板
+	surface.SetDrawColor(5, 5, 5, 180)--(5,5,5,180) --背景板
 	surface.DrawRect(0, 64, wid, hei - 64)
 	surface.SetDrawColor(90, 90, 90, 180)
 	surface.DrawOutlinedRect(0, 64, wid, hei - 64)
@@ -347,7 +347,7 @@ local function ToggleZSFriend(self)
 
 		self:GetParent().NextRefresh = RealTime()
 
-		net.Start("zs_zsfriend")
+		net.Start(NET_MSG.ZSFRIEND)
 			net.WriteString(pl:SteamID())
 			net.WriteBool(GAMEMODE.ZSFriends[pl:SteamID()])
 		net.SendToServer()
@@ -357,7 +357,7 @@ local function ToggleZSFriend(self)
 end
 
 -- 接收服务器确认的好友添加结果
-net.Receive("zs_zsfriendadded", function()
+net.Receive(NET_MSG.ZSFRIENDADDED, function()
 	local pl = net:ReadEntity()
 	pl.ZSFriendAdded = net:ReadBool()
 end)
@@ -404,6 +404,10 @@ function PANEL:Init()
 	self.m_SpecialImage:SetSize(16, 16)
 	self.m_SpecialImage:SetMouseInputEnabled(true)
 	self.m_SpecialImage:SetVisible(false)
+
+	-- AFK 标记（长时间未移动时显示，类似特殊身份图标）
+	self.m_AFK = EasyLabel(self, " ", "ZSScoreBoardPlayerSmall", COLOR_RED)
+	self.m_AFK:SetVisible(false)
 
 	-- 僵尸职业图标
 	self.m_ClassImage = vgui.Create("DImage", self)
@@ -484,6 +488,10 @@ function PANEL:PerformLayout()
 	self.m_PlayerLabel:MoveRightOf(self.m_AvatarButton, 4)
 	self.m_PlayerLabel:CenterVertical()
 
+	self.m_AFK:SizeToContents()
+	self.m_AFK:MoveRightOf(self.m_PlayerLabel, 6)
+	self.m_AFK:CenterVertical()
+
 	self.m_ScoreLabel:SizeToContents()
 	self.m_ScoreLabel:SetPos(self:GetWide() * 0.6 - self.m_ScoreLabel:GetWide() / 2, 0)
 	self.m_ScoreLabel:CenterVertical()
@@ -534,6 +542,14 @@ function PANEL:RefreshPlayer()
 	end
 	self.m_PlayerLabel:SetText(name)
 	self.m_PlayerLabel:SetAlpha(240)
+
+	-- AFK 状态显示
+	if pl.ZSAFK then
+		self.m_AFK:SetText(translate.Get("afk_tab_label"))
+		self.m_AFK:SetVisible(true)
+	else
+		self.m_AFK:SetVisible(false)
+	end
 
 	-- 更新分数
 	self.m_ScoreLabel:SetText(pl:Frags())

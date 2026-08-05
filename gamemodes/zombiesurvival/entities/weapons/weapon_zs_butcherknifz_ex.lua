@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "EX细狗小菜刀"
+SWEP.PrintName = ""..translate.Get("weapon_zs_butcherknifz_ex")
 
 SWEP.Base = "weapon_zs_butcherknife"
 

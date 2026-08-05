@@ -1,17 +1,26 @@
+-- ============================================================================
+-- weapon_zs_novablaster/cl_init.lua - 脉冲手枪「新星爆破」（Nova Blaster）客户端
+-- 负责：武器栏槽位、3D HUD 与 SCK 拼装的高科技枪体外观
+-- ============================================================================
+
 INC_CLIENT()
 
+-- 武器栏槽位（归类为手枪分类）与槽位序号
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotPistols")
 SWEP.WeaponType = "pistol"
 SWEP.SlotGroup = WEPSELECT_PISTOL
 SWEP.SlotPos = 0
 
+-- 第一人称视角设置：不翻转、FOV 60
 SWEP.ViewModelFlip = false
 SWEP.ViewModelFOV = 60
 
+-- 3D HUD 中展示武器模型的绑定骨骼与位置/缩放
 SWEP.HUD3DBone = "Python"
 SWEP.HUD3DPos = Vector(0.85, -0.3, -2.5)
 SWEP.HUD3DScale = 0.015
 
+-- SCK 元素（第一人称）：大量零件拼装的高科技脉冲枪（枪管/转轮/瞄准具）
 SWEP.VElements = {
 	["spinner"] = { type = "Model", model = "models/props_borealis/bluebarrel001.mdl", bone = "Cylinder", rel = "", pos = Vector(0, 0, 0.243), angle = Angle(-180, 0, 0), size = Vector(0.078, 0.078, 0.041), color = Color(100, 100, 100, 255), surpresslightning = false, material = "maxofs2d/models/hover_plate", skin = 0, bodygroup = {} },
 	["barrel11"] = { type = "Model", model = "models/items/boxflares.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "barrel10", pos = Vector(0.888, 0, 0.159), angle = Angle(10, 0, 0), size = Vector(0.101, 0.273, 0.642), color = Color(153, 124, 139, 255), surpresslightning = false, material = "models/props_junk/shoe001a", skin = 0, bodygroup = {} },
@@ -38,6 +47,7 @@ SWEP.VElements = {
 	["spinner2"] = { type = "Model", model = "models/items/combine_rifle_ammo01.mdl", bone = "Cylinder", rel = "spinner", pos = Vector(0, 0, 1.572), angle = Angle(-180, 0, 0), size = Vector(0.335, 0.335, 0.317), color = Color(50, 50, 50, 255), surpresslightning = false, material = "maxofs2d/models/hover_plate", skin = 0, bodygroup = {} }
 }
 
+-- SCK 元素（第三人称）：与第一人称一致的枪体拼装外观
 SWEP.WElements = {
 	["spinner"] = { type = "Model", model = "models/props_borealis/bluebarrel001.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "uragan", pos = Vector(1.45, 0, 1.529), angle = Angle(-90, 0, 0), size = Vector(0.078, 0.078, 0.041), color = Color(100, 100, 100, 255), surpresslightning = false, material = "maxofs2d/models/hover_plate", skin = 0, bodygroup = {} },
 	["barrel4"] = { type = "Model", model = "models/items/boxflares.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "uragan", pos = Vector(-1.734, 0, 1.445), angle = Angle(0, 90, -70), size = Vector(0.029, 0.092, 0.15), color = Color(50, 50, 50, 255), surpresslightning = false, material = "maxofs2d/models/hover_plate", skin = 0, bodygroup = {} },

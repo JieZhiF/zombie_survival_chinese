@@ -498,8 +498,8 @@ function GM:FixWeaponBase()
 	local base = weapons.GetStored("weapon_base")
 
 	-- 修复武器活动翻译函数，防止因活动不存在而报错
-	base.TranslateActivity = function(me)
-		if me.ActivityTranslate[act] ~= nil then
+	base.TranslateActivity = function(me, act)
+		if act and me.ActivityTranslate[act] ~= nil then
 			return me.ActivityTranslate[act]
 		end
 
@@ -812,7 +812,7 @@ function GM:DynamicSpawnIsValid(ent, humans, allplayers)
 	-- 检查出生点是否有足够站立空间（头部不被方块阻挡）
 	trace_dynspawn.start = pos
 	trace_dynspawn.endpos = pos + playerheight
-	trace_dynspawn.filter = allplayers
+	trace_dynspawn.filter = table.Copy(allplayers)
 	table.insert(trace_dynspawn.filter, ent)
 	local tr = util.TraceHull(trace_dynspawn)
 	if tr.Hit then

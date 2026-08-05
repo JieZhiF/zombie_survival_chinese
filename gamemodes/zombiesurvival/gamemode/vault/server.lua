@@ -76,15 +76,15 @@ function GM:LoadVault(pl)
 		if contents and #contents > 0 then
 			contents = Deserialize(contents)
 			if contents then
-				pl.PointsVault = contents.Points
+				pl.PointsVault = math.max(0, tonumber(contents.Points) or 0)
 
 				-- 恢复转生等级
 				if contents.RemortLevel then
-					pl:SetZSRemortLevel(contents.RemortLevel)
+					pl:SetZSRemortLevel(math.max(0, math.floor(tonumber(contents.RemortLevel) or 0)))
 				end
 				-- 恢复经验值
 				if contents.XP then
-					pl:SetZSXP(contents.XP)
+					pl:SetZSXP(math.max(0, tonumber(contents.XP) or 0))
 				end
 				-- 恢复已解锁技能
 				if contents.UnlockedSkills then
@@ -96,7 +96,8 @@ function GM:LoadVault(pl)
 				end
 				-- 恢复下次技能重置时间
 				if contents.NextSkillReset then
-					pl.NextSkillReset = contents.NextSkillReset
+					local reset = tonumber(contents.NextSkillReset)
+					pl.NextSkillReset = reset and math.max(os.time(), reset) or nil
 				end
 				-- 如果版本号不同，重置技能并标记为已退款
 				if not contents.Version or contents.Version < self.SkillTreeVersion then
@@ -121,7 +122,7 @@ function GM:PlayerReadyVault(pl)
 	local desired = pl:GetDesiredActiveSkills()
 	local active = pl:GetActiveSkills()
 
-	net.Start("zs_skills_init")
+	net.Start(NET_MSG.SKILLS_INIT)
 	self:WriteSkillBits(unlocked)
 	self:WriteSkillBits(desired)
 
@@ -141,7 +142,7 @@ function GM:PlayerReadyVault(pl)
 	if pl.NextSkillReset then
 		local time = os.time()
 		if time < pl.NextSkillReset then
-			net.Start("zs_skills_nextreset")
+			net.Start(NET_MSG.SKILLS_NEXTRESET)
 			net.WriteUInt(pl.NextSkillReset - time, 32)
 			net.Send(pl)
 		end

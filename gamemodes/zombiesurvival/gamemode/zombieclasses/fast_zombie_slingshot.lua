@@ -1,11 +1,9 @@
---[[
-==================================================================
-弹弓僵尸 (Slingshot Zombie) — 僵尸职业
-继承自：fast_zombie
-特点：快速僵尸变体、不可复活分裂、暗红色皮肤材质渲染、
-      扑击时视角锁定
-==================================================================
-]]
+-- ============================================================================
+-- 弹弓僵尸 (Slingshot Zombie) — 僵尸职业
+-- 继承自：fast_zombie
+-- 特点：快速僵尸变体、不可复活分裂、暗红色皮肤材质渲染、
+--       扑击时视角锁定
+-- ============================================================================
 
 -- 基础职业为"快速僵尸"
 CLASS.Base = "fast_zombie"
@@ -203,6 +201,7 @@ if SERVER then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/fastzombie"
+-- 图标颜色（锈红色）
 CLASS.IconColor = Color(163, 94, 99)
 
 -- 客户端移动指令：扑击时视角锁定
@@ -229,11 +228,13 @@ end
 -- 皮肤材质和颜色
 local matSkin = Material("models/barnacle/barnacle_sheet")
 
+-- 绘制前：覆盖藤壶材质并调色
 function CLASS:PrePlayerDraw(pl)
 	render.ModelMaterialOverride(matSkin)
 	render.SetColorModulation(0.64, 0.37, 0.39)
 end
 
+-- 绘制后：恢复材质和颜色
 function CLASS:PostPlayerDraw(pl)
 	render.ModelMaterialOverride()
 	render.SetColorModulation(1, 1, 1)

@@ -1,4 +1,4 @@
--- Translated by Mr. Darkness (http://www.noxiousnet.com/forums/index.php?action=profile;u=6296)
+-- Translated by Mr. Darkness (http:--www.noxiousnet.com/forums/index.php?action=profile;u=6296)
 
 translate.AddLanguage("ru", "Russian")
 
@@ -317,3 +317,17 @@ LANGUAGE.help_cont_being_a_zombie					= [[<p>Советы:
 ]]
 
 -- Place any custom stuff below here...
+LANGUAGE.nailplacer_saved = "Сохранено гвоздей: %d"
+LANGUAGE.nailplacer_loaded = "Загружено гвоздей: %d"
+LANGUAGE.nailplacer_generated = "Оборона построена (гвоздей: %d)"
+LANGUAGE.nailplacer_oldcfg_warn = "Обнаружены старые данные в data/zs/, сообщите администратору и попросите выполнить zs_nailplacer_migrate"
+LANGUAGE.nailplacer_migrate_done = "Старые данные перенесены в data/zs_nailplacer/"
+LANGUAGE.nailplacer_migrate_failed = "Ошибка миграции, проверьте права на каталог DATA"
+LANGUAGE.nailplacer_console_saved = "Сохранено гвоздей: %d в %s"
+LANGUAGE.nailplacer_console_loaded = "Загружено гвоздей: %d из %s (уровень<=%d)"
+LANGUAGE.nailplacer_console_migrating = "Миграция %s -> %s"
+LANGUAGE.nailplacer_console_migrate_done = "Миграция старых данных завершена"
+LANGUAGE.nailplacer_console_migrate_failed = "Ошибка миграции, проверьте права на каталог DATA"
+LANGUAGE.nailplacer_console_oldcfg = "Обнаружены старые данные в data/zs/, сообщите администратору и попросите выполнить zs_nailplacer_migrate"
+LANGUAGE.nailplacer_copymode = "Режим копирования"
+LANGUAGE.nailplacer_copymode_desc = "ВЫКЛ: используются пропы карты (оригиналы перемещаются для постройки обороны). ВКЛ: оригиналы остаются на месте, а для обороны создаются копии."

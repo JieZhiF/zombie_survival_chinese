@@ -1,3 +1,9 @@
+-- ============================================================================
+-- weapon_zs_base/sh_recoil.lua - 武器母本后坐力系统（共享）
+-- 负责：按状态计算后坐力倍率、开火后坐力累积/偏移与客户端镜头抖动
+-- ============================================================================
+
+-- ==== GetRecoilModifier - 按机瞄/蹲下/空中/移动状态计算后坐力倍率 ====
 function SWEP:GetRecoilModifier()
 	local owner = self:GetOwner()
 	if not IsValid(owner) then return 1 end
@@ -11,6 +17,7 @@ function SWEP:GetRecoilModifier()
 	return mod
 end
 
+-- ==== ApplyRecoil - 开火时计算并施加后坐力：热度累积、首发倍率、偏移与镜头效果 ====
 function SWEP:ApplyRecoil()
 	if not self.Recoil_Enabled then return end
 

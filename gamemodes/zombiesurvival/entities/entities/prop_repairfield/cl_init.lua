@@ -1,13 +1,21 @@
+-- ============================================================================
+-- cl_init.lua - 修理力场道具（客户端）：3D 状态面板与修复脉冲特效
+-- 负责：显示修理力场的耐久/弹药面板，修复时播放脉冲音效与上升光粒
+-- ============================================================================
 INC_CLIENT()
 
+-- 修复脉冲发光状态（配合 NextRepairPulse 控制特效节奏）
 ENT.Pulsed = true
 
+-- ==== Initialize - 初始化：缩小模型、创建音效与扁平浮标附属模型 ====
 function ENT:Initialize()
 	self:SetModelScale(0.5, 0)
 
+	-- 空闲时的扫描环境音效
 	self.AmbientSound = CreateSound(self, "npc/scanner/combat_scan_loop4.wav")
 	self.AmbientSound:SetSoundLevel(55)
 
+	-- 创建压扁的浮标模型作为力场底盘指示
 	local cmodel = ClientsideModel("models/props_wasteland/buoy01.mdl")
 	if cmodel:IsValid() then
 		cmodel:SetPos(self:LocalToWorld(Vector(0, 0, -11)))
@@ -18,6 +26,7 @@ function ENT:Initialize()
 		cmodel:SetParent(self)
 		cmodel:SetOwner(self)
 
+		-- 压扁成薄圆盘（0.02 倍垂直缩放）
 		local matrix = Matrix()
 		matrix:Scale(Vector(0.6, 0.6, 0.02))
 		cmodel:EnableMatrix( "RenderMultiply", matrix )
@@ -28,12 +37,14 @@ function ENT:Initialize()
 	end
 end
 
+-- ==== DrawTranslucent - 半透明绘制：人类视角显示耐久与弹药 3D 面板 ====
 function ENT:DrawTranslucent()
 	self:DrawModel()
 
 	local owner = self:GetObjectOwner()
 	local ammo = self:GetAmmo()
 
+	-- 仅人类玩家可见面板
 	if MySelf:IsValid() and MySelf:Team() == TEAM_HUMAN then
 		local ang = self:LocalToWorldAngles(Angle(0, 90, 0))
 		cam.Start3D2D(self:LocalToWorld(Vector(-11, 0, -10)), ang, 0.04)
@@ -41,8 +52,10 @@ function ENT:DrawTranslucent()
 			if owner:IsValid() and owner:IsPlayer() then
 				name = owner:ClippedName()
 			end
+			-- 耐久条与持有者名字
 			self:Draw3DHealthBar(math.Clamp(self:GetObjectHealth() / self:GetMaxObjectHealth(), 0, 1), name, 0, 0.65)
 
+			-- 剩余修理次数（弹药数）或"空"提示
 			if ammo > 0 then
 				draw.SimpleTextBlurry("["..ammo.." / "..self.MaxAmmo.."]", "ZS3D2DFont", 0, 550, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			else
@@ -52,7 +65,9 @@ function ENT:DrawTranslucent()
 	end
 end
 
+-- ==== Think - 每帧处理：按修复状态控制音效与脉冲光粒特效 ====
 function ENT:Think()
+	-- 有持有者且还有弹药时播放扫描音效，否则停止
 	if self:GetObjectOwner():IsValid() and self:GetAmmo() > 0 then
 		self.AmbientSound:PlayEx(0.5, 100)
 	else
@@ -60,6 +75,7 @@ function ENT:Think()
 	end
 
 	if MySelf:IsValid() then
+		-- 每次修复脉冲（NextRepairPulse 周期）播放音效并喷发光粒
 		if self.Pulsed then
 			if CurTime() < self:GetNextRepairPulse() then
 				self.Pulsed = false
@@ -74,6 +90,7 @@ function ENT:Think()
 				local emitter = ParticleEmitter(pos)
 				emitter:SetNearClip(24, 32)
 
+				-- 45 个紫色小球向上飘散并消散
 				for i=1, 45 do
 					local dir = VectorRand():GetNormalized()
 					local particle = emitter:Add("sprites/glow04_noz", pos)
@@ -89,6 +106,7 @@ function ENT:Think()
 					particle:SetVelocity(dir * 205)
 				end
 
+				-- 10 个蓝色光点缓慢上升
 				for i=1, 10 do
 					local dir = VectorRand():GetNormalized()
 					local particle = emitter:Add("sprites/glow04_noz", pos)
@@ -111,6 +129,7 @@ function ENT:Think()
 	return true
 end
 
+-- ==== OnRemove - 移除时：停止音效并清理附属模型 ====
 function ENT:OnRemove()
 	self.AmbientSound:Stop()
 

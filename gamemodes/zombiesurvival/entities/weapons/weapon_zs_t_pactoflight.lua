@@ -2,7 +2,7 @@ AddCSLuaFile()
 
 SWEP.Base = "weapon_zs_t_doomorgan"
 
-SWEP.PrintName = "光之契约"
+SWEP.PrintName = ""..translate.Get("weapon_zs_t_pactoflight")
 SWEP.Description = "左键使用后，你变为英雄，持续150s，时间结束后，你立即死亡."
 
 SWEP.Undroppable = true

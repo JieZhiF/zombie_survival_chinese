@@ -1,10 +1,8 @@
---[[
-==================================================================
-乌鸦 (Crow) — 特殊僵尸职业
-特点：使用乌鸦模型、可飞行、极低血量、隐藏职业、不计入击杀统计、
-      不产生恐惧、击杀后统计乌鸦击杀数、可啄击攻击
-==================================================================
-]]
+-- ============================================================================
+-- 乌鸦 (Crow) — 特殊僵尸职业
+-- 特点：使用乌鸦模型、可飞行、极低血量、隐藏职业、不计入击杀统计、
+--       不产生恐惧、击杀后统计乌鸦击杀数、可啄击攻击
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Crow"
@@ -17,6 +15,7 @@ CLASS.Description = "description_crow"
 CLASS.Health = 5
 -- 波次/阈值（初始可用）
 CLASS.Wave = 0
+-- 阈值（0 表示无需任何条件）
 CLASS.Threshold = 0
 -- 绑定的武器
 CLASS.SWEP = "weapon_zs_crow"
@@ -29,19 +28,27 @@ CLASS.JumpPower = 230
 
 -- 受伤/死亡音效
 CLASS.PainSounds = {"NPC_Crow.Pain"}
+-- 死亡音效
 CLASS.DeathSounds = {"NPC_Crow.Die"}
 
 -- 初始解锁/隐藏
 CLASS.Unlocked = true
+-- 隐藏（不在职业列表中显示）
 CLASS.Hidden = true
 
 -- 小型碰撞体积
 CLASS.Hull = {Vector(-4, -4, 0), Vector(4, 4, 9)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-4, -4, 0), Vector(4, 4, 9)}
+-- 视角偏移
 CLASS.ViewOffset = Vector(0,0,8)
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = Vector(0,0,8)
+-- 蹲伏行走速度倍率
 CLASS.CrouchedWalkSpeed = 1
+-- 台阶高度
 CLASS.StepSize = 8
+-- 质量（极轻）
 CLASS.Mass = 2
 
 -- 各种特殊属性

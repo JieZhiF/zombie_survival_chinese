@@ -1,9 +1,19 @@
+-- ============================================================================
+-- death_extinctioncrab.lua - 灭绝蟹死亡爆体特效（客户端）
+-- 负责：角色死亡瞬间播放躯干断裂与血肉撞击音效，依次喷射红色烟雾、
+--       灰色血雾与向外迸射的橙色雨点粒子，最后留下大片血迹
+-- ============================================================================
+
+-- ==== Init - 特效初始化：播放死亡音效并分三阶段喷射粒子 ====
 function EFFECT:Init(data)
+	-- 爆体位置与主朝向（法线取反作为爆体喷发方向）
 	local pos = data:GetOrigin()
 	local normal = data:GetNormal() * -1
 
+	-- 出生点沿法线微抬，避免粒子嵌在表面内部
 	pos = pos + normal
 
+	-- 立即播放躯干断裂音效，并延迟随机播放数次血肉撞击音效
 	sound.Play("physics/body/body_medium_break"..math.random(2, 4)..".wav", pos, 77, math.Rand(90, 110))
 	for i=0, math.random(2, 3) do
 		timer.Simple(i * math.Rand(0.1, 0.3), function() sound.Play("physics/flesh/flesh_squishy_impact_hard"..math.random(4)..".wav", pos, 77, math.Rand(90, 110)) end)
@@ -14,6 +24,7 @@ function EFFECT:Init(data)
 
 	local particle, size, heading
 
+	-- 第一阶段：12 个暗红色浓烟团沿爆体方向上升，缓慢旋转并渐隐消散
 	for i=1, 12 do
 		particle = emitter:Add("particles/smokey", pos)
 		particle:SetVelocity(normal * 48 + VectorRand() * 32)
@@ -27,6 +38,7 @@ function EFFECT:Init(data)
 		particle:SetColor(160, 5, 0)
 	end
 
+	-- 第二阶段：24 个灰色血雾粒子逆着重力向上飘起，模拟爆体升腾的血雾
 	local grav = Vector(0, 0, 170)
 	for i=1, 24 do
 		particle = emitter:Add("!sprite_bloodspray"..math.random(8), pos)
@@ -43,6 +55,7 @@ function EFFECT:Init(data)
 		particle:SetLighting(true)
 	end
 
+	-- 第三阶段：80 个橙色长条雨点粒子向四周高速迸射并拉长，模拟爆体喷溅的体液
 	for i=1, 80 do
 		heading = VectorRand()
 		heading:Normalize()
@@ -66,12 +79,15 @@ function EFFECT:Init(data)
 
 	emitter:Finish() emitter = nil collectgarbage("step", 64)
 
+	-- 在爆体位置留下 22~26 处向上喷溅的血迹
 	util.Blood(pos, math.random(22, 26), Vector(0,0,1), 300)
 end
 
+-- ==== Think - 特效思考：一次性粒子效果，无需持续更新 ====
 function EFFECT:Think()
 	return false
 end
 
+-- ==== Render - 无自定义渲染，粒子由引擎粒子系统绘制 ====
 function EFFECT:Render()
 end

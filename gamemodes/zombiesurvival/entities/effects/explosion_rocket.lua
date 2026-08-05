@@ -1,12 +1,22 @@
+-- ============================================================================
+-- explosion_rocket.lua - 火箭爆炸特效（客户端）
+-- 负责：火箭命中瞬间播放随机爆炸音效，分四组喷射橙色火花、火焰云、
+--       翻滚火苗与飞散余烬粒子，随后在爆炸点绘制一颗快速衰减的
+--       橙色光晕，表现经典爆炸冲击
+-- ============================================================================
+
+-- ==== Init - 特效初始化：播放爆炸音效并分四组喷射火焰粒子 ====
 function EFFECT:Init(data)
 	local pos = data:GetOrigin() + Vector(0, 0, 2)
 
 	self.Start = pos
 	self.StartTime = CurTime()
 
+	-- 光晕透明度与寿命计数器初始值
 	self.Alpha = 255
 	self.Life = 0
 
+	-- 播放随机爆炸音效，音调偏高显得更具冲击力
 	sound.Play("ambient/explosions/explode_"..math.random(1,5)..".wav", pos, 80, math.random(135, 160))
 
 	local emitter = ParticleEmitter(pos)

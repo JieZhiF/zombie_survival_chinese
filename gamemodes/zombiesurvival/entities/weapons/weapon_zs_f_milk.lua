@@ -1,24 +1,30 @@
+-- ============================================================================
+-- weapon_zs_f_milk.lua - 牛奶（食物/饮品）
+-- 负责：可饮用食物武器，恢复较多生命值，客户端拼装奶盒模型
+-- ============================================================================
 AddCSLuaFile()
 
-SWEP.Base = "weapon_zs_basefood"
+SWEP.Base = "weapon_zs_basefood" -- 继承食物武器基类
 
-SWEP.PrintName = ""..translate.Get("weapon_zs_f_milk")
+SWEP.PrintName = ""..translate.Get("weapon_zs_f_milk") -- 武器显示名称
 
 if CLIENT then
+	-- 第一人称模型部件（奶盒，挂在右手骨骼）
 	SWEP.VElements = {
 		["base"] = { type = "Model", model = "models/props_junk/garbage_milkcarton002a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(3.75, 2.5, -2), angle = Angle(180, 0, 0), size = Vector(0.5, 0.5, 0.5), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 	}
 
+	-- 第三人称模型部件（奶盒，挂在右手骨骼）
 	SWEP.WElements = {
 		["base"] = { type = "Model", model = "models/props_junk/garbage_milkcarton002a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(3.75, 2.5, -2), angle = Angle(180, 0, -25), size = Vector(0.5, 0.5, 0.5), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 	}
 end
 
-SWEP.ViewModel = "models/weapons/c_grenade.mdl"
-SWEP.WorldModel = "models/props_junk/garbage_milkcarton002a.mdl"
+SWEP.ViewModel = "models/weapons/c_grenade.mdl" -- 第一人称模型
+SWEP.WorldModel = "models/props_junk/garbage_milkcarton002a.mdl" -- 第三人称模型（奶盒）
 
-SWEP.Primary.Ammo = "foodmilk"
+SWEP.Primary.Ammo = "foodmilk" -- 消耗的弹药类型（食物牛奶）
 
-SWEP.FoodHealth = 13
-SWEP.FoodEatTime = 3
-SWEP.FoodIsLiquid = true
+SWEP.FoodHealth = 13 -- 饮用恢复的生命值
+SWEP.FoodEatTime = 3 -- 饮用耗时（秒）
+SWEP.FoodIsLiquid = true -- 属于液态饮品（可边走边喝）

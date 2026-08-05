@@ -1,4 +1,9 @@
 
+-- ============================================================================
+-- swep_construction_kit/menu/ironsights.lua - SCK 机瞄编辑面板（客户端）
+-- 负责：机瞄开关/重置、拖拽模式选择、六轴位置与旋转滑条
+-- ============================================================================
+-- 拖拽模式：轴组合映射（x/z 同组、pitch/yaw 同组等）
 local drag_modes = {
 	["x / z"] = { "x", "z" },
 	["y"] = { "y" },
@@ -6,10 +11,12 @@ local drag_modes = {
 	["roll"] = { "roll" }
 }
 
+-- 获取当前持有的 SCK 武器与其机瞄面板
 local wep = GetSCKSWEP( LocalPlayer() )
 local pironsight = wep.pironsight
 local pironsight_enable = SimplePanel( pironsight )
 
+	-- 机瞄开关复选框：切换时通过控制台命令同步
 	local icbox = vgui.Create( "DCheckBoxLabel", pironsight_enable )
 		icbox:SetSize( 150, 20 )
 		icbox:SetText( "Enable ironsights" )
@@ -22,6 +29,7 @@ local pironsight_enable = SimplePanel( pironsight )
 		else icbox:SetValue(0) end
 	icbox:Dock(LEFT)
 
+	-- 重置机瞄偏移按钮
 	local ribtn = vgui.Create( "DButton", pironsight_enable )
 		ribtn:SetTall( 20 )
 		ribtn:SetText( "Reset ironsights" )
@@ -40,6 +48,7 @@ local pironsight_drag = SimplePanel( pironsight )
 		modlabel:SetText( "Drag mode:" )
 	modlabel:Dock(LEFT)
 
+	-- 拖拽模式选择框：切换后更新对应轴的拖拽启用状态
 	local drbox = vgui.Create( "DComboBox", pironsight_drag )
 		drbox:SetTall( 20 )
 		drbox:SetText( wep.cur_drag_mode )
@@ -58,6 +67,7 @@ local pironsight_drag = SimplePanel( pironsight )
 pironsight_drag:DockMargin(0,0,0,10)
 pironsight_drag:Dock(TOP)
 
+-- 位置 X 滑条（绑定 _sp_ironsight_x 控制台变量）
 local ixslider = vgui.Create( "DNumSlider", pironsight )
 	ixslider:SetText( "Translate x" )
 	ixslider:SetMinMax( -50, 50 )
@@ -70,6 +80,7 @@ local ixslider = vgui.Create( "DNumSlider", pironsight )
 ixslider:DockMargin(0,0,0,10)
 ixslider:Dock(TOP)
 
+-- 位置 Y 滑条
 local iyslider = vgui.Create( "DNumSlider", pironsight )
 	iyslider:SetText( "Translate y" )
 	iyslider:SetMinMax( -50, 50 )
@@ -82,6 +93,7 @@ local iyslider = vgui.Create( "DNumSlider", pironsight )
 iyslider:DockMargin(0,0,0,10)
 iyslider:Dock(TOP)
 
+-- 位置 Z 滑条
 local izslider = vgui.Create( "DNumSlider", pironsight )
 	izslider:SetText( "Translate z" )
 	izslider:SetMinMax( -50, 50 )
@@ -94,6 +106,7 @@ local izslider = vgui.Create( "DNumSlider", pironsight )
 izslider:DockMargin(0,0,0,10)
 izslider:Dock(TOP)
 
+-- 旋转 pitch 滑条
 local ipslider = vgui.Create( "DNumSlider", pironsight )
 	ipslider:SetText( "Rotate pitch" )
 	ipslider:SetMinMax( -100, 100 )
@@ -106,6 +119,7 @@ local ipslider = vgui.Create( "DNumSlider", pironsight )
 ipslider:DockMargin(0,0,0,10)
 ipslider:Dock(TOP)
 
+-- 旋转 yaw 滑条
 local iyaslider = vgui.Create( "DNumSlider", pironsight )
 	iyaslider:SetText( "Rotate yaw" )
 	iyaslider:SetMinMax( -100, 100 )
@@ -118,6 +132,7 @@ local iyaslider = vgui.Create( "DNumSlider", pironsight )
 iyaslider:DockMargin(0,0,0,10)
 iyaslider:Dock(TOP)
 
+-- 旋转 roll 滑条
 local irslider = vgui.Create( "DNumSlider", pironsight )
 	irslider:SetText( "Rotate roll" )
 	irslider:SetMinMax( -100, 100 )

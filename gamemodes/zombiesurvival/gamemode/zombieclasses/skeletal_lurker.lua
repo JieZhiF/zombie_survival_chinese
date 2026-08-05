@@ -1,11 +1,9 @@
---[[
-==================================================================
-骷髅爬行者 (Skeletal Crawler) — 僵尸职业
-继承自：zombie_torso
-特点：骷髅模型、子弹伤害大幅减免（64%）、非斩击/棍棒伤害减免55%、
-      死亡时创建骷髅假尸体
-==================================================================
-]]
+-- ============================================================================
+-- 骷髅爬行者 (Skeletal Crawler) — 僵尸职业
+-- 继承自：zombie_torso
+-- 特点：骷髅模型、子弹伤害大幅减免（64%）、非斩击/棍棒伤害减免55%、
+--       死亡时创建骷髅假尸体
+-- ============================================================================
 
 -- 基础职业为"僵尸躯干"
 CLASS.Base = "zombie_torso"
@@ -19,12 +17,14 @@ CLASS.Description = "description_skeletal_lurker"
 -- 控制帮助文本键名
 CLASS.Help = "controls_skeletal_lurker"
 
--- 主模型（经典躯干）+ 覆盖模型（骷髅）
+-- 主模型（经典躯干）
 CLASS.Model = Model("models/zombie/classic_torso.mdl")
+-- 覆盖模型（骷髅）
 CLASS.OverrideModel = Model("models/player/skeleton.mdl")
 
 -- 小碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 22)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 22)}
 
 -- 绑定的武器
@@ -32,12 +32,16 @@ CLASS.SWEP = "weapon_zs_skeletallurker"
 
 -- 出现波次
 CLASS.Wave = 2 / 6
+-- 初始未解锁（按波次解锁）
 CLASS.Unlocked = false
+-- 不隐藏（可在列表中选择）
 CLASS.Hidden = false
 
--- 生命值/速度
+-- 生命值
 CLASS.Health = 75
+-- 移动速度
 CLASS.Speed = 155
+-- 跳跃力
 CLASS.JumpPower = 160
 
 -- 击杀得分
@@ -47,11 +51,14 @@ CLASS.Points = CLASS.Health/GM.SkeletonPointRatio
 CLASS.VoicePitch = 0.8
 
 -- 标记为躯干和骷髅
+-- 标记为躯干
 CLASS.IsTorso = true
+-- 标记为骷髅类僵尸
 CLASS.Skeletal = true
+-- 骷髅抗性（骨骼减伤）
 CLASS.SkeletalRes = true
 
--- 缓存
+-- 缓存函数与常量
 local math_random = math.random
 local ACT_IDLE = ACT_IDLE
 local ACT_WALK = ACT_WALK
@@ -75,6 +82,7 @@ function CLASS:PlayPainSound(pl)
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound(string_format("npc/zombie/zombie_die%d.wav", math_random(3)), 75, math_random(132, 138))
 	return true
@@ -86,6 +94,7 @@ local StepSounds = {
 	Sound("npc/barnacle/neck_snap2.wav")
 }
 
+-- 自定义脚步声（藤壶折颈音效）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	pl:EmitSound(StepSounds[math_random(#StepSounds)], 50, math_random(210, 220), 0.5)
 	return true

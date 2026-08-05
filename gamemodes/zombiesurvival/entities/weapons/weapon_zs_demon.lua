@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "'恶魔剑客' 斩剑式"
+SWEP.PrintName = ""..translate.Get("weapon_zs_demon")
 SWEP.Description = "手持时，15%闪避。你攻击的僵尸血量小于等于20%时，立即斩杀"
 
 if CLIENT then

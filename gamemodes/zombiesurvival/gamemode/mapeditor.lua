@@ -485,26 +485,33 @@ function GM:SaveMapEditorFile()
 	file.Write(self.MapEditorPrefix .. "maps/" .. game.GetMap() .. ".txt", Serialize(sav))
 end
 
+-- 反序列化沙箱环境：仅暴露序列化所需类型，杜绝 DATA 文件注入任意代码（RCE）
+local sandbox_env = {Vector = Vector, Angle = Angle}
+
 -- ============================================================
--- 反序列化函数：将 SRL 格式的字符串解析为 Lua 数据表
+-- Deserialize - 反序列化 SRL 格式数据（沙箱执行，安全）
 -- SRL 是一种类 Lua 源码的序列化格式
 -- sIn: 输入的序列化字符串
 -- 返回值: 反序列化后的数据表
 -- ============================================================
 function Deserialize(sIn)
-	-- 清空全局变量 SRL，用于接收反序列化结果
-	SRL = nil
-
 	-- 如果输入字符串为空，返回空表
-	if #sIn == 0 then return {} end
+	if #sIn == 0 or string.sub(sIn, -1) ~= "}" then return {} end
 
-	-- 如果字符串不以 "SRL=" 开头，补充前缀后执行
+	-- 如果字符串不以 "SRL=" 开头，补充前缀
 	if string.sub(sIn, 1, 4) ~= "SRL=" then sIn = "SRL=" .. sIn end
-	-- 执行反序列化代码（将字符串作为 Lua 代码运行，结果存入 SRL 变量）
-	RunString(sIn)
 
-	-- 返回反序列化的结果
-	return SRL
+	if string.sub(sIn, 5, 5) ~= "{" then return {} end
+
+	-- 沙箱编译执行：反序列化代码无法访问全局环境，仅能构造 Vector/Angle
+	sIn = sIn .. " return SRL"
+	local func = CompileString(sIn, "deserialize", false)
+	if type(func) == "string" then
+		return {}
+	end
+
+	setfenv(func, sandbox_env)
+	return func() or {}
 end
 
 -- ============================================================

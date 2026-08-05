@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-SWEP.PrintName = "疯狂屠刀"
+SWEP.PrintName = ""..translate.Get("weapon_zs_butcherknife_boss")
 SWEP.Description = "砍砍砍！我要彻底撕碎你！."
 
 if CLIENT then

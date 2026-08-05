@@ -140,7 +140,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 0.6,
 	level = 70,
-	pitch = 210,//{80,85},
+	pitch = 210,--{80,85},
 	sound = "weapons/xm1014/xm1014-1.wav"
 } )
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MAX_SPREAD, -0.603, 1)

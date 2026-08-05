@@ -1,7 +1,7 @@
 AddCSLuaFile()
 DEFINE_BASECLASS("weapon_zs_base")
 
-SWEP.PrintName = "'迷你超载' 马格南"
+SWEP.PrintName = ""..translate.Get("weapon_zs_magnum_a")
 SWEP.Description = "迷你的超载马格南，但伤害略微降低了."
 
 SWEP.SlotPos = 0

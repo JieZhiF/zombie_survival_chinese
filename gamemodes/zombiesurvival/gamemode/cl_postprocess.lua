@@ -204,9 +204,10 @@ function GM:_RenderScreenspaceEffects()
 		DrawSharpen(1, math_min(6, self.HurtEffect * 3))
 	end
 
-	-- 如果启用了颜色修正功能，根据玩家状态应用不同的颜色修正
-	if self.ColorModEnabled then
-		if not MySelf:Alive() and MySelf:GetObserverMode() ~= OBS_MODE_CHASE then
+	-- 颜色修正未启用时跳过全部 DrawColorModify（每帧高开销）
+	if not self.ColorModEnabled then return end
+
+	if not MySelf:Alive() and MySelf:GetObserverMode() ~= OBS_MODE_CHASE then
 			-- 死亡状态且非追踪观察模式：应用死亡颜色修正（去色效果逐渐增强）
 			if not MySelf:HasWon() then
 				tColorModDead["$pp_colour_colour"] = (1 - math_min(1, CurTime() - self.LastTimeAlive)) * 0.5
@@ -248,7 +249,6 @@ function GM:_RenderScreenspaceEffects()
 				DrawColorModify(tColorModHuman)
 			end
 		end
-	end
 end
 
 -- 渲染场景前调用，根据视觉模式设置全亮模式

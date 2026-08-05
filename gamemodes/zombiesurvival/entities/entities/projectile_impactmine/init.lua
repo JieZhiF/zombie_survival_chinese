@@ -33,7 +33,7 @@ function ENT:Use(activator, caller)
 
 		activator:GiveAmmo(1, "impactmine")
 
-		net.Start("zs_ammopickup")
+		net.Start(NET_MSG.AMMOPICKUP)
 			net.WriteUInt(1, 16)
 			net.WriteString("impactmine")
 		net.Send(activator)

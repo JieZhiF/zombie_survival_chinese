@@ -491,7 +491,7 @@ killicon.Add("ammo_medpower", "zombiesurvival/killicons/medpower_ammo_icon")
 killicon.Add("ammo_nail", "zombiesurvival/killicons/nail_ammo_icon_2")
 
 -- 接收乌鸦击杀网络消息，在屏幕顶部显示击杀通知
-net.Receive("zs_crow_kill_crow", function(length)
+net.Receive(NET_MSG.CROW_KILL_CROW, function(length)
 	local victim = net.ReadString()
 	local attacker = net.ReadString()
 
@@ -499,7 +499,7 @@ net.Receive("zs_crow_kill_crow", function(length)
 end)
 
 --[[
-net.Receive("zs_pl_kill_pl", function(length) -- 单独击杀
+net.Receive(NET_MSG.PL_KILL_PL, function(length) -- 单独击杀
 	local victim = net.ReadEntity()
 	local attacker = net.ReadEntity()
 
@@ -532,7 +532,7 @@ net.Receive("zs_pl_kill_pl", function(length) -- 单独击杀
 	end
 end)
 
-net.Receive("zs_pls_kill_pl", function(length) -- 合作击杀
+net.Receive(NET_MSG.PLS_KILL_PL, function(length) -- 合作击杀
 	local victim = net.ReadEntity()
 	local attacker = net.ReadEntity()
 	local assister = net.ReadEntity()
@@ -576,7 +576,7 @@ local BG_DEATH = Color(130, 30, 30, 190)  -- 我被击杀的深红底色
 local DEBUG_MODE = false
 
 -- 接收玩家击杀玩家的网络消息（包含击杀者、受害者、武器、是否爆头等信息）
-net.Receive("zs_pl_kill_pl", function(length)
+net.Receive(NET_MSG.PL_KILL_PL, function(length)
 	-- 从网络消息中读取各种数据
     local victim = net.ReadEntity()
     local attacker = net.ReadEntity()
@@ -654,7 +654,7 @@ net.Receive("zs_pl_kill_pl", function(length)
 end)
 
 -- 接收玩家自杀的网络消息
-net.Receive("zs_pl_kill_self", function(length)
+net.Receive(NET_MSG.PL_KILL_SELF, function(length)
 	local victim = net.ReadEntity()
 	local victimteam = net.ReadUInt(8)
 
@@ -678,7 +678,7 @@ net.Receive("zs_pl_kill_self", function(length)
 end)
 
 -- 接收玩家重生的网络消息
-net.Receive("zs_playerredeemed", function(length)
+net.Receive(NET_MSG.PLAYERREDEEMED, function(length)
 	local pl = net.ReadEntity()
 
 	if pl:IsValid() then
@@ -695,7 +695,7 @@ net.Receive("zs_playerredeemed", function(length)
 end)
 
 -- 接收通用死亡网络消息（非玩家之间的击杀，如NPC、环境伤害等）
-net.Receive("zs_death", function(length)
+net.Receive(NET_MSG.DEATH, function(length)
 	local victim = net.ReadEntity()
 	local inflictor = net.ReadString()
 	local attacker = "#" .. net.ReadString()

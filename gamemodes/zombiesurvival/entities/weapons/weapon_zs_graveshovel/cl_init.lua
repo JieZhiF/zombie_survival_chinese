@@ -1,10 +1,17 @@
-INC_CLIENT()
+-- ============================================================================
+-- weapon_zs_graveshovel/cl_init.lua - 掘墓铲近战武器（客户端部分）
+-- 负责：用骨骼与骷髅零件拼装"掘墓铲"外观（脊椎握柄 + 肩胛骨铲面 +
+--       红色发光眼睛装饰），隐藏原始模型
+-- ============================================================================
+INC_CLIENT() -- 客户端专用文件标记
 
-SWEP.ViewModelFOV = 80
+SWEP.ViewModelFOV = 80 -- 第一人称视野大小
 
+-- 隐藏原始模型，改用自定义元素拼装
 SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 
+-- 第一人称手持元素：脊椎骨握柄 + 两片肩胛骨铲面 + 红色发光眼睛
 SWEP.VElements = {
 	["eye+"] = { type = "Sprite", sprite = "sprites/light_glow02", bone = "ValveBiped.Bip01_Spine4", rel = "spine", pos = Vector(-3.097, 1.175, 32.965), size = { x = 2.072, y = 2.072 }, color = Color(255, 0, 0, 255), nocull = true, additive = true, vertexalpha = true, vertexcolor = true, ignorez = false},
 	["skull"] = { type = "Model", model = "models/Gibs/HGIBS.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "spine", pos = Vector(-0.245, 1.638, 32.466), angle = Angle(0, -159.118, 0), size = Vector(0.85, 0.85, 0.85), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -16,6 +23,7 @@ SWEP.VElements = {
 	["spine"] = { type = "Model", model = "models/Gibs/HGIBS_spine.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(5.125, 1.445, -21.761), angle = Angle(6.393, -2.498, -3.169), size = Vector(0.899, 0.665, 3.928), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
 
+-- 第三人称世界元素：同样的骨骼拼装，绑在玩家右手骨骼上
 SWEP.WElements = {
 	["eye+"] = { type = "Sprite", sprite = "sprites/light_glow02", bone = "ValveBiped.Bip01_R_Hand", rel = "spine", pos = Vector(-3.097, 1.175, 33.444), size = { x = 2.072, y = 2.072 }, color = Color(255, 0, 0, 255), nocull = true, additive = true, vertexalpha = true, vertexcolor = true, ignorez = false},
 	["eye"] = { type = "Sprite", sprite = "sprites/light_glow02", bone = "ValveBiped.Bip01_R_Hand", rel = "spine", pos = Vector(-3.097, 1.175, 33.444), size = { x = 2.072, y = 2.072 }, color = Color(255, 0, 0, 255), nocull = true, additive = true, vertexalpha = true, vertexcolor = true, ignorez = false},

@@ -31,7 +31,7 @@ end
 -- 向指定玩家（或所有人类玩家）发送当前所有物品库存
 function GM:RefreshItemStocks(pl)
 	for k in pairs(self.ItemStocks) do
-		self:SendItemStocks(pl)
+		self:SendItemStocks(k, pl)
 	end
 end
 
@@ -39,7 +39,7 @@ end
 
 -- 通过网络消息将指定物品的库存数量发送给玩家
 function GM:SendItemStocks(itemid, pl)
-	net.Start("zs_itemstock")
+	net.Start(NET_MSG.ITEMSTOCK)
 		net.WriteString(tostring(itemid))
 		net.WriteInt(self:GetItemStocks(itemid), 16)
 	if pl then

@@ -279,7 +279,7 @@ function ENT:Think()
 	end
 
 	object:SetPhysicsAttacker(owner)
-	object.LastHeld = CurTime()
+	-- object.LastHeld 已随 LastHeld 系统一并移除（平衡性调整，允许打掉手持中的道具）
 
 	self:NextThink(ct)
 	return true

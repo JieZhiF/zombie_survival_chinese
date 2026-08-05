@@ -1,11 +1,9 @@
---[[
-==================================================================
-怨灵 (Wraith) — 僵尸职业
-特点：透明隐形效果、根据视角和距离动态调节透明度、
-      无阴影、无脚步声、机械血液、使用小刀动作集、
-      按住速度键减速、死亡时触发暗影特效
-==================================================================
-]]
+-- ============================================================================
+-- 怨灵 (Wraith) — 僵尸职业
+-- 特点：透明隐形效果、根据视角和距离动态调节透明度、
+--       无阴影、无脚步声、机械血液、使用小刀动作集、
+--       按住速度键减速、死亡时触发暗影特效
+-- ============================================================================
 
 -- 职业显示名称
 CLASS.Name = "Wraith"
@@ -21,6 +19,7 @@ CLASS.BetterVersion = "Tormented Wraith"
 
 -- 初始可用
 CLASS.Wave = 0
+-- 初始解锁
 CLASS.Unlocked = true
 
 -- 生命值
@@ -43,12 +42,17 @@ CLASS.Points = CLASS.Health/GM.NoHeadboxZombiePointRatio
 CLASS.VoicePitch = 0.65
 
 -- 受伤/死亡音效
+-- 受伤音效
 CLASS.PainSounds = {Sound("npc/barnacle/barnacle_pull1.wav"), Sound("npc/barnacle/barnacle_pull2.wav"), Sound("npc/barnacle/barnacle_pull3.wav"), Sound("npc/barnacle/barnacle_pull4.wav")}
+-- 死亡音效（幽灵哀嚎）
 CLASS.DeathSounds = {Sound("zombiesurvival/wraithdeath1.ogg"), Sound("zombiesurvival/wraithdeath2.ogg"), Sound("zombiesurvival/wraithdeath3.ogg"), Sound("zombiesurvival/wraithdeath4.ogg")}
 
 -- 无阴影/无视目标辅助/半透明渲染
+-- 无阴影
 CLASS.NoShadow = true
+-- 无视目标辅助
 CLASS.IgnoreTargetAssist = true
+-- 半透明渲染模式
 CLASS.RenderMode = RENDERMODE_TRANSALPHA
 
 -- 机械血液

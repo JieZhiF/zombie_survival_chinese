@@ -232,6 +232,54 @@ function TrueVisibleFilters(posa, posb, ...)
 end
 
 -- ============================================================================
+-- TrueVisibleFiltered —— 函数式可见性过滤器（推荐使用）
+-- 作用：与 TrueVisibleFilters 语义完全一致，但过滤器使用函数而非实体表，
+--       避免了每次调用时 ents.FindByClass("projectile_*") 的全场景扫描
+--       和多次表分配（GC 压力），在 FindInSphere 循环内调用时收益明显。
+-- 参数：
+--   posa (Vector) —— 起点位置
+--   posb (Vector) —— 终点位置
+--   ... (Entity) —— 可变数量的要过滤掉的实体
+-- 返回：boolean —— true表示可见，false表示不可见
+-- ============================================================================
+function TrueVisibleFiltered(posa, posb, ...)
+	-- 额外需要过滤掉的实体（通常是自身和伤害来源）
+	local extra = {...}
+
+	-- 设置追踪参数
+	TrueVisibleTrace.start = posa
+	TrueVisibleTrace.endpos = posb
+	TrueVisibleTrace.mask = MASK_SHOT
+	-- 函数式过滤器：返回 false 表示该实体被忽略（不阻挡视线）
+	TrueVisibleTrace.filter = function(ent)
+		-- 过滤所有投射物实体（等价于旧版 FindByClass("projectile_*") 的 O(1) 前缀判断）
+		if ent:GetClass():sub(1, 11) == "projectile_" then return false end
+
+		-- 过滤额外传入的实体
+		for i = 1, #extra do
+			if extra[i] == ent then return false end
+		end
+
+		-- 服务器端过滤隐形实体，客户端过滤所有玩家
+		if SERVER then
+			local invis = GAMEMODE.CachedInvisibleEntities
+			if invis then
+				for _, e in pairs(invis) do
+					if e == ent then return false end
+				end
+			end
+		elseif ent:IsPlayer() then
+			return false
+		end
+
+		return true
+	end
+
+	-- 如果射线未击中任何物体，则可见
+	return not util.TraceLine(TrueVisibleTrace).Hit
+end
+
+-- ============================================================================
 -- INC_SERVER —— 用于服务器脚本的包含宏
 -- 作用：在服务器端运行 shared.lua，并将 shared.lua 和 cl_init.lua
 --       注册为客户端需要下载的文件。
@@ -584,9 +632,9 @@ function util.BlastDamageEx(inflictor, attacker, epicenter, radius, damage, dama
 			-- 检测点1：实体上距离爆炸中心最近的点
 			-- 检测点2：实体的眼睛位置
 			-- 检测点3：实体的世界空间中心
-			if TrueVisibleFilters(epicenter, nearest, inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:EyePos(), inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
+			if TrueVisibleFiltered(epicenter, nearest, inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:EyePos(), inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
 
 				-- 根据距离计算实际伤害（越远伤害越低），并应用特殊伤害系统
 				ent:TakeSpecialDamage(((radius - nearest:Distance(epicenter)) / radius) * basedmg, damagetype, attacker, inflictor, nearest)
@@ -624,9 +672,9 @@ function util.BlastDamageExAlloc(inflictor, attacker, epicenter, radius, damage,
 		if ent:IsValid() then
 			local nearest = ent:NearestPoint(epicenter)
 			-- 检查可见性（三选一）
-			if TrueVisibleFilters(epicenter, nearest, inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:EyePos(), inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
+			if TrueVisibleFiltered(epicenter, nearest, inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:EyePos(), inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
 
 				-- 根据距离计算实际伤害
 				dmg = ((radius - nearest:Distance(epicenter)) / radius) * damage
@@ -663,9 +711,9 @@ function util.BlastAlloc(inflictor, attacker, epicenter, radius)
 		if ent:IsValid() then
 			local nearest = ent:NearestPoint(epicenter)
 			-- 检查实体的三个关键位置是否至少有一个可见
-			if TrueVisibleFilters(epicenter, nearest, inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:EyePos(), inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
+			if TrueVisibleFiltered(epicenter, nearest, inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:EyePos(), inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
 				-- 将可见实体加入列表
 				t[#t + 1] = ent
 			end
@@ -718,9 +766,9 @@ function util.PoisonBlastDamage(inflictor, attacker, epicenter, radius, damage, 
 		if ent:IsValid() then
 			local nearest = ent:NearestPoint(epicenter)
 			-- 检查可见性
-			if TrueVisibleFilters(epicenter, nearest, inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:EyePos(), inflictor, attacker, ent)
-				or TrueVisibleFilters(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
+			if TrueVisibleFiltered(epicenter, nearest, inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:EyePos(), inflictor, attacker, ent)
+				or TrueVisibleFiltered(epicenter, ent:WorldSpaceCenter(), inflictor, attacker, ent) then
 				-- 根据距离计算伤害并调用毒素伤害系统
 				ent:PoisonDamage(((radius - nearest:Distance(epicenter)) / radius) * damage, attacker, inflictor, nil, noreduce, instant)
 			end

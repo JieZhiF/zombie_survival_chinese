@@ -1,19 +1,29 @@
+-- ============================================================================
+-- weapon_zs_hyena/cl_init.lua - 鬣狗粘性炸弹发射器（客户端）
+-- 负责：爆炸物栏位设置、HUD 3D 图标位置、第一/第三人称模型拼装
+-- ============================================================================
 INC_CLIENT()
 
+-- 武器栏位：爆炸物槽
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
 SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
+-- 武器类型：爆炸物
 SWEP.WeaponType = "explosive"
 SWEP.SlotPos = 0
 
+-- HUD 3D 图标（大图标预览）的骨骼与偏移/角度
 SWEP.HUD3DBone = "v_weapon.p90_Parent"
 SWEP.HUD3DPos = Vector(0.1, -7.8, -0.2)
 SWEP.HUD3DAng = Angle(0, 0, 0)
 
+-- 第一人称视野与镜像
 SWEP.ViewModelFOV = 50
 SWEP.ViewModelFlip = false
+-- 隐藏原生模型，全部由 VElements/WElements 拼装
 SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 
+-- 第一人称拼装件：由多个道具模型组合出武器外形
 SWEP.VElements = {
 	["base+++"] = { type = "Model", model = "models/props_combine/combine_interface002.mdl", bone = "v_weapon.p90_Parent", rel = "base", pos = Vector(-3.22, -0.101, 4.764), angle = Angle(180, 0, 180), size = Vector(0.048, 0.021, 0.07), color = Color(20, 24, 24, 255), surpresslightning = false, material = "models/props_pipes/valve001_skin1", skin = 0, bodygroup = {} },
 	["base++"] = { type = "Model", model = "models/props_wasteland/laundry_basket001.mdl", bone = "v_weapon.p90_Parent", rel = "base", pos = Vector(0.335, 0, -4.156), angle = Angle(180, 90, 0), size = Vector(0.045, 0.045, 0.103), color = Color(52, 52, 64, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -27,6 +37,7 @@ SWEP.VElements = {
 	["base++++++++"] = { type = "Model", model = "models/props_wasteland/prison_padlock001a.mdl", bone = "v_weapon.p90_Parent", rel = "base", pos = Vector(1.782, 0, 13.51), angle = Angle(-180, 90, 0), size = Vector(0.703, 0.745, 1.062), color = Color(37, 40, 41, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
 
+-- 第三人称拼装件（世界模型）
 SWEP.WElements = {
 	["base+++++"] = { type = "Model", model = "models/props_lab/reciever01a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(0.024, 0, 7.936), angle = Angle(0, -90, -90), size = Vector(0.134, 0.547, 0.184), color = Color(24, 27, 27, 255), surpresslightning = false, material = "models/props_pipes/valve001_skin1", skin = 0, bodygroup = {} },
 	["base++"] = { type = "Model", model = "models/props_wasteland/laundry_basket001.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(0.335, 0, -4.156), angle = Angle(180, 90, 0), size = Vector(0.045, 0.045, 0.103), color = Color(52, 52, 64, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -40,5 +51,6 @@ SWEP.WElements = {
 	["base+++"] = { type = "Model", model = "models/props_combine/combine_interface002.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(-3.22, -0.101, 4.764), angle = Angle(180, 0, 180), size = Vector(0.048, 0.021, 0.07), color = Color(20, 24, 24, 255), surpresslightning = false, material = "models/props_pipes/valve001_skin1", skin = 0, bodygroup = {} }
 }
 
+-- ==== SecondaryAttack - 右键（空实现，服务端处理） ====
 function SWEP:SecondaryAttack()
 end

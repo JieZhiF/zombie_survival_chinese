@@ -1,15 +1,23 @@
 
+-- ============================================================================
+-- swep_construction_kit/menu/tool.lua - SCK 工具面板（客户端）
+-- 负责：元素数量统计、动画序列预览、配置保存/加载、生成 SCK 代码文本
+-- ============================================================================
+-- 获取当前持有的 SCK 武器与其工具面板
 local wep = GetSCKSWEP( LocalPlayer() )
 local ptool = wep.ptool
 
 local panim = SimplePanel(ptool)
 	-- ***** Animations *****
+	-- 动画预览区：序列列表与播放速度
 
+	-- 第一人称元素数量标签（实时刷新）
 	local vcount = vgui.Create("DLabel", panim)
 	vcount:SetText("VElement count:")
 	vcount:SizeToContents()
 	vcount:Dock(TOP)
 
+	-- 第三人称元素数量标签（实时刷新）
 	local wcount = vgui.Create("DLabel", panim)
 	wcount:SetText("WElement count:")
 	wcount:SizeToContents()
@@ -50,6 +58,7 @@ local panim = SimplePanel(ptool)
 		alabel:SetText( "Play sequence:" )
 	alabel:Dock( TOP )
 
+	-- 播放序列列表（第一人称动画）
 	local agrid = vgui.Create( "DListView", panim )
 		agrid:AddColumn("Sequence")
 		agrid:AddColumn("Seq ID")
@@ -101,6 +110,7 @@ local panim = SimplePanel(ptool)
 	agrid:DockMargin(0,5,0,0)
 	agrid:Dock(TOP)
 
+	-- 序列播放速度滑条
 	local aplayback = vgui.Create( "DNumSlider", panim )
 		aplayback:SetText( "Sequence Playback Rate" )
 		aplayback:SetMinMax( -1, 5 )
@@ -130,6 +140,8 @@ end
 local psettings = SimplePanel(ptool)
 
 	-- ***** Settings saving / loading *****
+	-- 设置保存/加载区：文件浏览器、另存为与加载
+	-- 显示临时提示通知
 	local function CreateSettingsNote( text )
 		local notiflabel = vgui.Create( "DLabel", psettings )
 			notiflabel:SetTall( 20 )
@@ -144,6 +156,7 @@ local psettings = SimplePanel(ptool)
 
 	end
 	
+	-- 打开/收起设计文件浏览器
 	local function CreateDesignBrowser( parent, field )
 		
 		if parent.SCKBrowser and parent.SCKBrowser:IsValid() then
@@ -185,6 +198,7 @@ local psettings = SimplePanel(ptool)
 		selabel:SetText( "Configuration:" )
 	selabel:Dock(TOP)
 
+	-- 文件名非法字符替换（防止路径注入）
 	local badsymbols = {"/", "\\", "?", ":", "*", "\"", "|", "<", ">"}
 	local function sanitize_filename(text)
 		for _, symb in ipairs(badsymbols) do
@@ -194,6 +208,7 @@ local psettings = SimplePanel(ptool)
 		return text
 	end
 
+	-- 保存配置行：文件名输入 + 浏览 + 另存为按钮
 	local psave = SimplePanel(psettings)
 		
 		psave:SetTall( 24 )
@@ -239,6 +254,7 @@ local psettings = SimplePanel(ptool)
 	psave:DockMargin(0,5,0,5)
 	psave:Dock(TOP)
 
+	-- 加载配置行：文件名输入 + 浏览 + 加载按钮（GLON 解码）
 	local pload = SimplePanel(psettings)
 
 		pload:SetTall( 24 )
@@ -307,6 +323,7 @@ end
 psettings:DockPadding(0,5,0,5)
 psettings:Dock(TOP)
 
+-- ==== GetWeaponPrintText - 生成基础武器属性代码文本 ====
 local function GetWeaponPrintText( wep )
 	str = ""
 	str = str.."SWEP.HoldType = \""..wep.HoldType.."\"\n"
@@ -338,10 +355,12 @@ local function GetWeaponPrintText( wep )
 end
 
 
+-- ==== GetIronSightPrintText - 生成机瞄偏移代码文本 ====
 local function GetIronSightPrintText( vec, ang )
 	return "SWEP.IronSightsPos = "..PrintVec( vec ).."\nSWEP.IronSightsAng = "..PrintVec( ang )
 end
 
+-- ==== GetVModelsText - 生成 VElements（第一人称元素）代码文本 ====
 local function GetVModelsText()
 	local wep = GetSCKSWEP(LocalPlayer())
 	if not IsValid(wep) then return "" end
@@ -387,6 +406,7 @@ local function GetVModelsText()
 	return str
 end
 
+-- ==== GetWModelsText - 生成 WElements（第三人称元素）代码文本 ====
 local function GetWModelsText()
 	local wep = GetSCKSWEP( LocalPlayer() )
 	if not IsValid(wep) then return "" end
@@ -434,6 +454,7 @@ local function GetWModelsText()
 	return str
 end
 
+-- ==== CompileIncompatibleMaterials - 收集所有用到的 SCK 材质列表 ====
 local function CompileIncompatibleMaterials()
 	local list = {}
 	local donealready = {}
@@ -463,6 +484,7 @@ local function CompileIncompatibleMaterials()
 	return startstr
 end
 
+-- 复制 SCK 配置代码到剪贴板按钮
 local pcbtn = vgui.Create( "DButton", ptool )
 	pcbtn:SetTall( 30 )
 	pcbtn:SetText( "Copy SCK to clipboard" )
@@ -490,6 +512,7 @@ local pcbtn = vgui.Create( "DButton", ptool )
 pcbtn:DockMargin(0,5,0,0)
 pcbtn:Dock(TOP)
 
+-- 打印 SCK 配置代码到控制台按钮
 local prbtn = vgui.Create( "DButton", ptool )
 	prbtn:SetTall( 30 )
 	prbtn:SetText( "Print SCK to console" )

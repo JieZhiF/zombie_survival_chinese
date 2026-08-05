@@ -1,10 +1,8 @@
---[[
-==================================================================
-血块小子 (Gore Child) — 僵尸职业
-特点：娃娃模型、极小体型、极低血量、速度慢、可装死、
-      可嘲讽、死亡时播放假死动画、自定义手部模型
-==================================================================
-]]
+-- ============================================================================
+-- 血块小子 (Gore Child) — 僵尸职业
+-- 特点：娃娃模型、极小体型、极低血量、速度慢、可装死、
+--       可嘲讽、死亡时播放假死动画、自定义手部模型
+-- ============================================================================
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/gigagorechild"
@@ -19,7 +17,9 @@ CLASS.Help = "controls_gore_child"
 
 -- 初始可用/隐藏
 CLASS.Wave = 0
+-- 初始解锁
 CLASS.Unlocked = true
+-- 隐藏（不直接可选）
 CLASS.Hidden = true
 
 -- 生命值
@@ -47,10 +47,15 @@ CLASS.ModelScale = 0.4
 
 -- 物理/碰撞属性
 CLASS.Mass = 30
+-- 视角偏移
 CLASS.ViewOffset = DEFAULT_VIEW_OFFSET * CLASS.ModelScale
+-- 视角偏移（蹲下）
 CLASS.ViewOffsetDucked = DEFAULT_VIEW_OFFSET_DUCKED * CLASS.ModelScale
+-- 台阶高度
 CLASS.StepSize = 8
+-- 碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0) * CLASS.ModelScale, Vector(16, 16, 100) * CLASS.ModelScale}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0) * CLASS.ModelScale, Vector(16, 16, 60) * CLASS.ModelScale}
 
 -- 可装死
@@ -81,6 +86,7 @@ local StepRightSounds = {
 	"npc/zombie/foot3.wav"
 }
 
+-- 自定义脚步声（高音调）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	if iFoot == 0 then
 		pl:EmitSound(StepLeftSounds[math_random(#StepLeftSounds)], 55, 150)

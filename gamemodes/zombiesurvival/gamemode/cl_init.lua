@@ -8,6 +8,7 @@ end
 
 -- ==================== 包含文件 ====================
 include("sh_globals.lua")
+include("net_messages.lua")
 
 -- 客户端实体/玩家/武器扩展
 include("obj_entity_extend_cl.lua")
@@ -47,6 +48,7 @@ include("vgui/mainmenu.lua")  -- 主菜单
 include("vgui/pmainmenu.lua")  -- 主菜单面板
 include("vgui/poptions.lua")  -- 选项面板
 include("vgui/phelp.lua")  -- 帮助面板
+include("vgui/ptutorial.lua")  -- 新手教程面板
 include("vgui/pclassselect.lua")  -- 职业选择
 include("vgui/pweapons.lua")  -- 武器面板
 include("vgui/pendboard.lua")  -- 结束面板
@@ -67,10 +69,13 @@ include("cl_hint.lua")  -- 提示
 include("cl_thirdperson.lua")  -- 第三人称
 
 include("itemstocks/cl_stock.lua")  -- 物品库存客户端
-
+include("cl_recoil_handler.lua")  -- 后坐力处理
 include("cl_zombieescape.lua")  -- 僵尸逃跑模式
 include("vgui/pmutationshop.lua")  -- 变异商店
 
+--SCK
+include("sck/cl_materials.lua")  -- SCK材质收藏
+include("sck/cl_util.lua")  -- SCK核心
 -- ==================== 全局变量 ====================
 UsedMutations = {}  -- 已使用的变异
 w, h = ScrW(), ScrH()  -- 屏幕宽高缓存
@@ -148,7 +153,7 @@ local COLOR_GREEN = COLOR_GREEN
 local COLOR_WHITE = COLOR_WHITE
 
 local vector_up = Vector(0, 0, 1)
-local vector_down = Vector(0, 0, 1)
+local vector_down = Vector(0, 0, -1)
 
 --local surface_SetFont = surface.SetFont
 --local surface_SetTexture = surface.SetTexture
@@ -898,14 +903,14 @@ end
 
 -- ==================== 网络消息处理 ====================
 -- 将接收到的补给箱缓存数量存储在本地玩家对象上
-net.Receive("zs_stowagecaches", function()
+net.Receive(NET_MSG.STOWAGECACHES, function()
     local caches = net.ReadInt(8)
     if MySelf and MySelf:IsValid() then
         MySelf.StowageCaches = caches
     end
 end)
 -- 接收下次补给箱使用时间
-net.Receive("zs_nextresupplyuse", function(length)
+net.Receive(NET_MSG.NEXTRESUPPLYUSE, function(length)
 	MySelf.NextUse = net.ReadFloat()
 end)
 
@@ -958,7 +963,7 @@ function GM:HumanHUD(screenscale)
 			surface_SetDrawColor(30, 30, 230, 180)
 			surface_DrawOutlinedRect(w * 0.4, h * 0.35, w * 0.2, 12)
 			surface_DrawRect(w * 0.4, h * 0.35, w * 0.2 * (1 - drown:GetDrown()), 12)
-			draw_SimpleTextBlurry(translate.Get("breath").." ", "ZSHUDFontSmall", w * 0.4, h * 0.35 + 6, COLOR_LBLUE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)//好像是溺水
+			draw_SimpleTextBlurry(translate.Get("breath").." ", "ZSHUDFontSmall", w * 0.4, h * 0.35 + 6, COLOR_LBLUE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)--好像是溺水
 		end
 	end
 	local stowage = MySelf:IsSkillActive(SKILL_STOWAGE)
@@ -1126,97 +1131,54 @@ function GM:_PostDrawTranslucentRenderables()
 	end
 end
 
--- 绘制弹药箱
-function GM:DrawCrateIndicators() -- 绘制弹药箱
-	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(SKILL_INSIGHT) then return end
-
-	local pos, distance, ang, deployable, alpha
-	local eyepos = EyePos()
-
-	surface_SetMaterial(matArsenal)
-
-	for i, arsenal in pairs(GAMEMODE.CachedArsenalEntities) do
-		if not arsenal:IsValid() then continue end
-		deployable = arsenal.GetObjectOwner
-
-		pos = arsenal:GetPos()
-		pos.z = pos.z + (arsenal:IsPlayer() and 32 or (deployable and 12 or -8))
-		distance = eyepos:DistToSqr(pos)
-
-		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
-			ang = (eyepos - pos):Angle()
-			ang:RotateAroundAxis(ang:Right(), 270)
-			ang:RotateAroundAxis(ang:Up(), 90)
-			alpha = math.min(220, math.sqrt(distance / 4))
-
-			cam_IgnoreZ(true)
-			cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
-
-			surface_SetDrawColor(255, 255, 255, alpha)
-			surface_DrawTexturedRect(-123, -113, 248, 228)
-			local arsenalcreat = translate.Get("arsenal_crate")
-			draw_SimpleTextBlurry(arsenalcreat, "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
-
-			cam_End3D2D()
-			cam_IgnoreZ(false)
-		end
-	end
-end
-
--- 绘制补给箱
-function GM:DrawResupplyIndicators() -- 绘制补给箱
-	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(SKILL_ACUITY) then return end
-
-	local pos, distance, ang, deployable, alpha
-	local eyepos = EyePos()
-
-	surface_SetMaterial(matResupply)
-
-	for i, resupply in pairs(GAMEMODE.CachedResupplyEntities) do
-		if not resupply:IsValid() then continue end
-		deployable = resupply.GetObjectOwner
-
-		pos = resupply:GetPos()
-		pos.z = pos.z + (resupply:IsPlayer() and 32 or (deployable and 12 or -8))
-		distance = eyepos:DistToSqr(pos)
-
-		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
-			ang = (eyepos - pos):Angle()
-			ang:RotateAroundAxis(ang:Right(), 270)
-			ang:RotateAroundAxis(ang:Up(), 90)
-			alpha = math.min(220, math.sqrt(distance / 4))
-
-			cam_IgnoreZ(true)
-			cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
-
-			surface_SetDrawColor(255, 255, 255, alpha)
-			surface_DrawTexturedRect(-128, -128, 256, 256)
-
+-- 部署物 3D 指示器配置(数据驱动): 新增指示器 = 登记一项 + 薄封装一行
+-- Skill    触发技能(需为人类且激活)
+-- Material 图标材质
+-- CacheKey GAMEMODE 上缓存的实体表字段名
+-- Rect     2D 贴图矩形(x, y, w, h)
+-- GetText  指示器下方文案(可为动态)
+local DeployableIndicators = {
+	{
+		Skill = SKILL_INSIGHT,
+		Material = matArsenal,
+		CacheKey = "CachedArsenalEntities",
+		Rect = { x = -123, y = -113, w = 248, h = 228 },
+		GetText = function() return translate.Get("arsenal_crate") end
+	},
+	{
+		Skill = SKILL_ACUITY,
+		Material = matResupply,
+		CacheKey = "CachedResupplyEntities",
+		Rect = { x = -128, y = -128, w = 256, h = 256 },
+		GetText = function()
 			local timeremain = math.ceil(math.max(0, (MySelf.NextUse or 0) - CurTime()))
-			local txt = not MySelf.NextUse and translate.Get("ready") or timeremain > 0 and timeremain or translate.Get("ready")
-			draw_SimpleTextBlurry(txt, "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
-
-			cam_End3D2D()
-			cam_IgnoreZ(false)
+			return not MySelf.NextUse and translate.Get("ready") or timeremain > 0 and timeremain or translate.Get("ready")
 		end
-	end
-end
+	},
+	{
+		Skill = SKILL_VISION,
+		Material = matRemantler,
+		CacheKey = "CachedRemantlerEntities",
+		Rect = { x = -128, y = -128, w = 256, h = 256 },
+		GetText = function() return translate.Get("weapon_remantler") end
+	}
+}
 
--- 绘制武器重铸
-function GM:DrawRemantlerIndicators() -- 绘制武器重铸
-	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(SKILL_VISION) then return end
+-- 绘制部署物 3D 指示器(由 DeployableIndicators 配置驱动)
+function GM:DrawDeployableIndicator(config)
+	if P_Team(MySelf) ~= TEAM_HUMAN or not MySelf:IsSkillActive(config.Skill) then return end
 
 	local pos, distance, ang, deployable, alpha
 	local eyepos = EyePos()
 
-	surface_SetMaterial(matRemantler)
+	surface_SetMaterial(config.Material)
 
-	for i, remantler in pairs(GAMEMODE.CachedRemantlerEntities) do
-		if not remantler:IsValid() then continue end
-		deployable = remantler.GetObjectOwner
+	for i, ent in pairs(GAMEMODE[config.CacheKey]) do
+		if not ent:IsValid() then continue end
+		deployable = ent.GetObjectOwner
 
-		pos = remantler:GetPos()
-		pos.z = pos.z + (remantler:IsPlayer() and 32 or (deployable and 12 or -8))
+		pos = ent:GetPos()
+		pos.z = pos.z + (ent:IsPlayer() and 32 or (deployable and 12 or -8))
 		distance = eyepos:DistToSqr(pos)
 
 		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
@@ -1229,14 +1191,27 @@ function GM:DrawRemantlerIndicators() -- 绘制武器重铸
 			cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
 
 			surface_SetDrawColor(255, 255, 255, alpha)
-			surface_DrawTexturedRect(-128, -128, 256, 256)
-			local remantler = translate.Get("weapon_remantler")
-			draw_SimpleTextBlurry(remantler, "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
+			surface_DrawTexturedRect(config.Rect.x, config.Rect.y, config.Rect.w, config.Rect.h)
+
+			draw_SimpleTextBlurry(config:GetText(), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
 
 			cam_End3D2D()
 			cam_IgnoreZ(false)
 		end
 	end
+end
+
+-- 原入口保留为薄封装(调用点与外部引用零改动)
+function GM:DrawCrateIndicators()
+	self:DrawDeployableIndicator(DeployableIndicators[1])
+end
+
+function GM:DrawResupplyIndicators()
+	self:DrawDeployableIndicator(DeployableIndicators[2])
+end
+
+function GM:DrawRemantlerIndicators()
+	self:DrawDeployableIndicator(DeployableIndicators[3])
 end
 
 -- 绘制巢穴
@@ -1484,6 +1459,93 @@ local fontfamilynoksidi = "typenoksidi"
 local fontfamily3d = "hidden"
 local fontsizeadd = 8
 local fontweight = 0
+   
+surface.CreateFont( "zs_floatingtext_melee", {
+    font = "typenoksidi", --typenoksidi -- Original: Remington Noiseless
+    extended = false,
+    size = 40,
+    shadow = true,
+    outline = true,
+})
+
+surface.CreateFont( "ZSM_Coolvetica", {
+    font = "Coolvetica", --Ghoulish Fright AOE --Remington Noiseless
+    extended = false,
+    size = 25,
+    shadow = true,
+    outline = true,
+})
+    
+surface.CreateFont( "ZSM_CoolveticaBlur", {
+    font = "Coolvetica", --Ghoulish Fright AOE --Remington Noiseless
+    extended = false,
+    size = 25,
+    shadow = true,
+    outline = true,
+    blursize = 3,
+})
+
+surface.CreateFont( "csfont", {
+font = "csd", 
+extended = false,
+size = 65,
+weight = 0,
+blursize = 0,
+scanlines = 0, 
+})
+
+-- New font definitions
+surface.CreateFont("RemingtonNoiseless", {
+    font = "Remington Noiseless", -- The font name as recognized by the system
+    extended = false,
+    size = 22, -- Adjust the size as needed
+    shadow = true,
+    outline = true,
+})
+
+surface.CreateFont("RemingtonNoiselessBlur", {
+    font = "Remington Noiseless", -- The font name as recognized by the system
+    extended = false,
+    size = 22, -- Adjust the size as needed
+    shadow = true,
+    outline = true,
+    blursize = 3, -- Adding blursize for the blurred version
+})
+
+surface.CreateFont("Typenoksidi", {
+    font = "typenoksidi", -- The font name as recognized by the system
+    extended = false,
+    size = 22, -- Adjust the size as needed
+    shadow = true,
+    outline = true,
+})
+
+surface.CreateFont("TypenoksidiBlur", {
+    font = "typenoksidi", -- The font name as recognized by the system
+    extended = false,
+    size = 22, -- Adjust the size as needed
+    shadow = true,
+    outline = true,
+    blursize = 3, -- Adding blursize for the blurred version
+})
+
+surface.CreateFont("GhoulishFrightAOE", {
+    font = "Ghoulish Fright AOE", -- The font name as recognized by the system
+    extended = false,
+    size = 35, -- Adjust the size as needed
+    shadow = true,
+    outline = true,
+})
+
+surface.CreateFont("GhoulishFrightAOEBlur", {
+    font = "Ghoulish Fright AOE", -- The font name as recognized by the system
+    extended = false,
+    size = 35, -- Adjust the size as needed
+    shadow = true,
+    outline = true,
+    blursize = 3, -- Adding blursize for the blurred version
+})
+
 
 -- ==================== 3D字体创建 ====================
 function GM:Create3DFonts()

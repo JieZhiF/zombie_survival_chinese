@@ -1,11 +1,9 @@
---[[
-==================================================================
-暗影潜伏者 (Shadow Lurker) — 僵尸职业
-继承自：zombie_torso
-特点：骷髅覆盖模型、半透明黑色渲染、近战伤害减半、
-      死亡时触发暗影特效、红色发光眼睛
-==================================================================
-]]
+-- ============================================================================
+-- 暗影潜伏者 (Shadow Lurker) — 僵尸职业
+-- 继承自：zombie_torso
+-- 特点：骷髅覆盖模型、半透明黑色渲染、近战伤害减半、
+--       死亡时触发暗影特效、红色发光眼睛
+-- ============================================================================
 
 -- 基础职业为"僵尸躯干"
 CLASS.Base = "zombie_torso"
@@ -19,25 +17,31 @@ CLASS.Description = "description_shadow_lurker"
 -- 控制帮助文本键名
 CLASS.Help = "controls_shadow_lurker"
 
--- 主模型（经典躯干）+ 覆盖模型（骷髅）
+-- 主模型（经典躯干）
 CLASS.Model = Model("models/zombie/classic_torso.mdl")
+-- 覆盖模型（骷髅）
 CLASS.OverrideModel = Model("models/player/skeleton.mdl")
 
 -- 小碰撞体积
 CLASS.Hull = {Vector(-16, -16, 0), Vector(16, 16, 22)}
+-- 碰撞体积（蹲下）
 CLASS.HullDuck = {Vector(-16, -16, 0), Vector(16, 16, 22)}
 
 -- 绑定的武器
 CLASS.SWEP = "weapon_zs_shadowlurker"
 
--- 出现波次/解锁状态
+-- 出现波次
 CLASS.Wave = 2 / 6
+-- 初始未解锁（按波次解锁）
 CLASS.Unlocked = false
+-- 不隐藏（可在列表中选择）
 CLASS.Hidden = false
 
--- 生命值/移动
+-- 生命值
 CLASS.Health = 165
+-- 移动速度
 CLASS.Speed = 160
+-- 跳跃力
 CLASS.JumpPower = 160
 
 -- 击杀得分
@@ -50,7 +54,9 @@ CLASS.VoicePitch = 0.55
 CLASS.NoHideMainModel = true
 
 -- 标记为躯干和骷髅
+-- 标记为躯干
 CLASS.IsTorso = true
+-- 标记为骷髅类僵尸
 CLASS.Skeletal = true
 
 -- 缓存函数
@@ -73,6 +79,7 @@ function CLASS:PlayPainSound(pl)
 	return true
 end
 
+-- 自定义死亡音效
 function CLASS:PlayDeathSound(pl)
 	pl:EmitSound("npc/antlion/pain"..math_random(2)..".wav", 70, math_random(240, 250))
 	return true
@@ -84,6 +91,7 @@ local StepSounds = {
 	Sound("npc/barnacle/neck_snap2.wav")
 }
 
+-- 自定义脚步声（藤壶折颈音效）
 function CLASS:PlayerFootstep(pl, vFootPos, iFoot, strSoundName, fVolume, pFilter)
 	pl:EmitSound(StepSounds[math_random(#StepSounds)], 50, math_random(210, 220), 0.5)
 	return true
@@ -141,6 +149,7 @@ if not CLIENT then return end
 
 -- 击杀图标
 CLASS.Icon = "zombiesurvival/killicons/skeletal_lurker"
+-- 图标颜色（黑色）
 CLASS.IconColor = Color(20, 20, 20)
 
 -- 渲染变量
@@ -164,16 +173,18 @@ function CLASS:PrePlayerDraw(pl)
 	render_SetColorModulation(0.1, 0.1, 0.1)
 end
 
+-- 主模型绘制后：恢复颜色与透明度
 function CLASS:PostPlayerDraw(pl)
 	render_SetBlend(1)
 	render_SetColorModulation(1, 1, 1)
 end
 
--- 覆盖模型绘制
+-- 覆盖模型绘制前：黑色材质
 function CLASS:PrePlayerDrawOverrideModel(pl)
 	render_ModelMaterialOverride(matBlack)
 end
 
+-- 覆盖模型绘制后：恢复材质并绘制红色发光眼睛
 function CLASS:PostPlayerDrawOverrideModel(pl)
 	render_ModelMaterialOverride(nil)
 	if pl == MySelf and not pl:ShouldDrawLocalPlayer() or pl.SpawnProtection then return end

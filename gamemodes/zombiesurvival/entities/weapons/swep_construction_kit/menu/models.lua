@@ -1,10 +1,18 @@
+-- ============================================================================
+-- swep_construction_kit/menu/models.lua - SCK 元素编辑面板（客户端）
+-- 负责：第一/第三人称元素（模型/精灵/Quad/裁剪面）树形列表、位置/角度/大小/
+--       颜色/材质等修改器、Ctrl+Z 撤销重做、元素复制/重命名/导入导出
+-- ============================================================================
+-- 元素类型图标
 local icon_model = "icon16/brick.png"
 local icon_sprite = "icon16/asterisk_yellow.png"
 local icon_quad = "icon16/picture_empty.png"
 local icon_clip = "icon16/cut.png"
 
 -- Some hacky shit to keep the relative DComboBoxes updated
+-- 登记需要保持同步的相对关系下拉框
 local boxes_to_update = {}
+-- ==== RegisterRelBox - 登记相对元素下拉框以在改名/改动时同步更新 ====
 local function RegisterRelBox( elementname, box, w_or_v, preset_choice )
 	table.insert(boxes_to_update, { box, w_or_v, elementname, preset_choice })
 end
@@ -40,6 +48,7 @@ local mlabeltext = vgui.Create( "DLabel", mlabel )
 	mlabeltext:SetText( "New viewmodel element:" )
 mlabeltext:Dock(FILL)
 
+-- ==== CreateNote - 在面板上弹出提示通知 ====
 local function CreateNote( text )
 	local templabel = vgui.Create( "DLabel" )
 		templabel:SetText( text )
@@ -87,6 +96,8 @@ pnewelement:DockMargin(0,5,0,5)
 pnewelement:Dock(TOP)
 
 -- dark magic, do not touch
+-- 修复拖拽插入节点的引擎问题（黑魔法，勿动）
+-- ==== FixInsertNode - 手动完成节点插入的补丁 ====
 local function FixInsertNode( self, pNode )
 	self:CreateChildNodes()
 	pNode:SetRoot( self:GetRoot() )
@@ -99,6 +110,8 @@ local function FixInsertNode( self, pNode )
 end
 
 -- yet again, this is a very stupid fix
+-- 修复子节点顺序标记的引擎问题
+-- ==== FixDoChildrenOrder - 重设最后一个子节点的标记 ====
 local function FixDoChildrenOrder( self )
 	if not IsValid( self.ChildNodes ) then return end
 
@@ -113,6 +126,7 @@ local function FixDoChildrenOrder( self )
 	children[last]:SetLastChild( true )
 end
 
+-- ==== MaintainRelativePosition - 锁定相对位置时，切换父级/骨骼后保持元素世界位置不变 ====
 local function MaintainRelativePosition( name, new_parent_name, v_or_w, overridebone )
 	if not wep.lockRelativePositions then return end
 
@@ -184,6 +198,7 @@ local function MaintainRelativePosition( name, new_parent_name, v_or_w, override
 	end
 end
 
+-- ==== SetRelativeForNode - 设置节点元素的相对父级（含重命名场景） ====
 local function SetRelativeForNode( pnl, new_parent, v_or_w, rename )
 	local name = pnl:GetText()
 	local new_rel = ""
@@ -208,6 +223,7 @@ local function SetRelativeForNode( pnl, new_parent, v_or_w, rename )
 end
 
 local copy_element, copy_hierarchy
+-- ==== node_do_rclick - 节点右键菜单：复制层级结构 ====
 local function node_do_rclick(self)
 	local node_menu = DermaMenu(false, self)
 	node_menu:AddOption("Copy Hierarchy", function()
@@ -222,6 +238,7 @@ local function node_do_rclick(self)
 	node_menu:Open()
 end
 
+-- ==== copy_element - 复制单个元素：深拷贝数据并重建面板与树节点 ====
 copy_element = function(realm, tree, override)
 	local line = override or tree:GetSelectedItem()
 	if not IsValid(line) then return end
@@ -313,6 +330,7 @@ copy_element = function(realm, tree, override)
 	return node
 end
 
+-- ==== copy_hierarchy - 递归复制节点的整个子层级 ====
 copy_hierarchy = function(self, parent, realm, first)
 	local children = self:GetChildNodes()
 
@@ -333,6 +351,7 @@ copy_hierarchy = function(self, parent, realm, first)
 	end
 end
 
+-- 第一人称元素树形列表
 local mtree = vgui.Create( "DTree", pmodels)
 	mtree:SetTall( 160 )
 	wep.v_modelListing = mtree
@@ -373,6 +392,7 @@ local mtree = vgui.Create( "DTree", pmodels)
 
 mtree:Dock(TOP)
 
+-- 元素操作按钮行：删除/复制选中元素、导入第三人称元素
 local pbuttons = SimplePanel( pmodels )
 	local rmbtn = vgui.Create( "DButton", pbuttons )
 		rmbtn:SetSize( 160, 25 )
@@ -392,11 +412,13 @@ local pbuttons = SimplePanel( pmodels )
 pbuttons:DockMargin(0,5,0,5)
 pbuttons:Dock(TOP)
 
+-- 修改面板交替背景色
 local pCol = 0
 local function PanelBackgroundReset()
 	pCol = 0
 end
 
+-- ==== PanelApplyBackground - 交替设置面板背景色 ====
 local function PanelApplyBackground(panel)
 	if (pCol == 1) then
 		panel:SetPaintBackground(true)
@@ -407,6 +429,7 @@ local function PanelApplyBackground(panel)
 end
 
 --track position, angle, and size changes as mouse is down
+-- 记录鼠标拖动期间的位置/角度/大小变化，用于 Ctrl+Z 撤销
 local ctrlzhistory = {}
 local currentzindex = 0
 
@@ -417,6 +440,7 @@ local wasmousereleased = false
 local mousepressed = false
 
 local nextregister = 0
+-- ==== handle_undo - 撤销上一次元素修改 ====
 local function handle_undo()
 	if #ctrlzhistory == 0 then return end
 	if currentzindex == 0 then return end
@@ -439,6 +463,7 @@ local function handle_undo()
 	return true
 end
 
+-- ==== handle_redo - 重做已撤销的元素修改 ====
 local function handle_redo()
 	if #ctrlzhistory == 0 then return end
 	if currentzindex == #ctrlzhistory then return end
@@ -461,6 +486,7 @@ local function handle_redo()
 	return true
 end
 
+-- ==== undoredolisten - 监听 Ctrl+Z / Ctrl+Y 按键 ====
 local function undoredolisten()
 	if nextregister < CurTime() and input.IsKeyDown(KEY_LCONTROL) then
 		if input.WasKeyPressed(KEY_Z) then
@@ -477,6 +503,7 @@ local function undoredolisten()
 	end
 end
 
+-- ==== copy - 深拷贝向量或角度值 ====
 local function copy(var)
 	if isvector(var) then
 		return Vector(var)
@@ -548,6 +575,7 @@ hook.Add("CreateMove", "TrackMouseCTRLZ", function()
 	end
 end)
 
+-- ==== CreatePositionModifiers - 位置 XYZ 修改器面板 ====
 local function CreatePositionModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -633,6 +661,7 @@ local function CreatePositionModifiers( data, panel )
 	return panel
 end
 
+-- ==== CreateAngleModifiers - 角度 pitch/yaw/roll 修改器面板 ====
 local function CreateAngleModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -718,6 +747,7 @@ local function CreateAngleModifiers( data, panel )
 	return panel
 end
 
+-- ==== CreateSizeModifiers - 大小缩放修改器面板（1~3 维） ====
 local function CreateSizeModifiers( data, panel, dimensions )
 
 	if panel._passdata and panel._passdata._name then
@@ -830,6 +860,7 @@ local function CreateSizeModifiers( data, panel, dimensions )
 	return panel
 end
 
+-- ==== CreateColorModifiers - 颜色修改器面板 ====
 local function CreateColorModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -869,6 +900,7 @@ local function CreateColorModifiers( data, panel )
 	return panel
 end
 
+-- ==== CreateModelModifier - 模型路径修改器面板 ====
 local function CreateModelModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -914,6 +946,7 @@ local function CreateModelModifier( data, panel )
 	return panel
 end
 
+-- ==== CreateSpriteModifier - 精灵材质路径修改器面板 ====
 local function CreateSpriteModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -958,6 +991,7 @@ local function CreateSpriteModifier( data, panel )
 	return panel
 end
 
+-- ==== renamev - 重命名第一人称元素（同步面板缓存与树节点） ====
 local function renamev(old, new, panel)
 	local wep = GetSCKSWEP( LocalPlayer() )
 	if wep.v_panelCache[old] and not wep.v_panelCache[new] then
@@ -996,6 +1030,7 @@ local function renamev(old, new, panel)
 	return false
 end
 
+-- ==== renamew - 重命名第三人称元素（同步面板缓存与树节点） ====
 local function renamew(old, new, panel)
 	local wep = GetSCKSWEP(LocalPlayer())
 	if wep.w_panelCache[old] and not wep.w_panelCache[new] then
@@ -1033,6 +1068,7 @@ local function renamew(old, new, panel)
 	return false
 end
 
+-- ==== CreateNameLabel - 名称显示与重命名输入框 ====
 local function CreateNameLabel(name, panel, world)
 	panel:SetTall(20)
 
@@ -1066,6 +1102,7 @@ local function CreateNameLabel(name, panel, world)
 	return panel
 end
 
+-- ==== CreateParamModifiers - 精灵材质参数（nocull/additive 等）复选框面板 ====
 local function CreateParamModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1153,6 +1190,7 @@ local function CreateParamModifiers( data, panel )
 	return panel
 end
 
+-- ==== CreateMaterialModifier - 材质路径修改器面板 ====
 local function CreateMaterialModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1200,6 +1238,7 @@ local function CreateMaterialModifier( data, panel )
 	return panel
 end
 
+-- ==== CreateSLightningModifier - 引擎光照抑制开关面板 ====
 local function CreateSLightningModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1227,6 +1266,7 @@ local function CreateSLightningModifier( data, panel )
 	return panel
 end
 
+-- ==== CreateBonemergeModifier - 骨骼合并开关面板 ====
 local function CreateBonemergeModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1254,6 +1294,7 @@ local function CreateBonemergeModifier( data, panel )
 	return panel
 end
 
+-- ==== CreateNocullModifier - 背面剔除禁用开关面板 ====
 local function CreateNocullModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1281,6 +1322,7 @@ local function CreateNocullModifier( data, panel )
 	return panel
 end
 
+-- ==== CreateHighRenderModifier - 强制顶层渲染开关面板 ====
 local function CreateHighRenderModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1313,6 +1355,7 @@ local function CreateHighRenderModifier( data, panel )
 	return panel
 end
 
+-- ==== CreateBoneModifier - 骨骼选择下拉框面板 ====
 local function CreateBoneModifier( data, panel, ent, name )
 
 	if panel._passdata and panel._passdata._name then
@@ -1379,6 +1422,7 @@ local function CreateBoneModifier( data, panel, ent, name )
 	return panel
 end
 
+-- ==== CreateVRelativeModifier - 第一人称相对父级下拉框面板 ====
 local function CreateVRelativeModifier( name, data, panel )
 	local prellabel = vgui.Create( "DLabel", panel )
 		prellabel:SetText( "Relative:" )
@@ -1399,6 +1443,7 @@ local function CreateVRelativeModifier( name, data, panel )
 	return panel
 end
 
+-- ==== CreateWRelativeModifier - 第三人称相对父级下拉框面板 ====
 local function CreateWRelativeModifier( name, data, panel )
 	local prellabel = vgui.Create( "DLabel", panel )
 		prellabel:SetText( "Relative:" )
@@ -1419,6 +1464,7 @@ local function CreateWRelativeModifier( name, data, panel )
 	return panel
 end
 
+-- ==== CreateBodygroupSkinModifier - 身体组与皮肤修改器面板 ====
 local function CreateBodygroupSkinModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
@@ -1500,6 +1546,7 @@ Model size x / y / z
 Material
 Color modulation
 ]]
+-- ==== CreateModelPanel - 构建第一人称模型元素编辑面板（名称/模型/骨骼/变换/材质等） ====
 function CreateModelPanel( name, preset_data )
 	local data = wep.v_models[name]
 	if not preset_data then preset_data = {} end
@@ -1565,6 +1612,7 @@ Translation x / y / z
 Sprite x / y size
 Color
 ]]
+-- ==== CreateSpritePanel - 构建第一人称精灵元素编辑面板 ====
 function CreateSpritePanel( name, preset_data )
 	local data = wep.v_models[name]
 	if not preset_data then preset_data = {} end
@@ -1620,6 +1668,7 @@ Translation x / y / z
 Rotation pitch / yaw / role
 Size
 ]]
+-- ==== CreateQuadPanel - 构建第一人称 Quad 元素编辑面板 ====
 function CreateQuadPanel( name, preset_data )
 	local data = wep.v_models[name]
 	if (!preset_data) then preset_data = {} end
@@ -1660,6 +1709,7 @@ function CreateQuadPanel( name, preset_data )
 	return panellist
 end
 
+-- ==== CreateClipPanel - 构建第一人称裁剪面元素编辑面板 ====
 function CreateClipPanel( name, preset_data )
 	local data = wep.v_models[name]
 	if (!preset_data) then preset_data = {} end
@@ -1698,6 +1748,7 @@ function CreateClipPanel( name, preset_data )
 end
 
 -- adding button DoClick
+-- ==== add_element - 添加新元素：创建数据、面板与树节点 ====
 local function add_element(btn, realm, tree)
 	local line = tree:GetSelectedItem()
 
@@ -1982,6 +2033,7 @@ local mlabeltext = vgui.Create( "DLabel", mlabel )
 	mlabeltext:SetText( "New worldmodel element:" )
 mlabeltext:Dock(FILL)
 
+-- ==== CreateWNote - 在第三人称面板上弹出提示通知 ====
 local function CreateWNote( text )
 	local templabel = vgui.Create( "DLabel" )
 		templabel:SetText( text )
@@ -2026,6 +2078,7 @@ pnewelement:SetTall(20)
 pnewelement:DockMargin(0,5,0,5)
 pnewelement:Dock(TOP)
 
+-- 第三人称元素树形列表
 local mwtree = vgui.Create( "DTree", pwmodels)
 	mwtree:SetTall( 160 )
 	wep.w_modelListing = mwtree
@@ -2065,6 +2118,7 @@ local mwtree = vgui.Create( "DTree", pwmodels)
 
 mwtree:Dock(TOP)
 
+-- 第三人称元素操作按钮行：删除/复制选中元素、导入第一人称元素
 local pwbuttons = SimplePanel( pwmodels )
 
 	local rmbtn = vgui.Create( "DButton", pwbuttons )
@@ -2094,6 +2148,7 @@ Model size x / y / z
 Material
 Color modulation
 ]]
+-- ==== CreateWorldModelPanel - 构建第三人称模型元素编辑面板 ====
 function CreateWorldModelPanel( name, preset_data )
 	local data = wep.w_models[name]
 	if not preset_data then preset_data = {} end
@@ -2157,6 +2212,7 @@ Translation x / y / z
 Sprite x / y size
 Color
 ]]
+-- ==== CreateWorldSpritePanel - 构建第三人称精灵元素编辑面板 ====
 function CreateWorldSpritePanel( name, preset_data )
 	local data = wep.w_models[name]
 	if not preset_data then preset_data = {} end
@@ -2212,6 +2268,7 @@ Translation x / y / z
 Rotation pitch / yaw / role
 Size
 ]]
+-- ==== CreateWorldQuadPanel - 构建第三人称 Quad 元素编辑面板 ====
 function CreateWorldQuadPanel( name, preset_data )
 	local data = wep.w_models[name]
 	if not preset_data then preset_data = {} end
@@ -2252,6 +2309,7 @@ function CreateWorldQuadPanel( name, preset_data )
 	return panellist
 end
 
+-- ==== CreateWorldClipPanel - 构建第三人称裁剪面元素编辑面板 ====
 function CreateWorldClipPanel( name, preset_data )
 	local data = wep.w_models[name]
 	if not preset_data then preset_data = {} end

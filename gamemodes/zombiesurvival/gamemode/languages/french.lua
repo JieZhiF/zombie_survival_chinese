@@ -1,4 +1,4 @@
--- Translated by Shen (http://www.noxiousnet.com/forums/index.php?action=profile;u=3311)
+-- Translated by Shen (http:--www.noxiousnet.com/forums/index.php?action=profile;u=3311)
 
 translate.AddLanguage("fr", "French")
  

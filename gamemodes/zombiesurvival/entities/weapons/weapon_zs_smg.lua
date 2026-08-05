@@ -124,7 +124,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 250,//{80,85},
+	pitch = 250,--{80,85},
 	sound = "weapons/g3sg1/g3sg1-1.wav"
 } )
 sound.Add( {
@@ -132,7 +132,7 @@ sound.Add( {
 	channel = CHAN_WEAPON,
 	volume = 2.0,
 	level = 100,
-	pitch = 250,//{80,85},
+	pitch = 250,--{80,85},
 	sound = "weapons/mac10/mac10-1.wav"
 } )
 SWEP.Primary.Sound = Sound("Weapon_GA4.SingleHeavy") 

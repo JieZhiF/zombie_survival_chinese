@@ -1,15 +1,23 @@
+-- ============================================================================
+-- projectile_ghoulfleshfr/cl_init.lua - 食尸鬼血肉投射物（客户端）
+-- 负责：设置投射物渲染颜色/材质，飞行时以 0.025 秒间隔持续发射紫色烟雾尾迹粒子
+-- ============================================================================
 INC_CLIENT()
 
+-- 下一次粒子发射的时间戳（避免每帧都发射）
 ENT.NextEmit = 0
 
+-- ==== Initialize - 初始化渲染外观：紫灰色实体颜色与海鸥材质 ====
 function ENT:Initialize()
 	self:SetColor(Color(120, 85, 195, 255))
 	self:SetMaterial("models/seagull/seagull")
 end
 
+-- ==== Draw - 绘制模型并发射飞行尾迹粒子 ====
 function ENT:Draw()
 	self:DrawModel()
 
+	-- 按 0.025 秒间隔控制粒子发射频率
 	if CurTime() < self.NextEmit then return end
 	self.NextEmit = CurTime() + 0.025
 
@@ -18,6 +26,7 @@ function ENT:Draw()
 	local emitter = ParticleEmitter(pos)
 	emitter:SetNearClip(24, 32)
 
+	-- 烟雾粒子：随机生命周期/大小，沿飞行反方向并叠加随机偏移形成拖尾
 	local particle = emitter:Add("particles/smokey", pos)
 	particle:SetDieTime(math.Rand(0.4, 0.5))
 	particle:SetStartAlpha(255)
@@ -30,5 +39,6 @@ function ENT:Draw()
 	particle:SetLighting(true)
 	particle:SetColor(190, 125, 255)
 
+	-- 结束粒子发射并立即触发一次垃圾回收以降低粒子开销
 	emitter:Finish() emitter = nil collectgarbage("step", 64)
 end

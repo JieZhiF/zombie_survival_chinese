@@ -1,5 +1,10 @@
+-- ============================================================================
+-- weapon_zs_charon/cl_init.lua - 客户端：卡戎弩外观拼装与第一人称视角表现
+-- 负责：SCK 自定义模型元素、3D 武器 HUD、弩弦收回动画、幽灵化视角
+-- ============================================================================
 INC_CLIENT()
 
+-- 第一人称附加模型元素（SCK 拼装：由多个部件组合出弩的外观）
 SWEP.VElements = {
 	["underbarrel_sides"] = { type = "Model", model = "models/mechanics/solid_steel/type_b_2_2.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "underbarrel", pos = Vector(-2.26, 0, 0), angle = Angle(0, 0, 0), size = Vector(0.514, 0.293, 0.312), color = Color(200, 200, 200, 255), surpresslightning = false, material = "phoenix_storms/officewindow_1-1", skin = 0, bodygroup = {} },
 	["underbarrel_stripes"] = { type = "Model", model = "models/Mechanics/gears/gear24x6.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "underbarrel", pos = Vector(4.05, 0, 0), angle = Angle(90, 0, 0), size = Vector(0.063, 0.063, 2.016), color = Color(175, 175, 175, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -9,9 +14,11 @@ SWEP.VElements = {
 	["underbarrel"] = { type = "Model", model = "models/XQM/panel360.mdl", bone = "ValveBiped.Crossbow_base", rel = "", pos = Vector(0, 2.382, 15.612), angle = Angle(90, 0, 0), size = Vector(9.519, 0.065, 0.065), color = Color(0, 0, 0, 255), surpresslightning = false, material = "models/debug/debugwhite", skin = 0, bodygroup = {} },
 	["back"] = { type = "Model", model = "models/weapons/w_shot_m3super90.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "side", pos = Vector(0.086, 7.222, -1.844), angle = Angle(0, 90, 0), size = Vector(0.5, 0.845, 0.513), color = Color(200, 200, 200, 255), surpresslightning = false, material = "phoenix_storms/officewindow_1-1", skin = 0, bodygroup = {} },
 	["side"] = { type = "Model", model = "models/props_trainstation/trainstation_arch001.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "underbarrel", pos = Vector(-6.483, -0.226, 0), angle = Angle(90, -90, 0), size = Vector(3.45, 0.178, 0.043), color = Color(200, 200, 200, 255), surpresslightning = false, material = "phoenix_storms/officewindow_1-1", skin = 0, bodygroup = {} },
+	-- 弩弦元素：绑定在弩栓骨骼上，开火后由 PostDrawViewModel 控制其缩放实现收回
 	["overlay"] = { type = "Model", model = "models/props_junk/harpoon002a.mdl", bone = "ValveBiped.bolt", rel = "", pos = Vector(-0.13, 0, 11.22), angle = Angle(90, 0, 180), size = Vector(0.303, 0.555, 0.555), color = Color(255, 255, 255, 255), surpresslightning = false, material = "phoenix_storms/officewindow_1-1", skin = 0, bodygroup = {} },
 	["stuff"] = { type = "Model", model = "models/props_c17/grinderclamp01a.mdl", bone = "ValveBiped.Bip01_Spine4", rel = "underbarrel", pos = Vector(-17.656, -4.215, 0.122), angle = Angle(90, 90, 90), size = Vector(0.245, 0.221, 0.314), color = Color(200, 200, 200, 255), surpresslightning = false, material = "phoenix_storms/officewindow_1-1", skin = 0, bodygroup = {} }
 }
+-- 世界模型附加元素（SCK 拼装：第三人称/他人视角下的弩外观）
 SWEP.WElements = {
 	["underbarrel_sides"] = { type = "Model", model = "models/mechanics/solid_steel/type_b_2_2.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "underbarrel", pos = Vector(-2.26, 0, 0), angle = Angle(0, 0, 0), size = Vector(0.514, 0.293, 0.312), color = Color(200, 200, 200, 255), surpresslightning = false, material = "phoenix_storms/officewindow_1-1", skin = 0, bodygroup = {} },
 	["underbarrel_stripes"] = { type = "Model", model = "models/Mechanics/gears/gear24x6.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "underbarrel", pos = Vector(4.05, 0, 0), angle = Angle(90, 0, 0), size = Vector(0.063, 0.063, 2.016), color = Color(175, 175, 175, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -27,20 +34,31 @@ SWEP.WElements = {
 
 
 
+-- 3D 武器 HUD 绑定的骨骼：弩身基座
 SWEP.HUD3DBone = "ValveBiped.Crossbow_base"
+-- 3D 武器 HUD 的偏移位置
 SWEP.HUD3DPos = Vector(1.5, 0.5, 11)
+-- 3D 武器 HUD 的缩放比例
 SWEP.HUD3DScale = 0.025
 
+-- 第一人称视野角度
 SWEP.ViewModelFOV = 60
+-- 是否镜像翻转第一人称模型
 SWEP.ViewModelFlip = false
+-- 隐藏第一人称模型（外观由 SCK 元素拼装）
 SWEP.ShowViewModel = false
+-- 隐藏世界模型
 SWEP.ShowWorldModel = false
 
+-- 武器栏位：螺栓/发射器类武器选择槽
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotBolt")
 SWEP.SlotGroup = WEPSELECT_BOLT
+-- 槽位内的排序位置
 SWEP.SlotPos = 0
 
+-- ==== PostDrawViewModel - 绘制第一人称模型后更新 3D HUD 与弩弦收回动画 ====
 function SWEP:PostDrawViewModel(vm, pl, wep)
+	-- 游戏模式允许时，绘制绑定在弩身上的 3D 武器 HUD
 	if self.HUD3DPos and GAMEMODE:ShouldDraw3DWeaponHUD() then
 		local pos, ang = self:GetHUD3DPos(vm)
 		if pos then
@@ -48,18 +66,23 @@ function SWEP:PostDrawViewModel(vm, pl, wep)
 		end
 	end
 
+	-- 开火后约 1/3 秒内，弩弦元素从零线性放大回原尺寸（表现弓弦收回）
 	local adj = math.min(1, (CurTime() - self:GetShootTime()) * 3)
 	self.VElements["overlay"].size = Vector(0.303, 0.555, 0.555) * adj
 end
 
+-- 幽灵化插值系数：放置路障或换弹收尾阶段视角倾斜的平滑过渡值
 local ghostlerp = 0
+-- ==== CalcViewModelView - 计算第一人称视角位置与角度（幽灵化时枪口下压倾斜） ====
 function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
+	-- 玩家处于路障幽灵放置状态或武器换弹收尾阶段时，视角逐步下压
 	if self:GetOwner():GetBarricadeGhosting() or self:GetReloadFinish() > 0 then
 		ghostlerp = math.min(1, ghostlerp + FrameTime() * 1)
 	elseif ghostlerp > 0 then
 		ghostlerp = math.max(0, ghostlerp - FrameTime() * 1.3)
 	end
 
+	-- 按插值系数绕视线右轴旋转视角（最大下压 18 度）
 	if ghostlerp > 0 then
 		ang:RotateAroundAxis(ang:Right(), -18 * ghostlerp)
 	end

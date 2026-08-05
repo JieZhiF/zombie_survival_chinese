@@ -1,3 +1,8 @@
+-- ============================================================================
+-- swep_construction_kit/server.lua - SCK 武器构造工具包（服务器端）
+-- 负责：拾取限制、部署/收起/丢弃处理、全部设计模式控制台命令
+-- ============================================================================
+-- ==== CanPickup - 拾取限制：SCK 武器需按 R 或未被丢弃时才可捡起 ====
 local function CanPickup( pl, wep )
 	if (wep:GetClass() == "swep_construction_kit") then
 		return pl:KeyDown(IN_RELOAD) or !wep.Dropped
@@ -7,15 +12,18 @@ end
 hook.Add("PlayerCanPickupWeapon","SCKPickup",CanPickup)
 
 
+-- ==== Deploy - 部署时记录持有者 ====
 function SWEP:Deploy()
 	self.LastOwner = self:GetOwner()
 end
 
+-- ==== Holster - 收起时退出第三人称 ====
 function SWEP:Holster()
 	self:SetThirdPerson( false )
 	return true
 end
 
+-- ==== OnDrop - 丢弃时退出第三人称并通知客户端 ====
 function SWEP:OnDrop()
 	self:SetThirdPerson( false )
 	if (IsValid(self.LastOwner)) then
@@ -24,6 +32,7 @@ function SWEP:OnDrop()
 	self.LastOwner = nil
 end
 
+-- ==== ForceDesignMode - 将武器强制挂接到目标实体（设计模式） ====
 function SWEP:ForceDesignMode( ent )
 	if ent and ent:IsValid() then
 		self:SetPos( ent:LocalToWorld( ent:OBBCenter() ) )
@@ -32,6 +41,7 @@ function SWEP:ForceDesignMode( ent )
 	end
 end
 
+-- ==== Cmd_SetHoldType - 控制台命令：设置持枪姿势 ====
 local function Cmd_SetHoldType( pl, cmd, args )
 
 	local holdtype = args[1]
@@ -44,6 +54,7 @@ local function Cmd_SetHoldType( pl, cmd, args )
 end
 concommand.Add("swepck_setholdtype", Cmd_SetHoldType)
 
+-- ==== Cmd_ToggleThirdPerson - 控制台命令：切换第三人称 ====
 local function Cmd_ToggleThirdPerson( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -54,6 +65,7 @@ local function Cmd_ToggleThirdPerson( pl, cmd, args )
 end
 concommand.Add("swepck_togglethirdperson", Cmd_ToggleThirdPerson)
 
+-- ==== Cmd_PlayAnimation - 控制台命令：播放指定序列动画 ====
 local function Cmd_PlayAnimation( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -73,6 +85,7 @@ local function Cmd_PlayAnimation( pl, cmd, args )
 end
 concommand.Add("swepck_playanimation", Cmd_PlayAnimation)
 
+-- ==== Cmd_HidePlayer - 控制台命令：隐藏/显示玩家模型 ====
 local function Cmd_HidePlayer( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -87,6 +100,7 @@ local function Cmd_HidePlayer( pl, cmd, args )
 end
 concommand.Add("swepck_hideplayer", Cmd_HidePlayer)
 
+-- ==== Cmd_ToggleSights - 控制台命令：切换机瞄 ====
 local function Cmd_ToggleSights( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -97,6 +111,7 @@ local function Cmd_ToggleSights( pl, cmd, args )
 end
 concommand.Add("swepck_toggleironsights", Cmd_ToggleSights)
 
+-- ==== Cmd_ViewModelFOV - 控制台命令：设置第一人称视野 ====
 local function Cmd_ViewModelFOV( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -107,6 +122,7 @@ local function Cmd_ViewModelFOV( pl, cmd, args )
 end
 concommand.Add("swepck_viewmodelfov", Cmd_ViewModelFOV)
 
+-- ==== Cmd_ViewModel - 控制台命令：更换第一人称模型 ====
 local function Cmd_ViewModel( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -142,6 +158,7 @@ local function Cmd_ViewModel( pl, cmd, args )
 end
 concommand.Add("swepck_viewmodel", Cmd_ViewModel)
 
+-- ==== Cmd_WorldModel - 控制台命令：更换第三人称模型 ====
 local function Cmd_WorldModel( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -160,6 +177,7 @@ local function Cmd_WorldModel( pl, cmd, args )
 end
 concommand.Add("swepck_worldmodel", Cmd_WorldModel)
 
+-- ==== Cmd_PlayerModel - 控制台命令：更换玩家模型 ====
 local function Cmd_PlayerModel( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -175,6 +193,7 @@ local function Cmd_PlayerModel( pl, cmd, args )
 end
 concommand.Add("swepck_playermodel", Cmd_PlayerModel)
 
+-- ==== Cmd_PlayerModelScale - 控制台命令：缩放玩家模型 ====
 local function Cmd_PlayerModelScale( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -186,6 +205,7 @@ local function Cmd_PlayerModelScale( pl, cmd, args )
 end
 concommand.Add("swepck_playermodelscale", Cmd_PlayerModelScale)
 
+-- ==== Cmd_DropWep - 控制台命令：丢弃武器 ====
 local function Cmd_DropWep( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
@@ -197,6 +217,7 @@ local function Cmd_DropWep( pl, cmd, args )
 end
 concommand.Add("swepck_dropwep", Cmd_DropWep)
 
+-- ==== Cmd_GiveToEnt - 控制台命令：将武器交给准星实体（设计模式） ====
 local function Cmd_GiveToEnt( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )

@@ -1,7 +1,15 @@
+-- ============================================================================
+-- explosion_chem.lua - 化学爆炸特效（客户端）
+-- 负责：化学爆炸瞬间按威力播放爆炸音效，依次喷射绿色浓烟团、
+--       暗绿扩散烟云与亮绿色火焰云粒子，表现毒雾弥漫效果
+-- ============================================================================
+
+-- ==== Init - 特效初始化：分三组喷射绿色烟雾与火焰粒子 ====
 function EFFECT:Init(data)
 	local pos = data:GetOrigin()
 	local magnitude = data:GetMagnitude()
 
+	-- 爆炸音量与音调随威力变化，威力越大越响越低沉
 	sound.Play("ambient/explosions/explode_" .. math.random(8, 9) .. ".wav", pos, 70 + magnitude * 20, math.Rand(175, 180) - magnitude * 55)
 
 	local emitter = ParticleEmitter(pos)
@@ -9,6 +17,7 @@ function EFFECT:Init(data)
 
 	local particle, heading
 
+	-- 第一组：绿色浓烟团，沿随机方向匀速飘散
 	for i=1, math.random(8, 11) do
 		heading = VectorRand()
 		heading:Normalize()
@@ -25,6 +34,7 @@ function EFFECT:Init(data)
 		particle:SetRollDelta(math.Rand(-1, 1))
 	end
 
+	-- 第二组：暗绿色烟云，缓慢膨胀扩散
 	for i=1, math.random(3, 6) do
 		particle = emitter:Add("particle/smokestack", pos)
 		particle:SetVelocity(math.Rand(48, 82) * magnitude * VectorRand():GetNormalized())
@@ -39,6 +49,7 @@ function EFFECT:Init(data)
 		particle:SetAirResistance(10)
 	end
 
+	-- 第三组：亮绿色火焰云，快速四散并随随机重力方向飘动
 	for i=1, math.random(14, 18) do
 		heading = VectorRand()
 		heading:Normalize()
@@ -60,6 +71,7 @@ function EFFECT:Init(data)
 	emitter:Finish() emitter = nil collectgarbage("step", 64)
 end
 
+-- 纯粒子特效，无需逐帧更新
 function EFFECT:Think()
 	return false
 end

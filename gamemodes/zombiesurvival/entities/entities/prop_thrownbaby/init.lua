@@ -29,7 +29,7 @@ function ENT:Think()
 		self:SetSettled(true)
 		self:SetCollisionGroup(COLLISION_GROUP_DEBRIS_TRIGGER)
 
-		net.Start("zs_nestbuilt")
+		net.Start(NET_MSG.NESTBUILT)
 		net.Broadcast()
 	end
 end

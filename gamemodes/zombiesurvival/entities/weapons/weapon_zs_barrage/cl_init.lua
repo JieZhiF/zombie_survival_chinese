@@ -1,20 +1,29 @@
+-- ============================================================================
+-- weapon_zs_barrage/cl_init.lua - 弹幕榴弹发射器（客户端）
+-- 负责：爆炸物栏位设置、HUD 3D 图标与第一/第三人称模型拼装
+-- ============================================================================
 INC_CLIENT()
 
+-- HUD 3D 图标（大图标预览）参数
 SWEP.HUD3DBone = "v_weapon.ump45_Release"
 SWEP.HUD3DPos = Vector(-1.6, -4.4, 2)
 SWEP.HUD3DAng = Angle(0, 0, 0)
 SWEP.HUD3DScale = 0.02
 
+-- 隐藏原生模型，全部由拼装件构成
 SWEP.ShowViewModel = false
 SWEP.ShowWorldModel = false
 SWEP.ViewModelFOV = 50
 SWEP.ViewModelFlip = false
 
+-- 武器栏位：爆炸物槽
 SWEP.Slot = GAMEMODE:GetWeaponSlot("WeaponSelectSlotExplosives")
 SWEP.SlotGroup = WEPSELECT_EXPLOSIVE
+-- 武器类型：爆炸物
 SWEP.WeaponType = "explosive"
 SWEP.SlotPos = 0
 
+-- 第一人称拼装件（金色弹匣等）
 SWEP.VElements = {
 	["base+++++"] = { type = "Model", model = "models/props_combine/combine_teleportplatform.mdl", bone = "v_weapon.ump45_Parent", rel = "base", pos = Vector(1.044, 0, -2.02), angle = Angle(-2.439, 0, -180), size = Vector(0.079, 0.029, 0.061), color = Color(255, 205, 0, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
 	["base++"] = { type = "Model", model = "models/props_combine/combine_booth_short01a.mdl", bone = "v_weapon.ump45_Parent", rel = "base", pos = Vector(2.262, 0, 17.344), angle = Angle(0, 0, 180), size = Vector(0.039, 0.024, 0.059), color = Color(255, 225, 0, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
@@ -30,6 +39,7 @@ SWEP.VElements = {
 	["base++++++++"] = { type = "Model", model = "models/props_combine/combinetrain01a.mdl", bone = "v_weapon.ump45_Parent", rel = "base", pos = Vector(2.426, 0, 0.414), angle = Angle(90, -90, 90), size = Vector(0.012, 0.014, 0.014), color = Color(255, 225, 0, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
 
+-- 第三人称拼装件（世界模型）
 SWEP.WElements = {
 	["base+++++"] = { type = "Model", model = "models/props_combine/combine_teleportplatform.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(1.044, 0, -2.02), angle = Angle(-2.439, 0, -180), size = Vector(0.079, 0.029, 0.061), color = Color(255, 205, 0, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },
 	["base++"] = { type = "Model", model = "models/props_combine/combine_booth_short01a.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "base", pos = Vector(2.262, 0, 17.344), angle = Angle(0, 0, 180), size = Vector(0.039, 0.024, 0.059), color = Color(255, 225, 0, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} },

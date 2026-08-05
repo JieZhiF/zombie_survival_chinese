@@ -147,6 +147,9 @@ function SWEP:DealDamage()
 	local tr = owner:CompensatedMeleeTrace(self.HitDistance * (owner.MeleeRangeMul or 1), 3)
 
 	local hitent = tr.Entity
+	local hitplayer = hitent:IsValid() and hitent:IsPlayer()
+	local damagemultiplier
+	local hitflesh = tr.MatType == MAT_FLESH or tr.MatType == MAT_BLOODYFLESH or tr.MatType == MAT_ANTLION or tr.MatType == MAT_ALIENFLESH
 
 	-- We need the second part for single player because SWEP:Think is ran shared in SP.
 	if tr.Hit and not ( game.SinglePlayer() and CLIENT ) then
@@ -177,7 +180,7 @@ function SWEP:DealDamage()
 	self:SetNextSecondaryFire( time + delay )
 
 	if hitent:IsValid() then
-		local damagemultiplier = owner:GetTotalAdditiveModifier("UnarmedDamageMul", "MeleeDamageMultiplier")
+		damagemultiplier = owner:GetTotalAdditiveModifier("UnarmedDamageMul", "MeleeDamageMultiplier")
 		if owner:IsSkillActive(SKILL_LASTSTAND) then
 			if owner:Health() <= owner:GetMaxHealth() * 0.25 then
 				damagemultiplier = damagemultiplier * 2
@@ -377,6 +380,7 @@ end
 
 function SWEP:ApproachBlockAngles()
     local blockMods = self.BlockMods
+    local vm = self:GetOwner():GetViewModel()
 
     -- Assuming you have the current angles stored in a table
     if not self.CurrentBlockAngles then
@@ -400,7 +404,7 @@ function SWEP:ApproachBlockAngles()
         self.CurrentBlockAngles[bone] = currentAngle
 
         -- Apply the new angle to the weapon bones (this depends on how you're handling bone manipulation)
-        vm:ManipulateBoneAngles(boneIndex, currentAngle)
+        vm:ManipulateBoneAngles(bone, currentAngle)
     end
 end
 

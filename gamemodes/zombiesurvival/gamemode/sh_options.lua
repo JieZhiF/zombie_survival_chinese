@@ -266,7 +266,7 @@ GM:AddStartingItem("owens",				ITEMCAT_GUNS,			40,				"weapon_zs_owens")        
 GM:AddStartingItem("blstr",				ITEMCAT_GUNS,			40,				"weapon_zs_blaster")        -- 爆能枪
 GM:AddStartingItem("tossr",				ITEMCAT_GUNS,			40,				"weapon_zs_tosser")         -- 投掷者
 GM:AddStartingItem("stbbr",				ITEMCAT_GUNS,			40,				"weapon_zs_stubber")        -- 短管枪
-GM:AddStartingItem("crklr",				ITEMCAT_GUNS,			40,				"weapon_zs_crackler")       -- 劈啪作响者
+GM:AddStartingItem("crklr",				ITEMCAT_GUNS,			40,				"weapon_zs_enderp")       -- 末影 等离子无托步枪（原爆裂者位置）
 --GM:AddStartingItem("sling",			ITEMCAT_GUNS,			40,				"weapon_zs_slinger")       -- 投石索（已禁用）
 GM:AddStartingItem("handgrenade",		ITEMCAT_GUNS,			60,				"weapon_zs_handgrenade")    -- 手榴弹发射器
 
@@ -487,7 +487,7 @@ GM:AddPointShopItem("owens",			ITEMCAT_GUNS,			15,				"weapon_zs_owens", nil, ni
 GM:AddPointShopItem("blstr",			ITEMCAT_GUNS,			15,				"weapon_zs_blaster", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_blaster") end)               -- 爆能枪
 GM:AddPointShopItem("tossr",			ITEMCAT_GUNS,			15,				"weapon_zs_tosser", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_tosser") end)                  -- 投掷者
 GM:AddPointShopItem("stbbr",			ITEMCAT_GUNS,			15,				"weapon_zs_stubber", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_stubber") end)                -- 短管枪
-GM:AddPointShopItem("crklr",			ITEMCAT_GUNS,			15,				"weapon_zs_crackler", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_crackler") end)             -- 劈啪作响者
+GM:AddPointShopItem("crklr",			ITEMCAT_GUNS,			15,				"weapon_zs_enderp", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_enderp") end)             -- 末影 等离子无托步枪（原爆裂者位置）
 --GM:AddPointShopItem("sling",			ITEMCAT_GUNS,			15,				"weapon_zs_slinger", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_slinger") end) -- 投石索（已禁用）
 
 GM:AddPointShopItem("z9000",			ITEMCAT_GUNS,			15,				"weapon_zs_z9000", nil, nil, nil, function(pl) pl:GiveEmptyWeapon("weapon_zs_z9000") end)                   -- Z9000
@@ -518,7 +518,7 @@ GM:AddPointShopItem("hunter",			ITEMCAT_GUNS,			70,				"weapon_zs_hunter")      
 GM:AddPointShopItem("onyx",				ITEMCAT_GUNS,			70,				"weapon_zs_onyx")                                                                                             -- 黑玛瑙
 GM:AddPointShopItem("charon",			ITEMCAT_GUNS,			70,				"weapon_zs_charon")                                                                                           -- 卡戎
 GM:AddPointShopItem("akbar",			ITEMCAT_GUNS,			70,				"weapon_zs_akbar")                                                                                            -- 阿克巴
-GM:AddPointShopItem("enderp",			ITEMCAT_GUNS,			70,				"weapon_zs_enderp")                                                                                           -- 终结者 P
+--GM:AddPointShopItem("enderp",			ITEMCAT_GUNS,			70,				"weapon_zs_enderp")                                                                                           -- 终结者 P（已隐藏，移至 Tier 1 槽位 crklr，武器保留）
 GM:AddPointShopItem("oberon",			ITEMCAT_GUNS,			70,				"weapon_zs_oberon")                                                                                           -- 奥伯龙
 GM:AddPointShopItem("hyena",			ITEMCAT_GUNS,			70,				"weapon_zs_hyena")                                                                                            -- 鬣狗
 GM:AddPointShopItem("pollutor",			ITEMCAT_GUNS,			70,				"weapon_zs_pollutor")                                                                                         -- 污染者

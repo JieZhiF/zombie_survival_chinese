@@ -46,14 +46,14 @@ SWEP.WalkSpeed = SPEED_FAST
 SWEP.IsMelee = true
 SWEP.MeleeFlagged = false
 
-SWEP.HoldType = "melee" //武器类型
+SWEP.HoldType = "melee" --武器类型
 
-SWEP.SwingHoldType = "melee2" //挥舞武器类型
+SWEP.SwingHoldType = "melee2" --挥舞武器类型
 
 
-SWEP.DamageType = DMG_SLASH //伤害类型
+SWEP.DamageType = DMG_SLASH --伤害类型
 
-SWEP.BloodDecal = "Blood" //击中血迹
+SWEP.BloodDecal = "Blood" --击中血迹
 SWEP.HitDecal = "Impact.Concrete"
 
 SWEP.HitAnim = ACT_VM_HITCENTER
@@ -61,20 +61,20 @@ SWEP.MissAnim = ACT_VM_MISSCENTER
 
 SWEP.SwingTime = 0
 SWEP.SwingRotation = Angle(0, 0, 0)
-SWEP.SwingOffset = Vector(0, 0, 0) //挥舞位置
+SWEP.SwingOffset = Vector(0, 0, 0) --挥舞位置
 
 SWEP.MeleeDelay = 0.45
-SWEP.BlockHoldType = "melee2" //格挡武器类型
-SWEP.BlockPos = Vector(0, 0, 0) //格挡位置
-SWEP.BlockAng = Angle(0, 0, 0) //格挡位置
+SWEP.BlockHoldType = "melee2" --格挡武器类型
+SWEP.BlockPos = Vector(0, 0, 0) --格挡位置
+SWEP.BlockAng = Angle(0, 0, 0) --格挡位置
 
-SWEP.DefendingDamageBlockedDefault = 1.5 //默认格挡伤害
-SWEP.DefendingDamageBlocked = 1.5 //格挡伤害
-SWEP.NextBlock = 2 //格挡间隔
+SWEP.DefendingDamageBlockedDefault = 1.5 --默认格挡伤害
+SWEP.DefendingDamageBlocked = 1.5 --格挡伤害
+SWEP.NextBlock = 2 --格挡间隔
 
-SWEP.BlockSound = "weapons/rpg/shotdown.wav" //格挡声音		
-SWEP.BlockSoundPitch = 90 //格挡声音音量	
-SWEP.ParryStartTime = 1 //格挡开始时间
+SWEP.BlockSound = "weapons/rpg/shotdown.wav" --格挡声音		
+SWEP.BlockSoundPitch = 90 --格挡声音音量	
+SWEP.ParryStartTime = 1 --格挡开始时间
 
 SWEP.AllowQualityWeapons = false
 SWEP.Weight = 4
@@ -164,26 +164,26 @@ function SWEP:SecondaryAttack()
 end
 
 
-function SWEP:Reload() //Reload
+function SWEP:Reload() --Reload
 	if self:IsSwinging() then return end
 	if self.NextBlock >= CurTime() then return end
 	if self:IsBlocking() then return end
 	
-	--//if CurTime() >= self:GetSwingEnd()-0.1 then
-	if not self:IsSwinging() and GetConVar("zsw_enable_block"):GetInt() == 1 then
+	----if CurTime() >= self:GetSwingEnd()-0.1 then
+	if not self:IsSwinging() then--and GetConVar("zsw_enable_block"):GetInt() == 1 then
 		self:SetBlocking(true)
 		self.Owner:EmitSound("physics/metal/weapon_impact_soft"..math.random(1,2)..".wav")
 	--	self.Owner:SetNWBool("ZSBlocking",true)
 	end
 
-	if GetConVar("zsw_enable_block"):GetInt() == 1 then
+	--if GetConVar("zsw_enable_block"):GetInt() == 1 then
 	self.NextBlock = CurTime() + self.Primary.Delay + self.MeleeDelay + self.SwingTime
-    end
+    --end
 
 	return false
 end
 
-function SWEP:GetBlockDamageMultiplier(pl) //格挡伤害
+function SWEP:GetBlockDamageMultiplier(pl) --格挡伤害
 	
 	if pl:IsDefending() then
 		local wep = pl:GetActiveWeapon()
@@ -195,7 +195,7 @@ function SWEP:GetBlockDamageMultiplier(pl) //格挡伤害
 			end
 		end
 	end
-	//block all by default
+	--block all by default
 	return 0
 end
 
@@ -494,7 +494,7 @@ function SWEP:SetBlocking(b)
 end
 
 function SWEP:IsDefending()
-	return IsBlocking()
+	return self:IsBlocking()
 end
 
 function SWEP:IsBlocking()

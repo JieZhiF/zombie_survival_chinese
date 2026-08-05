@@ -1,5 +1,9 @@
 AddCSLuaFile()
 
+-- 僵尸怒吼音效参数（EmitSound 衰减度/音量），与其他音效调用保持一致
+local ZOMBIE_MOAN_ATTEN = 70
+local ZOMBIE_MOAN_VOLUME = 1
+
 SWEP.PrintName = ""..translate.Get("weapon_zs_executioner")
 SWEP.Description = ""..translate.Get("weapon_zs_executioner_description")
 

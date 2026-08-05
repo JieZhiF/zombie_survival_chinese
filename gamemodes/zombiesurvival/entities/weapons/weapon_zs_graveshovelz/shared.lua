@@ -1,12 +1,17 @@
 
-SWEP.PrintName = ""..translate.Get("weapon_zs_graveshovel_a")
+-- ============================================================================
+-- weapon_zs_graveshovelz/shared.lua - 坟铲 Z（共享）：击杀成长型近战武器
+-- 负责：永久伤害成长、燃烧效果、自定义 HUD 显示
+-- ============================================================================
+
+SWEP.PrintName = ""..translate.Get("weapon_zs_graveshovel_a") -- 显示名称
 
 
-SWEP.Base = "weapon_zs_graveshovel"
-SWEP.ZombieOnly = true
+SWEP.Base = "weapon_zs_graveshovel" -- 基于坟铲武器
+SWEP.ZombieOnly = true -- 仅僵尸可用
 
-SWEP.MeleeDamage = 40
-SWEP.MeleeKnockBack = 0
+SWEP.MeleeDamage = 40 -- 基础近战伤害
+SWEP.MeleeKnockBack = 0 -- 击退为 0
 
 -- 获取当前的近战伤害
 function SWEP:GetMeleeDamage()
