@@ -44,7 +44,7 @@ function SWEP:Initialize()
 			if IsValid(vm) then
 				self:ResetBonePositions(vm)
 
-				-- Necrossin: Beware, this is old and terrible! Please use PostDrawViewModel and stuff to handle this
+				-- Necrossin: Beware, this is old and terriblenot Please use PostDrawViewModel and stuff to handle this
 				
 				-- Init viewmodel visibility
 				if (self.ShowViewModel == nil or self.ShowViewModel) then
@@ -88,13 +88,13 @@ if CLIENT then
 	function SWEP:ViewModelDrawn()
 
 		local vm = self:GetOwner():GetViewModel()
-		if !IsValid(vm) then return end
+		if not IsValid(vm) then return end
 
-		if (!self.VElements) then return end
+		if (not self.VElements) then return end
 
 		self:UpdateBonePositions(vm)
 
-		if (!self.vRenderOrder) then
+		if (not self.vRenderOrder) then
 
 			-- we build a render order because sprites need to be drawn after models
 			self.vRenderOrder = {}
@@ -117,7 +117,7 @@ if CLIENT then
 				elseif (v.type == "Sprite" or v.type == "Quad") then
 					table.insert(self.vRenderOrder, k)
 				elseif (v.type == "ClipPlane") then
-					if v.rel == "" or v.rel == nil then continue end
+					if v.rel ~= "" and v.rel ~= nil then
 					
 					if self.VElements[ v.rel ] and self.VElements[ v.rel ].type == "Model" then
 						
@@ -130,6 +130,7 @@ if CLIENT then
 						
 						table.insert(self.vRenderOrder, k)
 					end
+					end
 				end
 			end
 
@@ -138,17 +139,16 @@ if CLIENT then
 		for k, name in ipairs( self.vRenderOrder ) do
 
 			local v = self.VElements[name]
-			if (!v) then self.vRenderOrder = nil break end
-			if (v.hide) then continue end
+			if (not v) then self.vRenderOrder = nil break end
+
+			if not v.hide and v.bone then
 
 			local model = v.modelEnt
 			local sprite = v.spriteMaterial
 
-			if (!v.bone) then continue end
-
 			local pos, ang = self:GetBoneOrientation( self.VElements, v, vm )
 
-			if (!pos) then continue end
+			if pos then
 
 			if (v.type == "Model" and IsValid(model)) then
 
@@ -173,7 +173,7 @@ if CLIENT then
 				end
 
 				if v.bonemerge then
-					if !model:IsEffectActive( EF_BONEMERGE ) then
+					if not model:IsEffectActive( EF_BONEMERGE ) then
 						model:SetParent( vm )
 						model:AddEffects( EF_BONEMERGE )
 					end
@@ -186,17 +186,17 @@ if CLIENT then
 
 				if (v.material == "") then
 					model:SetMaterial("")
-				elseif (model:GetMaterial() != v.material) then
+				elseif (model:GetMaterial() ~= v.material) then
 					model:SetMaterial( v.material )
 				end
 
-				if (v.skin and v.skin != model:GetSkin()) then
+				if (v.skin and v.skin ~= model:GetSkin()) then
 					model:SetSkin(v.skin)
 				end
 
 				if (v.bodygroup) then
 					for k, v in pairs( v.bodygroup ) do
-						if (model:GetBodygroup(k) != v) then
+						if (model:GetBodygroup(k) ~= v) then
 							model:SetBodygroup(k, v)
 						end
 					end
@@ -277,6 +277,8 @@ if CLIENT then
 				cam.End3D2D()
 
 			end
+			end
+			end
 
 		end
 
@@ -290,9 +292,9 @@ if CLIENT then
 			self:DrawModel()
 		end
 
-		if (!self.WElements) then return end
+		if (not self.WElements) then return end
 
-		if (!self.wRenderOrder) then
+		if (not self.wRenderOrder) then
 
 			self.wRenderOrder = {}
 			
@@ -314,7 +316,7 @@ if CLIENT then
 				elseif (v.type == "Sprite" or v.type == "Quad") then
 					table.insert(self.wRenderOrder, k)
 				elseif (v.type == "ClipPlane") then
-					if v.rel == "" or v.rel == nil then continue end
+					if v.rel ~= "" and v.rel ~= nil then
 					
 					if self.WElements[ v.rel ] and self.WElements[ v.rel ].type == "Model" then
 						
@@ -326,6 +328,7 @@ if CLIENT then
 						self.WElements[ v.rel ].clipcount = self.WElements[ v.rel ].clipcount + 1
 						
 						table.insert(self.wRenderOrder, k)
+					end
 					end
 				end
 			end
@@ -342,8 +345,9 @@ if CLIENT then
 		for k, name in pairs( self.wRenderOrder ) do
 
 			local v = self.WElements[name]
-			if (!v) then self.wRenderOrder = nil break end
-			if (v.hide) then continue end
+			if (not v) then self.wRenderOrder = nil break end
+
+			if not v.hide then
 
 			local pos, ang
 
@@ -353,7 +357,7 @@ if CLIENT then
 				pos, ang = self:GetBoneOrientation( self.WElements, v, bone_ent, "ValveBiped.Bip01_R_Hand" )
 			end
 
-			if (!pos) then continue end
+			if pos then
 
 			local model = v.modelEnt
 			local sprite = v.spriteMaterial
@@ -376,7 +380,7 @@ if CLIENT then
 				end
 				
 				if v.bonemerge then
-					if !model:IsEffectActive( EF_BONEMERGE ) then
+					if not model:IsEffectActive( EF_BONEMERGE ) then
 						model:SetParent( self:GetOwner() )
 						model:AddEffects( EF_BONEMERGE )
 					end
@@ -389,17 +393,17 @@ if CLIENT then
 
 				if (v.material == "") then
 					model:SetMaterial("")
-				elseif (model:GetMaterial() != v.material) then
+				elseif (model:GetMaterial() ~= v.material) then
 					model:SetMaterial( v.material )
 				end
 
-				if (v.skin and v.skin != model:GetSkin()) then
+				if (v.skin and v.skin ~= model:GetSkin()) then
 					model:SetSkin(v.skin)
 				end
 
 				if (v.bodygroup) then
 					for k, v in pairs( v.bodygroup ) do
-						if (model:GetBodygroup(k) != v) then
+						if (model:GetBodygroup(k) ~= v) then
 							model:SetBodygroup(k, v)
 						end
 					end
@@ -477,6 +481,8 @@ if CLIENT then
 				cam.End3D2D()
 
 			end
+			end
+			end
 
 		end
 
@@ -486,17 +492,17 @@ if CLIENT then
 	function SWEP:GetBoneOrientation( basetab, tab, ent, bone_override )
 
 		local bone, pos, ang
-		if (tab.rel and tab.rel != "") then
+		if (tab.rel and tab.rel ~= "") then
 
 			local v = basetab[tab.rel]
 
-			if (!v) then return end
+			if (not v) then return end
 
 			-- Technically, if there exists an element with the same name as a bone
 			-- you can get in an infinite loop. Let's just hope nobody's that stupid.
 			pos, ang = self:GetBoneOrientation( basetab, v, ent )
 
-			if (!pos) then return end
+			if (not pos) then return end
 
 			pos = pos + ang:Forward() * v.pos.x + ang:Right() * v.pos.y + ang:Up() * v.pos.z
 			ang:RotateAroundAxis(ang:Up(), v.angle.y)
@@ -507,7 +513,7 @@ if CLIENT then
 
 			bone = ent:LookupBone(bone_override or tab.bone)
 
-			if (!bone) then return end
+			if (not bone) then return end
 
 			pos, ang = Vector(0,0,0), Angle(0,0,0)
 			local m = ent:GetBoneMatrix(bone)
@@ -528,11 +534,11 @@ if CLIENT then
 	-- ==== CreateModels - 创建客户端模型/精灵材质（渲染钩子中不允许创建） ====
 	function SWEP:CreateModels( tab )
 
-		if (!tab) then return end
+		if (not tab) then return end
 
 		-- Create the clientside models here because Garry says we can't do it in the render hook
 		for k, v in pairs( tab ) do
-			if (v.type == "Model" and v.model and v.model != "" and (!IsValid(v.modelEnt) or v.createdModel != v.model) and
+			if (v.type == "Model" and v.model and v.model ~= "" and (not IsValid(v.modelEnt) or v.createdModel ~= v.model) and
 					string.find(v.model, ".mdl") and file.Exists (v.model, "GAME") ) then
 
 				v.modelEnt = ClientsideModel(v.model, RENDERGROUP_TRANSLUCENT)
@@ -546,7 +552,7 @@ if CLIENT then
 					v.modelEnt = nil
 				end
 
-			elseif (v.type == "Sprite" and v.sprite and v.sprite != "" and (!v.spriteMaterial or v.createdSprite != v.sprite)
+			elseif (v.type == "Sprite" and v.sprite and v.sprite ~= "" and (not v.spriteMaterial or v.createdSprite ~= v.sprite)
 				and file.Exists ("materials/"..v.sprite..".vmt", "GAME")) then
 
 				local name = v.sprite.."-"
@@ -578,12 +584,12 @@ if CLIENT then
 
 		if self.ViewModelBoneMods then
 
-			if (!vm:GetBoneCount()) then return end
+			if (not vm:GetBoneCount()) then return end
 
-			-- !! WORKAROUND !! --
+			-- !not WORKAROUND !! --
 			-- We need to check all model names :/
 			local loopthrough = self.ViewModelBoneMods
-			if (!hasGarryFixedBoneScalingYet) then
+			if (not hasGarryFixedBoneScalingYet) then
 				allbones = {}
 				for i=0, vm:GetBoneCount() do
 					local bonename = vm:GetBoneName(i)
@@ -602,15 +608,16 @@ if CLIENT then
 			end
 			-- !! ----------- !! --
 
-			for k, v in pairs( loopthrough ) do
-				local bone = vm:LookupBone(k)
-				if (!bone) then continue end
+		for k, v in pairs( loopthrough ) do
+			local bone = vm:LookupBone(k)
 
-				-- !! WORKAROUND !! --
+			if bone then
+
+				-- !not WORKAROUND !! --
 				local s = Vector(v.scale.x,v.scale.y,v.scale.z)
 				local p = Vector(v.pos.x,v.pos.y,v.pos.z)
 				local ms = Vector(1,1,1)
-				if (!hasGarryFixedBoneScalingYet) then
+				if (not hasGarryFixedBoneScalingYet) then
 					local cur = vm:GetBoneParent(bone)
 					while(cur >= 0) do
 						local pscale = loopthrough[vm:GetBoneName(cur)].scale
@@ -622,18 +629,19 @@ if CLIENT then
 				s = s * ms
 				-- !! ----------- !! --
 
-				if vm:GetManipulateBoneScale(bone) != s then
+				if vm:GetManipulateBoneScale(bone) ~= s then
 					vm:ManipulateBoneScale( bone, s )
 				end
-				if vm:GetManipulateBoneAngles(bone) != v.angle then
+				if vm:GetManipulateBoneAngles(bone) ~= v.angle then
 					vm:ManipulateBoneAngles( bone, v.angle )
 				end
-				if vm:GetManipulateBonePosition(bone) != p then
-					vm:ManipulateBonePosition( bone, p )
-				end
+			if vm:GetManipulateBonePosition(bone) ~= p then
+				vm:ManipulateBonePosition( bone, p )
 			end
-		else
-			self:ResetBonePositions(vm)
+			end
+		end
+	else
+		self:ResetBonePositions(vm)
 		end
 
 	end
@@ -645,7 +653,7 @@ if CLIENT then
 		vm:SetMaterial("")
 		--------
 
-		if (!vm:GetBoneCount()) then return end
+		if (not vm:GetBoneCount()) then return end
 		for i=0, vm:GetBoneCount() do
 			vm:ManipulateBoneScale( i, Vector(1, 1, 1) )
 			vm:ManipulateBoneAngles( i, Angle(0, 0, 0) )

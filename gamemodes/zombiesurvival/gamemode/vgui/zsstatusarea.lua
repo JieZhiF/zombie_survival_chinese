@@ -121,6 +121,13 @@ local statusdisplays = {
 		Icon = Material("zombiesurvival/frost.png")
 	},
 	{
+		Color = Color(0, 200, 255),
+		Name = "冰冻",
+		ValFunc = statusValueFunction("freeze"),
+		Max = 4,
+		Icon = Material("zombiesurvival/frost.png")
+	},
+	{
 		Color = Color(180, 0, 255),
 		Name = translate.Get("Status_Tremor"),
 		ValFunc = statusValueFunction("frightened"),

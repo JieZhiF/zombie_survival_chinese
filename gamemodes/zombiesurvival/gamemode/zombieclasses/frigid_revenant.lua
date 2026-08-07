@@ -33,6 +33,8 @@ CLASS.Points = CLASS.Health/GM.HumanoidZombiePointRatio
 
 -- 冰霜抗性
 CLASS.ResistFrost = true
+-- 冰冻抗性（去掉百分号的数值）：0 = 免疫冰冻 buff
+CLASS.FreezeResistance = 0
 
 -- 骷髅标记
 CLASS.Skeletal = true

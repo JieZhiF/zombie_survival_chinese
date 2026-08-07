@@ -169,6 +169,7 @@ AddCSLuaFile("cl_draw.lua")
 AddCSLuaFile("cl_net.lua")
 AddCSLuaFile("cl_fontdlc.lua")
 AddCSLuaFile("cl_util.lua")
+AddCSLuaFile("cl_global.lua")
 AddCSLuaFile("cl_options.lua")
 AddCSLuaFile("cl_scoreboard.lua")
 AddCSLuaFile("cl_targetid.lua")
@@ -243,6 +244,7 @@ include("shared.lua")
 include("sv_options.lua")
 include("mapeditor.lua")
 include("sv_playerspawnentities.lua")
+include("sv_block_melee_functions.lua")
 include("sv_profiling.lua")
 include("sv_sigils.lua")
 include("sv_concommands.lua")
@@ -257,6 +259,8 @@ include("skillweb/sv_skillweb.lua")
 
 include("sv_zombieescape.lua")
 include("sv_zombieshop.lua")--同上
+include("sv_tutorial.lua")
+include("sv_nailsave.lua")
 
 include("zsbots/init.lua")
 
@@ -744,6 +748,7 @@ function GM:AddNetworkStrings()
 	util.AddNetworkString("zs_pls_kill_pl")
 	util.AddNetworkString("zs_pl_kill_self")
 	util.AddNetworkString("zs_death")
+	util.AddNetworkString("zs_afk_state")
 
 	util.AddNetworkString("voice_eyepain")
 	util.AddNetworkString("voice_giveammo")
@@ -1168,38 +1173,36 @@ function GM:CreateZombieGas()
 			return
 		end
 
-		if #gasses > 0 and math.random(5) ~= 1 then
-			continue
-		end
+		if #gasses == 0 or math.random(5) == 1 then
+			local spawnpos = zombie_spawn:GetPos() + Vector(0, 0, 24)
 
-		local spawnpos = zombie_spawn:GetPos() + Vector(0, 0, 24)
+			-- 检查毒气位置是否合理（远离人类出生点和已有毒气）
+			local near = false
 
-		-- 检查毒气位置是否合理（远离人类出生点和已有毒气）
-		local near = false
-
-		if not self.ZombieEscape then
-			for __, human_spawn in pairs(humanspawns) do
-				if human_spawn:IsValid() and human_spawn:GetPos():DistToSqr(spawnpos) < 90000 then
-					near = true
-					break
+			if not self.ZombieEscape then
+				for __, human_spawn in pairs(humanspawns) do
+					if human_spawn:IsValid() and human_spawn:GetPos():DistToSqr(spawnpos) < 90000 then
+						near = true
+						break
+					end
 				end
 			end
-		end
 
-		if not near then
-			for __, gas in pairs(gasses) do
-				if gas:GetPos():DistToSqr(spawnpos) < 122500 then --350^2
-					near = true
-					break
+			if not near then
+				for __, gas in pairs(gasses) do
+					if gas:GetPos():DistToSqr(spawnpos) < 122500 then --350^2
+						near = true
+						break
+					end
 				end
 			end
-		end
 
-		if not near then
-			local ent = ents.Create("zombiegasses")
-			if ent:IsValid() then
-				ent:SetPos(spawnpos)
-				ent:Spawn()
+			if not near then
+				local ent = ents.Create("zombiegasses")
+				if ent:IsValid() then
+					ent:SetPos(spawnpos)
+					ent:Spawn()
+				end
 			end
 		end
 	end
@@ -1399,7 +1402,7 @@ function GM:SpawnMultipleBosses(amount)
         -- 【修改】删除了 ent:Alive() 检查
         -- 只要不是 Boss 且开启了 boss 选项的玩家都有资格，无论死活
         if not ent:GetZombieClassTable().Boss then 
-            if ent:GetInfo("zs_nobosspick") == "0" then
+            if ent:GetInfo("zs_nobosspick") == "0" and not ent.ZSAFKSent then
                 table.insert(zombies, ent)
             end
         end
@@ -1647,17 +1650,22 @@ end
 
 function GM:ThinkPerSecond(time, wave)
 	local allplayers = player_GetAll()
+	local afktime = GetConVar("zs_afk_time"):GetFloat()
 
 	if NextTick <= time then
 		NextTick = time + 1
 
 		local plpos
 
-		if wave == 0 and not self:GetWaveActive() then
+		-- AFK 检测：跟踪所有存活玩家（人类+僵尸）的位置移动，排除 bot。
+		-- 首次跟踪时初始化 LastNotAFK 作为计时起点，避免出生未移动即被判定为 AFK。
+		if afktime > 0 then
 			for _, pl in pairs(allplayers) do
-				if P_Team(pl) == TEAM_HUMAN then
+				if P_Alive(pl) and not pl:IsBot() then
 					plpos = pl:GetPos()
-					if pl.LastAFKPosition and (pl.LastAFKPosition.x ~= plpos.x or pl.LastAFKPosition.y ~= plpos.y) then
+					if pl.LastAFKPosition and (pl.LastAFKPosition.x ~= plpos.x or pl.LastAFKPosition.y ~= plpos.y or pl.LastAFKPosition.z ~= plpos.z) then
+						pl.LastNotAFK = time
+					elseif not pl.LastNotAFK then
 						pl.LastNotAFK = time
 					end
 					pl.LastAFKPosition = plpos
@@ -1667,13 +1675,6 @@ function GM:ThinkPerSecond(time, wave)
 
 		for _, pl in pairs(allplayers) do
 			if P_Team(pl) == TEAM_HUMAN and P_Alive(pl) then
-				plpos = pl:GetPos()
-				if doafk then
-					if pl.LastAFKPosition and (pl.LastAFKPosition.x ~= plpos.x or pl.LastAFKPosition.y ~= plpos.y) then
-						pl.LastNotAFK = time
-					end
-					pl.LastAFKPosition = plpos
-				end
 
 				if pl:WaterLevel() >= 3 and not (pl.status_drown and pl.status_drown:IsValid()) then
 					pl:GiveStatus("drown")
@@ -1768,6 +1769,24 @@ function GM:ThinkPerSecond(time, wave)
 				end
 			end
 		end
+
+		-- AFK 状态同步（TAB 记分板显示；状态变化时才广播）。
+		-- bot 永远不视为 AFK；死亡/旁观玩家清除残留状态。
+		for _, pl in pairs(allplayers) do
+			local afk = afktime > 0 and P_Alive(pl) and not pl:IsBot() and pl.LastNotAFK and (time - pl.LastNotAFK >= afktime) or false
+			if pl.ZSAFKSent ~= afk then
+				pl.ZSAFKSent = afk
+				net.Start(NET_MSG.AFK_STATE)
+					net.WriteEntity(pl)
+					net.WriteBool(afk)
+				net.Broadcast()
+
+				-- 变 AFK 时提醒玩家本人（移动可解除）
+				if afk then
+					pl:CenterNotify(COLOR_RED, translate.ClientGet(pl, "afk_notice"))
+				end
+			end
+		end
 	end
 end
 
@@ -1832,8 +1851,8 @@ function GM:CalculateNextBoss()
             -- 注意：这里删除了 "if livingbosses >= 9 then return end"
             -- 我们希望无论 Boss 有多少，都要算出“如果不满员，下一个该是谁”
         else
-            -- 如果不是 Boss，检查是否开启了不当 Boss 选项
-            if ent:GetInfo("zs_nobosspick") == "0" then
+            -- 如果不是 Boss，检查是否开启了不当 Boss 选项（AFK 玩家也不参与选拔）
+            if ent:GetInfo("zs_nobosspick") == "0" and not ent.ZSAFKSent then
                 table.insert(zombies, ent)
             end
         end
@@ -3466,6 +3485,11 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	if ent:IsPlayer() then
 		dispatchdamagedisplay = true
 
+		-- 完全冻结的玩家受到额外伤害（冰冻伤害倍率）
+		if ent:IsFrozenFull() and dmginfo:GetDamage() > 0 then
+			dmginfo:SetDamage(dmginfo:GetDamage() * FREEZE_DAMAGE_MULT)
+		end
+
 		if attacker.PBAttacker and attacker.PBAttacker:IsValid() then
 			attacker = attacker.PBAttacker
 		end
@@ -4233,12 +4257,12 @@ function GM:GetNearestSpawn(pos, teamid)
 
 	local nearestdist = math.huge
 	for _, ent in pairs(team.GetValidSpawnPoint(teamid)) do
-		if ent.Disabled then continue end
-
-		local dist = ent:GetPos():DistToSqr(pos)
-		if dist < nearestdist then
-			nearestdist = dist
-			nearest = ent
+		if not ent.Disabled then
+			local dist = ent:GetPos():DistToSqr(pos)
+			if dist < nearestdist then
+				nearestdist = dist
+				nearest = ent
+			end
 		end
 	end
 

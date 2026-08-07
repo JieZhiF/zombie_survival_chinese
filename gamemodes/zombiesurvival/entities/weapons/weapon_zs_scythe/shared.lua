@@ -107,35 +107,35 @@ function SWEP:MeleeSwing()
 	end
 
 	for _, trace in ipairs(tr) do
-		if not trace.Hit then continue end
+		if trace.Hit then
+			ent = trace.Entity
 
-		ent = trace.Entity
+			hit = true
 
-		hit = true
+			local hitflesh = trace.MatType == MAT_FLESH or trace.MatType == MAT_BLOODYFLESH or trace.MatType == MAT_ANTLION or trace.MatType == MAT_ALIENFLESH
 
-		local hitflesh = trace.MatType == MAT_FLESH or trace.MatType == MAT_BLOODYFLESH or trace.MatType == MAT_ANTLION or trace.MatType == MAT_ALIENFLESH
+			if hitflesh then
+				util.Decal(self.BloodDecal, trace.HitPos + trace.HitNormal, trace.HitPos - trace.HitNormal)
 
-		if hitflesh then
-			util.Decal(self.BloodDecal, trace.HitPos + trace.HitNormal, trace.HitPos - trace.HitNormal)
+				if SERVER then
+					self:ServerHitFleshEffects(ent, trace, damagemultiplier)
+				end
 
-			if SERVER then
-				self:ServerHitFleshEffects(ent, trace, damagemultiplier)
 			end
 
-		end
+			if ent and ent:IsValid() then
+				if SERVER then
+					self:ServerMeleeHitEntity(trace, ent, damagemultiplier)
+				end
 
-		if ent and ent:IsValid() then
-			if SERVER then
-				self:ServerMeleeHitEntity(trace, ent, damagemultiplier)
+				self:MeleeHitEntity(trace, ent, damagemultiplier, damage)
+
+				if SERVER then
+					self:ServerMeleePostHitEntity(trace, ent, damagemultiplier)
+				end
+
+				if owner.GlassWeaponShouldBreak then break end
 			end
-
-			self:MeleeHitEntity(trace, ent, damagemultiplier, damage)
-
-			if SERVER then
-				self:ServerMeleePostHitEntity(trace, ent, damagemultiplier)
-			end
-
-			if owner.GlassWeaponShouldBreak then break end
 		end
 	end
 

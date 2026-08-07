@@ -93,16 +93,16 @@ function SWEP:Think()
 				local damage = self:GetSlowSwingDamage(self:GetTracesNumPlayers(traces))
 
 				for _, trace in ipairs(traces) do
-					if not trace.Hit then continue end
+					if trace.Hit then
+						hit = true
 
-					hit = true
-
-					if trace.HitWorld then
-						self:MeleeHitWorld(trace)
-					else
-						local ent = trace.Entity
-						if ent and ent:IsValid() then
-							self:MeleeHit(ent, trace, damage)
+						if trace.HitWorld then
+							self:MeleeHitWorld(trace)
+						else
+							local ent = trace.Entity
+							if ent and ent:IsValid() then
+								self:MeleeHit(ent, trace, damage)
+							end
 						end
 					end
 				end

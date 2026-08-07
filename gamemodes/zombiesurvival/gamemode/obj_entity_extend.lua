@@ -227,84 +227,88 @@ function meta:FireBulletsLua(src, dir, spread, num, damage, attacker, force_mul,
 		local use_impact = true
 		local use_ragdoll_impact = true
 		local use_damage = true
+		local donothing
 
 		-- 如果提供了回调，则调用回调函数并根据返回值调整行为
 		if callback then
 			local ret = callback(attacker, bullet_tr, damageinfo)
 			if ret then
-				if ret.donothing then continue end
-
-				if ret.tracer ~= nil then use_tracer = ret.tracer end
-				if ret.impact ~= nil then use_impact = ret.impact end
-				if ret.ragdoll_impact ~= nil then use_ragdoll_impact = ret.ragdoll_impact end
-				if ret.damage ~= nil then use_damage = ret.damage end
+				donothing = ret.donothing
+				if not donothing then
+					if ret.tracer ~= nil then use_tracer = ret.tracer end
+					if ret.impact ~= nil then use_impact = ret.impact end
+					if ret.ragdoll_impact ~= nil then use_ragdoll_impact = ret.ragdoll_impact end
+					if ret.damage ~= nil then use_damage = ret.damage end
+				end
 			end
 		end
 
-		-- 对命中的实体应用伤害
-		local ent = bullet_tr.Entity
-		if E_IsValid(ent) and use_damage then
-			if ent:IsPlayer() then
-				-- 缓存玩家当前速度，用于后续修正（防止多次速度修改）
-				temp_vel_ents[ent] = temp_vel_ents[ent] or ent:GetVelocity()
-				if SERVER then
-					ent:SetLastHitGroup(bullet_tr.HitGroup)
-					if bullet_tr.HitGroup == HITGROUP_HEAD then
-						ent:SetWasHitInHead()
+		if not donothing then
+			-- 对命中的实体应用伤害
+			local ent = bullet_tr.Entity
+			if E_IsValid(ent) and use_damage then
+				if ent:IsPlayer() then
+					-- 缓存玩家当前速度，用于后续修正（防止多次速度修改）
+					temp_vel_ents[ent] = temp_vel_ents[ent] or ent:GetVelocity()
+					if SERVER then
+						ent:SetLastHitGroup(bullet_tr.HitGroup)
+						if bullet_tr.HitGroup == HITGROUP_HEAD then
+							ent:SetWasHitInHead()
+						end
+					end
+				elseif attacker:IsValidPlayer() then
+					-- 对于可移动的物理实体，记录物理攻击者
+					local phys = ent:GetPhysicsObject()
+					if ent:GetMoveType() == MOVETYPE_VPHYSICS and phys:IsValid() and phys:IsMoveable() then
+						ent:SetPhysicsAttacker(attacker)
 					end
 				end
-			elseif attacker:IsValidPlayer() then
-				-- 对于可移动的物理实体，记录物理攻击者
-				local phys = ent:GetPhysicsObject()
-				if ent:GetMoveType() == MOVETYPE_VPHYSICS and phys:IsValid() and phys:IsMoveable() then
-					ent:SetPhysicsAttacker(attacker)
+
+				ent:DispatchTraceAttack(damageinfo, bullet_tr, dir)
+			end
+
+			-- 在服务器端弹出累积的伤害数字（最后一颗子弹时）
+			if SERVER and num > 1 and i == num - 1 and attacker_player then
+				local dmg, dmgpos, haspl = attacker:PopDamageNumberSession()
+
+				if dmg > 0 and dmgpos then
+					GAMEMODE:DamageFloater(attacker, ent, dmgpos, dmg, haspl)
 				end
 			end
 
-			ent:DispatchTraceAttack(damageinfo, bullet_tr, dir)
-		end
+			-- 在客户端生成各种视觉效果（第一次预测时）
+			if IsFirstTimePredicted() then
+				local effectdata = EffectData()
+				effectdata:SetOrigin(bullet_tr.HitPos)
+				effectdata:SetStart(src)
+				effectdata:SetNormal(bullet_tr.HitNormal)
 
-		-- 在服务器端弹出累积的伤害数字（最后一颗子弹时）
-		if SERVER and num > 1 and i == num - 1 and attacker_player then
-			local dmg, dmgpos, haspl = attacker:PopDamageNumberSession()
-
-			if dmg > 0 and dmgpos then
-				GAMEMODE:DamageFloater(attacker, ent, dmgpos, dmg, haspl)
-			end
-		end
-
-		-- 在客户端生成各种视觉效果（第一次预测时）
-		if IsFirstTimePredicted() then
-			local effectdata = EffectData()
-			effectdata:SetOrigin(bullet_tr.HitPos)
-			effectdata:SetStart(src)
-			effectdata:SetNormal(bullet_tr.HitNormal)
-
-			if hitwater then
-				-- 击中水面时，可能仍然需要影响布娃娃
-				if use_ragdoll_impact then
-					util.Effect("RagdollImpact", effectdata)
+				if hitwater then
+					-- 击中水面时，可能仍然需要影响布娃娃
+					if use_ragdoll_impact then
+						util.Effect("RagdollImpact", effectdata)
+					end
+				elseif use_impact and not bullet_tr.HitSky and bullet_tr.Fraction < 1 then
+					effectdata:SetSurfaceProp(bullet_tr.SurfaceProps)
+					effectdata:SetDamageType(DMG_BULLET)
+					effectdata:SetHitBox(bullet_tr.HitBox)
+					effectdata:SetEntity(ent)
+					util.Effect("Impact", effectdata)
 				end
-			elseif use_impact and not bullet_tr.HitSky and bullet_tr.Fraction < 1 then
-				effectdata:SetSurfaceProp(bullet_tr.SurfaceProps)
-				effectdata:SetDamageType(DMG_BULLET)
-				effectdata:SetHitBox(bullet_tr.HitBox)
-				effectdata:SetEntity(ent)
-				util.Effect("Impact", effectdata)
-			end
 
-			-- 生成曳光弹效果
-			if use_tracer then
-				if self:IsPlayer() and E_IsValid(self:GetActiveWeapon()) then
-					effectdata:SetFlags( 0x0003 ) --TRACER_FLAG_USEATTACHMENT + TRACER_FLAG_WHIZ
-					effectdata:SetEntity(self:GetActiveWeapon())
-					effectdata:SetAttachment(1)
-				else
-					effectdata:SetEntity(self)
-					effectdata:SetFlags( 0x0001 ) -- TRACER_FLAG_WHIZ
+				-- 生成曳光弹效果
+				if use_tracer then
+					if self:IsPlayer() and E_IsValid(self:GetActiveWeapon()) then
+						effectdata:SetFlags( 0x0003 ) --TRACER_FLAG_USEATTACHMENT + TRACER_FLAG_WHIZ
+						effectdata:SetEntity(self:GetActiveWeapon())
+						effectdata:SetAttachment(1)
+					else
+						effectdata:SetEntity(self)
+						effectdata:SetFlags( 0x0001 ) -- TRACER_FLAG_WHIZ
+					end
+					effectdata:SetScale(5000) -- Tracer travel speed
+					util.Effect(tracer or "Tracer", effectdata)
 				end
-				effectdata:SetScale(5000) -- Tracer travel speed
-				util.Effect(tracer or "Tracer", effectdata)
 			end
 		end
 	end

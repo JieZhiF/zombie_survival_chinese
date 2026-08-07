@@ -306,7 +306,11 @@
         -- 保存钉子（zs_savenails）
         -- =====================================================================
         concommand.Add("zs_savenails", function (ply, cmd, args, strArg)
-            if IsValid(ply) and not ply:IsAdmin() then return end
+            if IsValid(ply) then
+                -- 与武器统一的权限判定（管理员或白名单）；服务器控制台（ply 无效）直接放行
+                local weptbl = weapons.Get("weapon_zs_nailplacer")
+                if not (weptbl and weptbl.CanUseNailPlacer and weptbl.CanUseNailPlacer(ply)) then return end
+            end
 
             file.CreateDir(MAPDATA_DIR)
             local datapath = GetMapDataPath()
@@ -657,7 +661,11 @@
         -- 手动加载命令：管理员强制全量加载（所有等级）
         -- =====================================================================
         concommand.Add("zs_loadnails", function(ply, cmd, args, strArg)
-            if IsValid(ply) and not ply:IsAdmin() then return end
+            if IsValid(ply) then
+                -- 与武器统一的权限判定（管理员或白名单）；服务器控制台（ply 无效）直接放行
+                local weptbl = weapons.Get("weapon_zs_nailplacer")
+                if not (weptbl and weptbl.CanUseNailPlacer and weptbl.CanUseNailPlacer(ply)) then return end
+            end
             ClearGhosts()
             local count = LoadNailsFromFile(999)
             if IsValid(ply) then

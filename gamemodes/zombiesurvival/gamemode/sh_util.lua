@@ -1283,7 +1283,7 @@ end
 function table.FullCopy( tab )
 
 	-- 如果输入为 nil，直接返回 nil
-	if (!tab) then return nil end
+	if (not tab) then return nil end
 
 	-- 创建新的空表，用于存放复制结果
 	local res = {}

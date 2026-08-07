@@ -325,15 +325,15 @@ function meta:SigilTeleportDestination(not_from_sigil, corrupted)
 	-- 找到最符合视线方向的传送目标
 	dist = -1
 	for i, sigil in pairs(sigils) do
-		if i == icurrent then continue end
-
-		spos = sigil:GetPos() - mypos
-		spos:Normalize()
-		d = spos:Dot(eyevector)
-		if d > dist then
-			dist = d
-			target = sigil
-			itarget = i
+		if i ~= icurrent then
+			spos = sigil:GetPos() - mypos
+			spos:Normalize()
+			d = spos:Dot(eyevector)
+			if d > dist then
+				dist = d
+				target = sigil
+				itarget = i
+			end
 		end
 	end
 
@@ -1278,4 +1278,29 @@ end
 -- 获取玩家的幻影生命值（通过数据表指定字段）
 function meta:GetPhantomHealth()
 	return self:GetDTFloat(DT_PLAYER_FLOAT_PHANTOMHEALTH)
+end
+
+-- 获取冰冻效果倍率：根据僵尸职业的冰冻抗性计算
+-- 抗性为去掉百分号的数值，直接表示冰冻效果百分比：
+--   0   = 完全免疫（寒冰boss等冰系僵尸用）
+--   100 = 标准效果（与不设置等价）
+--   200 = 双倍效果（更快被冻住）
+--   50  = 半效（更抗冻）
+-- 返回 0 表示免疫冰冻 buff
+function meta:GetFreezeEffectMult()
+	if not self:IsValidLivingZombie() then return 0 end
+
+	local class = self:GetZombieClassTable()
+	if not class or class.ResistFrost then return 0 end
+
+	local res = class.FreezeResistance
+	if res == 0 then return 0 end
+
+	return (res or 100) / 100
+end
+
+-- 玩家是否处于完全冻结状态（冰冻 buff 阶段3：定身+禁攻+受伤倍率）
+function meta:IsFrozenFull()
+	local status = self:GetStatus("freeze")
+	return status ~= nil and status:IsValid() and status:IsFullyFrozen()
 end

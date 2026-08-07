@@ -57,6 +57,9 @@ function SWEP:CanPrimaryAttack()
     local owner = self:GetOwner()
     if owner:IsHolding() or owner:GetBarricadeGhosting() or self:GetReloadFinish() > 0 then return false end
 
+    -- 完全冻结状态下无法攻击
+    if owner:IsFrozenFull() then return false end
+
     if self:Clip1() < self.RequiredClip then
         self:EmitSound(self.DryFireSound)
         self:SetNextPrimaryFire(CurTime() + math.max(0.25, self.Primary.Delay))

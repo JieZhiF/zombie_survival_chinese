@@ -84,28 +84,28 @@ function SWEP:Think()
 
 			local hit = false
 			for _, trace in ipairs(traces) do
-				if not trace.Hit then continue end
-
-				if trace.HitWorld then
-					-- 撞墙（法线较平的墙面）：命中并停止冲锋
-					if trace.HitNormal.z < 0.8 then
-						hit = true
-						self:MeleeHitWorld(trace)
-					end
-				else
-					local ent = trace.Entity
-					-- 撞到有效实体（非弹体）：结算冲锋伤害
-					if ent and ent:IsValid() and not ent:IsProjectile() then
-						hit = true
-						-- 玩家按冲锋玩家倍率、道具按扑击弱点；临界冲锋对非玩家翻倍
-						self:MeleeHit(ent, trace, damage * (ent:IsPlayer() and self.ChargeDamageVsPlayerMul or ent.PounceWeakness or 1) * (self:IsChargeCritical() and not ent:IsPlayer() and 2 or 1), 1)
-						if ent:IsPlayer() then
-							-- 被撞玩家沿冲锋方向击飞
-							ent:ThrowFromPositionSetZ(trace.StartPos, 120 * chargemul + owner:GetVelocity():Length() * 0.5)
-							-- 临界冲锋且有击倒冷却空档：附加击倒状态
-							if CurTime() >= (ent.NextKnockdown or 0) and self:IsChargeCritical() then
-								ent:GiveStatus("knockdown", self.ChargeKnockdown * chargemul)
-								ent.NextKnockdown = CurTime() + 4 * chargemul
+				if trace.Hit then
+					if trace.HitWorld then
+						-- 撞墙（法线较平的墙面）：命中并停止冲锋
+						if trace.HitNormal.z < 0.8 then
+							hit = true
+							self:MeleeHitWorld(trace)
+						end
+					else
+						local ent = trace.Entity
+						-- 撞到有效实体（非弹体）：结算冲锋伤害
+						if ent and ent:IsValid() and not ent:IsProjectile() then
+							hit = true
+							-- 玩家按冲锋玩家倍率、道具按扑击弱点；临界冲锋对非玩家翻倍
+							self:MeleeHit(ent, trace, damage * (ent:IsPlayer() and self.ChargeDamageVsPlayerMul or ent.PounceWeakness or 1) * (self:IsChargeCritical() and not ent:IsPlayer() and 2 or 1), 1)
+							if ent:IsPlayer() then
+								-- 被撞玩家沿冲锋方向击飞
+								ent:ThrowFromPositionSetZ(trace.StartPos, 120 * chargemul + owner:GetVelocity():Length() * 0.5)
+								-- 临界冲锋且有击倒冷却空档：附加击倒状态
+								if CurTime() >= (ent.NextKnockdown or 0) and self:IsChargeCritical() then
+									ent:GiveStatus("knockdown", self.ChargeKnockdown * chargemul)
+									ent.NextKnockdown = CurTime() + 4 * chargemul
+								end
 							end
 						end
 					end

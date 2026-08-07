@@ -295,7 +295,7 @@ end
 if not CLIENT then return end
 
 function SWEP:CreateMove(cmd)
-	if self.m_LastViewAngles and (self:GetChargeStart() != 0) then
+	if self.m_LastViewAngles and (self:GetChargeStart() ~= 0) then
 		local perc = self:GetChargePerc()
 		local difflimit = 15+512*(1-math.Clamp(perc/100,0,1))
 		local maxdiff = FrameTime() * difflimit

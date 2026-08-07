@@ -101,11 +101,11 @@ function SWEP:BuildingThink()
 	end
 
 	for _, ent in pairs(team.GetValidSpawnPoint(TEAM_UNDEAD)) do
-		if ent.Disabled then continue end
-
-		if util.SkewedDistance(ent:GetPos(), hitpos, 1.5) < GAMEMODE.CreeperNestDistBuildZSpawn then
-			self:SendMessage("too_close_to_a_spawn")
-			return
+		if not ent.Disabled then
+			if util.SkewedDistance(ent:GetPos(), hitpos, 1.5) < GAMEMODE.CreeperNestDistBuildZSpawn then
+				self:SendMessage("too_close_to_a_spawn")
+				return
+			end
 		end
 	end
 
@@ -118,11 +118,11 @@ function SWEP:BuildingThink()
 	end
 
 	for _, sigil in pairs(ents.FindByClass("prop_obj_sigil")) do
-		if sigil:GetSigilCorrupted() then continue end
-
-		if util.SkewedDistance(sigil:GetPos(), hitpos, 1.5) <= GAMEMODE.CreeperNestDistBuildNest then
-			self:SendMessage("too_close_to_uncorrupt")
-			return
+		if not sigil:GetSigilCorrupted() then
+			if util.SkewedDistance(sigil:GetPos(), hitpos, 1.5) <= GAMEMODE.CreeperNestDistBuildNest then
+				self:SendMessage("too_close_to_uncorrupt")
+				return
+			end
 		end
 	end
 

@@ -257,11 +257,14 @@ RegisterClientConVar("zs_hideviewmodels", "0", "HideViewModels", "隐藏第一�
 GM.TransparencyRadiusMax = 8192
 GM.TransparencyRadius = 0
 
+-- 捕获 gamemode 表引用供回调闭包使用：客户端回调环境中 GM 全局为 nil（见文件头注释），只能在加载期捕获
+local gm = GM or GAMEMODE
+
 -- 第一人称视角下玩家模型的透明半径（平方值）
-RegisterClientConVar("zs_transparencyradius", 140, "TransparencyRadius1p", "第一人称视角玩家模型透明半径", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, GM.TransparencyRadiusMax) ^ 2 end)
+RegisterClientConVar("zs_transparencyradius", 140, "TransparencyRadius1p", "第一人称视角玩家模型透明半径", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, gm.TransparencyRadiusMax) ^ 2 end)
 
 -- 第三人称视角下玩家模型的透明半径（平方值）
-RegisterClientConVar("zs_transparencyradius3p", 140, "TransparencyRadius3p", "第三人称视角玩家模型透明半径", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, GM.TransparencyRadiusMax) ^ 2 end)
+RegisterClientConVar("zs_transparencyradius3p", 140, "TransparencyRadius3p", "第三人称视角玩家模型透明半径", "int", function(v) return math.Clamp(tonumber(v) or 0, 0, gm.TransparencyRadiusMax) ^ 2 end)
 
 -- 启用或禁用移动时的视角倾斜效果
 RegisterClientConVar("zs_movementviewroll", "0", "MovementViewRoll", "移动时视角倾斜效果", "bool")

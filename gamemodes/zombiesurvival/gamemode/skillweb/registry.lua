@@ -88,7 +88,7 @@ end
 -- 通过饰品名称查找对应的技能ID
 -- ============================================================
 function GM:GetTrinketSkillID(trinketname)
-	for skillid, skill in pairs(GM.Skills) do
+	for skillid, skill in pairs(self.Skills) do
 		if skill.Trinket and skill.Trinket == trinketname then
 			return skillid
 		end

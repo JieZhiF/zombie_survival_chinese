@@ -415,12 +415,11 @@ function GM:ProfilerTick()
 	local changed = false
 	-- 遍历所有在线玩家
 	for _, pl in pairs(player.GetAll()) do
-		-- 验证玩家位置是否适合作为新节点
-		if not self:ProfilerPlayerValid(pl) then continue end
-
-		-- 将玩家的脚部位置添加为节点
-		table.insert(self.ProfilerNodes, pl:GetPos())
-		changed = true
+		if self:ProfilerPlayerValid(pl) then
+			-- 将玩家的脚部位置添加为节点
+			table.insert(self.ProfilerNodes, pl:GetPos())
+			changed = true
+		end
 	end
 
 	-- 如果节点列表有变化，保存数据

@@ -13,7 +13,7 @@ end
 
 local function ClearWorldModels()
 	local wep = GetSCKSWEP( LocalPlayer() )
-	if (!IsValid(wep)) then return end
+	if (not IsValid(wep)) then return end
 
 	wep.w_models = {}
 	if (wep.w_modelListing) then wep.w_modelListing:Clear() end
@@ -38,13 +38,13 @@ end
 
 
 local new_postdraw_viewmodel = function( self, ViewModel, Player, Weapon )
-	if ( !IsValid( Weapon ) ) then return false end
+	if ( not IsValid( Weapon ) ) then return false end
 	if Weapon.PostDrawViewModel then
 		Weapon:PostDrawViewModel( ViewModel, Weapon, Player )
 	end
 	player_manager.RunClass( Player, "PostDrawViewModel", ViewModel, Weapon )
 
-	if ( Weapon.UseHands || !Weapon:IsScripted() ) then
+	if ( Weapon.UseHands or not Weapon:IsScripted() ) then
 
 		local hands = Player:GetHands()
 		if ( IsValid( hands ) ) then
@@ -88,11 +88,12 @@ local function RefreshViewModelBoneMods()
 		local vm = LocalPlayer():GetViewModel()
 		if IsValid(vm) and IsValid(wep) then
 			for k, v in pairs(wep.v_models) do
-				if #v.bone < 1 then continue end
+				if #v.bone >= 1 then
 
 				local bone = vm:LookupBone(v.bone)
 				if not bone then
 					v.bone = replacement
+				end
 				end
 			end
 		end
@@ -134,7 +135,7 @@ local pweapon_vmodel = SimplePanel( pweapon )
 			RunConsoleCommand("swepck_viewmodel", newmod)
 
 			-- clear view model additions
-			if (newmod != next_v_model and file.Exists(newmod..".mdl", "GAME")) then
+			if (newmod ~= next_v_model and file.Exists(newmod..".mdl", "GAME")) then
 				next_v_model = newmod
 				--ClearViewModels()
 				RefreshViewModelBoneMods()
@@ -171,7 +172,7 @@ local pweapon_wmodel = SimplePanel( pweapon )
 			RunConsoleCommand("swepck_worldmodel", newmod)
 
 			-- clear world model additions
-			if (newmod != wep.cur_wmodel) then
+			if (newmod ~= wep.cur_wmodel) then
 				ClearWorldModels()
 			end
 
@@ -205,7 +206,7 @@ local pweapon_holdtype = SimplePanel( pweapon )
 			hbox:AddChoice( v )
 		end
 		hbox.OnSelect = function(panel,index,value)
-			if (!value) then return end
+			if (not value) then return end
 			wep:SetWeaponHoldType( value )
 			wep.HoldType = value
 			RunConsoleCommand("swepck_setholdtype", value)
@@ -348,15 +349,16 @@ local pweapon_bone = SimplePanel( pweapon )
 
 pweapon_bone:Dock(TOP)
 
-if (!wep.save_data.v_bonemods) then
+if (not wep.save_data.v_bonemods) then
 	wep.save_data.v_bonemods = {}
 end
 
 -- backwards compatability with old bone scales
 if (wep.save_data.v_bonescales) then
 	for k, v in pairs(wep.save_data.v_bonescales) do
-		if (v == Vector(1,1,1)) then continue end
+		if (v ~= Vector(1,1,1)) then
 		wep.save_data.v_bonemods[k] = { scale = v, pos = Vector(0,0,0), angle = Angle(0,0,0) }
+		end
 	end
 end
 wep.save_data.v_bonescales = nil
@@ -381,7 +383,7 @@ bonepanel:Dock(TOP)
 local function CreateBoneMod( selbone, preset_data )
 
 	local data = wep.v_bonemods[selbone]
-	if (!preset_data) then preset_data = {} end
+	if (not preset_data) then preset_data = {} end
 
 	data.scale = preset_data.scale or Vector(1,1,1)
 	data.pos = preset_data.pos or Vector(0,0,0)
@@ -411,7 +413,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vsywang:SetMinMax( 0.01, 5 )
 			vsywang:SetDecimals( 3 )
 			vsywang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].scale.y = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].scale.y = tonumber(value) end
 			end
 			vsywang:DockMargin(10,0,0,0)
 
@@ -421,7 +423,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vszwang:SetMinMax( 0.01, 5 )
 			vszwang:SetDecimals( 3 )
 			vszwang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].scale.z = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].scale.z = tonumber(value) end
 			end
 			vszwang:DockMargin(10,0,0,0)
 
@@ -475,7 +477,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vposxwang:SetMinMax( -30, 30 )
 			vposxwang:SetDecimals( 3 )
 			vposxwang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].pos.x = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].pos.x = tonumber(value) end
 			end
 		vposxwang:DockMargin(10,0,0,0)
 
@@ -485,7 +487,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vposywang:SetMinMax( -30, 30 )
 			vposywang:SetDecimals( 3 )
 			vposywang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].pos.y = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].pos.y = tonumber(value) end
 			end
 		vposywang:DockMargin(10,0,0,0)
 
@@ -495,7 +497,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vposzwang:SetMinMax( -30, 30 )
 			vposzwang:SetDecimals( 3 )
 			vposzwang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].pos.z = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].pos.z = tonumber(value) end
 			end
 		vposzwang:DockMargin(10,0,0,0)
 
@@ -540,7 +542,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vangxwang:SetMinMax( -180, 180 )
 			vangxwang:SetDecimals( 3 )
 			vangxwang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].angle.p = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].angle.p = tonumber(value) end
 			end
 		vangxwang:DockMargin(10,0,0,0)
 
@@ -550,7 +552,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vangywang:SetMinMax( -180, 180 )
 			vangywang:SetDecimals( 3 )
 			vangywang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].angle.y = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].angle.y = tonumber(value) end
 			end
 		vangywang:DockMargin(10,0,0,0)
 
@@ -560,7 +562,7 @@ local function CreateBoneMod( selbone, preset_data )
 			vangzwang:SetMinMax( -180, 180 )
 			vangzwang:SetDecimals( 3 )
 			vangzwang.Wang.ConVarChanged = function( p, value )
-				if (selbone != "") then wep.v_bonemods[selbone].angle.r = tonumber(value) end
+				if (selbone ~= "") then wep.v_bonemods[selbone].angle.r = tonumber(value) end
 			end
 		vangzwang:DockMargin(10,0,0,0)
 
@@ -608,9 +610,9 @@ end
 
 vsbonebox.OnSelect = function( p, index, value )
 	local selbone = value
-	if (!selbone or selbone == "") then return end
+	if (not selbone or selbone == "") then return end
 
-	if (!wep.v_bonemods[selbone]) then
+	if (not wep.v_bonemods[selbone]) then
 		wep.v_bonemods[selbone] = { scale = Vector(1,1,1), pos = Vector(0,0,0), angle = Angle(0,0,0) }
 	end
 

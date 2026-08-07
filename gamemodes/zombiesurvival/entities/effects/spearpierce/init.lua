@@ -1,6 +1,6 @@
 function EFFECT:Init(data)
 	
-	//self.Position = self:GetTracerShootPos(data:GetOrigin(), self.WeaponEnt, self.Attachment)
+	--self.Position = self:GetTracerShootPos(data:GetOrigin(), self.WeaponEnt, self.Attachment)
 	self.Position = data:GetOrigin()
 	self.Forward = data:GetNormal()
 	self.Angle = self.Forward:Angle()
@@ -18,15 +18,15 @@ function EFFECT:Init(data)
 		light.DieTime = CurTime() + 0.4
 	end
 	
-	local AddVel = 5//self.WeaponEnt:GetOwner():GetVelocity()
+	local AddVel = 5 --self.WeaponEnt:GetOwner():GetVelocity()
 	local emitter = ParticleEmitter(self.Position)
 
 	
 	
 for i=1, 1 do
-	if emitter != nil then	
+	if emitter ~= nil then	
 		local particle = emitter:Add( "effects/yellowflare", self.Position, (Color(255,255,255,25)) )
-		if particle != nil then
+		if particle ~= nil then
 
 			particle:SetVelocity( 0 * VectorRand() + 0 * VectorRand() + 0 * VectorRand() )
 			--particle:SetGravity( Vector( 0, 0, -50 ) )
@@ -43,9 +43,9 @@ for i=1, 1 do
 end	
 	
 for i=0, 10 do
-	if emitter != nil then	
+	if emitter ~= nil then	
 		local particle = emitter:Add( "effects/ar2_altfire2", self.Position, (Color(255,100,0,25)) )
-		if particle != nil then
+		if particle ~= nil then
 
 			particle:SetVelocity( 50 * VectorRand() + 50 * VectorRand() + 50 * VectorRand() )
 			particle:SetGravity( Vector( 0, 0, 0 ) )
@@ -67,7 +67,7 @@ for i=0, 10 do
 end
 emitter:Finish()
 end
-//end
+--end
 
 function EFFECT:Think()
 

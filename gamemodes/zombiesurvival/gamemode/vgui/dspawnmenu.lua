@@ -54,37 +54,38 @@ function PANEL:RefreshContents()
 
 	-- 遍历所有巢穴，为每个巢穴创建观察按钮
 	for k, nest in ipairs(GAMEMODE.CachedNests) do
-		if not nest:IsValid() then continue end
-		local nown = nest:GetNestOwner()
-		occurs[nown] = (occurs[nown] or 0) + 1
-		local ownname = nown:IsValidZombie() and nown:ClippedName() or ""
+		if nest:IsValid() then
+			local nown = nest:GetNestOwner()
+			occurs[nown] = (occurs[nown] or 0) + 1
+			local ownname = nown:IsValidZombie() and nown:ClippedName() or ""
 
-		local item = EasyButton(self, "巢 (" .. ownname .. " - " .. occurs[nown] .. ")", 8, 4)
-		item:SetFont("ZSHUDFontSmall")
-		item:SizeToContents()
-		item.DoClick = function()
-			net.Start(NET_MSG.NESTSPEC)
-				net.WriteEntity(nest)
-			net.SendToServer()
+			local item = EasyButton(self, "巢 (" .. ownname .. " - " .. occurs[nown] .. ")", 8, 4)
+			item:SetFont("ZSHUDFontSmall")
+			item:SizeToContents()
+			item.DoClick = function()
+				net.Start(NET_MSG.NESTSPEC)
+					net.WriteEntity(nest)
+				net.SendToServer()
+			end
+
+			self:AddItem(item)
 		end
-
-		self:AddItem(item)
 	end
 
 	-- 遍历所有幼体（熊孩子BOSS扔出的婴儿），为每个创建观察按钮
 	for k, baby in ipairs(GAMEMODE.CachedBabies) do
-		if not baby:IsValid() then continue end
+		if baby:IsValid() then
+			local item = EasyButton(self, "Gore Child", 8, 4)
+			item:SetFont("ZSHUDFontSmall")
+			item:SizeToContents()
+			item.DoClick = function()
+				net.Start(NET_MSG.NESTSPEC)
+					net.WriteEntity(baby)
+				net.SendToServer()
+			end
 
-		local item = EasyButton(self, "Gore Child", 8, 4)
-		item:SetFont("ZSHUDFontSmall")
-		item:SizeToContents()
-		item.DoClick = function()
-			net.Start(NET_MSG.NESTSPEC)
-				net.WriteEntity(baby)
-			net.SendToServer()
+			self:AddItem(item)
 		end
-
-		self:AddItem(item)
 	end
 
 	self:InvalidateLayout()

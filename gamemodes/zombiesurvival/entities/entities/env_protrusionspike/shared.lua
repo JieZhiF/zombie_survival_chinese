@@ -17,6 +17,9 @@ ENT.IgnoreMelee = true
 -- 忽略玩家视线射线（可被透视）
 ENT.IgnoreTraces = true
 
+-- 冻结模式标志（DT 同步）：true = 冰冻状态生成的附着尖刺（持续存在，由状态实体移除）
+AccessorFuncDT(ENT, "FreezeMode", "Bool", 0)
+
 -- 预缓存尖刺模型与触发音效，避免运行时卡顿
 util.PrecacheModel("models/props_wasteland/rockcliff06d.mdl")
 util.PrecacheSound("physics/glass/glass_largesheet_break1.wav")

@@ -1,54 +1,48 @@
-# VGUI KNOWLEDGE BASE
+# VGUI Panels
 
 ## OVERVIEW
 
-Client-side UI layer for the gamemode: 29 files, all client realm, loaded by cl_init.lua. Covers full-screen menus, always-on HUD components, and reusable widget primitives.
+All custom UI for the gamemode: HUD elements, menu windows, and a small reusable control library, loaded client-side via `cl_init.lua`.
 
-## REGISTRATION PATTERNS
+## STRUCTURE
 
-**A - vgui.Register class (dominant, 26/29 files)**: `local PANEL = {}` + methods + `vgui.Register("ClassName", PANEL, "BaseClass")`; instantiate via `vgui.Create("ClassName", parent)`. One PANEL table per registered class. Multi-registration files use a separate PANEL table per class: pclassselect (4), zsstatusarea (2), dexnotificationslist (2).
+Filename prefix groups panels by role:
 
-**B - Make* factory (9 files)**: global functions building ad-hoc UIs from stock Derma controls, storing the instance in a matching singleton global: MakepWorth (pWorth), MakepEndBoard, MakepWeapons, MakepOptions, MakepHelp, MakepCredits, MakepTutorial, MakepPlayerModel, MakepPlayerColor.
+- `d*.lua`: Derma-style widgets and side menus (dammocounter, dpingmeter, dteamcounter, dteamheading, dsidemenu, dspawnmenu, dmodelkillicon, dmodelpanelex)
+- `p*.lua`: full-screen game panels, each with a `GM:Open*` or `Makep*` entry point (pworth, parsenal, pclassselect, pendboard, pmainmenu, phelp, poptions, ptutorial, pweapons, pmutationshop, premantle)
+- `zs*.lua`: always-on HUD areas (zsgamestate, zshealtharea, zsstatusarea, zschanginglabel)
+- `dex*.lua`: DEX reusable control library (dexroundedframe, dexroundedpanel, dexrotatedimage, dexnotificationslist, dexchanginglabel)
+- `mainmenu.lua`: legacy NOX-era main menu, unused in the current version
 
-**C - GM method (2 files)**: `GM:OpenArsenalMenu` (parsenal.lua) stores the frame in `self.ArsenalInterface`. Patterns overlap within files; counts above are per-file usage, not exclusive buckets.
+## WHERE TO LOOK
 
-## NAMING
-
-File prefix taxonomy:
-
-| Prefix | Meaning | Examples |
-|--------|---------|----------|
-| p* | full-screen menu | pmainmenu, parsenal, pworth, pweapons, pclassselect, poptions, phelp, ptutorial, pendboard, premantle, pmutationshop |
-| zs* | game HUD component | zshealtharea -> ZSHealthArea, zsgamestate -> ZSGameState, zsstatusarea -> ZSStatusArea / ZSStatusModern |
-| dex* | reusable primitive, legacy DEX framework | dexroundedframe -> DEXRoundedFrame (extends DFrame), dexroundedpanel -> DEXRoundedPanel, dexchanginglabel -> DEXChangingLabel, dexrotatedimage -> DEXRotatedImage, dexnotificationslist -> DEXNotification / DEXNotificationsList |
-| d* | generic Derma component | dmodelpanelex -> DModelPanelEx (extends DModelPanel), dmodelkillicon -> DModelKillIcon, dspawnmenu -> DZombieSpawnMenu, dsidemenu -> DSideMenu, dammocounter, dpingmeter, dteamcounter, dteamheading |
-
-Registered class names: ZS* for game panels, D*/DEX* for reusable widgets, descriptive names for complex menus (ModernClassSelect, MutationShopFrame, ZSRemantlePath).
-
-## KEY MENUS
-
-| Trigger | File / entry | Panel / purpose |
-|---------|--------------|-----------------|
-| F1 | pmainmenu.lua | hub to help / weapons / options / playermodel |
-| F2 (in-wave) | parsenal.lua, `GM:OpenArsenalMenu` | point shop; auto-closes on mouse leave |
-| F2 (pre-wave) | pworth.lua, `MakepWorth()` | starting loadout shop |
-| F3 | pclassselect.lua, ModernClassSelect | zombie class select with evolution chains |
-| ALT hold (zombie) | dspawnmenu.lua, DZombieSpawnMenu | spawn point select |
-| ALT hold (human) | dsidemenu.lua, DSideMenu | ammo give / drop |
-| Round end | pendboard.lua, `MakepEndBoard(winner)` | scoreboard with honorable mentions |
-| Mutation shop | pmutationshop.lua, MutationShopFrame | zombie mutations |
-| Weapon upgrade | premantle.lua, ZSRemantlePath | remantle path tree |
-| Tutorial | ptutorial.lua, `MakepTutorial()` | server-triggered, typewriter effect |
-
-Always-on HUD components: zshealtharea (bottom-left health + armor with damage trail), zsgamestate (top: wave / countdown / team counts), zsstatusarea (status effect icons), dexnotificationslist (toasts).
-
-mainmenu.lua is LEGACY / unused (NOX era). Do not wire it in.
+| Task | Location | Notes |
+|------|----------|-------|
+| Starting-shop (Worth) menu | `pworth.lua` | 3-column layout; opened by `GM:OpenWorth()` in `cl_init.lua` |
+| Zombie class selection | `pclassselect.lua` | Registers ClassSelect, ClassButton, ClassDetailPanel, ZombieClassPreview; entry `GM:OpenClassSelect()` |
+| Arsenal / item viewer | `parsenal.lua` | Entry `GM:OpenArsenalMenu()`; defines `GAMEMODE:CreateItemInfoViewer()` reused by pworth |
+| End-of-round board | `pendboard.lua` | `MakepEndBoard()` + `GM:AddHonorableMention()`; rows are DEndBoardPlayerPanel |
+| F1 help / main menu | `pmainmenu.lua` | `GM:ShowHelp()`; player model and color pickers |
+| Options | `poptions.lua` | Registers ZSOptions |
+| Mutation shop | `pmutationshop.lua` | MutationShopFrame + ZSMutationItemRow |
+| Remantle paths | `premantle.lua` | ZSRemantlePath panel |
+| Wave/game-state HUD | `zsgamestate.lua` | ZSGameState; created once as `self.GameStatePanel` in cl_init (~line 1739) |
+| Health HUD | `zshealtharea.lua` | ZSHealthArea; `self.HealthHUD` in cl_init |
+| Status effect HUD | `zsstatusarea.lua` | ZSStatusArea + ZSStatusModern; `self.StatusHUD` in cl_init |
+| Kill/icon notifications | `dexnotificationslist.lua` | DEXNotificationsList; instantiated twice (top + center) in cl_init |
+| Ammo counter | `dammocounter.lua` | DAmmoCounter, embedded in the human side menu |
+| Side menus | `dsidemenu.lua`, `dspawnmenu.lua` | DSideMenu (human) and DZombieSpawnMenu (zombie) both derive from DZSSideMenuBase; built in cl_init (~lines 2014, 2120) |
 
 ## CONVENTIONS
 
-- Singleton guard before opening any menu: `if pXxx and pXxx:IsValid() then pXxx:Remove() end`.
-- Arsenal and remantle auto-close via `hook.Add("Think")` polling `gui.MousePos()` against panel bounds with a 16px margin.
-- Inheritance chain: DModelKillIcon -> DModelPanelEx -> DModelPanel.
-- zschanginglabel.lua re-registers DEXChangingLabel: historical alias, keep it.
-- One definition per file; class name must match the table passed to vgui.Register exactly.
-- translate.Get, BetterScreenScale sizing, MySelf global, file-realm prefixes: see root AGENTS.md.
+- Registration: `vgui.Register("Name", PANEL, "BaseClass")` at file bottom; registered names often differ from filenames (pworth.lua registers ZSWorthButton, pclassselect.lua registers ClassSelect).
+- Instantiation: HUD panels are created once in `cl_init.lua` and stored on the GM table; menus are built on demand by `GM:Open*`/`Makep*` functions and guarded by an `IsValid()` popup check.
+- DEX controls are the shared widget set; prefer DEXRoundedFrame/DEXRoundedPanel over raw DFrame/DPanel for new windows.
+- Large `p*` files open with a Chinese region map (区域地图, four fields: [区域]/[位置]/[作用]/[常改]) mapping each window section to its function; keep this map in sync when editing.
+- Fonts referenced here (HarmonyOS Sans SC, etc.) live in `content/resource/fonts/`; CJK text is expected throughout.
+
+## ANTI-PATTERNS
+
+- `zschanginglabel.lua` re-registers the name "DEXChangingLabel" with itself as base, overwriting the registration in `dexchanginglabel.lua`. Load order decides which wins; do not add a third registration of this name.
+- `mainmenu.lua` is dead code kept for reference; new menu work goes in `pmainmenu.lua`.
+- Do not create HUD panels per-frame or inside Paint hooks; they are singletons created once at client init.

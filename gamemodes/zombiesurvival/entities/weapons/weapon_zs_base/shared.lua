@@ -142,24 +142,25 @@ local function autoinclude(dir)
     local files, dirs = file.Find(dir .. "/*.lua", "LUA")
 
     for _, filename in pairs(files) do
-        if filename == "shared.lua" or filename == "init.lua" or filename == "cl_init.lua" then continue end
-        local luatype = string.sub(filename, 1, 3)
+        if filename ~= "shared.lua" and filename ~= "init.lua" and filename ~= "cl_init.lua" then
+            local luatype = string.sub(filename, 1, 3)
 
-        if luatype == "sv_" then
-            if SERVER then
+            if luatype == "sv_" then
+                if SERVER then
+                    include(dir .. "/" .. filename)
+                end
+            elseif luatype == "cl_" then
+                if SERVER then
+                    AddCSLuaFile(dir .. "/" .. filename)
+                else
+                    include(dir .. "/" .. filename)
+                end
+            elseif luatype == "sh_" then
+                if SERVER then
+                    AddCSLuaFile(dir .. "/" .. filename)
+                end
                 include(dir .. "/" .. filename)
             end
-        elseif luatype == "cl_" then
-            if SERVER then
-                AddCSLuaFile(dir .. "/" .. filename)
-            else
-                include(dir .. "/" .. filename)
-            end
-        elseif luatype == "sh_" then
-            if SERVER then
-                AddCSLuaFile(dir .. "/" .. filename)
-            end
-            include(dir .. "/" .. filename)
         end
     end
 

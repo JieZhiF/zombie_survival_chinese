@@ -884,12 +884,10 @@ function PANEL:Think()
 		self.TreeCount = {}
 			
 		for skill, skillinf in pairs(GAMEMODE.Skills) do
-			if not skillinf.Tree then 
-				continue
+			if skillinf.Tree then
+				local tree = skillinf.Tree
+				self.TreeCount[tree] = (self.TreeCount[tree] or 0) + 1
 			end
-				
-			local tree = skillinf.Tree
-			self.TreeCount[tree] = (self.TreeCount[tree] or 0) + 1
 		end
 			
 		local active = MySelf:GetUnlockedSkills()
@@ -898,12 +896,10 @@ function PANEL:Think()
 			for i, j in pairs(active) do
 				local skillinf = GAMEMODE.Skills[j]
 					
-				if not skillinf or not skillinf.Tree then
-					continue
-				end
-					
-				if skillinf.Tree == tree then
-					self.Progress[tree] = (self.Progress[tree] or 0) + 1
+				if skillinf and skillinf.Tree then
+					if skillinf.Tree == tree then
+						self.Progress[tree] = (self.Progress[tree] or 0) + 1
+					end
 				end
 			end
 		end
@@ -1156,18 +1152,10 @@ function PANEL:Paint(w, h)
 	render.SetMaterial(matBeam)
 		
 	for id, node in pairs(skillnodes) do
-		if IsValid(node) then
+		if IsValid(node) and not node.Skill.Disabled and (node:GetPos() - campost):LengthSqr() <= camheightadj then
 			nodepos = node:GetPos()
 				
-			if (nodepos - campost):LengthSqr() > camheightadj then
-				continue
-			end
-				
 			skill = node.Skill
-				
-			if skill.Disabled then
-				continue
-			end
 				
 			if skill.Connections then
 				for connectid, _ in pairs(skill.Connections) do
@@ -1247,11 +1235,8 @@ function PANEL:Paint(w, h)
 		
 	-- 渲染技能节点（3D悬空球 + 文字标签）
 	for id, node in pairs(skillnodes) do
-		if IsValid(node) then
+		if IsValid(node) and (node:GetPos() - campost):LengthSqr() <= camheightadj then
 			nodepos = node:GetPos()
-			if (nodepos - campost):LengthSqr() > camheightadj then
-				continue
-			end
 				
 			skillid = node.SkillID
 			skill = node.Skill
@@ -1314,7 +1299,7 @@ function PANEL:Paint(w, h)
 				for k,v in pairs(GAMEMODE.SkillModifiers[skillid]) do
 					local i = v or 1
 
-					if k >= 6 and !table.HasValue(exlude2, k) then
+					if k >= 6 and not table.HasValue(exlude2, k) then
 						i = (i*100).."%"
 					end
 					if (v or 0) > 0 then

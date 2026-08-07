@@ -38,14 +38,14 @@ CreateConVar("sck_autosave", 600, FCVAR_ARCHIVE, "Seconds between each SCK autos
 local debugging = false
 
 function SCKDebug( msg )
-	if !debugging then return end
+	if not debugging then return end
 	MsgN("[SCK] "..msg)
 end
 
 local repmsg = {}
 function SCKDebugRepeat( tag, msg )
-	if !debugging then return end
-	if !repmsg[tag] then repmsg[tag] = { last = 0, num = 0 } end
+	if not debugging then return end
+	if not repmsg[tag] then repmsg[tag] = { last = 0, num = 0 } end
 	repmsg[tag].num = repmsg[tag].num + 1
 	if (CurTime() - repmsg[tag].last >= 1) then
 		MsgN("[SCK][Repeated "..repmsg[tag].num.." times in last sec] "..msg)
@@ -143,7 +143,7 @@ end
 
 -- ==== ToggleIronSights - 切换机瞄开关 ====
 function SWEP:ToggleIronSights()
-	self.dt.ironsights = !self.dt.ironsights
+	self.dt.ironsights = not self.dt.ironsights
 end
 
 -- ==== SetIronSights - 设置机瞄状态 ====
@@ -168,7 +168,7 @@ end
 
 -- ==== ToggleThirdPerson - 切换第三人称视角 ====
 function SWEP:ToggleThirdPerson()
-	self:SetThirdPerson( !self.dt.thirdperson )
+	self:SetThirdPerson( not self.dt.thirdperson )
 end
 
 -- ==== SetThirdPerson - 设置第三人称：切换视角实体并隐藏准星 ====
@@ -176,8 +176,8 @@ function SWEP:SetThirdPerson( b )
 	self.dt.thirdperson = b
 
 	local owner = self:GetOwner()
-	if (!IsValid(owner)) then owner = self.LastOwner end
-	if (!IsValid(owner)) then return end
+	if (not IsValid(owner)) then owner = self.LastOwner end
+	if (not IsValid(owner)) then return end
 
 	if (self.dt.thirdperson) then
 		owner:SetViewEntity(game.GetWorld())
@@ -206,11 +206,11 @@ function SWEP:GetViewModelPosition(pos, ang)
 			
 			if self.ViewModelFlip then
 				
-				/*local m = Matrix()
+				--[[local m = Matrix()
 				m:SetTranslation( self.LockVMPos )
 				m:SetAngles( self.LockVMAng )
 				
-				local np, na = WorldToLocal( m:GetTranslation(), m:GetAngles(), pos, ang )*/
+				local np, na = WorldToLocal( m:GetTranslation(), m:GetAngles(), pos, ang )]]
 				
 				local np, na = WorldToLocal( self.LockVMPos, self.LockVMAng, pos, ang )
 				

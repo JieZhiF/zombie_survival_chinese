@@ -25,23 +25,23 @@ function SWEP:DoThrow()
 	local ang
 
 	for k, spr in pairs(self.PoisonPattern) do
-		if k == "BaseClass" then continue end
+		if k ~= "BaseClass" then
+			-- 基于瞄准方向做水平/垂直偏移后生成毒液投射物
+			ang = Angle(aimang.p, aimang.y, aimang.r)
+			ang:RotateAroundAxis(ang:Up(), spr[1] * 12.5)
+			ang:RotateAroundAxis(ang:Right(), spr[2] * 5)
+			local heading = ang:Forward()
 
-		-- 基于瞄准方向做水平/垂直偏移后生成毒液投射物
-		ang = Angle(aimang.p, aimang.y, aimang.r)
-		ang:RotateAroundAxis(ang:Up(), spr[1] * 12.5)
-		ang:RotateAroundAxis(ang:Right(), spr[2] * 5)
-		local heading = ang:Forward()
+			local ent = ents.Create("projectile_poisonflesh")
+			if ent:IsValid() then
+				ent:SetPos(startpos + heading * 8)
+				ent:SetOwner(owner)
+				ent:Spawn()
 
-		local ent = ents.Create("projectile_poisonflesh")
-		if ent:IsValid() then
-			ent:SetPos(startpos + heading * 8)
-			ent:SetOwner(owner)
-			ent:Spawn()
-
-			local phys = ent:GetPhysicsObject()
-			if phys:IsValid() then
-				phys:SetVelocityInstantaneous(heading * self.PoisonThrowSpeed)
+				local phys = ent:GetPhysicsObject()
+				if phys:IsValid() then
+					phys:SetVelocityInstantaneous(heading * self.PoisonThrowSpeed)
+				end
 			end
 		end
 	end

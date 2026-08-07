@@ -121,31 +121,31 @@ function SWEP:Swung()
 	local ent
 
 	for _, trace in ipairs(traces) do
-		if not trace.Hit then continue end
+		if trace.Hit then
+			ent = trace.Entity
 
-		ent = trace.Entity
+			hit = true
 
-		hit = true
-
-		if trace.HitWorld then
-			self:MeleeHitWorld(trace)
-		elseif ent and ent:IsValid() then
-			self:MeleeHit(ent, trace, damage)
-		end
-
-		--if IsFirstTimePredicted() then
-			effectdata:SetOrigin(trace.HitPos)
-			effectdata:SetStart(trace.StartPos)
-			effectdata:SetNormal(trace.HitNormal)
-			util.Effect("RagdollImpact", effectdata)
-			if not trace.HitSky then
-				effectdata:SetSurfaceProp(trace.SurfaceProps)
-				effectdata:SetDamageType(self.MeleeDamageType) --effectdata:SetDamageType(DMG_BULLET)
-				effectdata:SetHitBox(trace.HitBox)
-				effectdata:SetEntity(ent)
-				util.Effect("Impact", effectdata)
+			if trace.HitWorld then
+				self:MeleeHitWorld(trace)
+			elseif ent and ent:IsValid() then
+				self:MeleeHit(ent, trace, damage)
 			end
-		--end
+
+			--if IsFirstTimePredicted() then
+				effectdata:SetOrigin(trace.HitPos)
+				effectdata:SetStart(trace.StartPos)
+				effectdata:SetNormal(trace.HitNormal)
+				util.Effect("RagdollImpact", effectdata)
+				if not trace.HitSky then
+					effectdata:SetSurfaceProp(trace.SurfaceProps)
+					effectdata:SetDamageType(self.MeleeDamageType) --effectdata:SetDamageType(DMG_BULLET)
+					effectdata:SetHitBox(trace.HitBox)
+					effectdata:SetEntity(ent)
+					util.Effect("Impact", effectdata)
+				end
+			--end
+		end
 	end
 
 	--if IsFirstTimePredicted() then

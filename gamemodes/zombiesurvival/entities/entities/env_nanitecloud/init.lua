@@ -26,40 +26,42 @@ function ENT:AcceptInput(name, activator, caller, arg)
 	local totalheal = self.HealPower * (self:GetOwner().RepairRateMul or 1)
 
 	for _, hitent in pairs(ents.FindInSphere(pos, self.Radius * (owner.CloudRadius or 1))) do
-		if not hitent:IsValid() or hitent == self or not WorldVisible(pos, hitent:NearestPoint(pos)) then
-			continue
-		end
+		if hitent:IsValid() and hitent ~= self and WorldVisible(pos, hitent:NearestPoint(pos)) then
 
-		local healed = false
+			local healed = false
 
-		if hitent:IsNailed() then
-			local oldhealth = hitent:GetBarricadeHealth()
-			if oldhealth <= 0 or oldhealth >= hitent:GetMaxBarricadeHealth() or hitent:GetBarricadeRepairs() <= 0.01 then continue end
+			if hitent:IsNailed() then
+				local oldhealth = hitent:GetBarricadeHealth()
+				if oldhealth > 0 and oldhealth < hitent:GetMaxBarricadeHealth() and hitent:GetBarricadeRepairs() > 0.01 then
 
-			hitent:SetBarricadeHealth(math.min(hitent:GetMaxBarricadeHealth(), hitent:GetBarricadeHealth() + math.min(hitent:GetBarricadeRepairs(), totalheal)))
-			healed = hitent:GetBarricadeHealth() - oldhealth
-			hitent:SetBarricadeRepairs(math.max(hitent:GetBarricadeRepairs() - healed, 0))
+					hitent:SetBarricadeHealth(math.min(hitent:GetMaxBarricadeHealth(), hitent:GetBarricadeHealth() + math.min(hitent:GetBarricadeRepairs(), totalheal)))
+					healed = hitent:GetBarricadeHealth() - oldhealth
+					hitent:SetBarricadeRepairs(math.max(hitent:GetBarricadeRepairs() - healed, 0))
+				end
 
-		elseif hitent.GetObjectHealth then
-			-- Taking the nil tr parameter for granted for now
-			if hitent.HitByWrench and hitent:HitByWrench(self, owner, nil) then continue end
+			elseif hitent.GetObjectHealth then
+				-- Taking the nil tr parameter for granted for now
+				if not (hitent.HitByWrench and hitent:HitByWrench(self, owner, nil)) then
 
-			local oldhealth = hitent:GetObjectHealth()
-			if oldhealth <= 0 or oldhealth >= hitent:GetMaxObjectHealth() or hitent.m_LastDamaged and CurTime() < hitent.m_LastDamaged + 4 then continue end
+					local oldhealth = hitent:GetObjectHealth()
+					if oldhealth > 0 and oldhealth < hitent:GetMaxObjectHealth() and (not hitent.m_LastDamaged or CurTime() >= hitent.m_LastDamaged + 4) then
 
-			hitent:SetObjectHealth(math.min(hitent:GetMaxObjectHealth(), hitent:GetObjectHealth() + totalheal/2))
-			healed = hitent:GetObjectHealth() - oldhealth
-		end
+						hitent:SetObjectHealth(math.min(hitent:GetMaxObjectHealth(), hitent:GetObjectHealth() + totalheal/2))
+						healed = hitent:GetObjectHealth() - oldhealth
+					end
+				end
+			end
 
-		if healed and owner:IsValidLivingHuman() then
-			hitent:EmitSound("npc/dog/dog_servo"..math.random(7, 8)..".wav", 70, math.random(100, 105))
-			gamemode.Call("PlayerRepairedObject", owner, hitent, healed, self)
+			if healed and owner:IsValidLivingHuman() then
+				hitent:EmitSound("npc/dog/dog_servo"..math.random(7, 8)..".wav", 70, math.random(100, 105))
+				gamemode.Call("PlayerRepairedObject", owner, hitent, healed, self)
 
-			local effectdata = EffectData()
-				effectdata:SetOrigin(hitent:GetPos())
-				effectdata:SetNormal((self:GetPos() - hitent:GetPos()):GetNormalized())
-				effectdata:SetMagnitude(1)
-			util.Effect("nailrepaired", effectdata, true, true)
+				local effectdata = EffectData()
+					effectdata:SetOrigin(hitent:GetPos())
+					effectdata:SetNormal((self:GetPos() - hitent:GetPos()):GetNormalized())
+					effectdata:SetMagnitude(1)
+				util.Effect("nailrepaired", effectdata, true, true)
+			end
 		end
 	end
 

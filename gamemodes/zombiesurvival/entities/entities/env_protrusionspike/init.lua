@@ -18,6 +18,19 @@ function ENT:Initialize()
 	-- 无实体碰撞（仅作为伤害区域表现，不阻挡移动）
 	self:PhysicsInit(SOLID_NONE)
 
+	-- 冻结模式：纯视觉冰刺，附着在玩家身上跟随移动，
+	-- 不触发范围伤害、不自动销毁（由状态实体负责移除）
+	if self:GetFreezeMode() then
+		local owner = self:GetOwner()
+		if owner:IsValid() then
+			self:SetParent(owner)
+			-- 尖刺中心上移到玩家身体中上部，避免一半埋进模型底部
+			-- （玩家原点在脚底，模型中心默认在原点）
+			self:SetLocalPos(Vector(0, 0, self.FreezeHeight or 25))
+		end
+		return
+	end
+
 	-- 生成瞬间立即触发范围伤害
 	self:Explode()
 

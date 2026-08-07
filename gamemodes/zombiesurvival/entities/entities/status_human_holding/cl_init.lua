@@ -97,3 +97,19 @@ function ENT:Draw()
 	self:SetAngles(ang)
 	self:DrawModel()
 end
+hook.Add("PlayerBindPress", "ZSHoldDisableWheelSwitch", function(ply, bind, pressed)
+    if ply ~= LocalPlayer() then return end
+ 
+    -- 检查是否持有物品
+    local holding = false
+    for _, ent in pairs(ents.FindByClass("status_human_holding")) do
+        if ent:IsValid() and ent:GetOwner() == ply then
+            holding = true
+            break
+        end
+    end
+
+    if holding and (bind == "invnext" or bind == "invprev") then
+        return true  -- 阻止滚轮切换武器
+    end
+end)

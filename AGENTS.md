@@ -1,151 +1,122 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-07-28
-**Commit:** a327644
+**Generated:** 2026-08-06
+**Commit:** d2fdc96
 **Branch:** main
 
 ## OVERVIEW
 
-Chinese-localized fork of JetBoom's Zombie Survival gamemode for Garry's Mod. Pure Lua (1803 files, ~156k lines), runs inside the Source engine — no build, no tests, no lint. Working language of comments/commits is Chinese (zh-CN).
+Zombie Survival — a Garry's Mod PvP gamemode where humans survive escalating waves of zombies. Forked from JetBoom's original, with Chinese-localized comments and modernized systems. Lua-only; assets live inside the gamemode folder.
 
 ## STRUCTURE
 
 ```
-zombie_survival_change/
-├── gamemodes.7z                  # 50MB distributable snapshot, not source — never edit
-└── gamemodes/zombiesurvival/     # the actual gamemode (NOT an addon with lua/autorun)
-    ├── zombiesurvival.txt        # gamemode manifest; maps: ^zs_|^zm_|^zh_|^zps_|^zr_|^ze_
-    ├── zombiesurvival.fgd        # Hammer entity definitions for mappers
-    ├── gamemode/                 # 577 Lua: core logic, entry points, all subsystems → see gamemode/AGENTS.md
-    ├── entities/
-    │   ├── weapons/              # 326 entries: all SWEPs → see entities/weapons/AGENTS.md
-    │   ├── entities/             # 247 entries: props, statuses, projectiles, logic → see entities/entities/AGENTS.md
-    │   └── effects/              # 85 client-only VFX (standard GMod EFFECT pattern)
-    ├── content/                  # 886 assets (materials/models/sound/fonts/particles)
-    ├── backgrounds/              # loading screen JPGs (non-standard location, at gamemode root)
-    ├── readme.txt                # install instructions (legacy)
-    ├── scripting and addons.txt  # hook API reference for extenders — read before adding GM hooks
-    └── mapping and new entities.txt # custom map entity reference
+.
+└── gamemodes/zombiesurvival/
+    ├── gamemode/          # Core Lua: init, shared, client, VGUI, subsystems
+    │   ├── zombieclasses/ # Zombie class definitions
+    │   ├── vgui/          # HUD & menu panels
+    │   ├── maps/          # Per-map configuration scripts
+    │   ├── profiler_premade/ # Map performance profiles
+    │   └── weapons/        # (referenced as ../entities/weapons/)
+    ├── entities/          # Scripted entities, weapons, effects
+    │   ├── weapons/       # All weapons (SWEPs) and zombie attack weapons
+    │   ├── entities/       # Props, projectiles, status effects, logic entities
+    │   └── effects/        # Visual effects
+    ├── content/           # Materials, models, sounds, fonts, particles
+    ├── backgrounds/       # Loading screen images
+    └── *.txt              # Convars, mapping guide, license, readme
 ```
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Round/wave/damage/spawn logic | `gamemode/init.lua` (5384 ln) | Monolithic server entry; ~200 `GM:` hooks |
-| HUD/camera/client loop | `gamemode/cl_init.lua` (2674 ln) | Monolithic client entry |
-| Wave state, purchase rules, dynamic spawn | `gamemode/shared.lua` (1820 ln) | Shared core; `GM:GetWave*` accessors |
-| Global constants (teams, DT idx, balance) | `gamemode/sh_globals.lua` | Read first — referenced everywhere |
-| Shop item/weapon registration | `gamemode/sh_options.lua` | `GM:AddStartingItem` / `GM:AddPointShopItem` |
-| Player/Entity/Weapon meta extensions | `gamemode/obj_*_extend{,_sv,_cl}.lua` | Server player ext alone is 2138 ln |
-| Skill tree | `gamemode/skillweb/` | → skillweb/AGENTS.md |
-| Zombie classes | `gamemode/zombieclasses/` | → zombieclasses/AGENTS.md |
-| UI panels/menus | `gamemode/vgui/` | → vgui/AGENTS.md |
-| Weapons | `entities/weapons/` | → weapons/AGENTS.md |
-| Entities/statuses/projectiles | `entities/entities/` | → entities/AGENTS.md |
-| Per-map patches | `gamemode/maps/<mapname>.lua` | Filename must equal `game.GetMap()`; hooks `InitPostEntityMap` |
-| Localization | `gamemode/languages/` | `translate.Get("key")`; 11 languages |
-| ConVars | in-game: `find zs_` | All ConVars use `zs_` prefix |
+| Server entry & round logic | `gamemode/init.lua` | 5417 lines; GM:Initialize, GM:Think, GM:EndRound, GM:PlayerSpawn |
+| Client entry & rendering | `gamemode/cl_init.lua` | 2646 lines; HUD, fog, VGUI, deferred hook activation |
+| Shared game rules | `gamemode/shared.lua` | Team setup, waves, ammo, dynamic spawn, collision |
+| Global constants | `gamemode/sh_globals.lua` | TEAM_*, DT_PLAYER_*, SPEED_*, ammo names/icons |
+| Net message IDs | `gamemode/net_messages.lua` | NET_MSG table ("zs_" prefixed strings) |
+| Module loader | `gamemode/loader.lua` | `include_library(folder)` auto-loads server/client/shared subfolders |
+| Translation system | `gamemode/sh_translate.lua` + `gamemode/languages/` | 11 languages, Chinese/English primary |
+| Weapons | `entities/weapons/` | 327 files; base classes + individual SWEPs |
+| Zombie classes | `gamemode/zombieclasses/` | 72 files; normal + boss variants |
+| VGUI panels | `gamemode/vgui/` | 29 custom panels, many registered with `vgui.Register()` |
+| Map configs | `gamemode/maps/` | 119 per-map Lua scripts; also see `prepackagedmapprofiles/` |
+| Effects | `entities/effects/` | 88 visual effects (tracers, hits, explosions) |
+| Scripted entities | `entities/entities/` | 248 props, projectiles, status effects, logic entities |
 
 ## CODE MAP
 
-No Lua LSP and codegraph DB was locked during generation — reference centrality **unmeasured**. Bootstrap chain (verified by reading):
+LSP unavailable for Lua; centrality measured via CodeGraph.
 
-**Server** `init.lua`: AddCSLuaFile batch → `sh_globals` → `obj_*_extend_sv` → `loader.lua` → `shared.lua` → `sv_options` → `mapeditor` → `sv_playerspawnentities` → `sv_block_melee_functions` → `sv_profiling` → `sv_sigils` → `sv_concommands` → `itemstocks/sv_stock` → `vault/server` → `skillweb/sv_registry` + `sv_skillweb` → `sv_zombieescape` → `sv_zombieshop` → `sv_tutorial` → `zsbots/init` → `include_library("statistics")`
-
-**Client** `cl_init.lua`: CreateClientConVar shim → `sh_globals` → `obj_*_extend_cl` → `loader.lua` → `shared.lua` → all `cl_*` → `skillweb/cl_skillweb` → `vgui/*` → `itemstocks/cl_stock` → `cl_recoil_handler` → `cl_zombieescape` → `sck/*`
-
-**Shared** `shared.lua`: conditional `maps/<map>.lua` → `obj_*_extend` → `sh_*` batch → `noxapi` → `vault/shared` → `workshopfix` → `include_library("perf"/"player_movement"/"inventory"/"ammoexpand")`
-
-Key architectural facts:
-- `gamemode/loader.lua` defines `include_library(folder)` (aliases: `include_folder`, `load_folder`, `load_library`) — auto-loads `<folder>/*.lua` plus `server/`, `client/`, `shared/` subfolders with correct realm handling.
-- Custom events go through `gamemode.Call("EventName", ...)` → `GM:EventName()` (~257 call sites, 102 files). `hook.Call` is NOT used (2 exceptions inside third-party SCK).
-- Wave/round state lives in engine globals: `GM:GetWave()`, `GM:GetWaveActive()`, `GM:GetWaveStart/End()` wrap `GetGlobal*`. Server-only: `GM.RoundEnded`, `GM.CurrentRound`, `ROUNDWINNER`, `LASTHUMAN`. Escape stages: `ESCAPESTAGE_NONE/ESCAPE/BOSS/DEATH` via `GM:GetEscapeStage()`.
-- 105 net strings, 94 registered centrally in `GM:AddNetworkStrings()` (init.lua:658-755); client handlers in `cl_net.lua`.
-- Central game loop: `GM:Think()` (init.lua) — wave timers, regen, per-second upkeep. Damage router: `GM:EntityTakeDamage` (~345 lines). Death: `GM:DoPlayerDeath`. Universal damage gate: `gamemode.Call("PlayerShouldTakeDamage", ...)` — every weapon/projectile must respect it.
+| Symbol | Type | Location | Role |
+|--------|------|----------|------|
+| `GM:Initialize` | method | `gamemode/init.lua` | Server bootstrap: resources, ammo, skills, networks, modes |
+| `GM:Think` | method | `gamemode/init.lua` | Server main loop: waves, timers, player effects |
+| `GM:EndRound` | method | `gamemode/init.lua` + `cl_init.lua` | Winner handling, cleanup, end-of-round UI |
+| `GM:PlayerSpawn` | method | `gamemode/init.lua` | Spawn logic, team loadout |
+| `GM:EntityTakeDamage` | method | `gamemode/init.lua` | Central damage processing hook |
+| `GM:RestartRound` | method | `gamemode/init.lua` | Round reset orchestration |
+| `GM:LocalPlayerFound` / deferred hooks | pattern | `gamemode/cl_init.lua` | Client hooks start empty and swap to real impl after local player exists |
+| `include_library` | function | `gamemode/loader.lua` | Auto-loads `folder/*.lua`, then `server/`, `client/`, `shared/` subfolders |
+| `meta:ChangeTeam` | method | `obj_player_extend_sv.lua` | Player team switch with pre/post hooks |
+| `meta:ResetSpeed` | method | `obj_player_extend.lua` | Speed recalculation for both teams |
+| `BetterScreenScale` | function | `cl_util.lua` | 1080p-based UI scaling used across all VGUI |
+| `NET_MSG` | table | `net_messages.lua` | Central net message name constants |
+| `GAMEMODE.ZombieClasses` | table | `sh_zombieclasses.lua` | Zombie class registry indexed by class ID |
+| `translate.Get` / `translate.Format` | function | `sh_translate.lua` | i18n lookups used by client and shared code |
 
 ## CONVENTIONS
 
-- **File prefixes**: `sh_` shared, `sv_` server, `cl_` client, `obj_*_extend` metatable extensions. Entities/weapons additionally use `INC_SERVER()` / `INC_CLIENT()` / `INC_SHARED()` as first line instead of `if SERVER then`.
-- **Method definitions**: ALWAYS `function GM:Method()` (452 defs, zero `function GAMEMODE:`). Property access may use `GM.x` or `GAMEMODE.x` interchangeably; inside entities/weapons use `GAMEMODE`.
-- **Perf idiom (mandatory in hot code)**: cache globals at file top — `local math_random = math.random`; metatables as `local M_Player = FindMetaTable("Player")`; methods as `local P_Team = M_Player.Team`.
-- **Net strings**: `zs_` + snake_case (`zs_gamestate`). `voice_` prefix reserved for voice cues. PascalCase outliers (`DemonBlade_Slay`) are legacy — do not copy.
-- **Client global**: `MySelf` = `LocalPlayer()` (set in cl_init InitPostEntity). Use it, not repeated `LocalPlayer()` calls.
-- **Definition-file globals**: weapon files set `SWEP.*`, entity files `ENT.*`, zombie classes `CLASS.*`, panels `local PANEL = {}` → `vgui.Register`. One definition per file/folder.
-- **All user-visible strings** go through `translate.Get()` / `translate.Format()` (server→player: `translate.ClientGet(pl, ...)`).
-- **UI sizing** uses `BetterScreenScale()`.
-- Class naming: `weapon_zs_*`, `prop_*`, `status_*`, `logic_*`, `trigger_*`, `projectile_*`, `info_*`.
+- **Realm prefixes**: `cl_` client, `sv_` server, `sh_` shared, `obj_` metatable extensions; each `obj_*` has `_cl` and `_sv` variants where needed.
+- **File registration**: `init.lua` manually calls `AddCSLuaFile()` for every shared/client file before `include()`.
+- **Module folders**: `inventory/`, `ammoexpand/`, `perf/`, `player_movement/`, `statistics/`, `skillweb/`, `itemstocks/`, `vault/`, `gmapex/` use `include_library()`.
+- **Chinese comments**: Most inline and header comments are Simplified Chinese; code identifiers remain English.
+- **Global localization**: Heavy pattern of `local pairs = pairs`, `local CurTime = CurTime`, `local M_Player = FindMetaTable("Player")` for performance.
+- **Gamemode table aliases**: `GAMEMODE` is valid anywhere after load; global `GM` is load-time-only (see ANTI-PATTERNS). For closures that need the table later, capture at load scope: `local gm = GM or GAMEMODE`. Inside `function GM:Method()` bodies use `self`, never the `GM` global.
+- **Naming**: `SCREAMING_SNAKE_CASE` for constants (`TEAM_HUMAN`, `HM_LASTHUMAN`, `SPEED_NORMAL`), `GM:MethodName` for hooks, `weapon_zs_*` for SWEPs, `prop_*`/`logic_*` for custom entities.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
-- **Do NOT rely on return values of `surface.*` draw functions** (except `GetFontHeight`) — `perf/*/buffthefps.lua` rewrites them and must load before everything else.
-- **Do NOT use `TrueVisibleFilters()`** (sh_util.lua) — DEPRECATED; use function-based visibility filters.
-- **Do NOT pass cyclic tables to `table.FullCopy()`** — naive recursion, infinite loops (defined in two places: `weapon_zs_basemelee/animations.lua`, `weapon_zs_base/cl_model.lua`).
-- **Avoid `self.BaseClass` in weapon code** — known crash source (scoped weapons); slated for refactor (sh_weaponquality.lua TODO).
-- **Do NOT re-add the `zs_waveonezombies` ConVar** — intentionally hardcoded to `0.11` in sh_options.lua.
-- **Do NOT re-enable commented-out melee systems blindly**: `LastHeld` prop-shoot prevention (6 files) and `zsw_enable_block`/`IsBlocking()` (3 files) were deliberately removed for balance.
-- **Do NOT re-add the sigil-destroyed API** (`Set/GetAllSigilsDestroyed`) or the nest skybox/nodraw trace — intentionally removed.
-- **`ammoexpand` stubs `HasAmmo()/Clip1()/Clip2()` are unimplemented** — do not call.
-- **Never ship hard-coded user-facing strings** — must go through `translate.Get()` AND be added to both `languages/english.lua` and `languages/chinese_simple.lua`.
+- **Global `GM` in deferred contexts**: Per GMod wiki, `GM` ("the loading gamemode") is **only available while gamemode files are loading** — it is `nil` in every deferred callback on both realms (`cvars.AddChangeCallback`, `timer.*`, `hook.Add`, `net.Receive`, `concommand.Add`) and inside `function GM:Method()` bodies invoked later. Any `GM.foo` / `GM:foo()` read there crashes with `attempt to index global 'GM' (a nil value)`. Use `GAMEMODE`, `self`, or a load-captured `local gm = GM or GAMEMODE`. Bug history: `cl_options.lua` transparency-radius transform closures (fixed) and `skillweb/registry.lua` `GM.Skills` inside `GM:GetTrinketSkillID` (fixed).
+- **GMod-only operators**: `!` (not), `!=` (not equal), `&&` (and), `||` (or) are forbidden by CFC style; use `not`, `~=`, `and`, `or`. Concentrated in `entities/weapons/swep_construction_kit/` and weapon animation files.
+- **C-style comments**: `//` and `/* */` are forbidden in Lua; use `--` and `--[[ ]]`. Found in `entities/effects/` and `swep_construction_kit/shared.lua`.
+- **`continue` keyword**: Forbidden by CFC style; appears in ~42 files. Replace with `if/else` or early returns.
+- **`TrueVisibleFilters`**: Marked `DEPRECATED` in `sh_util.lua` (line 210); migrate to function-based filtering.
+- **Do not rely on return values from `draw.SimpleText` / `draw.DrawText`**: `perf/client/buffthefps.lua` hooks these and warns it removes return-value behavior.
+- **Do not use the custom `table.Copy` replacement on self-referencing tables**: `weapon_zs_base/cl_model.lua` and `weapon_zs_basemelee/animations.lua` warn this causes infinite loops.
+- **Do not add gameplay-advantage revenue**: Project uses a custom JBGM license (`license.txt`) that explicitly forbids this.
 
 ## UNIQUE STYLES
 
-- Comments and commit messages are in Chinese; new code should follow suit or be bilingual.
-- `DefaultLanguage = "zh-CN"` (sh_translate.lua) — translation fallback chain: player lang → zh-CN → `@key@`. English is NOT the final fallback.
-- Monolithic entry files: most logic lives directly in init/cl_init/shared, not split into modules. Match this when extending core loops; new self-contained features may use `include_library` subfolders instead.
-- Folder-per-definition with mixed layouts: weapons/entities/zombie classes each allow single-file OR folder (`shared.lua`+`init.lua`+`cl_init.lua`) forms; `weapon_zs_base/shared.lua` auto-scans its folder by prefix (`sv_`/`cl_`/`sh_`).
+- **Deferred client activation**: `cl_init.lua` defines hooks like `GM.Think` as empty initially, then swaps them to `GM:_Think` only after `LocalPlayer()` is valid.
+- **Bilingual codebase**: English identifiers and Chinese comments; `workshopdesc.txt` / readme are Chinese-facing.
+- **Map-driven config**: `maps/<mapname>.lua` is auto-included by `shared.lua`; three profile folders tune spawn/props per map.
+- **Zombie class dual representation**: Each class is defined in `gamemode/zombieclasses/` AND has a corresponding weapon entity under `entities/weapons/`.
+- **Chinese font support**: `content/resource/fonts/` includes HarmonyOS Sans SC and Naskh for CJK/Arabic UI.
 
 ## COMMANDS
 
 ```bash
-# No build, no tests, no lint, no CI. Validation = run the server and play.
+# Manual deployment (no build step)
+cp -r gamemodes/zombiesurvival /path/to/garrysmod/gamemodes/
+# In GMod console on a supported map:
+gamemode zombiesurvival
+map zs_somemap
 
-# Install: copy gamemodes/zombiesurvival into <garrysmod>/gamemodes/
-# Listen client console:  gamemode zombiesurvival   then   map zs_oldhouse
-
-# Dedicated server:
-srcds.exe -console -game garrysmod +gamemode zombiesurvival +maxplayers 32 +map zs_oldhouse
-
-# List all gamemode ConVars (in-game console):
+# List all project ConVars
 find zs_
+
+# Git info
+git log --oneline -10
+git status
 ```
 
 ## NOTES
 
-- **Gotcha**: `DefaultLanguage` is zh-CN — English-only new strings render as `@key@` for zh-CN players until added to `chinese_simple.lua`.
-- **Gotcha**: workshop publishing is broken per `workshopdesc.txt`; distribution is git/archive (`gamemodes.7z` is a snapshot — regenerate it manually if shipping).
-- **Gotcha**: `maps/`, `prepackagedmapprofiles/`, `profiler_premade/` are per-map data. Profiles are SRL-serialized (`SRL={...}`), generated by the in-game map editor / auto-profiler — hand-edit only if you know the format. User-saved versions live in DATA (`zsmaps/`, `profiler_premade/*.txt`) and override the packaged ones.
-- **Gotcha**: `sv_profiling.lua` is spawn-node generation (for sigils), not performance profiling.
-- `sh_options.lua` is the item/shop database, not settings; `sv_options.lua`/`cl_options.lua` hold actual ConVars.
-- License is custom "JBGM LICENSE" (license.txt), restrictive/non-commercial — check before reusing code elsewhere.
-- GitHub: `JieZhiF/zombie_survival_chinese`, branch `main`.
-
-参考图片优先级：
-
-最高优先级：
-目标效果图（Target Reference）
-
-第二优先级：
-当前实现截图（Current Screenshot）
-
-
-禁止：
-把Current Screenshot作为设计参考。
-
-
-修改前必须回答：
-
-Target Reference中：
-1. 窗口比例是多少？
-2. 武器列表排列方式是什么？
-3. 右侧详情结构是什么？
-4. 哪些设计需要迁移？
-
-Current Screenshot中：
-1. 已存在什么？
-2. 哪些需要保留？
-3. 哪些需要替换？
-
-
-如果无法区分两类图片：
-必须询问用户。
+- **No CI/CD, no tests, no linter**: Purely manual in-game testing. No `.github/workflows/`, no test framework, no `glualint.json`/`.luacheckrc`.
+- **Content path is non-standard**: Assets are under `gamemodes/zombiesurvival/content/` instead of the addon root; this is valid for gamemodes.
+- **Gamemode (2).7z**: Backup archive inside `gamemodes/zombiesurvival/` is gitignored and likely stale.
+- **Workshop incompatibility**: `workshopdesc.txt` warns the gamemode will not work from Steam Workshop; SVN/manual install is intended.
+- **Tooling directories**: `.omo/` and `.codegraph/` are ignored by git and hold AI/session indexes; do not commit them.

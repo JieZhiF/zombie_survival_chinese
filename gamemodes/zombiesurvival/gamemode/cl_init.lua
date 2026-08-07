@@ -22,6 +22,7 @@ include("loader.lua")
 include("shared.lua")
 include("cl_draw.lua")  -- 客户端绘制
 include("cl_util.lua")  -- 客户端工具函数
+include("cl_global.lua")  -- 武器选择槽位常量 WEPSELECT_*
 include("cl_options.lua")  -- 客户端选项
 include("cl_fontdlc.lua")  -- 字体DLC
 include("cl_scoreboard.lua")  -- 计分板
@@ -1174,29 +1175,30 @@ function GM:DrawDeployableIndicator(config)
 	surface_SetMaterial(config.Material)
 
 	for i, ent in pairs(GAMEMODE[config.CacheKey]) do
-		if not ent:IsValid() then continue end
-		deployable = ent.GetObjectOwner
+		if ent:IsValid() then
+			deployable = ent.GetObjectOwner
 
-		pos = ent:GetPos()
-		pos.z = pos.z + (ent:IsPlayer() and 32 or (deployable and 12 or -8))
-		distance = eyepos:DistToSqr(pos)
+			pos = ent:GetPos()
+			pos.z = pos.z + (ent:IsPlayer() and 32 or (deployable and 12 or -8))
+			distance = eyepos:DistToSqr(pos)
 
-		if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
-			ang = (eyepos - pos):Angle()
-			ang:RotateAroundAxis(ang:Right(), 270)
-			ang:RotateAroundAxis(ang:Up(), 90)
-			alpha = math.min(220, math.sqrt(distance / 4))
+			if (distance >= 6400 and distance <= 1048576) and (not deployable or not WorldVisible(eyepos, pos)) then
+				ang = (eyepos - pos):Angle()
+				ang:RotateAroundAxis(ang:Right(), 270)
+				ang:RotateAroundAxis(ang:Up(), 90)
+				alpha = math.min(220, math.sqrt(distance / 4))
 
-			cam_IgnoreZ(true)
-			cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
+				cam_IgnoreZ(true)
+				cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
 
-			surface_SetDrawColor(255, 255, 255, alpha)
-			surface_DrawTexturedRect(config.Rect.x, config.Rect.y, config.Rect.w, config.Rect.h)
+				surface_SetDrawColor(255, 255, 255, alpha)
+				surface_DrawTexturedRect(config.Rect.x, config.Rect.y, config.Rect.w, config.Rect.h)
 
-			draw_SimpleTextBlurry(config:GetText(), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
+				draw_SimpleTextBlurry(config:GetText(), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
 
-			cam_End3D2D()
-			cam_IgnoreZ(false)
+				cam_End3D2D()
+				cam_IgnoreZ(false)
+			end
 		end
 	end
 end
@@ -1224,34 +1226,34 @@ function GM:DrawNestIndicators() -- 绘制巢穴
 	surface_SetMaterial(matNest)
 
 	for i, nest in pairs(GAMEMODE.CachedNests) do
-		if not nest:IsValid() then continue end
+		if nest:IsValid() then
+			pos = nest:GetPos()
+			pos.z = pos.z + 32
+			distance = eyepos:DistToSqr(pos)
 
-		pos = nest:GetPos()
-		pos.z = pos.z + 32
-		distance = eyepos:DistToSqr(pos)
+			ang = (eyepos - pos):Angle()
+			ang:RotateAroundAxis(ang:Right(), 270)
+			ang:RotateAroundAxis(ang:Up(), 90)
+			alpha = math.min(220, math.sqrt(distance / 4))
 
-		ang = (eyepos - pos):Angle()
-		ang:RotateAroundAxis(ang:Right(), 270)
-		ang:RotateAroundAxis(ang:Up(), 90)
-		alpha = math.min(220, math.sqrt(distance / 4))
+			cam_IgnoreZ(true)
+			cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
 
-		cam_IgnoreZ(true)
-		cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
+			surface_SetDrawColor(255, 255, 255, alpha)
+			surface_DrawTexturedRect(-128, -128, 256, 256)
 
-		surface_SetDrawColor(255, 255, 255, alpha)
-		surface_DrawTexturedRect(-128, -128, 256, 256)
+			draw_SimpleTextBlurry(translate.Get("gameui_nest"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
 
-		draw_SimpleTextBlurry(translate.Get("gameui_nest"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
+			if distance < 80000 then
+				local nown = nest:GetNestOwner()
+				local ownname = nown:IsValidZombie() and nown:ClippedName() or ""
 
-		if distance < 80000 then
-			local nown = nest:GetNestOwner()
-			local ownname = nown:IsValidZombie() and nown:ClippedName() or ""
+				draw_SimpleTextBlurry(ownname, "ZS3D2DFont2", 0, 256, COLOR_GRAY, TEXT_ALIGN_CENTER)
+			end
 
-			draw_SimpleTextBlurry(ownname, "ZS3D2DFont2", 0, 256, COLOR_GRAY, TEXT_ALIGN_CENTER)
+			cam_End3D2D()
+			cam_IgnoreZ(false)
 		end
-
-		cam_End3D2D()
-		cam_IgnoreZ(false)
 	end
 end
 
@@ -1265,45 +1267,45 @@ function GM:DrawSigilIndicators() -- 绘制符文
 	surface_SetMaterial(matSigil)
 
 	for i, sigil in pairs(GAMEMODE.CachedSigils) do
-		if not sigil:IsValid() then continue end
+		if sigil:IsValid() then
+			health = sigil:GetSigilHealth()
+			if health > 0 then
+				pos = sigil:GetPos()
+				pos.z = pos.z + 48
+				distance = eyepos:DistToSqr(pos)
 
-		health = sigil:GetSigilHealth()
-		if health > 0 then
-			pos = sigil:GetPos()
-			pos.z = pos.z + 48
-			distance = eyepos:DistToSqr(pos)
+				maxhealth = sigil:GetSigilMaxHealth()
+				corrupted = sigil:GetSigilCorrupted()
+				damageflash = math.min((CurTime() - sigil:GetSigilLastDamaged()) * 2, 1) * 255
+				missinghealthfrac = 1 - health / maxhealth
+				alpha = math.min(220, math.sqrt(distance / 4))
 
-			maxhealth = sigil:GetSigilMaxHealth()
-			corrupted = sigil:GetSigilCorrupted()
-			damageflash = math.min((CurTime() - sigil:GetSigilLastDamaged()) * 2, 1) * 255
-			missinghealthfrac = 1 - health / maxhealth
-			alpha = math.min(220, math.sqrt(distance / 4))
+				ang = (eyepos - pos):Angle()
+				ang:RotateAroundAxis(ang:Right(), 270)
+				ang:RotateAroundAxis(ang:Up(), 90)
 
-			ang = (eyepos - pos):Angle()
-			ang:RotateAroundAxis(ang:Right(), 270)
-			ang:RotateAroundAxis(ang:Up(), 90)
+				cam_IgnoreZ(true)
+				cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
+				local oldfogmode = render_GetFogMode()
+				render_FogMode(0)
 
-			cam_IgnoreZ(true)
-			cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
-			local oldfogmode = render_GetFogMode()
-			render_FogMode(0)
+				if corrupted then
+					surface_SetDrawColor(255 - damageflash, damageflash, 0, alpha)
+				else
+					surface_SetDrawColor(damageflash, 255, damageflash, alpha)
+				end
+				surface_DrawTexturedRect(-64, -128, 128, 256)
+				if missinghealthfrac > 0 then
+					surface_SetDrawColor(40, 40, 40, 255)
+					surface_DrawTexturedRectUV(-64, -128, 128, 256 * missinghealthfrac, 0, 0, 1, missinghealthfrac)
+				end
 
-			if corrupted then
-				surface_SetDrawColor(255 - damageflash, damageflash, 0, alpha)
-			else
-				surface_SetDrawColor(damageflash, 255, damageflash, alpha)
+				draw_SimpleTextBlurry(string.char(64 + i), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
+
+				render_FogMode(oldfogmode)
+				cam_End3D2D()
+				cam_IgnoreZ(false)
 			end
-			surface_DrawTexturedRect(-64, -128, 128, 256)
-			if missinghealthfrac > 0 then
-				surface_SetDrawColor(40, 40, 40, 255)
-				surface_DrawTexturedRectUV(-64, -128, 128, 256 * missinghealthfrac, 0, 0, 1, missinghealthfrac)
-			end
-
-			draw_SimpleTextBlurry(string.char(64 + i), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
-
-			render_FogMode(oldfogmode)
-			cam_End3D2D()
-			cam_IgnoreZ(false)
 		end
 	end
 end
@@ -1321,68 +1323,61 @@ function GM:DrawHorderallyIndicators() -- 绘制僵尸
 		local maxDisplayCount = 2
 		local displayedCount = 0
 		for _, ent in pairs(ents.FindByClass("zombiegasses")) do
-			if self:GetWaveActive() then
-				continue
-			end
+			if not self:GetWaveActive() and ent:IsValid() then
+				-- 限制显示数量
+				if displayedCount >= maxDisplayCount then break end
 
-			if not ent:IsValid() then continue end
+				local pos = ent:GetPos()
+				if pos then
+					pos.z = pos.z + 32
 
-			-- 限制显示数量
-			if displayedCount >= maxDisplayCount then break end
+					-- 添加上下起伏效果
+					local waveHeight = 4 -- 起伏的高度
+					local waveSpeed = 2 -- 起伏的速度
+					local time = CurTime() -- 获取当前时间
+					pos.z = pos.z + math.sin(time * waveSpeed) * waveHeight
 
-			local pos = ent:GetPos()
-			if not pos then
-				print("Error: Position is nil for entity:", ent)
-				continue
-			end
+					local distance = eyepos:DistToSqr(pos)
 
-			pos.z = pos.z + 32
+					local ang = (eyepos - pos):Angle()
+					ang:RotateAroundAxis(ang:Right(), 270)
+					ang:RotateAroundAxis(ang:Up(), 90)
+					local alpha = math.min(220, math.sqrt(distance / 4))
 
-			-- 添加上下起伏效果
-			local waveHeight = 4 -- 起伏的高度
-			local waveSpeed = 2 -- 起伏的速度
-			local time = CurTime() -- 获取当前时间
-			pos.z = pos.z + math.sin(time * waveSpeed) * waveHeight
+					-- 检查是否已经显示过附近的个体
+					local alreadyDisplayed = false
+					for _, displayedPos in pairs(displayedPositions) do
+						if displayedPos and pos:DistToSqr(displayedPos) < 10000 then
+							alreadyDisplayed = true
+							break
+						end
+					end
 
-			local distance = eyepos:DistToSqr(pos)
+					if not alreadyDisplayed then
+						cam_IgnoreZ(true)
+						cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
+						surface_SetDrawColor(200, 20, 20, alpha)
+						surface_DrawTexturedRect(-128, -128, 256, 256)
+						draw_SimpleTextBlurry(""..translate.Get("game_ui_zombiegasmsg"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
 
-			local ang = (eyepos - pos):Angle()
-			ang:RotateAroundAxis(ang:Right(), 270)
-			ang:RotateAroundAxis(ang:Up(), 90)
-			local alpha = math.min(220, math.sqrt(distance / 4))
+						cam_End3D2D()
+						cam_IgnoreZ(false)
 
-			-- 检查是否已经显示过附近的个体
-			local alreadyDisplayed = false
-			for _, displayedPos in pairs(displayedPositions) do
-				if displayedPos and pos:DistToSqr(displayedPos) < 10000 then
-					alreadyDisplayed = true
-					break
+						-- 增加显示计数
+						displayedCount = displayedCount + 1
+
+						-- 记录已显示的位置
+						table.insert(displayedPositions, pos)
+					end
 				end
-			end
-
-			if not alreadyDisplayed then
-				cam_IgnoreZ(true)
-				cam_Start3D2D(pos, ang, math.max(250, math.sqrt(distance)) / 5000)
-				surface_SetDrawColor(200, 20, 20, alpha)
-				surface_DrawTexturedRect(-128, -128, 256, 256)
-				draw_SimpleTextBlurry(""..translate.Get("game_ui_zombiegasmsg"), "ZS3D2DFont2Big", 0, 128, COLOR_GRAY, TEXT_ALIGN_CENTER)
-
-				cam_End3D2D()
-				cam_IgnoreZ(false)
-
-				-- 增加显示计数
-				displayedCount = displayedCount + 1
-
-				-- 记录已显示的位置
-				table.insert(displayedPositions, pos)
 			end
 		end
 	--[[
 	for i, nest in pairs(GAMEMODE.CachedNests) do
 			if self:GetWaveActive() then
-				continue
+				-- 跳过本次循环
 			end
-		if not nest:IsValid() then continue end
+		if not nest:IsValid() then return end
 
 		pos = nest:GetPos()
 		distance = eyepos:DistToSqr(pos)
@@ -1832,25 +1827,23 @@ end
 function GM:InitializeBeats()
 	local _, dirs = file.Find("sound/zombiesurvival/beats/*", "GAME")
 	for _, dirname in pairs(dirs) do
-		if dirname == "none" or dirname == "default" then continue end
-
-		self.Beats[dirname] = {}
-		local highestexist
-		for i=1, 10 do
-			local a, __ = file.Find("sound/zombiesurvival/beats/"..dirname.."/"..i..".*", "GAME")
-			local a1 = FirstOfGoodType(a)
-			if a1 then
-				local filename = "zombiesurvival/beats/"..dirname.."/"..a1
-				if file.Exists("sound/"..filename, "GAME") then
-					self.Beats[dirname][i] = Sound(filename)
-					highestexist = filename
-
-					continue
+		if dirname ~= "none" and dirname ~= "default" then
+			self.Beats[dirname] = {}
+			local highestexist
+			for i=1, 10 do
+				local a, __ = file.Find("sound/zombiesurvival/beats/"..dirname.."/"..i..".*", "GAME")
+				local a1 = FirstOfGoodType(a)
+				if a1 then
+					local filename = "zombiesurvival/beats/"..dirname.."/"..a1
+					if file.Exists("sound/"..filename, "GAME") then
+						self.Beats[dirname][i] = Sound(filename)
+						highestexist = filename
+					elseif highestexist then
+						self.Beats[dirname][i] = highestexist
+					end
+				elseif highestexist then
+					self.Beats[dirname][i] = highestexist
 				end
-			end
-
-			if highestexist then
-				self.Beats[dirname][i] = highestexist
 			end
 		end
 	end

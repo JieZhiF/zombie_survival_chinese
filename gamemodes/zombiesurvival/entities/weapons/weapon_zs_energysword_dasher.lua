@@ -108,22 +108,23 @@ function SWEP:Think()
 			local ownerspeed = owner:GetVelocity():Length() -- 冲刺速度决定伤害倍率
 			local hit = false
 			for _, trace in ipairs(traces) do
-				if not trace.Hit then continue end
-				if trace.HitWorld then
-					-- 撞到墙壁（非地面）时停止冲刺
-					if trace.HitNormal.z < 0.8 then
-						hit = true
-						self.Weapon:SendWeaponAnim( ACT_VM_MISSCENTER )
-					end
-				else
-					local ent = trace.Entity
-					if ent and ent:IsValid() then
-						-- 命中目标：抛飞并按其相对速度结算伤害
-						hit = true
-						self.Weapon:SendWeaponAnim( ACT_VM_MISSCENTER )
-						local nearest = ent:NearestPoint(trace.StartPos)
-						ent:ThrowFromPositionSetZ(self:GetOwner():GetPos(), ownerspeed * 0.3)
-						self:ApplyMeleeDamage(ent, trace, math.Clamp(ownerspeed/1400,0,2)*self.MeleeDamage)
+				if trace.Hit then
+					if trace.HitWorld then
+						-- 撞到墙壁（非地面）时停止冲刺
+						if trace.HitNormal.z < 0.8 then
+							hit = true
+							self.Weapon:SendWeaponAnim( ACT_VM_MISSCENTER )
+						end
+					else
+						local ent = trace.Entity
+						if ent and ent:IsValid() then
+							-- 命中目标：抛飞并按其相对速度结算伤害
+							hit = true
+							self.Weapon:SendWeaponAnim( ACT_VM_MISSCENTER )
+							local nearest = ent:NearestPoint(trace.StartPos)
+							ent:ThrowFromPositionSetZ(self:GetOwner():GetPos(), ownerspeed * 0.3)
+							self:ApplyMeleeDamage(ent, trace, math.Clamp(ownerspeed/1400,0,2)*self.MeleeDamage)
+						end
 					end
 				end
 			end

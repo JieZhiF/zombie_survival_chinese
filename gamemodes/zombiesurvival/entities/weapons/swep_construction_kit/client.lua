@@ -168,8 +168,8 @@ end
 -- Populates a DChoiceList with all the bones of the specified entity
 -- returns if it has a first option
 function PopulateBoneList( choicelist, ent )
-	if (!IsValid(choicelist)) then return false end
-	if (!IsValid(ent)) then return end
+	if (not IsValid(choicelist)) then return false end
+	if (not IsValid(ent)) then return end
 
 	SCKDebug("Populating bone list for entity "..tostring(ent))
 
@@ -202,11 +202,11 @@ function PopulateBoneList( choicelist, ent )
 			local name = ent:GetBoneName(i)
 			if ent:LookupBone(name) then -- filter out invalid bones
 				choicelist:AddChoice(name)
-				if (!firstoption) then hasfirstoption = true end
+				if (not firstoption) then hasfirstoption = true end
 			else
 				if name == "__INVALIDBONE__" then -- store the unknown bone and see if it can be fixed later
 					choicelist:AddChoice(name, { ent = ent, bone_id = i })
-					if (!firstoption) then hasfirstoption = true end
+					if (not firstoption) then hasfirstoption = true end
 				end
 			end
 		end
@@ -219,7 +219,7 @@ function SWEP:CreateWeaponWorldModel()
 	local model = self.CurWorldModel
 	SCKDebug("Creating weapon world model")
 
-	if ((!self.world_model or (IsValid(self.world_model) and self.cur_wmodel != model)) and
+	if ((not self.world_model or (IsValid(self.world_model) and self.cur_wmodel ~= model)) and
 		string.find(model, ".mdl") and file.Exists(model,"GAME") ) then
 
 		if IsValid(self.world_model) then self.world_model:Remove() end
@@ -242,7 +242,7 @@ function SWEP:CreateModels( tab )
 	--if true then return end
 	-- Create the clientside models here because Garry says we can't do it in the render hook
 	for k, v in pairs( tab ) do
-		if (v.type == "Model" and v.model and v.model != "" and (!IsValid(v.modelEnt) or v.createdModel != v.model) and
+		if (v.type == "Model" and v.model and v.model ~= "" and (not IsValid(v.modelEnt) or v.createdModel ~= v.model) and
 				string.find(v.model, ".mdl") and file.Exists(v.model,"GAME") ) then
 
 			SCKDebug("Creating new ClientSideModel "..v.model)
@@ -259,7 +259,7 @@ function SWEP:CreateModels( tab )
 				v.modelEnt = nil
 			end
 
-		elseif (v.type == "Sprite" and v.sprite and v.sprite != "" and (!v.spriteMaterial or v.createdSprite != v.sprite) and file.Exists("materials/"..v.sprite..".vmt", "GAME")) then
+		elseif (v.type == "Sprite" and v.sprite and v.sprite ~= "" and (not v.spriteMaterial or v.createdSprite ~= v.sprite) and file.Exists("materials/"..v.sprite..".vmt", "GAME")) then
 
 			SCKDebug("Creating new sprite "..v.sprite)
 
@@ -431,7 +431,7 @@ function SWEP:Think()
 
 	else
 		-- normal ironsights and stuff
-		if (input.IsMouseDown(MOUSE_RIGHT) and !(diffx > 40 or diffy > 40) and self.Frame and self.Frame:IsVisible()) then -- right mouse press without sudden jumps
+		if (input.IsMouseDown(MOUSE_RIGHT) and not (diffx > 40 or diffy > 40) and self.Frame and self.Frame:IsVisible()) then -- right mouse press without sudden jumps
 
 			if (self.useThirdPerson) then
 
@@ -495,9 +495,9 @@ function SWEP:GetBoneOrientation( basetab, name, ent, bone_override, buildup )
 	if tab.rel and tab.rel ~= "" and basetab[tab.rel] then
 		local v = basetab[tab.rel]
 
-		if (!v) then return end
+		if (not v) then return end
 
-		if (!buildup) then
+		if (not buildup) then
 			buildup = {}
 		end
 
@@ -508,7 +508,7 @@ function SWEP:GetBoneOrientation( basetab, name, ent, bone_override, buildup )
 		-- you can get in an infinite loop. Let's just hope nobody's that stupid.
 		pos, ang = self:GetBoneOrientation( basetab, tab.rel, ent, nil, buildup )
 
-		if (!pos) then return end
+		if (not pos) then return end
 
 		pos = pos + ang:Forward() * v.pos.x + ang:Right() * v.pos.y + ang:Up() * v.pos.z
 		if (v.angle) then
@@ -518,7 +518,7 @@ function SWEP:GetBoneOrientation( basetab, name, ent, bone_override, buildup )
 		end
 	else
 		bone = ent:LookupBone(bone_override or tab.bone)
-		if (!bone) then return end
+		if (not bone) then return end
 
 		pos, ang = Vector(0,0,0), Angle(0,0,0)
 		local m = ent:GetBoneMatrix(bone)
@@ -542,9 +542,9 @@ function SWEP:GetElementRootBonename( basetab, name, ent, buildup )
 
 	if (tab.rel and tab.rel ~= "") then
 		local v = basetab[tab.rel]
-		if (!v) then return end
+		if (not v) then return end
 
-		if (!buildup) then
+		if (not buildup) then
 			buildup = {}
 		end
 
@@ -565,12 +565,12 @@ local hasGarryFixedBoneScalingYet = true
 
 function SWEP:UpdateBonePositions(vm)
 	if self.v_bonemods then
-		if (!vm:GetBoneCount()) then return end
+		if (not vm:GetBoneCount()) then return end
 
-		-- !! WORKAROUND !! --
+		-- !not WORKAROUND !! --
 		-- We need to check all model names :/
 		local loopthrough = self.v_bonemods
-		if (!hasGarryFixedBoneScalingYet) then
+		if (not hasGarryFixedBoneScalingYet) then
 			allbones = {}
 			for i=0, vm:GetBoneCount() do
 				local bonename = vm:GetBoneName(i)
@@ -591,13 +591,14 @@ function SWEP:UpdateBonePositions(vm)
 
 		for k, v in pairs( loopthrough ) do
 			local bone = vm:LookupBone(k)
-			if (!bone) then continue end
 
-			-- !! WORKAROUND !! --
+			if bone then
+
+			-- !not WORKAROUND !! --
 			local s = Vector(v.scale.x,v.scale.y,v.scale.z)
 			local p = Vector(v.pos.x,v.pos.y,v.pos.z)
 			local ms = Vector(1,1,1)
-			if (!hasGarryFixedBoneScalingYet) then
+			if (not hasGarryFixedBoneScalingYet) then
 				local cur = vm:GetBoneParent(bone)
 				while(cur >= 0) do
 					local pscale = loopthrough[vm:GetBoneName(cur)].scale
@@ -626,6 +627,7 @@ function SWEP:UpdateBonePositions(vm)
 			if vm:GetManipulateBonePosition(bone) ~= p then
 				vm:ManipulateBonePosition( bone, p )
 			end
+			end
 		end
 	else
 		self:ResetBonePositions(vm)
@@ -633,7 +635,7 @@ function SWEP:UpdateBonePositions(vm)
 end
 
 function SWEP:ResetBonePositions(vm)
-	if (!vm:GetBoneCount()) then return end
+	if (not vm:GetBoneCount()) then return end
 
 	for i=0, vm:GetBoneCount() do
 		vm:ManipulateBoneScale( i, Vector(1, 1, 1) )
@@ -682,10 +684,10 @@ end
 
 function SWEP:ShowBoneHelper( vm )
 
-	if !IsValid( self.ShouldShowBones ) then return end
+	if not IsValid( self.ShouldShowBones ) then return end
 
 	local ent = vm
-	if !IsValid(ent) then
+	if not IsValid(ent) then
 		ent = self:GetOwner()
 	end
 
@@ -754,14 +756,14 @@ function SWEP:ViewModelDrawn()
 	--SCKDebugRepeat( "SWEP:VMD", "Drawing viewmodel!" )
 
 	local vm = self:GetOwner():GetViewModel()
-	if !IsValid(vm) then return end
+	if not IsValid(vm) then return end
 
 	self:UpdateBonePositions(vm)
 	--[[if vm.BuildBonePositions ~= self.BuildViewModelBones then
 		vm.BuildBonePositions = self.BuildViewModelBones
 	end]]
 
-	if (!self.vRenderOrder) then
+	if (not self.vRenderOrder) then
 		-- we build a render order because sprites need to be drawn after models
 		self.vRenderOrder = {}
 
@@ -783,7 +785,7 @@ function SWEP:ViewModelDrawn()
 			elseif (v.type == "Sprite" or v.type == "Quad") then
 				table.insert(self.vRenderOrder, k)
 			elseif (v.type == "ClipPlane") then
-				if v.rel == "" or v.rel == nil then continue end
+				if v.rel ~= "" and v.rel ~= nil then
 
 				if self.v_models[ v.rel ] and self.v_models[ v.rel ].type == "Model" then
 
@@ -796,24 +798,25 @@ function SWEP:ViewModelDrawn()
 
 					table.insert(self.vRenderOrder, k)
 				end
+				end
 			end
 		end
 	end
 
 	local show_helpers = ( input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_LSHIFT ) ) and self.Frame and self.Frame:IsVisible()
 
-	for k, name in ipairs( self.vRenderOrder ) do
-		local v = self.v_models[name]
-		if (!v) then self.vRenderOrder = nil break end
+		for k, name in ipairs( self.vRenderOrder ) do
+			local v = self.v_models[name]
+			if (not v) then self.vRenderOrder = nil break end
 
-		local model = v.modelEnt
-		local sprite = v.spriteMaterial
+			if v.bone then
 
-		if (!v.bone) then continue end
+			local model = v.modelEnt
+			local sprite = v.spriteMaterial
 
-		local pos, ang = self:GetBoneOrientation( self.v_models, name, vm )
+			local pos, ang = self:GetBoneOrientation( self.v_models, name, vm )
 
-		if (!pos) then continue end
+			if pos then
 
 		if show_helpers then
 			if name == self.selectedElement then
@@ -850,7 +853,7 @@ function SWEP:ViewModelDrawn()
 			end
 
 			if v.bonemerge then
-				if !model:IsEffectActive( EF_BONEMERGE ) then
+				if not model:IsEffectActive( EF_BONEMERGE ) then
 					model:SetParent( vm )
 					model:AddEffects( EF_BONEMERGE )
 				end
@@ -976,6 +979,8 @@ function SWEP:ViewModelDrawn()
 			end
 
 		end
+		end
+		end
 	end
 end
 
@@ -987,11 +992,11 @@ function SWEP:DrawWorldModel()
 	--SCKDebugRepeat( "SWEP:WMD", "Drawing worldmodel!" )
 
 	local wm = self.world_model
-	if !IsValid(wm) then return end
+	if not IsValid(wm) then return end
 
 	self:ShowBoneHelper()
 
-	if (!self.wRenderOrder) then
+	if (not self.wRenderOrder) then
 
 		self.wRenderOrder = {}
 
@@ -1013,7 +1018,7 @@ function SWEP:DrawWorldModel()
 			elseif (v.type == "Sprite" or v.type == "Quad") then
 				table.insert(self.wRenderOrder, k)
 			elseif (v.type == "ClipPlane") then
-				if v.rel == "" or v.rel == nil then continue end
+				if v.rel ~= "" and v.rel ~= nil then
 
 				if self.w_models[ v.rel ] and self.w_models[ v.rel ].type == "Model" then
 
@@ -1025,6 +1030,7 @@ function SWEP:DrawWorldModel()
 					self.w_models[ v.rel ].clipcount = self.w_models[ v.rel ].clipcount + 1
 
 					table.insert(self.wRenderOrder, k)
+				end
 				end
 			end
 		end
@@ -1075,7 +1081,7 @@ function SWEP:DrawWorldModel()
 	local show_helpers = ( input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_LSHIFT ) ) and self.Frame and self.Frame:IsVisible()
 	for k, name in pairs( self.wRenderOrder ) do
 		local v = self.w_models[name]
-		if (!v) then self.wRenderOrder = nil break end
+		if (not v) then self.wRenderOrder = nil break end
 
 		local pos, ang
 
@@ -1085,7 +1091,7 @@ function SWEP:DrawWorldModel()
 			pos, ang = self:GetBoneOrientation( self.w_models, name, bone_ent, "ValveBiped.Bip01_R_Hand" )
 		end
 
-		if (!pos) then continue end
+		if pos then
 
 		if show_helpers then
 			if name == self.selectedElement then
@@ -1116,7 +1122,7 @@ function SWEP:DrawWorldModel()
 			end
 
 			if v.bonemerge then
-				if !model:IsEffectActive( EF_BONEMERGE ) then
+				if not model:IsEffectActive( EF_BONEMERGE ) then
 					model:SetParent( self:GetOwner() )
 					model:AddEffects( EF_BONEMERGE )
 				end
@@ -1239,6 +1245,7 @@ function SWEP:DrawWorldModel()
 				render.OverrideDepthEnable( false, false )
 			end
 
+		end
 		end
 	end
 end
@@ -1508,7 +1515,7 @@ function SWEP:OpenMaterialBrowser(current, callback)
 			basenode = tree_override
 		end
 
-		if (!basenode) then
+		if (not basenode) then
 			print("No base node for \""..tostring(base).."\", \""..tostring(dir).."\", "..tostring(tree_override))
 		end
 
@@ -1671,7 +1678,7 @@ function SWEP:OpenModelBrowser(current, callback)
 	local selected = ""
 
 	modlist.OnRowSelected = function( panel, line, override )
-		if (type(override) != "string") then override = nil end -- for some reason the list itself throws a panel at it in the callback
+		if (type(override) ~= "string") then override = nil end -- for some reason the list itself throws a panel at it in the callback
 		local path = override or modlist:GetLine(line):GetValue(1)
 
 		modview:SetModel(path)
@@ -1721,7 +1728,7 @@ function SWEP:OpenModelBrowser(current, callback)
 			basenode = tree_override
 		end
 
-		if (!basenode) then
+		if (not basenode) then
 			print("No base node for \""..tostring(base).."\", \""..tostring(dir).."\", "..tostring(tree_override))
 		end
 
@@ -1774,7 +1781,7 @@ end
 **************************]]
 local function CreateMenu( preset )
 	local wep = GetSCKSWEP( LocalPlayer() )
-	if !IsValid(wep) then return nil end
+	if not IsValid(wep) then return nil end
 
 	wep.save_data = table.Copy(save_data_template)
 
@@ -1816,7 +1823,7 @@ local function CreateMenu( preset )
 		local w, h = self:GetWide(), self:GetTall()
 		local x, y = self:GetPos()
 
-		local inside = mx > x and mx < ( x + w ) and my > y and my < ( y + h ) and !( input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_LSHIFT ) )
+		local inside = mx > x and mx < ( x + w ) and my > y and my < ( y + h ) and not ( input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_LSHIFT ) )
 
 		--self:SetKeyboardInputEnabled( inside )
 		--self:SetMouseInputEnabled( inside )
@@ -1839,7 +1846,7 @@ local function CreateMenu( preset )
 	mlabel:Dock(LEFT)
 
 	local msnap = vgui.Create( "DNumberWang", mpanel )
-		msnap:SetTooltip("Angle snap value\n\nExtremely janky! Use at your own risk!")
+		msnap:SetTooltip("Angle snap value\n\nExtremely jankynot Use at your own risk!")
 		msnap:SizeToContents()
 		msnap:SetTall(20)
 		msnap:SetMin(0)
@@ -2017,7 +2024,7 @@ local function CreateMenu( preset )
 end
 
 function SWEP:OpenMenu( preset )
-	if (!self.Frame) then
+	if (not self.Frame) then
 		self.Frame = CreateMenu( preset )
 	end
 
@@ -2066,7 +2073,7 @@ end
 function SWEP:OnDropWeapon()
 	self.useThirdPerson = false
 	self.LastOwner = nil
-	if (!self.Frame) then return end
+	if (not self.Frame) then return end
 	self.Frame:Close()
 end
 
@@ -2077,7 +2084,7 @@ function SWEP:CleanMenu()
 
 	RunConsoleCommand("swepck_playermodelscale", "1")
 
-	if (!self.Frame) then return end
+	if (not self.Frame) then return end
 
 	self.v_modelListing = nil
 	self.w_modelListing = nil
@@ -2088,7 +2095,7 @@ function SWEP:CleanMenu()
 end
 
 function SWEP:HUDShouldDraw( el )
-	return el != "CHudAmmo" and el != "CHudSecondaryAmmo"
+	return el ~= "CHudAmmo" and el ~= "CHudSecondaryAmmo"
 end
 
 --[[**************************
@@ -2097,7 +2104,7 @@ end
 function TPCalcView(pl, pos, angles, fov)
 
 	local wep = pl:GetActiveWeapon()
-	if (!IsValid(wep) or !wep.IsSCK or !wep.useThirdPerson) then
+	if (not IsValid(wep) or not wep.IsSCK or not wep.useThirdPerson) then
 		wep.useThirdPerson = false
 		return
 	end
@@ -2132,7 +2139,7 @@ end
 
 function SWEP:CalcViewHookManagement()
 
-	if (!hooksCleared) then
+	if (not hooksCleared) then
 
 		local CVHooks = hook.GetTable()["CalcView"]
 		if CVHooks then

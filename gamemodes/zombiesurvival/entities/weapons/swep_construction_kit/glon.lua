@@ -82,12 +82,12 @@ encode_types = {
 		local s = ""
 		for k,v in pairs(o) do
 
-			if ( !encode_types[type(v)] ) then continue end
-
+			if encode_types[type(v)] then
 			if not is_array then
 				s = s..Write(k, rtabs)
 			end
 			s = s..Write(v, rtabs)
+			end
 		end
 		return s.."\1", is_array and 3
 	end},
@@ -210,7 +210,7 @@ decode_types = {
 			c, pos = reader:Peek()
 			if c == "\1" then
 				if stage then
-					error(string.format("Expected value to match key at %s! (Got EO Table)",
+					error(string.format("Expected value to match key at %snot (Got EO Table)",
 						pos))
 				else
 					reader:Next()
@@ -253,7 +253,7 @@ decode_types = {
 		while true do
 			c = reader:Next()
 			if not c then
-				error(string.format("Expected \1 to end number at %s! (Got EOF!)",
+				error(string.format("Expected \1 to end number at %snot (Got EOF!)",
 					pos))
 			elseif c == "\1" then
 				break
@@ -264,7 +264,7 @@ decode_types = {
 		if s == "" then s = "0" end
 		local n = tonumber(s)
 		if not n then
-			error(string.format("Invalid number at %s! (%q)",
+			error(string.format("Invalid number at %snot (%q)",
 				pos, s))
 		end
 		return n
@@ -274,7 +274,7 @@ decode_types = {
 		while true do
 			c = reader:Next()
 			if not c then
-				error(string.format("Expected unescaped \1 to end string at position %s! (Got EOF)",
+				error(string.format("Expected unescaped \1 to end string at position %snot (Got EOF)",
 					pos))
 			elseif e then
 				if c == "\3" then
@@ -332,7 +332,7 @@ decode_types = {
 		local ent = Entity(decode_types[6](reader))
 		local bone = decode_types[6](reader)
 
-		if ( !IsValid( ent ) ) then return nil end;
+		if ( not IsValid( ent ) ) then return nil end;
 		return ent:GetPhysicsObjectNum( bone )
 	end,
 	[15 ] = function(reader) -- Color
@@ -362,7 +362,7 @@ decode_types = {
 Read = function(reader, rtabs)
 	local t, pos = reader:Peek()
 	if not t then
-		error(string.format("Expected type ID at %s! (Got EOF)",
+		error(string.format("Expected type ID at %snot (Got EOF)",
 			pos))
 	else
 		local dt = decode_types[string.byte(t)]
@@ -405,7 +405,7 @@ function glon.decode(data)
 	if type(data) == "nil" then
 		return nil
 	elseif type(data) ~= "string" then
-		error(string.format("Expected string to decode! (Got type %s)",
+		error(string.format("Expected string to decodenot (Got type %s)",
 			type(data)
 		))
 	elseif data:len() == 0 then

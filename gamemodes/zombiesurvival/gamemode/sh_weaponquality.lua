@@ -403,10 +403,10 @@ function GM:CreateWeaponOfQuality(i, orig, quality, classname, branch)
         -- 遍历所有附加修饰器
         for modifier, datatab in pairs(wept.AltRemantleModifiers) do
             -- 跳过 "BaseClass" 特殊键 (原因不明, 可能是防错)
-            if modifier == "BaseClass" then continue end
-
-            -- 调用内部函数应用修饰器 (按修饰器定义的起始等级生效)
-            ApplyWeaponModifier(self.WeaponQualityModifiers[modifier], wept, datatab, remantledescs, i)
+            if modifier ~= "BaseClass" then
+                -- 调用内部函数应用修饰器 (按修饰器定义的起始等级生效)
+                ApplyWeaponModifier(self.WeaponQualityModifiers[modifier], wept, datatab, remantledescs, i)
+            end
         end
     end
 
@@ -538,41 +538,39 @@ function GM:CreateWeaponQualities()
         classname = t.ClassName
 
         -- 跳过基础武器模板类 (以 weapon_zs_base 开头的)
-        if string.sub(classname, 1, 14) == "weapon_zs_base" then
-            continue
-        end
+        if string.sub(classname, 1, 14) ~= "weapon_zs_base" then
+            -- 获取武器的完整 SWEP 表
+            local wept = weapons.Get(classname)
+            -- 只处理允许品质武器的条目
+            if wept and wept.AllowQualityWeapons then
+                -- 获取武器的原始储存表 (用于持久化数据)
+                local orig = weapons.GetStored(classname)
+                -- 初始化品质描述表: 0 表示无分支 (默认分支)
+                orig.RemantleDescs = {}
+                orig.RemantleDescs[0] = {}
 
-        -- 获取武器的完整 SWEP 表
-        local wept = weapons.Get(classname)
-        -- 只处理允许品质武器的条目
-        if wept and wept.AllowQualityWeapons then
-            -- 获取武器的原始储存表 (用于持久化数据)
-            local orig = weapons.GetStored(classname)
-            -- 初始化品质描述表: 0 表示无分支 (默认分支)
-            orig.RemantleDescs = {}
-            orig.RemantleDescs[0] = {}
-
-            -- 如果武器有自定义分支, 为每个分支初始化描述表
-            if orig.Branches then
-                for no, _ in pairs(orig.Branches) do
-                    orig.RemantleDescs[no] = {}
-                end
-            end
-
-            -- 为每个品质等级 (1/2/3) 创建武器变体
-            for i, quality in ipairs(self.WeaponQualities) do
-                -- 创建无分支的默认品质变体
-                self:CreateWeaponOfQuality(i, orig, quality, classname)
-
-                -- 如果武器有自定义分支, 为每个分支创建品质变体
+                -- 如果武器有自定义分支, 为每个分支初始化描述表
                 if orig.Branches then
-                    for no, tbl in pairs(orig.Branches) do
-                        -- 复制分支数据表并设置编号
-                        local ntbl = table.Copy(tbl)
-                        ntbl.No = no
+                    for no, _ in pairs(orig.Branches) do
+                        orig.RemantleDescs[no] = {}
+                    end
+                end
 
-                        -- 创建带分支的品质变体
-                        self:CreateWeaponOfQuality(i, orig, quality, classname, ntbl)
+                -- 为每个品质等级 (1/2/3) 创建武器变体
+                for i, quality in ipairs(self.WeaponQualities) do
+                    -- 创建无分支的默认品质变体
+                    self:CreateWeaponOfQuality(i, orig, quality, classname)
+
+                    -- 如果武器有自定义分支, 为每个分支创建品质变体
+                    if orig.Branches then
+                        for no, tbl in pairs(orig.Branches) do
+                            -- 复制分支数据表并设置编号
+                            local ntbl = table.Copy(tbl)
+                            ntbl.No = no
+
+                            -- 创建带分支的品质变体
+                            self:CreateWeaponOfQuality(i, orig, quality, classname, ntbl)
+                        end
                     end
                 end
             end

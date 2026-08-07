@@ -149,15 +149,16 @@ function SWEP:ShootBullets(dmg, numbul, cone)
 
 	owner:LagCompensation(true)
 	for i, trace in ipairs(tr) do
-		if not trace.Hit then continue end
-		-- 达到穿透上限后停止
-		if i > self.Pierces - 1 then break end
+		if trace.Hit then
+			-- 达到穿透上限后停止
+			if i > self.Pierces - 1 then break end
 
-		ent = trace.Entity
+			ent = trace.Entity
 
-		-- 对每个被穿透的目标单独结算递减伤害
-		if ent and ent:IsValid() then
-			owner:FireBulletsLua(trace.HitPos, dir, 0, numbul, dmgf(i-1), nil, self.Primary.KnockbackScale, "", self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
+			-- 对每个被穿透的目标单独结算递减伤害
+			if ent and ent:IsValid() then
+				owner:FireBulletsLua(trace.HitPos, dir, 0, numbul, dmgf(i-1), nil, self.Primary.KnockbackScale, "", self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
+			end
 		end
 	end
 	-- 最终弹道（穿透后剩余部分）也结算一次伤害

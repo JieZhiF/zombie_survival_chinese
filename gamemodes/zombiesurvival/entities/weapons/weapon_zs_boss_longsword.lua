@@ -121,35 +121,35 @@ function SWEP:MeleeSwing()
 	end
 
 	for _, trace in ipairs(tr) do
-		if not trace.Hit then continue end
+		if trace.Hit then
+			ent = trace.Entity
 
-		ent = trace.Entity
+			hit = true
 
-		hit = true
+			local hitflesh = trace.MatType == MAT_FLESH or trace.MatType == MAT_BLOODYFLESH or trace.MatType == MAT_ANTLION or trace.MatType == MAT_ALIENFLESH
 
-		local hitflesh = trace.MatType == MAT_FLESH or trace.MatType == MAT_BLOODYFLESH or trace.MatType == MAT_ANTLION or trace.MatType == MAT_ALIENFLESH
+			if hitflesh then
+				util.Decal(self.BloodDecal, trace.HitPos + trace.HitNormal, trace.HitPos - trace.HitNormal)
 
-		if hitflesh then
-			util.Decal(self.BloodDecal, trace.HitPos + trace.HitNormal, trace.HitPos - trace.HitNormal)
+				if SERVER then
+					self:ServerHitFleshEffects(ent, trace, damagemultiplier)
+				end
 
-			if SERVER then
-				self:ServerHitFleshEffects(ent, trace, damagemultiplier)
 			end
 
-		end
+			if ent and ent:IsValid() then
+				if SERVER then
+					self:ServerMeleeHitEntity(trace, ent, damagemultiplier)
+				end
 
-		if ent and ent:IsValid() then
-			if SERVER then
-				self:ServerMeleeHitEntity(trace, ent, damagemultiplier)
+				self:MeleeHitEntity(trace, ent, damagemultiplier, damage)
+
+				if SERVER then
+					self:ServerMeleePostHitEntity(trace, ent, damagemultiplier)
+				end
+
+				if owner.GlassWeaponShouldBreak then break end
 			end
-
-			self:MeleeHitEntity(trace, ent, damagemultiplier, damage)
-
-			if SERVER then
-				self:ServerMeleePostHitEntity(trace, ent, damagemultiplier)
-			end
-
-			if owner.GlassWeaponShouldBreak then break end
 		end
 	end
 
@@ -348,20 +348,30 @@ function SWEP:Reload()
 
         local entities = ents.FindInSphere(ply:GetPos(), 300)
         for _, ent in ipairs(entities) do
-            if ent == ply then continue end
-            if not IsValid(ent) then continue end
-
-            if ent:IsPlayer() then
-                if ent:Team() == TEAM_SURVIVORS then
-                    totalDamageSurvivors[ent] = (totalDamageSurvivors[ent] or 0)
-                    if totalDamageSurvivors[ent] < 50 then
-                        local dmg = DamageInfo()
-                        dmg:SetDamage(2)
-                        dmg:SetAttacker(ply)
-                        dmg:SetInflictor(self)
-                        dmg:SetDamageForce(Vector(0, 0, 0))
-                        ent:TakeDamageInfo(dmg)
-                        totalDamageSurvivors[ent] = totalDamageSurvivors[ent] + 2
+            if ent ~= ply and IsValid(ent) then
+                if ent:IsPlayer() then
+                    if ent:Team() == TEAM_SURVIVORS then
+                        totalDamageSurvivors[ent] = (totalDamageSurvivors[ent] or 0)
+                        if totalDamageSurvivors[ent] < 50 then
+                            local dmg = DamageInfo()
+                            dmg:SetDamage(2)
+                            dmg:SetAttacker(ply)
+                            dmg:SetInflictor(self)
+                            dmg:SetDamageForce(Vector(0, 0, 0))
+                            ent:TakeDamageInfo(dmg)
+                            totalDamageSurvivors[ent] = totalDamageSurvivors[ent] + 2
+                        end
+                    else
+                        totalDamageEntities[ent] = (totalDamageEntities[ent] or 0)
+                        if totalDamageEntities[ent] < 50 then
+                            local dmg = DamageInfo()
+                            dmg:SetDamage(2)
+                            dmg:SetAttacker(ply)
+                            dmg:SetInflictor(self)
+                            dmg:SetDamageForce(Vector(0, 0, 0))
+                            ent:TakeDamageInfo(dmg)
+                            totalDamageEntities[ent] = totalDamageEntities[ent] + 2
+                        end
                     end
                 else
                     totalDamageEntities[ent] = (totalDamageEntities[ent] or 0)
@@ -374,17 +384,6 @@ function SWEP:Reload()
                         ent:TakeDamageInfo(dmg)
                         totalDamageEntities[ent] = totalDamageEntities[ent] + 2
                     end
-                end
-            else
-                totalDamageEntities[ent] = (totalDamageEntities[ent] or 0)
-                if totalDamageEntities[ent] < 50 then
-                    local dmg = DamageInfo()
-                    dmg:SetDamage(2)
-                    dmg:SetAttacker(ply)
-                    dmg:SetInflictor(self)
-                    dmg:SetDamageForce(Vector(0, 0, 0))
-                    ent:TakeDamageInfo(dmg)
-                    totalDamageEntities[ent] = totalDamageEntities[ent] + 2
                 end
             end
         end
@@ -418,8 +417,7 @@ function SWEP:SecondaryAttack()
     ply:ChatPrint("🌌 [技能提示] 重力压制发动！")
 
     for _, target in ipairs(player.GetAll()) do
-        if target == ply then continue end
-        if target:Team() == TEAM_SURVIVORS then
+        if target ~= ply and target:Team() == TEAM_SURVIVORS then
             target:Freeze(true)
             timer.Simple(0.5, function()
                 if IsValid(target) then target:Freeze(false) end

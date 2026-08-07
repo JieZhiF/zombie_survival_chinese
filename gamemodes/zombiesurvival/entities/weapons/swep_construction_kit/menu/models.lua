@@ -453,9 +453,10 @@ local function handle_undo()
 	if not data then return end
 
 	for k, v in pairs(snapshot) do
-		if k == "name" then continue end
+		if k ~= "name" then
 
 		data[k] = v
+		end
 	end
 
 	currentzindex = currentzindex - 1
@@ -476,9 +477,10 @@ local function handle_redo()
 	if not data then return end
 
 	for k, v in pairs(snapshot) do
-		if k == "name" then continue end
+		if k ~= "name" then
 
 		data[k] = v
+		end
 	end
 
 	currentzindex = currentzindex + 1
@@ -545,14 +547,16 @@ hook.Add("CreateMove", "TrackMouseCTRLZ", function()
 			local snapshot = {}
 			local snapshotold = {}
 			for k, v in pairs(prevchange) do
-				if not (k == "pos" or k == "angle" or k == "size") then continue end
+				if (k == "pos" or k == "angle" or k == "size") then
 
 				local old = v
 				local new = data[k]
-				if old == new then continue end
+				if old ~= new then
 
 				snapshot[k] = copy(new) --since they're objects, we'll need to copy it or they'll change when the user changes them
 				snapshotold[k] = copy(old)
+				end
+				end
 			end
 
 			if table.Count(snapshot) == 0 then return end
@@ -580,7 +584,7 @@ local function CreatePositionModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -666,7 +670,7 @@ local function CreateAngleModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -752,7 +756,7 @@ local function CreateSizeModifiers( data, panel, dimensions )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -865,7 +869,7 @@ local function CreateColorModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -905,7 +909,7 @@ local function CreateModelModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -951,7 +955,7 @@ local function CreateSpriteModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1107,7 +1111,7 @@ local function CreateParamModifiers( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1195,7 +1199,7 @@ local function CreateMaterialModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1243,7 +1247,7 @@ local function CreateSLightningModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1271,7 +1275,7 @@ local function CreateBonemergeModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1299,7 +1303,7 @@ local function CreateNocullModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1327,7 +1331,7 @@ local function CreateHighRenderModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1360,7 +1364,7 @@ local function CreateBoneModifier( data, panel, ent, name )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1469,7 +1473,7 @@ local function CreateBodygroupSkinModifier( data, panel )
 
 	if panel._passdata and panel._passdata._name then
 		local data_check = panel._passdata._v and wep.v_models[ panel._passdata._name ] or wep.w_models[ panel._passdata._name ]
-		if data_check != data then
+		if data_check ~= data then
 			data = data_check
 		end
 	end
@@ -1671,7 +1675,7 @@ Size
 -- ==== CreateQuadPanel - 构建第一人称 Quad 元素编辑面板 ====
 function CreateQuadPanel( name, preset_data )
 	local data = wep.v_models[name]
-	if (!preset_data) then preset_data = {} end
+	if (not preset_data) then preset_data = {} end
 
 	-- default data
 	data.type = preset_data.type or "Quad"
@@ -1712,7 +1716,7 @@ end
 -- ==== CreateClipPanel - 构建第一人称裁剪面元素编辑面板 ====
 function CreateClipPanel( name, preset_data )
 	local data = wep.v_models[name]
-	if (!preset_data) then preset_data = {} end
+	if (not preset_data) then preset_data = {} end
 
 	-- default data
 	data.type = preset_data.type or "ClipPlane"
@@ -1761,7 +1765,7 @@ local function add_element(btn, realm, tree)
 	local panel_cache = is_v and wep.v_panelCache or wep.w_panelCache
 
 	if new == "" then note_func("Empty name field!") return end
-	if model_tab[new] != nil then note_func("Name already exists!") return end
+	if model_tab[new] ~= nil then note_func("Name already exists!") return end
 	model_tab[new] = {}
 
 	local icon = "icon16/exclamation.png"
@@ -1843,7 +1847,7 @@ for k, v in SortedPairs(wep.save_data.v_models) do
 		icon = icon_clip
 	end
 
-	if !IsValid(wep.v_panelCache[k]) then continue end
+	if IsValid(wep.v_panelCache[k]) then
 
 	wep.v_panelCache[k]:SetVisible(false)
 
@@ -1871,6 +1875,7 @@ for k, v in SortedPairs(wep.save_data.v_models) do
 	end
 
 	temp_v_nodes[k] = node
+	end
 end
 
 for k, v in SortedPairs( wep.v_models ) do
@@ -1914,11 +1919,11 @@ importbtn.DoClick = function()
 	local num = 0
 	for k, v in pairs( wep.w_models ) do
 
-		if not v.type then continue end
+		if v.type then
 
 		local name = k
 		local i = 1
-		while(wep.v_models[name] != nil) do
+		while(wep.v_models[name] ~= nil) do
 			name = k..""..i
 			i = i + 1
 
@@ -1991,6 +1996,7 @@ importbtn.DoClick = function()
 		temp_v_nodes[k] = node
 
 		num = num + 1
+		end
 	end
 
 	for k, v in SortedPairs(wep.v_models) do
@@ -2378,7 +2384,7 @@ for k, v in SortedPairs( wep.save_data.w_models ) do
 		icon = icon_clip
 	end
 
-	if not IsValid(wep.w_panelCache[k]) then continue end
+	if IsValid(wep.w_panelCache[k]) then
 
 	wep.w_panelCache[k]:SetVisible(false)
 
@@ -2406,6 +2412,7 @@ for k, v in SortedPairs( wep.save_data.w_models ) do
 	end
 
 	temp_w_nodes[k] = node
+	end
 end
 
 for k, v in SortedPairs( wep.w_models ) do
@@ -2419,7 +2426,7 @@ importbtn.DoClick = function()
 	local num = 0
 	for k, v in SortedPairs(wep.v_models) do
 
-		if not v.type then continue end
+		if v.type then
 
 		local name = k
 		local i = 1
@@ -2497,6 +2504,7 @@ importbtn.DoClick = function()
 		temp_w_nodes[k] = node
 
 		num = num + 1
+		end
 	end
 
 	for k, v in SortedPairs( wep.w_models ) do

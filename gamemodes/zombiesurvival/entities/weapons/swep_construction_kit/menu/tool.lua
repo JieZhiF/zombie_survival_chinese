@@ -166,7 +166,7 @@ local psettings = SimplePanel(ptool)
 			return
 		end
 		
-		if !file.Exists( "swep_construction_kit", "DATA" ) then
+		if not file.Exists( "swep_construction_kit", "DATA" ) then
 			file.CreateDir( "swep_construction_kit" )
 		end
 		
@@ -243,7 +243,7 @@ local psettings = SimplePanel(ptool)
 
 				local filename = "swep_construction_kit/"..fn..".txt"
 				if file.Exists(filename, "DATA") then
-					Derma_Query("File already exists! Overwrite?", "Warning", "Yes", function() SaveAsSCKFile(nil, wep, satext, true)  end, "No", function() SaveAsSCKFile(nil, wep, satext)  end)
+					Derma_Query("File already existsnot Overwrite?", "Warning", "Yes", function() SaveAsSCKFile(nil, wep, satext, true)  end, "No", function() SaveAsSCKFile(nil, wep, satext)  end)
 				else
 					SaveAsSCKFile(nil, wep, satext)
 				end
@@ -286,14 +286,14 @@ local psettings = SimplePanel(ptool)
 			if (text == "") then return end
 				local filename = "swep_construction_kit/"..text..".txt"
 
-				if (!file.Exists(filename, "DATA")) then
+				if (not file.Exists(filename, "DATA")) then
 					CreateSettingsNote( "No such file exists!" )
 					return
 				end
 
 				local glondata = file.Read(filename)
 				local succ, new_preset = pcall(glon.decode, glondata)
-				if (!succ || !new_preset) then LocalPlayer():ChatPrint("Failed to load settings!") return end
+				if (not succ or not new_preset) then LocalPlayer():ChatPrint("Failed to load settings!") return end
 
 				new_preset._savename = text
 
@@ -338,7 +338,7 @@ local function GetWeaponPrintText( wep )
 	local i = 0
 	local num = table.Count( wep.v_bonemods )
 	for k, v in SortedPairs(wep.v_bonemods) do
-		if !(v.scale == Vector(1,1,1) and v.pos == Vector(0,0,0) and v.angle == Angle(0,0,0)) then
+		if not (v.scale == Vector(1,1,1) and v.pos == Vector(0,0,0) and v.angle == Angle(0,0,0)) then
 			if (i == 0) then str = str.."\n" end
 			i = i + 1
 			str = str.."\t[\""..k.."\"] = { scale = "..PrintVec( v.scale )..", pos = "..PrintVec( v.pos )..", angle = "..PrintAngle( v.angle ).." }"
@@ -376,10 +376,11 @@ local function GetVModelsText()
 			str = str..", bodygroup = {"
 			local i = 0
 			for k, v in SortedPairs( v.bodygroup ) do
-				if (v <= 0) then continue end
-				if ( i != 0 ) then str = str..", " end
+				if v > 0 then
+				if ( i ~= 0 ) then str = str..", " end
 				i = 1
 				str = str.."["..k.."] = "..v
+				end
 			end
 			str = str.."} }"
 		elseif (v.type == "Sprite") then
@@ -422,10 +423,11 @@ local function GetWModelsText()
 			str = str..", bodygroup = {"
 			local i = 0
 			for k, v in SortedPairs( v.bodygroup ) do
-				if (v <= 0) then continue end
-				if ( i != 0 ) then str = str..", " end
+				if v > 0 then
+				if ( i ~= 0 ) then str = str..", " end
 				i = 1
 				str = str.."["..k.."] = "..v
+				end
 			end
 			str = str.."} }"
 		elseif (v.type == "Sprite") then

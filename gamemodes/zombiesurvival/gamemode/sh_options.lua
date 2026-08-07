@@ -755,6 +755,11 @@ GM:AddPointShopItem("rocketturret",		ITEMCAT_DEPLOYABLES,			125,			"weapon_zs_gu
 item.Countables = "prop_gunturret_rocket"
 item.NoClassicMode = true
 item.SkillRequirement = SKILL_U_ROCKETTURRET
+item =
+-- 冰冻炮塔
+GM:AddPointShopItem("freezeturret",		ITEMCAT_DEPLOYABLES,			70,				"weapon_zs_gunturret_freeze",	nil,							nil,									nil,											function(pl) pl:GiveEmptyWeapon("weapon_zs_gunturret_freeze") pl:GiveAmmo(1, "turret_pulse") end)
+item.NoClassicMode = true
+item.Countables = "prop_gunturret_pulse"
 GM:AddPointShopItem("manhack",			ITEMCAT_DEPLOYABLES,			30,				"weapon_zs_manhack").Countables = "prop_manhack"                              -- 猎杀无人机
 item =
 GM:AddPointShopItem("drone",			ITEMCAT_DEPLOYABLES,			40,				"weapon_zs_drone")                                                            -- 无人机
@@ -1023,7 +1028,7 @@ GM:AddDeployableInfo("prop_camera", 			"Camera",	 			"weapon_zs_camera")        
 GM:AddDeployableInfo("prop_gunturret", 			"Gun Turret",	 		"weapon_zs_gunturret")                -- 机枪炮塔
 GM:AddDeployableInfo("prop_gunturret_assault", 	"Assault Turret",	 	"weapon_zs_gunturret_assault")        -- 突击炮塔
 GM:AddDeployableInfo("prop_gunturret_buckshot",	"Blast Turret",	 		"weapon_zs_gunturret_buckshot")       -- 霰弹炮塔
-GM:AddDeployableInfo("prop_gunturret_pulse",	"Pulse Turret",	 	    "weapon_zs_gunturret_pulse")          -- 脉冲炮塔
+GM:AddDeployableInfo("prop_gunturret_pulse",	"Freeze Turret",	 	"weapon_zs_gunturret_freeze")         -- 冰冻炮塔
 GM:AddDeployableInfo("prop_gunturret_rocket",	"Rocket Turret",	 	"weapon_zs_gunturret_rocket")         -- 火箭炮塔
 GM:AddDeployableInfo("prop_repairfield",		"Repair Field Emitter",	"weapon_zs_repairfield")              -- 修复场发射器
 GM:AddDeployableInfo("prop_medicfield",		    "Medic Field Emitter",	"weapon_zs_medicfield")               -- 医疗场发射器

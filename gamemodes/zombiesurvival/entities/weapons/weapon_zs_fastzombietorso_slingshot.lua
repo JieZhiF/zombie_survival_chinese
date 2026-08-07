@@ -62,25 +62,25 @@ function SWEP:Think()
 			local hit = false
 			for _, trace in ipairs(traces) do
 				-- 跳过未命中的射线
-				if not trace.Hit then continue end
-
-				if trace.HitWorld then
-					-- 命中世界：仅当法线朝上不够陡峭时算命中（撞墙不算）
-					if trace.HitNormal.z < 0.8 then
-						hit = true
-						self:MeleeHitWorld(trace)
-					end
-				else
-					-- 命中实体：造成扑击伤害
-					local ent = trace.Entity
-					if ent and ent:IsValid() then
-						hit = true
-						-- 对玩家使用0.75倍率，对其他实体使用扑击弱点倍率或1
-						self:MeleeHit(ent, trace, damage * (ent:IsPlayer() and self.PounceDamageVsPlayerMul or ent.PounceWeakness or 1), ent:IsPlayer() and 1 or 10)
-						-- 命中玩家时施加减速和腿部伤害
-						if ent:IsPlayer() then
-							ent:GiveStatus("slow", 5)
-							ent:AddLegDamage(24)
+				if trace.Hit then
+					if trace.HitWorld then
+						-- 命中世界：仅当法线朝上不够陡峭时算命中（撞墙不算）
+						if trace.HitNormal.z < 0.8 then
+							hit = true
+							self:MeleeHitWorld(trace)
+						end
+					else
+						-- 命中实体：造成扑击伤害
+						local ent = trace.Entity
+						if ent and ent:IsValid() then
+							hit = true
+							-- 对玩家使用0.75倍率，对其他实体使用扑击弱点倍率或1
+							self:MeleeHit(ent, trace, damage * (ent:IsPlayer() and self.PounceDamageVsPlayerMul or ent.PounceWeakness or 1), ent:IsPlayer() and 1 or 10)
+							-- 命中玩家时施加减速和腿部伤害
+							if ent:IsPlayer() then
+								ent:GiveStatus("slow", 5)
+								ent:AddLegDamage(24)
+							end
 						end
 					end
 				end

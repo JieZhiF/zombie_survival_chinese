@@ -202,6 +202,9 @@ end
 function SWEP:CanPrimaryAttack()
 	if self:GetOwner():IsHolding() or self:GetOwner():GetBarricadeGhosting() then return false end
 
+	-- 完全冻结状态下无法攻击
+	if self:GetOwner():IsFrozenFull() then return false end
+
 	return self:GetNextPrimaryFire() <= CurTime() and not self:IsSwinging()
 end
 

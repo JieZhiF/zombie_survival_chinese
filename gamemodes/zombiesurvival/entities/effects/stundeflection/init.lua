@@ -7,7 +7,7 @@
 -- ==== Init - 特效初始化：设置光源并喷射闪光粒子与光环 ====
 function EFFECT:Init(data)
 	
-	//self.Position = self:GetTracerShootPos(data:GetOrigin(), self.WeaponEnt, self.Attachment)
+	--self.Position = self:GetTracerShootPos(data:GetOrigin(), self.WeaponEnt, self.Attachment)
 	self.Position = data:GetOrigin()
 	self.Forward = data:GetNormal()
 	self.Angle = self.Forward:Angle()
@@ -26,16 +26,16 @@ function EFFECT:Init(data)
 		light.DieTime = CurTime() + 0.4
 	end
 	
-	local AddVel = 5//self.WeaponEnt:GetOwner():GetVelocity()
+	local AddVel = 5 --self.WeaponEnt:GetOwner():GetVelocity()
 	local emitter = ParticleEmitter(self.Position)
 
 	
 	
 -- 单个大型白色光斑：从 150 快速缩小，模拟弹开瞬间的闪光
 for i=1, 1 do
-	if emitter != nil then	
+	if emitter ~= nil then	
 		local particle = emitter:Add( "sprites/light_glow02_add_noz", self.Position, (Color(255,100,0,25)) )
-		if particle != nil then
+		if particle ~= nil then
 
 			particle:SetVelocity( 0 * VectorRand() + 0 * VectorRand() + 0 * VectorRand() )
 			particle:SetGravity( Vector( 0, 0, -50 ) )
@@ -53,9 +53,9 @@ end
 	
 -- 26 个白色闪光粒子：向随机方向飘散，带碰撞与反弹，模拟能量碎屑
 for i=0, 25 do
-	if emitter != nil then	
+	if emitter ~= nil then	
 		local particle = emitter:Add( "sprites/light_glow02_add_noz", self.Position, (Color(255,100,0,25)) )
-		if particle != nil then
+		if particle ~= nil then
 
 			particle:SetVelocity( 50 * VectorRand() + 50 * VectorRand() + 50 * VectorRand() )
 			particle:SetGravity( Vector( 0, 0, -50 ) )
@@ -79,7 +79,7 @@ end
 		-- 2 个白色光环粒子：从 5 快速膨胀到 30，形成扩散的冲击环
 		for i=0, 1 do
 			local particle = emitter:Add( "particle/Particle_Ring_Wave_Additive", self.Position )
-			//if (particle) then
+			--if (particle) then
 				particle:SetDieTime( 0.25 )
 				particle:SetStartAlpha( 255 )
 				particle:SetEndAlpha( 0 )
@@ -89,13 +89,13 @@ end
 				particle:SetRoll( math.Rand(0, 360) )
 				particle:SetRollDelta( math.Rand(-1, 1) )
  				particle:SetAirResistance( 200 ) 
- 				//particle:SetGravity( Vector( 100, 0, 0 ) ) 	
-			//end
+ 				--particle:SetGravity( Vector( 100, 0, 0 ) ) 	
+			--end
 		
 		end
 emitter:Finish()
 end
-//end
+--end
 
 -- ==== Think - 特效思考：一次性粒子效果，无需持续更新 ====
 function EFFECT:Think()

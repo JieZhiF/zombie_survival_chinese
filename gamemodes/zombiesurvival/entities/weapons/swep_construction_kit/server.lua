@@ -5,7 +5,7 @@
 -- ==== CanPickup - 拾取限制：SCK 武器需按 R 或未被丢弃时才可捡起 ====
 local function CanPickup( pl, wep )
 	if (wep:GetClass() == "swep_construction_kit") then
-		return pl:KeyDown(IN_RELOAD) or !wep.Dropped
+		return pl:KeyDown(IN_RELOAD) or not wep.Dropped
 	end
 
 end
@@ -126,10 +126,10 @@ concommand.Add("swepck_viewmodelfov", Cmd_ViewModelFOV)
 local function Cmd_ViewModel( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
-	if (!IsValid(wep)) then return end
+	if (not IsValid(wep)) then return end
 	local newmod = args[1] or wep.ViewModel
 	newmod = newmod..".mdl"
-	if !file.Exists(newmod, "GAME") then return end
+	if not file.Exists(newmod, "GAME") then return end
 
 	--util.PrecacheModel(newmod)
 	wep.ViewModel = newmod
@@ -140,7 +140,7 @@ local function Cmd_ViewModel( pl, cmd, args )
 
 	local quickswitch = nil
 	for k, v in pairs( pl:GetWeapons() ) do
-		if (v:GetClass() != wep:GetClass()) then
+		if (v:GetClass() ~= wep:GetClass()) then
 			quickswitch = v:GetClass()
 			break
 		end
@@ -162,10 +162,10 @@ concommand.Add("swepck_viewmodel", Cmd_ViewModel)
 local function Cmd_WorldModel( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
-	if (!IsValid(wep)) then return end
+	if (not IsValid(wep)) then return end
 	local newmod = args[1] or wep.CurWorldModel
 	newmod = newmod..".mdl"
-	if !file.Exists(newmod, "GAME") then return end
+	if not file.Exists(newmod, "GAME") then return end
 
 	util.PrecacheModel(newmod)
 	wep.CurWorldModel = newmod
@@ -181,10 +181,10 @@ concommand.Add("swepck_worldmodel", Cmd_WorldModel)
 local function Cmd_PlayerModel( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
-	if (!IsValid(wep)) then return end
+	if (not IsValid(wep)) then return end
 	local newmod = args[1] or pl:GetModel()
 	newmod = newmod..".mdl"
-	if !file.Exists(newmod, "GAME") then return end
+	if not file.Exists(newmod, "GAME") then return end
 
 	util.PrecacheModel(newmod)
 
@@ -197,7 +197,7 @@ concommand.Add("swepck_playermodel", Cmd_PlayerModel)
 local function Cmd_PlayerModelScale( pl, cmd, args )
 
 	local wep = GetSCKSWEP( pl )
-	if (!IsValid(wep)) then return end
+	if (not IsValid(wep)) then return end
 	local sc = tonumber(args[1] or 1)
 
 	pl:SetModelScale( sc, 0.0001 )

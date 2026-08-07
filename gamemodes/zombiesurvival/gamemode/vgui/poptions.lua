@@ -480,7 +480,7 @@ function PANEL:UpdateSubCategoryList(subCategories)
 
         function btn:DoClick(play_sound)
             for _, child in ipairs(self:GetParent():GetChildren()) do
-                if child.SetSelected and child != self then
+                if child.SetSelected and child ~= self then
                     child:SetSelected(false)
                 end
             end

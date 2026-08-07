@@ -34,7 +34,7 @@ local matWhite = Material("models/debug/debugwhite")
 -- 使用白色材质覆盖模型颜色，引擎光照被抑制
 -- ============================================================================
 function PANEL:Paint(w, h)
-	if !IsValid( self.Entity ) then return end
+	if not IsValid( self.Entity ) then return end
 	
 	self:LayoutEntity( self.Entity )
 	

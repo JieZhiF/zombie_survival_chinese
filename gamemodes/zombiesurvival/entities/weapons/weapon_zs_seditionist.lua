@@ -132,13 +132,14 @@ function SWEP:ShootBullets(dmg, numbul, cone)
 	owner:FireBulletsLua(start, dir, cone, numbul, dmg, nil, self.Primary.KnockbackScale, self.TracerName, self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
 	-- 对穿透命中的每个目标补一发零散布子弹，伤害逐层递减
 	for i, trace in ipairs(tr) do
-		if i == 1 or not trace.Hit then continue end
-		if i > self.Pierces then break end
+		if i ~= 1 and trace.Hit then
+			if i > self.Pierces then break end
 
-		ent = trace.Entity
+			ent = trace.Entity
 
-		if ent and ent:IsValid() then
-			owner:FireBulletsLua(trace.HitPos, dir, 0, numbul, dmg/i, nil, self.Primary.KnockbackScale, "", self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
+			if ent and ent:IsValid() then
+				owner:FireBulletsLua(trace.HitPos, dir, 0, numbul, dmg/i, nil, self.Primary.KnockbackScale, "", self.BulletCallback, self.Primary.HullSize, nil, self.Primary.MaxDistance, nil, self)
+			end
 		end
 	end
 	owner:LagCompensation(false)

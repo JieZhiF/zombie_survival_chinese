@@ -142,16 +142,15 @@ function ENT:Think()
 	--local totalheal = self.HealValue * (self:GetObjectOwner().RepairRateMul or 1)
 	if not healer:IsValidLivingHuman() then healer = self end
 	for _, hitent in pairs(ents.FindInSphere(pos, self.MaxDistance )) do
-		if not hitent:IsValid() or hitent == self or not WorldVisible(pos, hitent:NearestPoint(pos)) then
-			continue
-		end
+		if hitent:IsValid() and hitent ~= self and WorldVisible(pos, hitent:NearestPoint(pos)) then
 
 
-		if  hitent:IsValidLivingHuman() and hitent:Health() < hitent:GetMaxHealth() then
-			healer:HealPlayer(hitent, self.HealValue, 1.2, false)
+			if  hitent:IsValidLivingHuman() and hitent:Health() < hitent:GetMaxHealth() then
+				healer:HealPlayer(hitent, self.HealValue, 1.2, false)
 			
-			self:SetAmmo(self:GetAmmo() - 3)
-			count = count + 1
+				self:SetAmmo(self:GetAmmo() - 3)
+				count = count + 1
+			end
 		end
 	end
  

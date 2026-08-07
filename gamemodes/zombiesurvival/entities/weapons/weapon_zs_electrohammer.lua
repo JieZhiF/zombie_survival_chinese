@@ -84,7 +84,9 @@ end
 GAMEMODE:SetPrimaryWeaponModifier(SWEP, WEAPON_MODIFIER_FIRE_DELAY, -0.04)
 GAMEMODE:AttachWeaponModifier(SWEP, WEAPON_MODIFIER_MELEE_RANGE, 3, 1)
 if SERVER then
-		
+
+	util.AddNetworkString("zs_electrohammer_skill")
+
 	local function RandomVectorInAABB(min, max)
 		return Vector(
 			math.Rand(min.x, max.x),
@@ -107,53 +109,51 @@ if SERVER then
 
 		-- Find all entities in range
 		for _, target in pairs(ents.FindInSphere(pos, radius)) do
-			if not IsValid(target) or target == self or not WorldVisible(pos, target:NearestPoint(pos)) then
-				continue
-			end
+			if IsValid(target) and target ~= self and WorldVisible(pos, target:NearestPoint(pos)) then
+				local healed = 0
 
-			local healed = 0
+				if target:IsNailed() then
+					-- Repair barricade health
+					local oldHealth = target:GetBarricadeHealth()
+					if oldHealth > 0 and oldHealth < target:GetMaxBarricadeHealth() and target:GetBarricadeRepairs() > 0.01 then
+						local repairAmount = math.min(target:GetBarricadeRepairs(), healStrength)
+						target:SetBarricadeHealth(math.min(target:GetMaxBarricadeHealth(), oldHealth + repairAmount))
+						healed = target:GetBarricadeHealth() - oldHealth
+						target:SetBarricadeRepairs(math.max(target:GetBarricadeRepairs() - healed, 0))
 
-			if target:IsNailed() then
-				-- Repair barricade health
-				local oldHealth = target:GetBarricadeHealth()
-				if oldHealth <= 0 or oldHealth >= target:GetMaxBarricadeHealth() or target:GetBarricadeRepairs() <= 0.01 then continue end
+						-- Spawn effect across the whole entity
+						local min, max = target:WorldSpaceAABB()
+						local effectData = EffectData()
+						effectData:SetOrigin(hitent:GetPos()) -- Random point inside bounding box
+						effectData:SetNormal(tr.HitNormal)
+						effectData:SetMagnitude(1)
+						util.Effect("explosion_electrohammer", effectData, true, true)
 
-				local repairAmount = math.min(target:GetBarricadeRepairs(), healStrength)
-				target:SetBarricadeHealth(math.min(target:GetMaxBarricadeHealth(), oldHealth + repairAmount))
-				healed = target:GetBarricadeHealth() - oldHealth
-				target:SetBarricadeRepairs(math.max(target:GetBarricadeRepairs() - healed, 0))
+						gamemode.Call("PlayerRepairedObject", owner, hitent, healed, self)
+						target:EmitSound("npc/dog/dog_servo"..math.random(7, 8)..".wav", 70, math.random(100, 105))
+					end
 
-				-- Spawn effect across the whole entity
-				local min, max = target:WorldSpaceAABB()
-				local effectData = EffectData()
-				effectData:SetOrigin(hitent:GetPos()) -- Random point inside bounding box
-				effectData:SetNormal(tr.HitNormal)
-				effectData:SetMagnitude(1)
-				util.Effect("explosion_electrohammer", effectData, true, true)
+				elseif target.GetObjectHealth then
+					-- Repair generic object health
+					if not (target.HitByWrench and target:HitByWrench(self, owner, nil)) then
+						local oldHealth = target:GetObjectHealth()
+						if oldHealth > 0 and oldHealth < target:GetMaxObjectHealth() and not (target.m_LastDamaged and CurTime() < target.m_LastDamaged + 4) then
+							target:SetObjectHealth(math.min(target:GetMaxObjectHealth(), oldHealth + healStrength / 2))
+							healed = target:GetObjectHealth() - oldHealth
 
-				gamemode.Call("PlayerRepairedObject", owner, hitent, healed, self)
-				target:EmitSound("npc/dog/dog_servo"..math.random(7, 8)..".wav", 70, math.random(100, 105))
+							-- Spawn effect across the whole object
+							local min, max = target:WorldSpaceAABB()
+							local effectData = EffectData()
+							effectData:SetOrigin(RandomVectorInAABB(min, max)) -- Random point inside bounding box
+							effectData:SetNormal(tr.HitNormal)
+							effectData:SetMagnitude(1)
+							util.Effect("explosion_electrohammer", effectData, true, true)
 
-			elseif target.GetObjectHealth then
-				-- Repair generic object health
-				if target.HitByWrench and target:HitByWrench(self, owner, nil) then continue end
-
-				local oldHealth = target:GetObjectHealth()
-				if oldHealth <= 0 or oldHealth >= target:GetMaxObjectHealth() or (target.m_LastDamaged and CurTime() < target.m_LastDamaged + 4) then continue end
-
-				target:SetObjectHealth(math.min(target:GetMaxObjectHealth(), oldHealth + healStrength / 2))
-				healed = target:GetObjectHealth() - oldHealth
-
-				-- Spawn effect across the whole object
-				local min, max = target:WorldSpaceAABB()
-				local effectData = EffectData()
-				effectData:SetOrigin(RandomVectorInAABB(min, max)) -- Random point inside bounding box
-				effectData:SetNormal(tr.HitNormal)
-				effectData:SetMagnitude(1)
-				util.Effect("explosion_electrohammer", effectData, true, true)
-
-				gamemode.Call("PlayerRepairedObject", owner, target, healed, self)
-				target:EmitSound("npc/dog/dog_servo"..math.random(7, 8)..".wav", 70, math.random(100, 105))
+							gamemode.Call("PlayerRepairedObject", owner, target, healed, self)
+							target:EmitSound("npc/dog/dog_servo"..math.random(7, 8)..".wav", 70, math.random(100, 105))
+						end
+					end
+				end
 			end
 		end
 	end

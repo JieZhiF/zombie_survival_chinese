@@ -12,4 +12,4 @@ ENT.Base = "status_ghost_gunturret"
 -- 放置确认后生成的真实炮塔实体
 ENT.GhostEntity = "prop_gunturret_pulse"
 -- 仅当玩家携带该武器时才显示此预览
-ENT.GhostWeapon = "weapon_zs_gunturret_pulse"
+ENT.GhostWeapon = "weapon_zs_gunturret_freeze"

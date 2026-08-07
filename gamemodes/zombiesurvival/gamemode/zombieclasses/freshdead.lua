@@ -28,6 +28,13 @@ CLASS.Speed = 195
 -- 击杀得分
 CLASS.Points = CLASS.Health/GM.HumanoidZombiePointRatio
 
+-- 冰冻抗性（去掉百分号的数值，可在本文件配置，直接表示冰冻效果百分比）：
+--   0   = 完全免疫冰冻 buff（寒冰boss等冰系僵尸用）
+--   100 = 标准效果（与不设置等价）
+--   200 = 双倍效果（更快被冻住）
+--   50  = 半效（更抗冻）
+-- CLASS.FreezeResistance = 200
+
 -- 可嘲讽
 CLASS.CanTaunt = true
 

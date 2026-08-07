@@ -99,18 +99,18 @@ function SWEP:Think()
 				local damage = self:GetSlowSwingDamage(self:GetTracesNumPlayers(traces))
 
 				for _, trace in ipairs(traces) do
-					if not trace.Hit then continue end
+					if trace.Hit then
+						hit = true
 
-					hit = true
-
-					if trace.HitWorld then
-						self:MeleeHitWorld(trace)
-					else
-						local ent = trace.Entity
-						if ent and ent:IsValid() then
-							self:MeleeHit(ent, trace, damage)
-							if ent:IsPlayer() then
-								self:MeleeHitPlayer(ent, trace, damage)
+						if trace.HitWorld then
+							self:MeleeHitWorld(trace)
+						else
+							local ent = trace.Entity
+							if ent and ent:IsValid() then
+								self:MeleeHit(ent, trace, damage)
+								if ent:IsPlayer() then
+									self:MeleeHitPlayer(ent, trace, damage)
+								end
 							end
 						end
 					end
@@ -157,18 +157,18 @@ function SWEP:Think()
 
 			local hit = false
 			for _, trace in ipairs(traces) do
-				if not trace.Hit then continue end
-
-				if trace.HitWorld then
-					if trace.HitNormal.z < 0.8 then
-						hit = true
-						self:MeleeHitWorld(trace)
-					end
-				else
-					local ent = trace.Entity
-					if ent and ent:IsValid() then
-						hit = true
-						self:MeleeHit(ent, trace, damage * (ent:IsPlayer() and self.PounceDamageVsPlayerMul or ent.PounceWeakness or 1), ent:IsPlayer() and 1 or 10)
+				if trace.Hit then
+					if trace.HitWorld then
+						if trace.HitNormal.z < 0.8 then
+							hit = true
+							self:MeleeHitWorld(trace)
+						end
+					else
+						local ent = trace.Entity
+						if ent and ent:IsValid() then
+							hit = true
+							self:MeleeHit(ent, trace, damage * (ent:IsPlayer() and self.PounceDamageVsPlayerMul or ent.PounceWeakness or 1), ent:IsPlayer() and 1 or 10)
+						end
 					end
 				end
 			end

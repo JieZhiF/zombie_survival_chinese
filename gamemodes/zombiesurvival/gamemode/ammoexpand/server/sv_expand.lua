@@ -12,6 +12,11 @@ local old_Player_SetAmmo = M_Player.SetAmmo
 local old_Player_RemoveAllAmmo = M_Player.RemoveAllAmmo
 local old_Player_StripAmmo = M_Player.StripAmmo
 
+-- ========== 注册自定义弹药同步网络消息 ==========
+
+util.AddNetworkString("cusammo")
+util.AddNetworkString("cusammo_removeall")
+
 -- ========== 通过名称或ID获取自定义弹药ID ==========
 
 -- 将弹药名称或ID转换为自定义弹药表中的索引ID

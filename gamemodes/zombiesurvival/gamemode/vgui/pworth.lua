@@ -404,10 +404,113 @@ function MakepWorth()
 	cartlist:SetSpacing(1)
 	cartlist:SetPadding(2)
 
-	-- 当前购物车更新函数
-	local function UpdateCurrentCart()
-		cartlist:Clear()
+	-- 购物车行缓存：按物品 ID 复用已创建的行
+	-- （旧实现每次点击全量 Clear+重建，反复执行 surface.CreateFont / DModelPanel:SetModel，
+	--   且 DPanelList:Clear 只隐藏不销毁旧行导致泄漏，随点击次数增多越来越卡）
+	local CartItemsByID = {}
+	local CartEmptyLabel = nil
+	local CartFontsCreated = {}
 
+	-- 创建单个购物车行（仅在新增时调用一次）
+	local function CreateCartItem(btn)
+		local tab = FindStartingItem(btn.ID)
+		if not tab then return end
+
+		local cartitem = vgui.Create("DPanel")
+		local itemhei = 72 * screenscale
+		cartitem:SetSize(cartlist:GetWide(), itemhei)
+		cartitem.Paint = function(self, w, h)
+			draw.RoundedBox(2, 1, 1, w - 2, h - 2, colBG)
+			if self.Hovered then
+				draw.RoundedBox(2, 1, 1, w - 2, h - 2, colHover)
+			end
+		end
+
+		-- 移除按钮：内缩留呼吸空间，低透明度 hover 显示
+		local removebutton = vgui.Create("DButton", cartitem)
+		removebutton:SetText("x")
+		removebutton:SetFont("ZSHUDFontTiny")
+		removebutton:SetSize(16 * screenscale, 16 * screenscale)
+		removebutton:SetPos(cartitem:GetWide() - removebutton:GetWide() - 8, 4)
+		removebutton:SetTextColor(COLOR_RED)
+		removebutton.Paint = function(self, w, h)
+			self:SetAlpha(self:IsHovered() and 255 or 70)
+		end
+		removebutton.DoClick = function()
+			btn:DoClick(true, true)
+		end
+
+		-- 物品图标（左侧紧凑显示）
+		local iconpanel = vgui.Create("DPanel", cartitem)
+		iconpanel:SetSize(44 * screenscale, 32 * screenscale)
+		iconpanel:SetPos(6 * screenscale, (itemhei - 32 * screenscale) * 0.5)
+		iconpanel.Paint = function() end
+
+		local kitbl = killicon.Get(GAMEMODE.ZSInventoryItemData[tab.SWEP] and "weapon_zs_craftables" or tab.SWEP or tab.Model)
+		if kitbl and #kitbl == 2 then
+			local img = vgui.Create("DImage", iconpanel)
+			img:SetImage(kitbl[1])
+			if kitbl[2] then img:SetImageColor(kitbl[2]) end
+			img:SizeToContents()
+			local natw, nath = img:GetWide(), img:GetTall()
+			local scale = math.min(iconpanel:GetWide() / natw, iconpanel:GetTall() / nath, 1)
+			img:SetSize(natw * scale, nath * scale)
+			img:Center()
+		elseif kitbl and #kitbl == 3 then
+			local label = vgui.Create("DLabel", iconpanel)
+			label:SetText(kitbl[2])
+			local iconfont = kitbl[1] .. "cart"
+			-- 字体按名称缓存：同一字体只创建一次，避免每次重建行都重新栅格化
+			if not CartFontsCreated[iconfont] then
+				surface.CreateFont(iconfont, {font = kitbl[1]:match("cs$") and "csd" or "HL2MP", size = iconpanel:GetTall(), weight = 100, antialias = true})
+				CartFontsCreated[iconfont] = true
+			end
+			label:SetFont(iconfont)
+			label:SetTextColor(kitbl[3] or color_white)
+			label:SizeToContents()
+			label:Center()
+		elseif tab.Model then
+			local mdlpanel = vgui.Create("DModelPanel", iconpanel)
+			mdlpanel:SetSize(iconpanel:GetSize())
+			mdlpanel:SetModel(tab.Model)
+			local mins, maxs = mdlpanel.Entity:GetRenderBounds()
+			mdlpanel:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5))
+			mdlpanel:SetLookAt((mins + maxs) / 2)
+		end
+
+		-- 价格标签
+		local pricelabel = EasyLabel(cartitem, tostring(tab.Price).." "..translate.Get("Worth"), "ZSHUDFontTiny", COLOR_LIMEGREEN)
+		pricelabel:SetPos(58 * screenscale, 4)
+
+		-- 弹药类型图标
+		local sweptable = tab.SWEP and (GAMEMODE.ZSInventoryItemData[tab.SWEP] or weapons.Get(tab.SWEP))
+		if sweptable and sweptable.Primary and sweptable.Primary.Ammo and GAMEMODE.AmmoIcons[string.lower(sweptable.Primary.Ammo)] then
+			local lower = string.lower(sweptable.Primary.Ammo)
+			local ki = killicon.Get(GAMEMODE.AmmoIcons[lower])
+			local ammoicon = vgui.Create("DImage", cartitem)
+			ammoicon:SetImage(ki[1])
+			if ki[2] then ammoicon:SetImageColor(ki[2]) end
+			ammoicon:SetSize(18 * screenscale, 18 * screenscale)
+			ammoicon:SetPos(58 * screenscale, 4)
+			pricelabel:SetPos(58 * screenscale + 18 * screenscale + 4, 4)
+		end
+
+		-- 物品名称
+		local namelabel = EasyLabel(cartitem, tab.Name or "", "ZSHUDFontTiny", COLOR_WHITE)
+		namelabel:SetWrap(true)
+		namelabel:SetMultiline(true)
+		namelabel:SetAutoStretchVertical(false)
+		namelabel:SetContentAlignment(4)
+		namelabel:SetPos(58 * screenscale, 25 * screenscale)
+		namelabel:SetSize(cartitem:GetWide() - 66 * screenscale, itemhei - 29 * screenscale)
+
+		cartlist:AddItem(cartitem)
+
+		return cartitem
+	end
+
+	-- 当前购物车增量更新函数：只创建新增行、只销毁取消的行，其余复用
+	local function UpdateCurrentCart()
 		local cartitems = {}
 		for _, btn in pairs(WorthButtons) do
 			if btn and btn.On and btn.ID then
@@ -415,106 +518,51 @@ function MakepWorth()
 			end
 		end
 
+		-- 移除已取消选中的行（只销毁有变化的部分）
+		for id, row in pairs(CartItemsByID) do
+			if not (row and row:IsValid()) then
+				CartItemsByID[id] = nil
+			else
+				local keep = false
+				for _, btn in ipairs(cartitems) do
+					if btn.ID == id then
+						keep = true
+						break
+					end
+				end
+				if not keep then
+					cartlist:RemoveItem(row)
+					CartItemsByID[id] = nil
+				end
+			end
+		end
+
 		if #cartitems == 0 then
-			-- 空状态：撑满列表高度并居中显示，避免悬在顶部
-			local emptylabel = EasyLabel(cartlist, translate.Get("Worth_CartEmpty"), "ZSHUDFontSmallest", COLOR_GRAY)
-			emptylabel:SetWrap(true)
-			emptylabel:SetMultiline(true)
-			emptylabel:SetWide(cartlist:GetWide() - 8)
-			emptylabel:SetTall(cartlist:GetTall() - 8)
-			emptylabel:SetContentAlignment(5)
-			cartlist:AddItem(emptylabel)
-		else
-			for _, btn in ipairs(cartitems) do
-				local tab = FindStartingItem(btn.ID)
-				if tab then
-					local cartitem = vgui.Create("DPanel")
-					local itemhei = 72 * screenscale
-					cartitem:SetSize(cartlist:GetWide(), itemhei)
-					cartitem.Paint = function(self, w, h)
-						draw.RoundedBox(2, 1, 1, w - 2, h - 2, colBG)
-						if self.Hovered then
-							draw.RoundedBox(2, 1, 1, w - 2, h - 2, colHover)
-						end
-					end
+			-- 空状态：撑满列表高度并居中显示，避免悬在顶部（仅首次创建）
+			if not (CartEmptyLabel and CartEmptyLabel:IsValid()) then
+				local emptylabel = EasyLabel(cartlist, translate.Get("Worth_CartEmpty"), "ZSHUDFontSmallest", COLOR_GRAY)
+				emptylabel:SetWrap(true)
+				emptylabel:SetMultiline(true)
+				emptylabel:SetWide(cartlist:GetWide() - 8)
+				emptylabel:SetTall(cartlist:GetTall() - 8)
+				emptylabel:SetContentAlignment(5)
+				cartlist:AddItem(emptylabel)
+				CartEmptyLabel = emptylabel
+			end
+			return
+		end
 
-					local screenscale = BetterScreenScale()
+		if CartEmptyLabel and CartEmptyLabel:IsValid() then
+			cartlist:RemoveItem(CartEmptyLabel)
+			CartEmptyLabel = nil
+		end
 
-					-- 移除按钮：内缩留呼吸空间，低透明度 hover 显示
-					local removebutton = vgui.Create("DButton", cartitem)
-					removebutton:SetText("x")
-					removebutton:SetFont("ZSHUDFontTiny")
-					removebutton:SetSize(16 * screenscale, 16 * screenscale)
-					removebutton:SetPos(cartitem:GetWide() - removebutton:GetWide() - 8, 4)
-					removebutton:SetTextColor(COLOR_RED)
-					removebutton.Paint = function(self, w, h)
-						self:SetAlpha(self:IsHovered() and 255 or 70)
-					end
-					removebutton.DoClick = function()
-						btn:DoClick(true, true)
-					end
-
-					-- 物品图标（左侧紧凑显示）
-					local iconpanel = vgui.Create("DPanel", cartitem)
-					iconpanel:SetSize(44 * screenscale, 32 * screenscale)
-					iconpanel:SetPos(6 * screenscale, (itemhei - 32 * screenscale) * 0.5)
-					iconpanel.Paint = function() end
-
-					local kitbl = killicon.Get(GAMEMODE.ZSInventoryItemData[tab.SWEP] and "weapon_zs_craftables" or tab.SWEP or tab.Model)
-					if kitbl and #kitbl == 2 then
-						local img = vgui.Create("DImage", iconpanel)
-						img:SetImage(kitbl[1])
-						if kitbl[2] then img:SetImageColor(kitbl[2]) end
-						img:SizeToContents()
-						local natw, nath = img:GetWide(), img:GetTall()
-						local scale = math.min(iconpanel:GetWide() / natw, iconpanel:GetTall() / nath, 1)
-						img:SetSize(natw * scale, nath * scale)
-						img:Center()
-					elseif kitbl and #kitbl == 3 then
-						local label = vgui.Create("DLabel", iconpanel)
-						label:SetText(kitbl[2])
-						local iconfont = kitbl[1] .. "cart"
-						surface.CreateFont(iconfont, {font = kitbl[1]:match("cs$") and "csd" or "HL2MP", size = iconpanel:GetTall(), weight = 100, antialias = true})
-						label:SetFont(iconfont)
-						label:SetTextColor(kitbl[3] or color_white)
-						label:SizeToContents()
-						label:Center()
-					elseif tab.Model then
-						local mdlpanel = vgui.Create("DModelPanel", iconpanel)
-						mdlpanel:SetSize(iconpanel:GetSize())
-						mdlpanel:SetModel(tab.Model)
-						local mins, maxs = mdlpanel.Entity:GetRenderBounds()
-						mdlpanel:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5))
-						mdlpanel:SetLookAt((mins + maxs) / 2)
-					end
-
-					-- 价格标签
-					local pricelabel = EasyLabel(cartitem, tostring(tab.Price).." "..translate.Get("Worth"), "ZSHUDFontTiny", COLOR_LIMEGREEN)
-					pricelabel:SetPos(58 * screenscale, 4)
-
-					-- 弹药类型图标
-					local sweptable = tab.SWEP and (GAMEMODE.ZSInventoryItemData[tab.SWEP] or weapons.Get(tab.SWEP))
-					if sweptable and sweptable.Primary and sweptable.Primary.Ammo and GAMEMODE.AmmoIcons[string.lower(sweptable.Primary.Ammo)] then
-						local lower = string.lower(sweptable.Primary.Ammo)
-						local ki = killicon.Get(GAMEMODE.AmmoIcons[lower])
-						local ammoicon = vgui.Create("DImage", cartitem)
-						ammoicon:SetImage(ki[1])
-						if ki[2] then ammoicon:SetImageColor(ki[2]) end
-						ammoicon:SetSize(18 * screenscale, 18 * screenscale)
-						ammoicon:SetPos(58 * screenscale, 4)
-						pricelabel:SetPos(58 * screenscale + 18 * screenscale + 4, 4)
-					end
-
-					-- 物品名称
-					local namelabel = EasyLabel(cartitem, tab.Name or "", "ZSHUDFontTiny", COLOR_WHITE)
-					namelabel:SetWrap(true)
-					namelabel:SetMultiline(true)
-					namelabel:SetAutoStretchVertical(false)
-					namelabel:SetContentAlignment(4)
-					namelabel:SetPos(58 * screenscale, 25 * screenscale)
-					namelabel:SetSize(cartitem:GetWide() - 66 * screenscale, itemhei - 29 * screenscale)
-
-					cartlist:AddItem(cartitem)
+		-- 只创建新增条目，已有条目复用，避免重复加载模型/字体
+		for _, btn in ipairs(cartitems) do
+			if not CartItemsByID[btn.ID] then
+				local row = CreateCartItem(btn)
+				if row then
+					CartItemsByID[btn.ID] = row
 				end
 			end
 		end

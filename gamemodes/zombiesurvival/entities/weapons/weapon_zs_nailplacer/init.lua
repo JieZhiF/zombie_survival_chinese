@@ -5,6 +5,8 @@
 --   Reload           - 启动拆钉计时器（实际拆钉在 shared.lua 的 SWEP:Think 中）
 --   net "zs_nailplacer_spawn" - 根据客户端选择在准星位置生成 prop_physics
 --                                （含缩放/颜色，其余参数与 sv_nailsave.lua 一致）
+--   net "zs_nailplacer_levelcfg" / "zs_nailplacer_levelrules" / "zs_nailplacer_ghosts"
+--                                - sv_nailsave.lua 的防线配置/规则/幽灵预览消息
 --   concommand "zs_nailplacer" - 给予本武器
 -- ============================================================================
 INC_SERVER()
@@ -152,6 +154,9 @@ util.AddNetworkString("zs_nailplacer_spawn")
 util.AddNetworkString("zs_nailplacer_menu")
 util.AddNetworkString("zs_nailplacer_modelcheck")
 util.AddNetworkString("zs_nailplacer_badmodel")
+util.AddNetworkString("zs_nailplacer_levelcfg")
+util.AddNetworkString("zs_nailplacer_levelrules")
+util.AddNetworkString("zs_nailplacer_ghosts")
 
 net.Receive("zs_nailplacer_spawn", function(len, ply)
 	-- 必须正手持本武器，防止绕过工具直接发包的滥用

@@ -29,6 +29,8 @@ CLASS.Points = 20
 
 -- 免疫冰冻效果
 CLASS.ResistFrost = true
+-- 冰冻抗性（去掉百分号的数值）：0 = 免疫冰冻 buff
+CLASS.FreezeResistance = 0
 
 -- 死亡音效（扫描机器人能量爆炸）
 CLASS.DeathSounds = {Sound("npc/scanner/cbot_energyexplosion1.wav")}

@@ -213,6 +213,19 @@ SLOWTYPE_COLD = 2
 -- 火焰减速
 SLOWTYPE_FLAME = 3
 
+-- ============================
+-- 冰冻效果（Freeze Buff）配置
+-- 冰冻 buff(status_freeze)按剩余时长分为多个阶段：
+--   阶段1：轻微减速  阶段2：重度减速  阶段3：完全冻结(定身+禁攻+尖刺+受伤倍率)
+-- ============================
+
+-- 剩余时长达到该值进入阶段2（重度减速），单位：秒
+FREEZE_SLOW_DURATION = 2
+-- 剩余时长达到该值进入阶段3（完全冻结），单位：秒
+FREEZE_FULL_DURATION = 4
+-- 完全冻结期间受到的伤害倍率（5.0 = 伤害 x5，即 500%）
+FREEZE_DAMAGE_MULT = 5.0
+
 -- 由于每次 GMod 更新都会莫名其妙地交换这些对齐值，所以定义真实常量以保持不变
 TEXT_ALIGN_TOP_REAL = 3
 TEXT_ALIGN_BOTTOM_REAL = 4

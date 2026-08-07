@@ -80,26 +80,26 @@ local function DoFleshThrow(owner, self)
 	local ang
 
 	for k, spr in pairs(PoisonPattern) do
-		if k == "BaseClass" then continue end
+		if k ~= "BaseClass" then
+			-- 在瞄准方向上叠加水平/垂直散布角度
+			ang = Angle(aimang.p, aimang.y, aimang.r)
+			ang:RotateAroundAxis(ang:Up(), spr[1] * 12.5)
+			ang:RotateAroundAxis(ang:Right(), spr[2] * 5)
+			local heading = ang:Forward()
 
-		-- 在瞄准方向上叠加水平/垂直散布角度
-		ang = Angle(aimang.p, aimang.y, aimang.r)
-		ang:RotateAroundAxis(ang:Up(), spr[1] * 12.5)
-		ang:RotateAroundAxis(ang:Right(), spr[2] * 5)
-		local heading = ang:Forward()
+			-- 第 1/4/7 号投掷"剧毒肉块"，其余投掷"普毒肉块"
+			local ent = ents.Create(k % 3 == 1 and "projectile_ghoulfleshno" or "projectile_poisonflesh")
+			if ent:IsValid() then
+				-- 在枪口前方生成并绑定所有者
+				ent:SetPos(startpos + heading * 8)
+				ent:SetOwner(owner)
+				ent:Spawn()
 
-		-- 第 1/4/7 号投掷"剧毒肉块"，其余投掷"普毒肉块"
-		local ent = ents.Create(k % 3 == 1 and "projectile_ghoulfleshno" or "projectile_poisonflesh")
-		if ent:IsValid() then
-			-- 在枪口前方生成并绑定所有者
-			ent:SetPos(startpos + heading * 8)
-			ent:SetOwner(owner)
-			ent:Spawn()
-
-			-- 沿散布方向抛出
-			local phys = ent:GetPhysicsObject()
-			if phys:IsValid() then
-				phys:SetVelocityInstantaneous(heading * 400)
+				-- 沿散布方向抛出
+				local phys = ent:GetPhysicsObject()
+				if phys:IsValid() then
+					phys:SetVelocityInstantaneous(heading * 400)
+				end
 			end
 		end
 	end
