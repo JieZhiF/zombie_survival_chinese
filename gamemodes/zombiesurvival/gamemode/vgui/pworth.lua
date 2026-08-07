@@ -74,8 +74,9 @@ local ExtraStartingWorth = 0
 -- 面板背景/悬停/选中颜色
 -- 必须声明在 UpdateCurrentCart 之前，否则其内部 Paint 闭包会把 colBG/colHover 解析为 nil 全局变量
 local colBG = Color(25, 25, 25, 110)
+local colBGOn = Color(25, 25, 25, 200)
 local colHover = Color(255, 255, 255, 10)
-local colSelLine = Color(50, 255, 50, 255)
+local colSelLine = Color(50, 255, 50, 255) -- 选中颜色
 
 -- ============================================================================
 -- GetStartingWorth - 获取总起始价值
@@ -1073,8 +1074,8 @@ end
 function PANEL:Paint(w, h)
 	if self.On then
 		-- 选中：2px 绿色边框 + 底部绿色线
-		draw.RoundedBox(2, 0, 0, w, h, colSelLine)
-		draw.RoundedBox(2, 2, 2, w - 4, h - 4, colBG)
+		--draw.RoundedBox(2, 0, 0, w, h, colSelLine)
+		draw.RoundedBox(2, 2, 2, w - 4, h - 4, colBGOn)
 		draw.RoundedBox(0, 2, h - 4, w - 4, 2, colSelLine)
 	else
 		draw.RoundedBox(2, 1, 1, w - 2, h - 2, colBG)

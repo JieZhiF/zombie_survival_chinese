@@ -309,10 +309,22 @@ function GM:SupplyItemViewerDetail(viewer, sweptable, shoptbl)
 		end
 	end
 
-	self:ViewerStatBarUpdate(viewer, shoptbl.Category ~= ITEMCAT_GUNS and shoptbl.Category ~= ITEMCAT_MELEE, sweptable)
+	-- 只有武器/近战类显示属性条，其余类别隐藏
+	local displaystats = shoptbl.Category ~= ITEMCAT_GUNS and shoptbl.Category ~= ITEMCAT_MELEE
+	self:ViewerStatBarUpdate(viewer, displaystats, sweptable)
 
 	viewer.m_Desc:SetText(desctext)
-	viewer.m_Desc:MoveBelow(viewer.ItemStats[10], 8)
+	-- 无属性条时描述直接贴图标区下方，避免留出整块属性区空白
+	-- （craftables 且无 IconDisplay 时图标区隐藏，改贴标题下方）
+	if displaystats then
+		if self.ZSInventoryItemData[shoptbl.SWEP] and not viewer.IconDisplay then
+			viewer.m_Desc:MoveBelow(viewer.m_Title, 20)
+		else
+			viewer.m_Desc:MoveBelow(viewer.m_VBG, 8)
+		end
+	else
+		viewer.m_Desc:MoveBelow(viewer.ItemStats[10], 8)
+	end
 
 	if self:HasPurchaseableAmmo(sweptable) and self.AmmoNames[string.lower(sweptable.Primary.Ammo)] then
 		local lower = string.lower(sweptable.Primary.Ammo)
