@@ -1,7 +1,9 @@
 # 工具与索引目录
 .omo/
 .codegraph/
-
+.workbuddy/
+.opencode/
+arc9_weapon_base/*
 # 备份压缩包
 *.7z
 *.zip
@@ -9,5 +11,3 @@
 *.tar
 *.tar.gz
 
-# 临时生成的修改记录文档
-修改记录*.diff
