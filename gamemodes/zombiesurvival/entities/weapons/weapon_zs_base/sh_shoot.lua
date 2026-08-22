@@ -29,7 +29,8 @@ function SWEP:ShootBullets(dmg, numbul, cone)
     
     owner:DoAttackEvent()
     
-
+    -- [ARC9 原版机制] 实际后坐力由 cl_recoil_handler 渐进注入真实视角，
+    -- 子弹自然跟随移动后的准星，此处不再单独偏转弹道
     owner:LagCompensation(true)
     owner:FireBulletsLua(
         owner:GetShootPos(), 

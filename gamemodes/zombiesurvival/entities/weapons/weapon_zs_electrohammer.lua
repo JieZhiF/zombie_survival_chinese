@@ -370,6 +370,6 @@ if CLIENT then
 		self:DrawElectrohammerHud()
 
 		if GetConVar("crosshair"):GetInt() ~= 1 then return end
-		self:DrawCrosshairDot()
+		self:DrawLockCrosshair()
 	end
 end

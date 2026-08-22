@@ -122,7 +122,6 @@ SWEP.RecoilRandomSide   = 0.04  -- 水平随机
 SWEP.RecoilMaxTotalUp   = 45
 SWEP.RecoilAutoControl  = 4     -- 轻度回正
 SWEP.RecoilAutoControlTime = 0.08
-SWEP.RecoilAutoControl_PerShot = 0.1
 SWEP.RecoilAutoControl_DontTryToReturnBack = false
 
 -- ==========================================

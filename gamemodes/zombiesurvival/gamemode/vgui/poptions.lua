@@ -295,6 +295,31 @@ function PANEL:PopulateOptionsData()
             { type = "slider", label = "Option_DamageNumberSize", convar = "zs_dmgnumberscale", min = 0.5, max = 2, decimals = 1 },
             { type = "slider", label = "Option_DamageNumberSpeed", convar = "zs_dmgnumberspeed", min = 0, max = 1, decimals = 1 },
             { type = "slider", label = "Option_DamageNumberLife", convar = "zs_dmgnumberlife", min = 0.2, max = 1.5, decimals = 1 },
+            { type = "combobox", label = "Option_DefaultTeam", choices = {
+                { text = "默认人类", value = "human" },
+                { text = "默认僵尸", value = "zombie" },
+                { text = "始终打开选择界面", value = "menu" }
+            }, getdefault = function()
+                local value = GetConVarNumber("zs_alwaysspawnmenu")
+                if value == 1 then return "menu" end
+                -- 显示当前持久化偏好（zs_lastspawnchoice），而非固定显示"默认人类"
+                local pref = GetConVar("zs_lastspawnchoice")
+                if pref and pref:GetString() == "zombie" then return "zombie" end
+                return "human"
+            end, onselect = function(index, value)
+                if value == "menu" then
+                    RunConsoleCommand("zs_alwaysspawnmenu", "1")
+                else
+                    RunConsoleCommand("zs_alwaysspawnmenu", "0")
+                    -- 直接写入本地持久化偏好 cvar（与出生菜单 SendChoice 相同机制）。
+                    -- 不能走 zs_spawnmenu 服务器命令：该命令仅在出生菜单待选时生效，
+                    -- 在选项界面调用会被静默忽略，导致"默认人类"完全不生效。
+                    local pref = GetConVar("zs_lastspawnchoice")
+                    if pref then
+                        pref:SetString(value == "zombie" and "zombie" or "human")
+                    end
+                end
+            end },
             { type = "slider", label = "Option_PropRotationSensitivity", convar = "zs_proprotationsens", min = 0.1, max = 4, decimals = 1 },
             { type = "combobox", label = "Option_PropRotationAngle", choices = {
                 { text = translate.Get("Option_PropRotationAngle_NONE"), value = 0 },
@@ -558,9 +583,9 @@ function PANEL:AddCheckbox(parent, data)
         local padding = 3
         local knobSize = h - padding * 2
 
-        local COLOR_TRACK_OFF = Color(80, 85, 95, 255)
-        local COLOR_KNOB_OFF = Color(180, 185, 195, 255)
-        local COLOR_KNOB_ON = Color(255, 255, 255, 255)
+local COLOR_TRACK_OFF = Color(80, 85, 95, 255)
+	local COLOR_KNOB_OFF = Color(180, 185, 195, 255)
+	local COLOR_KNOB_ON = Color(255, 255, 255, 255)
 
         local trackColor = Color(
             Lerp(self.animProgress, COLOR_TRACK_OFF.r, COLOR_ACCENT.r),

@@ -567,7 +567,7 @@ function SWEP:GetViewModelPosition(Pos, Ang)
     if CLIENT then self:ThinkVisualRecoil() end
 
     local ang_copy = Angle(Ang.p, Ang.y, Ang.r)
-    
+
     -- 1. ZS 原有机瞄旋转
     ang_copy:RotateAroundAxis(ang_copy:Forward(), self.IronAng.p)
     ang_copy:RotateAroundAxis(ang_copy:Up(),      self.IronAng.y)

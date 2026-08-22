@@ -44,6 +44,14 @@ cvars.AddChangeCallback("zs_ironsightscrosshair", function(cvar, oldvalue, newva
 	ironsightscrosshair = tonumber(newvalue) == 1
 end)
 
+-- [机瞄淡出] 开镜过渡期间准星透明度乘数；无机瞄系统的武器（近战/僵尸爪）恒为 1
+local function GetCrosshairAlphaMul(wep)
+	if not IsValid(wep) or not wep.GetIronsightDelta then return 1 end
+	-- 玩家主动要求开镜显示准星时不淡出
+	if wep.GetIronsights and wep:GetIronsights() and ironsightscrosshair then return 1 end
+	return 1 - wep:GetIronsightDelta()
+end
+
 -- ============================================================
 -- 材质与局部辅助函数
 -- matGrad: 白色渐变材质，用于绘制准星线条
@@ -53,7 +61,8 @@ local matGrad = Material("vgui/white")
 -- 绘制一条带有内外两层颜色的准星线条
 -- x, y: 线条中心坐标
 -- rot: 旋转角度（度）
-local function DrawLine(x, y, rot)
+local function DrawLine(x, y, rot, alphamul)
+	alphamul = alphamul or 1
 	-- 获取准星线条粗细配置
 	local thickness = GAMEMODE.CrosshairThickness
 
@@ -62,10 +71,10 @@ local function DrawLine(x, y, rot)
 	-- 设置渐变材质
 	surface.SetMaterial(matGrad)
 	-- 先绘制黑色描边层（外圈）
-	surface.SetDrawColor(0, 0, 0, GAMEMODE.CrosshairColor.a)
+	surface.SetDrawColor(0, 0, 0, GAMEMODE.CrosshairColor.a * alphamul)
 	surface.DrawTexturedRectRotated(x, y, 14, math.max(4 * thickness, 2 + 2 * thickness), rot)
 	-- 再绘制主要颜色层（内圈）
-	surface.SetDrawColor(GAMEMODE.CrosshairColor)
+	surface.SetDrawColor(ColorAlpha(GAMEMODE.CrosshairColor, GAMEMODE.CrosshairColor.a * alphamul))
 	surface.DrawTexturedRectRotated(x, y, 12, 2 * thickness, rot)
 end
 
@@ -159,14 +168,12 @@ function meta:DrawCrosshairCross()
 	local x = ScrW() * 0.5
 	local y = ScrH() * 0.5
 
-	-- 检查玩家是否在开镜状态
-	local ironsights = self.GetIronsights and self:GetIronsights()
-
 	-- 获取武器精准度
 	local cone = self:GetCone()
 
-	-- 如果精准度为 0 或开镜且未开启开镜准星，则不绘制
-	if cone <= 0 or ironsights and not ironsightscrosshair then return end
+	-- 机瞄过渡期间按进度平滑淡出，完全收起后不再绘制
+	local alphamul = GetCrosshairAlphaMul(self)
+	if cone <= 0 or alphamul <= 0.01 then return end
 
 	-- 将精准度转换为屏幕像素偏移量
 	cone = ScrH() * 0.0003125 * cone
@@ -196,7 +203,7 @@ function meta:DrawCrosshairCross()
 	for i = 0, 359, 360 / GAMEMODE.CrosshairLines do
 		ang.roll = baserot + i
 		local p = ang:Up() * midarea
-		DrawLine(math.Round(x + p.y), math.Round(y + p.z), ang.roll)
+		DrawLine(math.Round(x + p.y), math.Round(y + p.z), ang.roll, alphamul)
 	end
 end
 
@@ -214,17 +221,21 @@ function meta:DrawCrosshairDot()
 	-- 计算中心点尺寸
 	local size = 5 * thickness
 	local hsize = size / 2
+	-- 机瞄过渡期间同步淡出
+	local ply = MySelf and MySelf:IsValid() and MySelf or LocalPlayer()
+	local alphamul = GetCrosshairAlphaMul(IsValid(ply) and ply:GetActiveWeapon() or NULL)
+	if alphamul <= 0.01 then return end
 
 	-- 绘制中心点（主要颜色）
-	surface.SetDrawColor(GAMEMODE.CrosshairColor2)
+	surface.SetDrawColor(ColorAlpha(GAMEMODE.CrosshairColor2, GAMEMODE.CrosshairColor2.a * alphamul))
 	surface.DrawRect(x - hsize, y - hsize, size, size)
 	-- 绘制中心点黑色描边
-	surface.SetDrawColor(0, 0, 0, GAMEMODE.CrosshairColor2.a)
+	surface.SetDrawColor(0, 0, 0, GAMEMODE.CrosshairColor2.a * alphamul)
 	surface.DrawOutlinedRect(x - hsize, y - hsize, size, size)
 
 	-- 处理越肩视角被阻挡的情况，显示红色提示圆圈
 	if GAMEMODE.LastOTSBlocked and MySelf:Team() == TEAM_HUMAN and GAMEMODE:UseOverTheShoulder() then
-		GAMEMODE:DrawCircle(x, y, 8, COLOR_RED)
+		GAMEMODE:DrawCircle(x, y, 8, ColorAlpha(COLOR_RED, 255 * alphamul))
 	end
 end
 
@@ -371,7 +382,7 @@ function meta:BaseDrawWeaponSelection(x, y, wide, tall, alpha)
 	-- 判断击杀图标格式并绘制
 	if ki and #ki == 3 then
 		-- 文本格式的图标（使用字体+字符）
-		draw.SimpleText(ki[2], ki[1] .. "ws", x + wide * 0.5, y + tall * 0.5 + 18 * BetterScreenScale(), Color(cols.r, cols.g, cols.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText(ki[2], ki[1] .. "ws", x + wide * 0.5, y + tall * 0.5 + 13 * BetterScreenScale(), Color(cols.r, cols.g, cols.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	elseif ki then
 		-- 材质格式的图标（使用图片）
 		local material = Material(ki[1])

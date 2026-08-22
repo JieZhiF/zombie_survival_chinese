@@ -598,12 +598,12 @@
         end
 
         -- =====================================================================
-        -- 回合触发：第一回合开始前 1 秒（或开始的同时）按当时人数生成防线；
-        -- 之前的等待阶段只显示幽灵预显
+        -- 回合触发：每回合波次 1 开始前 1 秒（或开始的同时）按当时人数生成防线；
+        -- 准备阶段只显示幽灵预显。回合重启时由 RestartRound 钩子重置标记。
         -- =====================================================================
         local nailSaveLoaded = false
 
-        -- 按当前人数计算等级并正式加载防线（每局只触发一次）
+        -- 按当前人数计算等级并正式加载防线（每回合只触发一次）
         local function TriggerWaveLoad()
             if nailSaveLoaded then return end
             nailSaveLoaded = true
@@ -616,31 +616,32 @@
             end
         end
 
+        -- 回合重启信号：重置已加载标记，使新回合波次 1 前重新加载防线。
+        -- 不能用波次状态推断重置时机：wave==0 且未激活在"波次1开始前1秒"同样成立，
+        -- 若在 Think 里重置会与触发条件（CurTime() >= ws - 1）重叠，
+        -- 造成 加载→重置→再加载 的每帧死循环。必须挂在新回合的唯一入口 RestartRound 上。
+        hook.Add("RestartRound", "ZS_NailSave_RoundReset", function()
+            nailSaveLoaded = false
+            timer.Simple(1, function()
+                if not nailSaveLoaded then
+                    SendGhostData()
+                end
+            end)
+        end)
+
         hook.Add("Think", "ZS_NailSave_WaveTrigger", function()
             if not GAMEMODE then return end
+            if nailSaveLoaded then return end
 
-            if nailSaveLoaded then
-                local ws = GAMEMODE:GetWaveStart()
-                -- 仅在回合已经结束（ws == -1）且波次为0未激活时重置
-                if ws == -1 and GAMEMODE:GetWave() == 0 and not GAMEMODE:GetWaveActive() then
-                    nailSaveLoaded = false
-                    timer.Simple(1, function()
-                        if not nailSaveLoaded then
-                            SendGhostData()
-                        end
-                    end)
-                end
-                return
-            end
             -- 回合已在进行（中途进图/异常恢复）：立即加载
             if GAMEMODE:GetWaveActive() or GAMEMODE:GetWave() > 0 then
                 TriggerWaveLoad()
                 return
             end
 
-            -- 第一回合开始前 1 秒触发
+            -- 波次 1 开始前 1 秒触发（每回合重启后同样适用）
             local ws = GAMEMODE:GetWaveStart()
-            if ws ~= -1 and CurTime() >= ws - 1 and not hastrigger then
+            if ws ~= -1 and CurTime() >= ws - 1 then
                 TriggerWaveLoad()
             end
         end)

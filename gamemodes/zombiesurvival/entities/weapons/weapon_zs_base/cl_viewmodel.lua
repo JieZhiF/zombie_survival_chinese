@@ -36,11 +36,11 @@ function SWEP:ThinkVisualRecoil()
         local n_acc = (-cur * stiffness) - (vel * damping)
         return n_cur, vel + ((acc + n_acc) * (ft * 0.5)), n_acc
     end
-    
+
     local p, pv, pa = SolveAng(self.VisRecoilAng.p, self.VisRecoilAngVel.p, self.VisRecoilAngAcc.p)
     local y, yv, ya = SolveAng(self.VisRecoilAng.y, self.VisRecoilAngVel.y, self.VisRecoilAngAcc.y)
     local r, rv, ra = SolveAng(self.VisRecoilAng.r, self.VisRecoilAngVel.r, self.VisRecoilAngAcc.r)
-    
+
     self.VisRecoilAng = Angle(p, y, r)
     self.VisRecoilAngVel = Angle(pv, yv, rv)
     self.VisRecoilAngAcc = Angle(pa, ya, ra)
@@ -63,27 +63,52 @@ function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
         pos = pos + (ang:Right() * self.VMPos.x) + (ang:Forward() * self.VMPos.y) + (ang:Up() * self.VMPos.z)
     end
 
-    -- 2. 机械瞄准过渡 (Iron Sights)
-    self.CurrentIronPos = self.CurrentIronPos or Vector(0, 0, 0)
-    self.CurrentIronAng = self.CurrentIronAng or Angle(0, 0, 0)
-    
-    local bIron = self:GetIronsights() and not (GAMEMODE and GAMEMODE.NoIronsights)
-    
-    if bIron ~= self.bLastIron then
-        self.bLastIron = bIron
-        self.fIronTime = bIron and CurTime() or nil
-    end
+	-- 2. 机械瞄准过渡 (Iron Sights) —— ARC9 风格：双端共享的平滑进度 + 缓动曲线
+	self.CurrentIronPos = self.CurrentIronPos or Vector(0, 0, 0)
+	self.CurrentIronAng = self.CurrentIronAng or Angle(0, 0, 0)
 
-    local target_pos = bIron and self.IronSightsPos or Vector(0,0,0)
-    local target_ang = bIron and self.IronSightsAng or Angle(0,0,0)
-    
-    -- 类型修正
-    if isvector(target_ang) then target_ang = Angle(target_ang.x, target_ang.y, target_ang.z) end
-    if isangle(target_pos) then target_pos = Vector(target_pos.p, target_pos.y, target_pos.r) end
-    
-    local ft = RealFrameTime()
-    self.CurrentIronPos = LerpVector(ft * (self.IronSpeed or 10), self.CurrentIronPos, target_pos)
-    self.CurrentIronAng = LerpAngle(ft * (self.IronSpeed or 10), self.CurrentIronAng, target_ang)
+	-- [过渡进度] 进入用 OutBack/InOutSine 混合，退出用 InOutQuad/InQuad 混合
+	local delta = self.GetIronsightDelta and self:GetIronsightDelta() or 0
+	local eased = 0
+	if delta > 0 then
+		if self:GetIronsights() then
+			eased = Lerp(0.25, math.ease.OutBack(delta), math.ease.InOutSine(delta))
+		else
+			eased = Lerp(0.7, math.ease.InOutQuad(delta), math.ease.InQuad(delta))
+		end
+	end
+	eased = math.Clamp(eased, 0, 1)
+
+	local iron_pos = self.IronSightsPos or vector_origin
+	local iron_ang = self.IronSightsAng or angle_zero
+
+	-- 类型修正
+	if isvector(iron_ang) then iron_ang = Angle(iron_ang.x, iron_ang.y, iron_ang.z) end
+	if isangle(iron_pos) then iron_pos = Vector(iron_pos.p, iron_pos.y, iron_pos.r) end
+
+	-- [姿势参数] 模型自带 sights 时由动画本身完成贴瞄（ARC9 双轨制同款），手动偏移让位避免双重移动
+	-- 武器可设 DisableSightsPoseParam = true 强制走手动偏移路线
+	if self.DisableSightsPoseParam ~= true then
+		local mdl = vm:GetModel()
+		if self.m_SightsPPModel ~= mdl then
+			self.m_SightsPPModel = mdl
+			self.m_SightsPPIdx = vm:LookupPoseParameter("sights") or -1
+			if self.m_SightsPPIdx >= 0 then
+				self.m_SightsPPRangeMin, self.m_SightsPPRangeMax = vm:GetPoseParameterRange(self.m_SightsPPIdx)
+			end
+		end
+		if self.m_SightsPPIdx and self.m_SightsPPIdx >= 0 then
+			vm:SetPoseParameter(self.m_SightsPPIdx, Lerp(eased, self.m_SightsPPRangeMin or 0, self.m_SightsPPRangeMax or 1))
+			iron_pos, iron_ang = vector_origin, angle_zero
+		end
+	end
+
+	local target_pos = iron_pos * eased
+	local target_ang = iron_ang * eased
+
+	local ft = RealFrameTime()
+	self.CurrentIronPos = LerpVector(ft * (self.IronSpeed or 10), self.CurrentIronPos, target_pos)
+	self.CurrentIronAng = LerpAngle(ft * (self.IronSpeed or 10), self.CurrentIronAng, target_ang)
 
     -- 3. 动态晃动 (Sway & Bob)
     local vel = owner:GetVelocity()
@@ -91,14 +116,14 @@ function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
     local vel_forward = vel:Dot(oldang:Forward())
     local vel_right = vel:Dot(oldang:Right())
     
-    local sway_roll = -vel_right * (self.SwayAmount or 0.5) * (bIron and 0.3 or 1)
-    local bob_forward = -vel_forward * (self.BobAmount or 0.5) * (bIron and 0.1 or 1)
+    local sway_roll = -vel_right * (self.SwayAmount or 0.5) * Lerp(eased, 1, 0.3)
+    local bob_forward = -vel_forward * (self.BobAmount or 0.5) * Lerp(eased, 1, 0.1)
     
     self.CurrentSwayAngle = LerpAngle(ft * (self.MovementLerpSpeed or 5), self.CurrentSwayAngle or Angle(0,0,0), Angle(0, 0, sway_roll))
     self.CurrentBobVector = LerpVector(ft * (self.MovementLerpSpeed or 5), self.CurrentBobVector or Vector(0,0,0), Vector(0, bob_forward, 0))
 
     -- 4. 呼吸效果
-    self.Breath = math.sin(CurTime()) / ((self.Breathmult or 1) * (bIron and 80 or 4))
+    self.Breath = math.sin(CurTime()) / ((self.Breathmult or 1) * Lerp(eased, 4, 80))
 
     -- 5. 应用基础变换
     ang = Angle(ang.p, ang.y, ang.r) -- 复制以防修改原引用
@@ -113,17 +138,12 @@ function SWEP:CalcViewModelView(vm, oldpos, oldang, pos, ang)
 
     -- ===========================================================
     -- 6. [核心] 应用视觉后坐力 (Visual Recoil)
+    --    幅度即作者所写：开镜/腰射两套参数组在 sh_recoil 注入时已交叉插值，此处不再二次缩放
     -- ===========================================================
     if self.UseVisualRecoil and self.VisRecoilPos and self.VisRecoilAng then
         local center = self.VisualRecoilCenter or Vector(0, 0, 0)
         local vrPos = self.VisRecoilPos
         local vrAng = self.VisRecoilAng
-
-        -- 机瞄时减弱视觉抖动，保证瞄准稳定性
-        if bIron then
-            vrPos = vrPos * 0.5 
-            vrAng = vrAng * 0.5
-        end
 
         -- 使用矩阵绕点旋转应用后坐力
         pos, ang = RotateAroundPoint(pos, ang, center, vrPos, vrAng)

@@ -28,7 +28,6 @@ function SWEP:Initialize()
     self.last_shot_time = 0
     self.RecoilAmount = 0
     self.ShotCount = 0
-    self.IsReloadingRecoil = false
     
     self:ResetRecoilState(false) -- false 表示完全重置
     if GAMEMODE then
@@ -39,7 +38,6 @@ end
 -- 修改重置函数
 function SWEP:ResetRecoilState(isReload)
 	if not isReload then
-		self.Recoil_RecoverPool = Angle(0, 0, 0)
 		self.last_shot_time = 0
 		self.RecoilAmount = 0
 		self.ShotCount = 0
@@ -49,14 +47,22 @@ function SWEP:ResetRecoilState(isReload)
 	self.CamRecoilRollVal = 0
 	self.CamRecoilCurrent = Angle(0, 0, 0)
 	self.CamRecoilTarget = Angle(0, 0, 0)
-	self.CamFOV_Val = 0 
-	self.CamFOV_Vel = 0 
-	self.Recoil_Pending = Angle(0, 0, 0) 
-	self.LastEyeAngles = nil 
+	self.CamFOV_Val = 0
+	self.CamFOV_Vel = 0
+	self.LastEyeAngles = nil
+
+	self.RecoilAccumUp = 0
+	self.RecoilAccumSide = 0
+	self.RecoilPatternCache = nil
+	self.RecoilInjectUp = 0
+	self.RecoilInjectSide = 0
+	self.RecoilInjectNext = 0
+	self.RecoilInjectProgress = 1
+	self.RecoilRiseAngle = Angle(0, 0, 0)
 
 	self.VisRecoilPos = Vector(0, 0, 0)
 	self.VisRecoilVel = Vector(0, 0, 0)
-	self.VisRecoilAcc = Vector(0, 0, 0) 
+	self.VisRecoilAcc = Vector(0, 0, 0)
 	self.VisRecoilAng = Angle(0, 0, 0)
 	self.VisRecoilAngVel = Angle(0, 0, 0)
 	self.VisRecoilAngAcc = Angle(0, 0, 0)

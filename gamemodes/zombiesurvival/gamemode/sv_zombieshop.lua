@@ -31,3 +31,8 @@ hook.Add("PostEntityTakeDamage", "OnEntityDamaged", function(ent, dmginfo)
 
 	end
 end)
+hook.Add("PlayerSay","Tokengive",function(pl,text)
+	if text == "!giveme" and pl:IsAdmin() then
+		pl:AddTokens(100)
+	end
+end)

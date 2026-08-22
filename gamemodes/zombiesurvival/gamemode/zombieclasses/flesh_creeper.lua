@@ -13,10 +13,8 @@ CLASS.Description = "description_flesh_creeper"
 -- 控制帮助文本键名
 CLASS.Help = "controls_flesh_creeper"
 
--- 初始可用/隐藏/非随机起始
+-- 初始可用/非随机起始
 CLASS.Wave = 0
--- 隐藏（不直接可选）
-CLASS.Hidden = true
 -- 初始解锁
 CLASS.Unlocked = true
 -- 不作为随机起始职业

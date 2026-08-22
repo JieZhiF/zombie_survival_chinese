@@ -1,6 +1,6 @@
 -- ============================================================================
 -- prop_nail - 路障钉子实体（客户端）
--- 负责：绘制钉子模型、低血量时爆发火花特效，并在条件满足时以 3D2D 信息板显示路障血量/修理次数/放置者
+-- 负责：绘制钉子模型、低血量时爆发火花特效，并显示竖向血条及路障状态信息
 -- ============================================================================
 INC_CLIENT()
 
@@ -51,12 +51,139 @@ local matExpert = Material("zombiesurvival/padlock.png")
 local matHeart = Material("icon16/heart.png")
 -- 钉子血量条颜色（运行时按剩余血量红绿渐变）
 local colNail = Color(0, 0, 5, 220)
+local colNailText = Color(255, 255, 255, 255)
+local colNailTextOutline = Color(0, 0, 0, 200)
+local colNailRepair = Color(100, 170, 215, 240)
+local colNailRepairText = Color(100, 170, 215, 240)
+local colNailDamage = Color(100, 255, 100, 190)
 -- 信息文字常规颜色
 local colText = Color(240, 240, 240, 150)
 -- 信息文字高亮颜色
-local colText_High = Color(240, 240, 240, 190)
+local colText_High = Color(240, 240, 240, 255)
 -- 放置者已死亡时的名字颜色
 local colDead = Color(230, 80, 80, 95)
+local nailHudData = {}
+
+local function DrawNailHud()
+	if not IsValid(nailHudData.parent) then return end
+
+	local hudX = ScrW() * 0.5
+	local hudY = ScrH() * 0.5 + 70
+	local nhp = nailHudData.nhp
+	local mnhp = nailHudData.mnhp
+	local repairs = nailHudData.repairs
+	local mrps = nailHudData.mrps
+	local nailFraction = mnhp > 0 and math.Clamp(nhp / mnhp, 0, 1) or 0
+	local damagePercent = math.floor((1 - nailFraction) * 100)
+	local healthText = math.floor(nhp) .. " / " .. math.floor(mnhp) .. " "
+	local damageText = "(" .. damagePercent .. "%)"
+
+	colText.a = nailHudData.vis * 230
+	colText_High.a = nailHudData.vis * 255
+	colNailDamage.a = nailHudData.vis * 255
+	colNail.a = nailHudData.vis * 255
+	colNailRepair.a = nailHudData.vis * 255
+	colNailRepairText.a = nailHudData.vis * 255
+
+	local barWidth, barHeight = 150, 8
+	local barX = hudX - barWidth * 0.5
+	local barY = hudY
+	local fillWidth = nailFraction * barWidth
+	surface.SetDrawColor(0, 0, 0, 230 * nailHudData.vis)
+	surface.DrawRect(barX, barY, barWidth, barHeight)
+	if fillWidth > 0 then
+		surface.SetDrawColor(colNail)
+		surface.DrawRect(barX + 1, barY + 1, math.max(fillWidth - 2, 1), barHeight - 2)
+	end
+
+	-- 生命值显示在生命条上方（与血条重合，类似图层叠加）
+	surface.SetFont("BarrierFont")
+	local textY = barY + barHeight * 0.5
+	local healthWidth = surface.GetTextSize(healthText)
+	local damageWidth = surface.GetTextSize(damageText)
+	local textWidth = healthWidth + damageWidth
+	local textX = barX + barWidth * 0.5 - textWidth * 0.5
+	draw.SimpleText(healthText, "BarrierFont", textX + healthWidth * 0.5, textY, colText_High, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	draw.SimpleText(damageText, "BarrierFont", textX + healthWidth + damageWidth * 0.5, textY, colNailDamage, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+	-- 维修条：与生命条并排显示（一个上一个下），维修值同样显示在维修条上方
+	if mrps > 0 then
+		local repairFraction = math.Clamp(repairs / mrps, 0, 1)
+		local repairBarWidth, repairBarHeight = barWidth, barHeight
+		local repairY = barY + barHeight + 20
+		surface.SetDrawColor(0, 0, 0, 230 * nailHudData.vis)
+		surface.DrawRect(barX, repairY, repairBarWidth, repairBarHeight)
+		if repairFraction > 0 then
+			surface.SetDrawColor(colNailRepair)
+			surface.DrawRect(barX + 1, repairY + 1, math.max(repairFraction * (repairBarWidth - 2), 1), repairBarHeight - 2)
+		end
+
+		local repairText = math.floor(repairs) .. " / " .. math.floor(mrps)
+		draw.SimpleText(repairText, "BarrierFont", barX + repairBarWidth * 0.5, repairY + repairBarHeight * 0.5, colNailRepairText, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+	if nailHudData.ownerText then
+		local ownerColor = nailHudData.redname and colDead or colText
+		ownerColor.a = nailHudData.vis * 230
+		draw.SimpleText(nailHudData.ownerText, "BarrierFont", hudX, hudY + 50, ownerColor, TEXT_ALIGN_CENTER)
+	end
+	draw.SimpleText("按[Z/B]来穿过", "BarrierFont", hudX, hudY + 90, colText_High, TEXT_ALIGN_CENTER)
+	nailHudData.parent = nil
+end
+
+hook.Add("HUDPaint", "ZS_PropNailInfo", DrawNailHud)
+
+function ENT:DrawNailHealthVertical(pos, ang, nhp, mnhp, repairs, mrps, vis)
+	if mnhp <= 0 then return end
+
+	local barWid, barHei = 10, 44
+	local barBottom = -4
+	local mu = math.Clamp(nhp / mnhp, 0, 1)
+	local fillHei = mu * barHei
+	local repairFraction = mrps > 0 and math.Clamp(repairs / mrps, 0, 1) or 0
+	local repairWid = 4
+	local repairX = barWid * 0.5 + 2
+	if nhp > 0 then
+		fillHei = math.max(fillHei, 1)
+	end
+
+	local green = mu * 200
+	colNail.r = 200 - green
+	colNail.g = green
+	colNail.a = 255 * vis
+	colNailRepair.a = 255 * vis
+	colNailText.a = 255 * vis
+	colNailTextOutline.a = 230 * vis
+
+	cam.Start3D2D(pos, ang, 0.1)
+		surface.SetDrawColor(0, 0, 0, 230 * vis)
+		surface.DrawRect(barWid * -0.5 - 1, barBottom - barHei - 1, barWid + 2, barHei + 2)
+		if mrps > 0 then
+			surface.DrawRect(repairX - 1, barBottom - barHei - 1, repairWid + 2, barHei + 2)
+		end
+
+		if fillHei > 0 then
+			surface.SetDrawColor(colNail)
+			surface.DrawRect(barWid * -0.5, barBottom - fillHei, barWid, fillHei)
+		end
+		if repairFraction > 0 then
+			surface.SetDrawColor(colNailRepair)
+			surface.DrawRect(repairX, barBottom - repairFraction * barHei, repairWid, repairFraction * barHei)
+		end
+
+		draw.SimpleTextOutlined(
+			math.floor(nhp),
+			"BarrierFont",
+			barWid * -0.5 + barWid * 0.5,
+			0,
+			colNailText,
+			TEXT_ALIGN_CENTER,
+			TEXT_ALIGN_TOP,
+			1,
+			colNailTextOutline
+		)
+	cam.End3D2D()
+end
+
 -- ==== DrawTranslucent - 绘制钉子模型、低血量火花特效与路障状态 3D2D 信息板 ====
 function ENT:DrawTranslucent()
 	local parent = self:GetParent()
@@ -65,21 +192,21 @@ function ENT:DrawTranslucent()
 		self:DrawModel()
 		return
 	end
+	parent.LastNailInfoDraw = RealTime()
+	nailHudData.parent = nil
 
 	local drawinfo
 	local myteam
-	local pos
-	local eyepos
+	local pos = self:GetPos()
+	local eyepos = EyePos()
+	local target = GAMEMODE.TraceTargetNoPlayers
 	if MySelf:IsValid() then
 		myteam = MySelf:Team()
-		pos = self:GetPos()
-		eyepos = EyePos()
-		-- 人类/观察者：开启常显、按住加速键或准星瞄准该路障，且距离在 512 英寸内、视线无遮挡时才显示
 		if myteam == TEAM_HUMAN or myteam == TEAM_SPECTATOR then
-			drawinfo = (GAMEMODE.AlwaysShowNails or MySelf:KeyDown(IN_SPEED) or GAMEMODE.TraceTargetNoPlayers == self:GetParent()) and eyepos:DistToSqr(pos) <= 262144 and WorldVisible(eyepos, pos)
+			drawinfo = target == self:GetParent() or target == self
 		elseif myteam == TEAM_UNDEAD then
 			-- 亡灵：仅当准星瞄准该路障时显示
-			drawinfo = GAMEMODE.TraceTargetNoPlayers == self:GetParent()
+			drawinfo = target == self:GetParent() or target == self
 		end
 	end
 
@@ -87,9 +214,11 @@ function ENT:DrawTranslucent()
 
 	local nhp = self:GetNailHealth()
 	local mnhp = self:GetMaxNailHealth()
+	local repairs = self:GetRepairs()
+	local mrps = self:GetMaxRepairs()
 
 	-- 血量低于 35% 时周期性爆发黄绿色火花并播放音效（带随机冷却）
-	if nhp/mnhp < 0.35 and CurTime() > self.NextEmit then
+	if mnhp > 0 and nhp / mnhp < 0.35 and CurTime() > self.NextEmit then
 		local normal = self:GetForward() * -1
 		local epos = self:GetPos() + normal
 
@@ -118,11 +247,24 @@ function ENT:DrawTranslucent()
 		self.NextEmit = CurTime() + math.Rand(4.2, 5.8)
 	end
 
-	-- 满足显示条件时绘制 3D2D 信息板
-	if drawinfo then
-		-- 记录本帧已绘制，避免同一路障同帧被重复绘制
-		parent.LastNailInfoDraw = RealTime()
+	if not MySelf:IsValid() then return end
 
+	local ang = EyeAngles()
+	ang:RotateAroundAxis(ang:Up(), -90)
+	ang:RotateAroundAxis(ang:Forward(), 90)
+
+	local nearest = parent:WorldSpaceCenter()
+	local norm = nearest - eyepos
+	norm:Normalize()
+	local dot = EyeVector():Dot(norm)
+	local dotsq = dot * dot
+	local vis = math.Clamp((dotsq * dotsq) - 0.1, 0, 1)
+
+	cam.IgnoreZ(true)
+	self:DrawNailHealthVertical(nearest, ang, nhp, mnhp, repairs, mrps, vis)
+	cam.IgnoreZ(false)
+
+	if drawinfo and vis >= 0.01 then
 		local displayowner = self:GetDTString(0)
 		local redname = false
 		local expert = false
@@ -157,93 +299,13 @@ function ENT:DrawTranslucent()
 			end
 		end
 
-		-- 旋转 3D2D 基准角度使信息板始终朝向观察者
-		local ang = EyeAngles()
-		ang:RotateAroundAxis(ang:Up(), -90)
-		ang:RotateAroundAxis(ang:Forward(), 90)
-
-		local nearest = parent:WorldSpaceCenter()
-		local norm = nearest - eyepos
-		norm:Normalize()
-		local dot = EyeVector():Dot(norm)
-
-		-- 视线与信息板方向越接近正面越清晰，背对时透明度快速衰减
-		local dotsq = dot * dot
-		local vis = math.Clamp((dotsq * dotsq) - 0.1, 0, 1)
-
-		if vis < 0.01 then return end
-
-		-- 忽略深度测试，使信息板穿透障碍物可见
-		cam.IgnoreZ(true)
-
-		cam.Start3D2D(nearest, ang, 0.1)
-			local wid, hei = 150, 6
-			local x, y = wid * -0.5 + 2, 0
-
-			-- 好友（爱心）或专家（挂锁）玩家在名字旁绘制对应标记图标
-			local validfriend = deployer:IsValidLivingHuman() and deployer.ZSFriendAdded
-
-			if validfriend or expert then
-				surface.SetMaterial(validfriend and matHeart or matExpert)
-				surface.SetDrawColor(hcolor.r, hcolor.g, hcolor.b, 240 * vis)
-				surface.DrawTexturedRect(
-					x - (validfriend and 24 or 32),
-					y - (validfriend and 0 or 5),
-					validfriend and 16 or 24,
-					validfriend and 16 or 24
-				)
-			end
-
-			-- 绘制修理次数条与钉子血量条（每 200 值分段绘制，支持超大数值显示）
-			if self:GetMaxRepairs() > 0 or self:GetMaxNailHealth() > 0 then
-				local repairs = self:GetRepairs()
-				local mrps = self:GetMaxRepairs()
-
-				-- 修理次数条（蓝色）
-				surface.SetDrawColor(0, 0, 0, 210 * vis)
-				surface.DrawRect(x - 1, y, mrps/5 + mrps/50 + 1, hei)
-
-				for i = 0, repairs, 200 do
-					local val = math.Clamp(repairs - i, 0, 200)
-
-					surface.SetDrawColor(100, 170, 215, 240 * vis)
-					surface.DrawRect(x + 1 + i/5 + i/50, y + 1, val/5, hei - 2)
-				end
-
-				-- 血量条颜色随剩余血量比例从红色渐变到绿色
-				local mu = math.Clamp(nhp / mnhp, 0, 1)
-				local green = mu * 200
-				colNail.r = 200 - green
-				colNail.g = green
-				colNail.a = 240 * vis
-
-				y = y + hei + 3
-				hei = 8
-				x = wid * -0.5 + 2
-
-				-- 钉子血量条（红绿渐变）
-				surface.SetDrawColor(0, 0, 0, 210 * vis)
-				surface.DrawRect(x - 1, y, mnhp/5 + mnhp/50 + 2, hei)
-
-				for i = 0, nhp, 200 do
-					local val = math.Clamp(nhp - i, 0, 200)
-
-					surface.SetDrawColor(colNail)
-					surface.DrawRect(x + 1 + i/5 + i/50, y + 1, val/5, hei - 2)
-				end
-
-				-- 显示放置者名字与当前/最大血量数字
-				if displayowner then
-					local col = redname and colDead or colText
-					col.a = 150 * vis
-
-					draw.SimpleText(displayowner, "BarrierFont", 0, y + 20, colText, TEXT_ALIGN_CENTER)
-					draw.SimpleText(math.floor(nhp) .. "/" .. math.floor(self:GetMaxNailHealth()), "BarrierFont", x + 45, y - 45, colText_High, TEXT_ALIGN_CENTER)
-				end
-				draw.SimpleText("按[Z/B]来穿过", "BarrierFont", x + 75, y +45, colText_High, TEXT_ALIGN_CENTER)
-			end
-		cam.End3D2D()
-
-		cam.IgnoreZ(false)
-	end
+			nailHudData.parent = parent
+			nailHudData.nhp = nhp
+			nailHudData.mnhp = mnhp
+			nailHudData.repairs = repairs
+			nailHudData.mrps = mrps
+			nailHudData.vis = vis
+			nailHudData.ownerText = displayowner and "建造者: " .. displayowner or nil
+			nailHudData.redname = redname
+		end
 end

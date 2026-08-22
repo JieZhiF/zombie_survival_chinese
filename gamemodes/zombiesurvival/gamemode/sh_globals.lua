@@ -274,26 +274,26 @@ GM.MaxArmDamage = 3
 -- 工具键绑定（使用/互动键），绑定到 IN_SPEED（默认 Shift）
 GM.UtilityKey = IN_SPEED
 -- 菜单键绑定，绑定到 IN_WALK（默认 Alt）
--- 本来想用生成菜单键，但它没有对应的 IN_ 常量
 GM.MenuKey = IN_WALK
 
--- 军火箱佣金比例（军火箱中收取的额外费用比例）
+-- 军火箱佣金比例（放置的人获得的收益比例）
 GM.ArsenalCrateCommission = 0.05
 
 -- 基础部署速度（设为 1 以增加其价值）
 GM.BaseDeploySpeed = 1
 
--- 每多一块额外钉子增加的生命值
-GM.ExtraHealthPerExtraNail = 400
+-- 钉子给予的额外生命值（已经改成一钉满血了，里面的per没动）
+-- GM.ExtraHealthPerExtraNail = 300
+GM.ExtraHealthExtraNail = 300
 -- 最大钉子数量
-GM.MaxNails = 2
+GM.MaxNails = 4
 
 -- ============================
 -- 游戏核心平衡常量
 -- 这些值从选项移到全局常量，因为游戏已围绕它们平衡
 -- ============================
 
--- 波数（Waves）总量 —— 非常重要：如果此值不是 6，游戏模式将会崩溃！
+-- 波数（Waves）总量 
 GM.NumberOfWaves = 6
 
 -- 脉冲点数倍率（Pulse Points 的收益乘数）

@@ -38,6 +38,5 @@ hook.Add("InitPostEntityMap", "Adding", function()
 	for _, ent in pairs(ents.FindByClass("item_healthcharger")) do
 			-- 删除治疗充电器
 			ent:Remove()
-		end
 	end
 end)

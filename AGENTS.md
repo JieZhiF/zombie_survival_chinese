@@ -113,6 +113,22 @@ git log --oneline -10
 git status
 ```
 
+## LUA VALIDATION (MANDATORY)
+
+GMod runs LuaJIT — Lua 5.1 semantics plus selected 5.2 extensions. This repo also
+contains GLua-only syntax (`continue`, legacy `&&`/`//` files), which stock Lua rejects.
+
+- **Validate every edited .lua file with LuaJIT** (the same VM GMod runs) before
+  reporting work complete: `luajit -bl <file> >/dev/null 2>&1` — exit 0 = valid.
+- **NEVER use PUC `luac` / `luac5.1` / `luac5.4`**: they reject LuaJIT `goto` labels and
+  GLua constructs with false errors (e.g. `luac5.1 -p` fails on `goto PASS` with
+  `'=' expected`). CFC's "luac" recommendation refers to `gluac` (cartman300), a GLua-aware
+  checker, not PUC luac.
+- Files failing only due to GLua-only constructs (`continue`, `&&`, `||`, `!=`, `//`)
+  are KNOWN anti-patterns (see ANTI-PATTERNS) — do not treat as syntax errors, and do
+  not "fix" them unless asked.
+- Full-repo sweep: run `/lua-check` (validates all files, classifies known vs real errors).
+
 ## NOTES
 
 - **No CI/CD, no tests, no linter**: Purely manual in-game testing. No `.github/workflows/`, no test framework, no `glualint.json`/`.luacheckrc`.

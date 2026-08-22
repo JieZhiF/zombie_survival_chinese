@@ -258,6 +258,7 @@ timer.Create("CachedBabies", 0.5, 0, function()
 	local babies = {}
 	table.Add(babies, ents.FindByClass("prop_thrownbaby"))
 	table.Add(babies, ents.FindByClass("prop_thrownshadowbaby"))
+	table.Add(babies, ents.FindByClass("prop_thrownskeleton"))
 
 	GAMEMODE.CachedBabies = babies
 end)

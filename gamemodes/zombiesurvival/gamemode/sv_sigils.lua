@@ -98,7 +98,7 @@ function GM:CreateSigils(secondtry, rearrange)
 		end
 	end]]
 
-	local spawns = team.GetSpawnPoint(TEAM_UNDEAD) -- 获取僵尸刷新点
+	local spawns = team.GetSpawnPoint(TEAM_UNDEAD) or {} -- 获取僵尸刷新点（兜底为空表，避免 pairs(nil) 崩溃）
 
 	-- 循环创建Sigil，直到达到最大数量
 	for i = 1 + (rearrange and 0 or alreadycreated), self.MaxSigils do

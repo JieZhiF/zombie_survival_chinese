@@ -4,6 +4,7 @@
 .workbuddy/
 .opencode/
 arc9_weapon_base/*
+*:Zone.Identifier
 # 备份压缩包
 *.7z
 *.zip

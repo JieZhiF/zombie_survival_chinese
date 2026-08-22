@@ -174,6 +174,7 @@ AddCSLuaFile("cl_options.lua")
 AddCSLuaFile("cl_scoreboard.lua")
 AddCSLuaFile("cl_targetid.lua")
 AddCSLuaFile("cl_postprocess.lua")
+AddCSLuaFile("cl_instinct.lua")
 AddCSLuaFile("cl_deathnotice.lua")
 AddCSLuaFile("cl_floatingscore.lua")
 AddCSLuaFile("cl_dermaskin.lua")
@@ -200,6 +201,7 @@ AddCSLuaFile("vgui/dpingmeter.lua")
 AddCSLuaFile("vgui/dteamheading.lua")
 AddCSLuaFile("vgui/dsidemenu.lua")
 AddCSLuaFile("vgui/dspawnmenu.lua")
+AddCSLuaFile("vgui/dteamselect.lua")  -- 出生团队选择界面
 AddCSLuaFile("vgui/dmodelkillicon.lua")
 
 AddCSLuaFile("vgui/dexroundedpanel.lua")
@@ -583,6 +585,7 @@ function GM:AddResources()
 	resource.AddFile("sound/nox/scatterfrost.ogg")
 
 	resource.AddFile("sound/weapons/zs_gluon/egon_off1.wav")
+	resource.AddFile("sound/instinct/ping3.mp3")
 
 	resource.AddFile("sound/weapons/zs_heph/electro4.wav")
 	resource.AddFile("sound/weapons/zs_heph/electro5.wav")
@@ -756,6 +759,9 @@ function GM:AddNetworkStrings()
 	util.AddNetworkString("voice_zombiedeath")
 	util.AddNetworkString("voice_pain")
 	util.AddNetworkString("voice_zombiepain")
+	util.AddNetworkString("zs_buffgun_select")
+	util.AddNetworkString("zs_spawnmenu")
+	util.AddNetworkString("zs_lastspawnchoice")
 end
 
 --[[ GM:IsClassicMode 返回是否经典模式（原始ZS机制）]]
@@ -1472,6 +1478,39 @@ function GM:SpawnBossZombie(bossplayer, silent, bossindex, triggerboss)
 			net.WriteUInt(bossindex, 8)
 		net.Broadcast()
 	end
+end
+
+--[[
+	GM:SpawnMiniBoss（变身为迷你BOSS）
+	将指定玩家立即变身为指定迷你BOSS职业（由僵尸商店"迷你BOSS"分类购买触发，
+	见 sh_zombieshop.lua 的 AddMiniBossPurchase 回调）。
+	变身是一次性的：保存原职业为 DeathClass，玩家死亡后重生回原职业。
+	参数：pl-玩家对象，classname-迷你BOSS职业名称（CLASS.Name）
+]]
+function GM:SpawnMiniBoss(pl, classname)
+	if not pl:IsValid() or not classname then return end
+
+	local classtab = self.ZombieClasses[classname]
+	if not classtab or not classtab.MiniBoss then return end
+
+	-- 仅亡灵队伍可变身（购买入口 ZombieCanPurchase 已校验，这里双保险）
+	if pl:Team() ~= TEAM_UNDEAD then return end
+
+	-- 保存原职业（死亡后重生恢复），变身流程与 SpawnBossZombie / ChangeToCrow 一致
+	local curclass = pl.DeathClass or pl:GetZombieClass()
+	pl:KillSilent()
+	pl:SetZombieClass(classtab.Index)
+	pl:DoHulls(classtab.Index, TEAM_UNDEAD)
+	pl.DeathClass = nil
+	pl:UnSpectateAndSpawn()
+	pl.DeathClass = curclass
+	pl.BossHealRemaining = 750
+
+	-- 广播变身通知（复用 Boss 生成消息，客户端显示"xxx 已崛起为 yyy"）
+	net.Start(NET_MSG.BOSS_SPAWNED)
+		net.WriteEntity(pl)
+		net.WriteUInt(classtab.Index, 8)
+	net.Broadcast()
 end
 
 --[[
@@ -2333,12 +2372,18 @@ function GM:DoRestartGame()
 	gamemode.Call("InitPostEntityMap")
 
 	for _, pl in pairs(player.GetAll()) do
-		pl:UnSpectateAndSpawn()
+		-- 先按上次选择（本地 cvar zs_lastspawnchoice / 会话缓存 LastSpawnChoice）/规则分配队伍与乌鸦状态，再生成玩家，
+		-- 保证人类/僵尸阵营在重启时与正常开局完全一致：僵尸→乌鸦观战，人类→人类。
+		-- 注意：必须在 UnSpectateAndSpawn 之前执行，否则玩家会以 RestartGame 强制的
+		-- TEAM_HUMAN 先生成，重建队伍后无法重新套用乌鸦模型/碰撞箱（与人类阵营行为不一致）。
+		gamemode.Call("PlayerInitialSpawnRound", pl, true) -- 回合重启：不弹出生菜单，直接按上次选择/规则分配
 		pl:GodDisable()
-		gamemode.Call("PlayerInitialSpawnRound", pl)
+		pl:UnSpectateAndSpawn()
 		gamemode.Call("PlayerReadyRound", pl)
 
-		if pl:Team() == TEAM_UNDEAD then -- bots?
+		-- 仅对机器人执行静默击杀以触发正确的僵尸重生；
+		-- 真实玩家已在上面以正确的阵营/乌鸦状态生成，不应被误杀（否则与人类阵营行为不一致）。
+		if pl.IsZSBot and pl:Team() == TEAM_UNDEAD then
 			pl:KillSilent()
 		end
 	end
@@ -2724,6 +2769,11 @@ concommand.Add("initpostentity", function(sender, command, arguments)
 		sender.DidInitPostEntity = true
 
 		gamemode.Call("PlayerReady", sender)
+
+		-- 如果玩家仍处于出生菜单待选状态，确保客户端已经加载完毕后再弹一次菜单
+		if sender.PendingSpawnChoice then
+			GAMEMODE:ShowSpawnMenu(sender)
+		end
 	end
 end)
 
@@ -2808,9 +2858,10 @@ end
 	函数名: GM:PlayerInitialSpawnRound (玩家首次生成回合)
 	功能: 玩家在一回合内首次生成时的全量数据初始化
 	参数: pl - 玩家对象
+	参数: noMenu - 为 true 时不弹出生菜单（回合重启时由服务器按上次选择直接分配）
 	说明: 初始化统计计数器、标志状态、分配队伍
 --]]
-function GM:PlayerInitialSpawnRound(pl)
+function GM:PlayerInitialSpawnRound(pl, noMenu)
 	pl:SprintDisable()
 	if pl:KeyDown(IN_WALK) then
 		pl:ConCommand("-walk")
@@ -2888,37 +2939,35 @@ function GM:PlayerInitialSpawnRound(pl)
 
 	local uniqueid = pl:SteamID64()
 
-	if self.PreviouslyDied[uniqueid] or ZSBOT then
-		-- They already died and reconnected.
-		pl:ChangeTeam(TEAM_UNDEAD)
-	elseif LASTHUMAN then ----
+	-- 出生菜单选择：玩家偏好（zs_alwaysspawnmenu / zs_alwaysvolunteer）
+	-- 与游戏规则（未超过 NoNewHumansWave 等）共同决定是否弹出；
+	-- 「始终打开选择界面」开启时，只要允许选人类就一律弹菜单；回合重启（noMenu=true）不弹。
+	-- 本地偏好优先于服务器会话缓存（pl.LastSpawnChoice）。
+	local localsel = pl:GetInfo("zs_lastspawnchoice") -- "" / "human" / "zombie"
+	local prefer = pl.LastSpawnChoice
+	if localsel == "zombie" then
+		prefer = TEAM_UNDEAD
+	elseif localsel == "human" and self:CanChooseHumanTeam(pl) then
+		-- 仅在当前允许新人类的波数/规则下，才用本地偏好强制人类；
+		-- 否则（已死过/超过 NoNewHumansWave/无限波中途等）尊重原版规则，不强制。
+		prefer = TEAM_HUMAN
+	end
+
+	if not noMenu and self:WantsSpawnMenu(pl) and self:CanChooseHumanTeam(pl) then
+		-- 保留玩家选择空间，等待客户端在出生菜单中挑选人类或僵尸
+		pl.PendingSpawnChoice = true
 		pl.SpawnedTime = CurTime()
-		pl:ChangeTeam(TEAM_UNDEAD)
-	elseif self:GetWave() <= 0 then
-		pl.SpawnedTime = CurTime()
-		pl:ChangeTeam(TEAM_HUMAN)
-		if self.DynamicSpawning then
-			timer.Simple(1, function()
-				if IsValid(pl) and pl:Team() == TEAM_HUMAN then
-					GAMEMODE:AttemptHumanDynamicSpawn(pl)
-					pl:SetBarricadeGhosting(true, true)
-				end
-			end)
-		end
-	elseif self:GetNumberOfWaves() == -1 or self.NoNewHumansWave <= self:GetWave() or team.NumPlayers(TEAM_UNDEAD) == 0 and 1 <= team.NumPlayers(TEAM_HUMAN) then -- Joined during game, no zombies, some humans or joined past the deadline.
-		pl:ChangeTeam(TEAM_UNDEAD)
-		self.PreviouslyDied[uniqueid] = CurTime()
+		self:ShowSpawnMenu(pl)
 	else
-		pl.SpawnedTime = CurTime()
-		pl:ChangeTeam(TEAM_HUMAN)
-		if self.DynamicSpawning then
-			timer.Simple(0, function()
-				if IsValid(pl) and pl:Team() == TEAM_HUMAN then
-					GAMEMODE:AttemptHumanDynamicSpawn(pl)
-					pl:SetBarricadeGhosting(true, true)
-				end
-			end)
+		-- 清理可能残留的待选状态与客户端菜单（重启时服务器直接分配，界面不再弹出）
+		if pl.PendingSpawnChoice then
+			pl.PendingSpawnChoice = false
+			self:CloseSpawnMenu(pl)
 		end
+		-- 不弹菜单：优先按本地/上次选择分配，其余按原版规则自动分配（自愿僵尸 / 超过波数 / 死过 / 最后人类等）
+		self:AutoAssignTeam(pl, prefer)
+		-- 自动分配结果不回写 zs_lastspawnchoice：该 cvar 是玩家持久化偏好，
+		-- 只能由玩家主动选择（出生菜单/选项界面）写入，否则会被规则分配污染。
 	end
 
 	if pl:Team() == TEAM_UNDEAD and not self:GetWaveActive() then
@@ -2933,6 +2982,250 @@ function GM:PlayerInitialSpawnRound(pl)
 		self.StoredUndeadFrags[uniqueid] = nil
 	end
 end
+
+--[[
+	GM:CanChooseHumanTeam（是否允许通过出生菜单选择人类）
+	与菜单弹出条件一致：非Bot（含D3bot等第三方机器人，IsBot 为 true）、
+	未死过、非最后人类、当前波数未超过 NoNewHumansWave、非无限波中途。
+	参数：pl - 玩家
+]]
+function GM:CanChooseHumanTeam(pl)
+	return not pl:IsBot()
+		and not self.PreviouslyDied[pl:SteamID64()]
+		and not ZSBOT
+		and not LASTHUMAN
+		and self:GetWave() <= self.NoNewHumansWave
+		and not (self:GetNumberOfWaves() == -1 and self:GetWave() > 0)
+end
+
+--[[
+	GM:WantsSpawnMenu（玩家是否期望弹出出生菜单）
+	仅受"总是打开出生菜单"偏好控制（zs_alwaysspawnmenu=0 时不弹）；
+	"自愿僵尸"不再影响面板弹出，只影响超时后的默认选择。
+	参数：pl - 玩家
+]]
+function GM:WantsSpawnMenu(pl)
+	return pl:GetInfo("zs_alwaysspawnmenu") ~= "0"
+end
+
+--[[
+	GM:AutoAssignTeam（自动分配队伍）
+	不弹出生菜单时按原版规则分配：
+	自愿当初始僵尸 / 之前死过 / Bot / 最后人类 → 僵尸；
+	波数<=0 → 人类；无限波中途 / 超过 NoNewHumansWave / 无僵尸有活人 → 僵尸；否则人类。
+	参数：pl - 玩家，prefer - 玩家上次的选择（回合重启时传入，无强制规则时按其分配）
+]]
+function GM:AutoAssignTeam(pl, prefer)
+	local uniqueid = pl:SteamID64()
+
+	-- 自愿当初始僵尸：无论波数与历史直接僵尸
+	if pl:GetInfo("zs_alwaysvolunteer") == "1" then
+		pl:ChangeTeam(TEAM_UNDEAD)
+		pl.LastSpawnChoice = TEAM_UNDEAD
+		if not ZSBOT then
+			self.PreviouslyDied[uniqueid] = CurTime()
+		end
+		return
+	end
+
+	-- 回合重启：按玩家上次的选择分配（仅在无强制规则时生效，自愿僵尸/ZSBOT 等仍优先）
+	if prefer then
+		pl.SpawnedTime = CurTime()
+		pl:ChangeTeam(prefer)
+		pl.LastSpawnChoice = prefer
+		if prefer == TEAM_UNDEAD then
+			if not ZSBOT then
+				self.PreviouslyDied[uniqueid] = CurTime()
+			end
+		elseif self.DynamicSpawning then
+			timer.Simple(1, function()
+				if IsValid(pl) and pl:Team() == TEAM_HUMAN then
+					GAMEMODE:AttemptHumanDynamicSpawn(pl)
+					pl:SetBarricadeGhosting(true, true)
+				end
+			end)
+		end
+		return
+	end
+
+	if self.PreviouslyDied[uniqueid] or ZSBOT then
+		pl:ChangeTeam(TEAM_UNDEAD)
+	elseif LASTHUMAN then
+		pl.SpawnedTime = CurTime()
+		pl:ChangeTeam(TEAM_UNDEAD)
+	elseif self:GetWave() <= 0 then
+		pl.SpawnedTime = CurTime()
+		pl:ChangeTeam(TEAM_HUMAN)
+		if self.DynamicSpawning then
+			timer.Simple(1, function()
+				if IsValid(pl) and pl:Team() == TEAM_HUMAN then
+					GAMEMODE:AttemptHumanDynamicSpawn(pl)
+					pl:SetBarricadeGhosting(true, true)
+				end
+			end)
+		end
+	elseif self:GetNumberOfWaves() == -1 or self.NoNewHumansWave <= self:GetWave() or (team.NumPlayers(TEAM_UNDEAD) == 0 and 1 <= team.NumPlayers(TEAM_HUMAN)) then
+		pl:ChangeTeam(TEAM_UNDEAD)
+		if not ZSBOT then
+			self.PreviouslyDied[uniqueid] = CurTime()
+		end
+	else
+		pl.SpawnedTime = CurTime()
+		pl:ChangeTeam(TEAM_HUMAN)
+		if self.DynamicSpawning then
+			timer.Simple(0, function()
+				if IsValid(pl) and pl:Team() == TEAM_HUMAN then
+					GAMEMODE:AttemptHumanDynamicSpawn(pl)
+					pl:SetBarricadeGhosting(true, true)
+				end
+			end)
+		end
+	end
+
+	-- 规则自动分配的结果不算玩家"选择"，不写入 LastSpawnChoice：
+	-- 否则会在回合重启时被当作上次选择再次套用（如中途加入被分到僵尸后被永久锁定）。
+end
+
+--[[
+	GM:ShowSpawnMenu（弹出出生选择菜单）
+	向客户端发送出生菜单消息，让玩家选择人类或僵尸。
+	参数：pl - 目标玩家
+]]
+function GM:ShowSpawnMenu(pl)
+	if not pl:IsValid() then return end
+
+	pl.PendingSpawnChoice = true
+
+	net.Start(NET_MSG.SPAWNMENU)
+		net.WriteBool(true) -- 显示菜单
+		net.WriteUInt(self:GetWave(), 16)
+	net.Send(pl)
+
+	-- 兜底：60 秒未选择时自动分配——勾选自愿僵尸→僵尸；未勾选→人类（仍受选队规则约束）
+	if pl.SpawnMenuTimer then
+		timer.Remove(pl.SpawnMenuTimer)
+	end
+	pl.SpawnMenuTimer = timer.Simple(60, function()
+		if IsValid(pl) and pl.PendingSpawnChoice then
+			local teamid = pl:GetInfo("zs_alwaysvolunteer") == "1" and TEAM_UNDEAD or TEAM_HUMAN
+			GAMEMODE:PlayerChooseTeam(pl, teamid)
+		end
+	end)
+end
+
+--[[
+	GM:CloseSpawnMenu（关闭客户端出生菜单）
+	当服务器自动处理选择（超时强制僵尸、波数超限等）时，
+	通知客户端关闭仍在显示的菜单，避免界面残留。
+	参数：pl - 目标玩家
+]]
+function GM:CloseSpawnMenu(pl)
+	if not pl:IsValid() then return end
+
+	net.Start(NET_MSG.SPAWNMENU)
+		net.WriteBool(false) -- 关闭菜单
+	net.Send(pl)
+end
+
+--[[
+	GM:SyncLastSpawnChoice（将最终阵营回写客户端本地 cvar）
+	服务器完成阵营分配后，把结果同步到客户端本机 cvar（zs_lastspawnchoice）。
+	该 cvar 为 FCVAR_ARCHIVE + FCVAR_USERINFO：既持久化在本机 config.cfg（断线重连仍保留），
+	又可供服务器经 pl:GetInfo 读回，作为回合重启/重连时的本地偏好来源。
+	参数：pl - 玩家，teamid - 最终分配的阵营（TEAM_HUMAN / TEAM_UNDEAD）
+]]
+function GM:SyncLastSpawnChoice(pl, teamid)
+	if not pl:IsValid() then return end
+
+	net.Start(NET_MSG.LASTSPAWNCHOICE)
+		net.WriteBool(teamid == TEAM_UNDEAD)
+	net.Send(pl)
+end
+
+--[[
+	GM:PlayerChooseTeam（处理出生菜单选择）
+	当客户端在出生菜单中选择人类/僵尸后，为其分配队伍并完成后续逻辑。
+	参数：pl - 玩家，teamid - 所选队伍（TEAM_HUMAN / TEAM_UNDEAD）
+]]
+function GM:PlayerChooseTeam(pl, teamid)
+	if not pl:IsValid() then return end
+	if not pl.PendingSpawnChoice then return end
+
+	-- 菜单打开期间若已不再允许新人类（波数超过 NoNewHumansWave 等），强制转为僵尸
+	if teamid == TEAM_HUMAN and not self:CanChooseHumanTeam(pl) then
+		teamid = TEAM_UNDEAD
+	end
+
+	pl.PendingSpawnChoice = false
+	if pl.SpawnMenuTimer then
+		timer.Remove(pl.SpawnMenuTimer)
+		pl.SpawnMenuTimer = nil
+	end
+
+	local uniqueid = pl:SteamID64()
+
+	if teamid == TEAM_UNDEAD then
+		pl:ChangeTeam(TEAM_UNDEAD)
+		pl.SpawnedTime = CurTime()
+
+		-- 非活跃波次时出场为乌鸦观战，否则按默认僵尸职业
+		if not self:GetWaveActive() then
+			pl:SetZombieClassName("Crow")
+			pl.DeathClass = self.DefaultZombieClass
+		else
+			pl:SetZombieClass(self.DefaultZombieClass)
+		end
+
+		if self.StoredUndeadFrags[uniqueid] then
+			pl:SetFrags(self.StoredUndeadFrags[uniqueid])
+			self.StoredUndeadFrags[uniqueid] = nil
+		end
+
+		pl:UnSpectateAndSpawn()
+	else
+		pl:ChangeTeam(TEAM_HUMAN)
+		pl.SpawnedTime = CurTime()
+		pl:SetZombieClass(self.DefaultZombieClass)
+		self.PreviouslyDied[uniqueid] = nil
+		pl:UnSpectateAndSpawn()
+
+		-- 进行中的波次采用动态出生，靠近队友安全位置
+		if self.DynamicSpawning and self:GetWave() > 0 then
+			timer.Simple(0, function()
+				if IsValid(pl) and pl:Team() == TEAM_HUMAN then
+					GAMEMODE:AttemptHumanDynamicSpawn(pl)
+					pl:SetBarricadeGhosting(true, true)
+				end
+			end)
+		end
+	end
+
+	-- 记录本次选择：回合重启时不再弹出出生菜单，直接按该选择自动分配
+	pl.LastSpawnChoice = pl:Team()
+
+	-- 将最终阵营回写客户端本机 cvar（zs_lastspawnchoice），作为本地持久化记录
+	self:SyncLastSpawnChoice(pl, pl:Team())
+
+	-- 无论玩家自行选择还是服务器强制处理，都通知客户端关闭菜单（客户端已自行关闭时无副作用）
+	self:CloseSpawnMenu(pl)
+
+	-- 玩家已完成加载时，补齐就绪逻辑（装备/价值菜单/出生点等）
+	if pl.PlayerReady then
+		gamemode.Call("PlayerReadyRound", pl)
+	end
+end
+
+-- 处理客户端在出生菜单中发送的队伍选择
+concommand.Add("zs_spawnmenu", function(sender, command, arguments)
+	if not (sender:IsValid() and sender:IsConnected()) then return end
+
+	local choice = arguments[1]
+	if choice == "human" or choice == "1" then
+		GAMEMODE:PlayerChooseTeam(sender, TEAM_HUMAN)
+	elseif choice == "zombie" or choice == "2" then
+		GAMEMODE:PlayerChooseTeam(sender, TEAM_UNDEAD)
+	end
+end)
 
 -- 返回当前是否启用动态生成
 function GM:GetDynamicSpawning()
@@ -3265,7 +3558,12 @@ function GM:PlayerDeathThink(pl)
 				pl.StartSpectating = nil
 
 				pl:StripWeapons()
-				local best = self:GetBestDynamicSpawn(pl)
+				local best = pl.NestSpectate
+				if best and not best:IsValid() then
+					best = nil
+				end
+				pl.NestSpectate = nil
+				best = best or self:GetBestDynamicSpawn(pl)
 				if best then
 					pl:Spectate(OBS_MODE_CHASE)
 					pl:SpectateEntity(best)
@@ -4519,6 +4817,9 @@ end
 	功能: 处理所有玩家死亡逻辑：布娃娃、团队变更、击杀广播、复活机制
 --]]
 function GM:DoPlayerDeath(pl, attacker, dmginfo)
+	-- 完全冻结（freeze 阶段3）状态下被击败的僵尸：在状态被清除前记录，用于播放冰块破碎音效
+	local frozenatdeath = pl:Team() == TEAM_UNDEAD and pl:IsFrozenFull()
+
 	pl:RemoveEphemeralStatuses()
 	pl:Extinguish()
 	pl:SetPhantomHealth(0)
@@ -4581,6 +4882,11 @@ function GM:DoPlayerDeath(pl, attacker, dmginfo)
 		local classtable = pl:GetZombieClassTable()
 
 		pl:PlayZombieDeathSound()
+
+		-- 完全冻结时被击败：播放与冰刺 env_protrusionspike 相同的玻璃碎裂音效，模拟冰块破碎
+		if frozenatdeath then
+			pl:EmitSound("physics/glass/glass_largesheet_break"..math.random(1, 3)..".wav", 70, math.random(160, 180))
+		end
 
 		if classtable.Boss and not self.ObjectiveMap and pl.BossDeathNotification then
 			net.Start(NET_MSG.BOSS_SLAIN)
@@ -4805,6 +5111,7 @@ function GM:PlayerSpawn(pl)
 	pl.StartCrowing = nil
 	pl.StartSpectating = nil
 	pl.NextSpawnTime = nil
+	pl.NestSpectate = nil
 	pl.Gibbed = nil
 
 	pl.SpawnNoSuicide = CurTime() + 1
@@ -4820,6 +5127,13 @@ function GM:PlayerSpawn(pl)
 	pcol.y = math.Clamp(pcol.y, 0, 2.5)
 	pcol.z = math.Clamp(pcol.z, 0, 2.5)
 	pl:SetPlayerColor(pcol)
+
+	-- 出生菜单待选状态：冻结在原地且不可被攻击，等待玩家在菜单中做出选择
+	if pl.PendingSpawnChoice then
+		pl:Freeze(true)
+		pl:SetNoTarget(true)
+		return
+	end
 
 	if pl:Team() == TEAM_UNDEAD then
 
@@ -5060,6 +5374,9 @@ function GM:PlayerSpawn(pl)
 	wcol.y = math.Clamp(wcol.y, 0, 2.5)
 	wcol.z = math.Clamp(wcol.z, 0, 2.5)
 	pl:SetWeaponColor(wcol)
+
+	-- 正常出生时清除待选阶段的冻结状态（防御残留：PlayerSpawn 可能由其他路径触发）
+	pl:Freeze(false)
 end
 
 --[[
@@ -5403,19 +5720,33 @@ end)
 --]]
 net.Receive(NET_MSG.NESTSPEC, function(len, sender)
 	if not sender:IsValidZombie() then return end
-	if sender:GetObserverMode() == OBS_MODE_NONE then return end
 
 	local nest = net:ReadEntity()
+	if not nest:IsValid() then return end
+
 	local neveralive = sender:GetZombieClassTable().NeverAlive
 
+	-- 存活且非BOSS僵尸：选择巢穴后自杀，并在该巢穴重生
+	if sender:Alive() then
+		if sender:GetZombieClassTable().Boss then return end
+		if not (nest.MinionSpawn or nest.IsCreeperNest) then return end
+		if not GAMEMODE:GetWaveActive() then return end
+		if not (CurTime() < GAMEMODE:GetWaveEnd() - 4 or GAMEMODE:GetWaveEnd() < 0) then return end
+		if not gamemode.Call("CanPlayerSuicide", sender) then return end
+
+		sender.NestSpectate = nest
+
+		sender:Kill()
+		return
+	end
+
+	-- 已死亡：NeverAlive 随从直接在巢穴重生；否则旁观该巢穴
 	if neveralive and nest.MinionSpawn then
 		sender:TrySpawnAsGoreChild(nest)
 	end
 
 	if sender:Alive() or neveralive then return end
 
-	if nest:IsValid() then
-		sender:Spectate(OBS_MODE_CHASE)
-		sender:SpectateEntity(nest)
-	end
+	sender:Spectate(OBS_MODE_CHASE)
+	sender:SpectateEntity(nest)
 end)

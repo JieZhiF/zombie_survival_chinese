@@ -15,8 +15,10 @@
 
 -- =====================================================================
 -- translate 全局表：所有翻译相关函数都挂载在此表下
+-- 兼容模式：若其他插件（如 EasyChat）已创建 translate 表，则复用该表，
+-- 而不是重置，避免互相清空导致界面显示 @id@。
 -- =====================================================================
-translate = {}
+translate = translate or {}
 
 -- =====================================================================
 -- 内部变量定义
@@ -24,11 +26,14 @@ translate = {}
 
 -- Languages 表：存储所有已注册的语言，key=短名称，value=长名称
 -- 例如：Languages["zh-CN"] = "简体中文"
-local Languages = {}
+-- 兼容模式：挂到 translate 表上共享，与其他插件读写同一份数据
+local Languages = translate.Languages or {}
+translate.Languages = Languages
 
 -- Translations 表：存储所有语言的所有翻译条目，三层结构：
 -- Translations[语言短名称][翻译ID] = 翻译文本
-local Translations = {}
+local Translations = translate.Translations or {}
+translate.Translations = Translations
 
 -- AddingLanguage：当前正在添加翻译的语言短名称，由 AddLanguage() 设置
 local AddingLanguage

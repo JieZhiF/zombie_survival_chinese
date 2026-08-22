@@ -1128,7 +1128,7 @@ GM.TimeAddedPerWave = 12
 
 -- 新玩家加入时的波次阈值：当达到此波次或更高时，新玩家将被分配到僵尸队伍
 -- 不要将此值设为小于 1，否则会破坏游戏平衡
-GM.NoNewHumansWave = 3
+GM.NoNewHumansWave = 1
 
 -- 禁止自杀的波次阈值：当波次低于或等于此值时，人类玩家不能自杀
 GM.NoSuicideWave = 1

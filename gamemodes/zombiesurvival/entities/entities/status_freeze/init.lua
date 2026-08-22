@@ -8,6 +8,13 @@ INC_SERVER()
 local CurTime = CurTime
 local IsValid = IsValid
 
+-- 同步冰冻结束时间到玩家网络变量（客户端染色/状态栏依赖，不依赖状态实体客户端链路）
+local function SyncFreezeEnd(ent, pPlayer, endtime)
+	if IsValid(pPlayer) then
+		pPlayer:SetNWFloat("zs_freeze_endtime", endtime or 0)
+	end
+end
+
 -- ==== SetDie - 设置状态结束时间：覆盖基类以支持特殊时长值 ====
 function ENT:SetDie(fTime)
 	if fTime == 0 or not fTime then
@@ -21,6 +28,7 @@ function ENT:SetDie(fTime)
 		self.DieTime = CurTime() + fTime
 		self:SetDuration(fTime)
 	end
+	SyncFreezeEnd(self, self:GetOwner(), self.DieTime)
 end
 
 -- ==== Extend - 累加冰冻时长 ====
@@ -31,6 +39,7 @@ function ENT:Extend(fTime)
 	else
 		self.DieTime = self.DieTime + fTime
 		self:SetDuration(self:GetDuration() + fTime)
+		SyncFreezeEnd(self, self:GetOwner(), self.DieTime)
 	end
 	Msg("[FREEZE-DBG] 状态累加 -> 剩余 " .. self:GetRemaining() .. "s 阶段=" .. self:GetStage() .. "\n")
 end
@@ -40,6 +49,7 @@ end
 --       否则阶段计算（StartTime + Duration - CurTime）恒为 0，效果全部失效
 function ENT:PlayerSet(pPlayer, bExists)
 	self:SetStartTime(CurTime())
+	SyncFreezeEnd(self, pPlayer, self.DieTime or 0)
 
 	hook.Add("Move", self, self.Move)
 	hook.Add("PlayerButtonDown", self, self.PlayerButtonDown)
@@ -135,11 +145,17 @@ function ENT:RemoveSpikes()
 	self.Spike = nil
 end
 
--- ==== OnRemove - 移除时：解冻、清冰刺、移除钩子 ====
+-- ==== OnRemove - 移除时：解冻、清冰刺、清 NW、移除钩子 ====
 function ENT:OnRemove()
 	local owner = self:GetOwner()
-	if IsValid(owner) and self.Frozen then
-		owner:Freeze(false)
+	if IsValid(owner) then
+		if self.Frozen then
+			owner:Freeze(false)
+		end
+		-- 仅当玩家身上仍是本状态时清除结束时间（避免同帧被新冰冻替换时误清）
+		if owner[self:GetClass()] == self then
+			owner:SetNWFloat("zs_freeze_endtime", 0)
+		end
 	end
 
 	self:RemoveSpikes()

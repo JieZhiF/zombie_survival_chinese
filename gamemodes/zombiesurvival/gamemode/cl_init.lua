@@ -28,6 +28,7 @@ include("cl_fontdlc.lua")  -- 字体DLC
 include("cl_scoreboard.lua")  -- 计分板
 include("cl_targetid.lua")  -- 目标标识
 include("cl_postprocess.lua")  -- 后处理特效
+include("cl_instinct.lua")  -- 僵尸声呐扫描/透视标记 (Instinct 移植)
 include("cl_voicesets.lua")  -- 语音集
 include("cl_net.lua")  -- 网络消息
 include("skillweb/cl_skillweb.lua")  -- 技能树客户端
@@ -59,6 +60,7 @@ include("vgui/premantle.lua")  -- 重铸面板
 include("vgui/dpingmeter.lua")  -- Ping表
 include("vgui/dsidemenu.lua")  -- 侧边菜单（保留作为 fallback）
 include("vgui/dspawnmenu.lua")  -- 出生菜单
+include("vgui/dteamselect.lua")  -- 出生团队选择界面
 include("vgui/zsgamestate.lua")  -- 游戏状态
 include("vgui/zshealtharea.lua")  -- 血量区域
 include("vgui/zsstatusarea.lua")  -- 状态区域
@@ -206,7 +208,6 @@ GM.InputMouseY = 0  -- 鼠标输入Y
 GM.LastTimeDead = 0  -- 上次死亡时间
 GM.LastTimeAlive = 0  -- 上次存活时间
 GM.HeartBeatTime = 0  -- 心跳时间
-GM.FOVLerp = 1  -- FOV插值
 GM.HurtEffect = 0  -- 受伤特效
 GM.PrevHealth = 0  -- 上一帧血量
 GM.SuppressArsenalTime = 0  -- 抑制军械库升级时间
@@ -777,13 +778,6 @@ function GM:_Think()
 
 	local thirdperson
 	if myteam == TEAM_HUMAN then
-		local wep = MySelf:GetActiveWeapon()
-		if wep:IsValid() and wep.GetIronsights and wep:GetIronsights() then
-			self.FOVLerp = math.Approach(self.FOVLerp, wep.IsScoped and not self.DisableScopes and wep.IronsightsMultiplier or not wep.IsScoped and wep.IronsightsMultiplier or 0.6, FrameTime() * 4)
-		elseif self.FOVLerp ~= 1 then
-			self.FOVLerp = math.Approach(self.FOVLerp, 1, FrameTime() * 5)
-		end
-
 		if MySelf:GetBarricadeGhosting() then
 			MySelf:BarricadeGhostingThink()
 		end
@@ -1408,6 +1402,9 @@ function GM:RestartRound()
 	self.TheLastHuman = nil
 	self.RoundEnded = nil
 	LASTHUMAN = nil
+
+	-- 回合重启：服务器按上次选择自动分配，不再弹出出生选择窗口；此处兜底关闭可能残留的界面
+	CloseTeamSelect()
 
 	if pEndBoard and pEndBoard:IsValid() then
 		pEndBoard:Remove()
@@ -2128,7 +2125,7 @@ function GM:PlayerBindPress(pl, bind, wasin)
 		end
 	elseif bind == "impulse 100" then
 		if P_Team(pl) == TEAM_UNDEAD and pl:Alive() then
-			self:ToggleZombieVision()
+			ZSInstinctScan()
 		end
 	end
 end
@@ -2335,6 +2332,17 @@ function GM:_PrePlayerDraw(pl)
 			cam_IgnoreZ(true)
 		end
 	end
+
+	-- 冰冻染色：放在 GM 方法末尾，确保覆盖职业自身的 PrePlayerDraw 染色（hook.Add 钩子先于 GM 方法执行）
+	-- 结束时间由服务端 status_freeze 写入玩家 NW 变量，不依赖客户端状态实体链路
+	local freezeend = pl:GetNWFloat("zs_freeze_endtime", 0)
+	if freezeend > CurTime() then
+		local remain = freezeend - CurTime()
+		local fstage = remain >= FREEZE_FULL_DURATION and 3 or (remain >= FREEZE_SLOW_DURATION and 2 or 1)
+		undo = true
+		local frg = 0.45 - fstage * 0.12
+		render_SetColorModulation(frg, frg, 1 - math.abs(math.sin((CurTime() + pl:EntIndex()) * 3)) * 0.2)
+	end
 end
 
 -- 玩家绘制后处理（目标指示器、队友环）
@@ -2492,7 +2500,7 @@ function GM:KeyPress(pl, key)
 		local team = P_Team(pl)
 		if team == TEAM_HUMAN and pl:Alive() and not pl:IsHolding() then
 			gamemode.Call("HumanMenu")
-		elseif team == TEAM_ZOMBIE and not pl:Alive() then
+		elseif team == TEAM_ZOMBIE then
 			gamemode.Call("ZombieSpawnMenu")
 		end
 	elseif key == IN_SPEED then

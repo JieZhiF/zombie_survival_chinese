@@ -160,6 +160,9 @@ CreateClientConVar("zs_alwaysvolunteer", "0", true, true)
 CreateClientConVar("zs_nobosspick", "0", true, true)
 CreateClientConVar("zs_nousetodeposit", "0", true, true)
 CreateClientConVar("zs_nopickupprops", "0", true, true)
+-- 出生阵营选择偏好（本地记录）："" = 未选择；"human" / "zombie" = 上次选择。
+-- FCVAR_ARCHIVE 写进本机 config.cfg（断线重连后仍保留），FCVAR_USERINFO 供服务器 pl:GetInfo 读取。
+CreateClientConVar("zs_lastspawnchoice", "", true, true)
 CreateClientConVar("zs_nailplacer_ghostmode", "1", true, true) -- 钉子放置器幽灵预显模式：0 = 仅显示当前等级，1 = 全部显示（超出等级的为红色）
 -- 禁用武器瞄准镜功能
 RegisterClientConVar("zs_disablescopes", "0", "DisableScopes", "禁用武器瞄准镜功能", "bool")

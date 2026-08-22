@@ -21,9 +21,8 @@ function SWEP:Reload()
 		self:SendReloadAnimation()
 		self:ProcessReloadEndTime()
 		self:ResetRecoilState(true)
-		self.last_shot_time = 0 
+		self.last_shot_time = 0
 		self.ShotCount = 0 -- 连射计数重置
-		self.IsReloadingRecoil = true
 		owner:DoReloadEvent()
 
 		self:EmitReloadSound()

@@ -1,29 +1,10 @@
 -- ============================================================================
--- cl_init.lua - 冰冻 buff 状态（客户端）：蓝冰染色与屏幕冻结特效
--- 负责：将受冻玩家模型染成冰蓝色（阶段越高越蓝），并给本地玩家叠加冷色滤镜
+-- cl_init.lua - 冰冻 buff 状态（客户端）：屏幕冻结特效
+-- 负责：给本地玩家叠加冷色滤镜；模型蓝冰染色由 GM:_PrePlayerDraw 统一处理
+--       （hook.Add 钩子先于 GM 方法执行，状态钩子染色会被职业 PrePlayerDraw 覆盖）
 --       冻结尖刺由服务端生成 env_protrusionspike 实体（自动同步渲染）
 -- ============================================================================
 INC_CLIENT()
-
--- ==== PrePlayerDraw - 玩家绘制前：冰蓝染色，阶段越高蓝色越浓 ====
-function ENT:PrePlayerDraw(pl)
-	if pl ~= self:GetOwner() then return end
-
-	local stage = self:GetStage()
-	if stage <= 0 then return end
-
-	-- 蓝色分量随正弦脉动，阶段越高红/绿压得越低
-	local b = 1 - math.abs(math.sin((CurTime() + self:EntIndex()) * 3)) * 0.2
-	local rg = 0.45 - stage * 0.12
-	render.SetColorModulation(rg, rg, b)
-end
-
--- ==== PostPlayerDraw - 玩家绘制后：恢复默认调色 ====
-function ENT:PostPlayerDraw(pl)
-	if pl ~= self:GetOwner() then return end
-
-	render.SetColorModulation(1, 1, 1)
-end
 
 -- 屏幕色彩滤镜参数表
 local colModDimVision = {

@@ -9,6 +9,8 @@ ENT.Type = "anim"
 ENT.NoNails = true
 -- 可生成随从（落地后产生小僵尸随从）
 ENT.MinionSpawn = true
+-- 落地后重生的随从职业
+ENT.MinionClass = "Gore Child"
 
 -- ==== ShouldNotCollide - 碰撞过滤 ====
 -- 不碰撞僵尸玩家（避免投掷时被挡回）

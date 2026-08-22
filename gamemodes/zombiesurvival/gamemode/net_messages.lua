@@ -118,6 +118,9 @@ NET_MSG = {
 	PLATINUM_STAR_WORLD = "zs_platinum_star_world",
 	THEWORLD_SCREENFX = "zs_theworld_screenfx",
 	THEWORLD_ENDFX = "zs_theworld_endfx",
+	BUFFGUN_SELECT = "zs_buffgun_select",
+	SPAWNMENU = "zs_spawnmenu",
+	LASTSPAWNCHOICE = "zs_lastspawnchoice", -- 服务器将最终分配阵营回写客户端本地 cvar（zs_lastspawnchoice）
 	-- 语音提示类消息（voice_ 前缀为语音预留）
 	VOICE_EYEPAIN = "voice_eyepain",
 	VOICE_GIVEAMMO = "voice_giveammo",

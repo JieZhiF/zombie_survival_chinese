@@ -609,7 +609,8 @@ function meta:TrySpawnAsGoreChild(ent)
 		ang.pitch = 0
 
 		self.OldDeathClass = self.DeathClass
-		self:SetZombieClassName(ent:GetClass() == "prop_thrownbaby" and "Gore Child" or "Shadow Child")
+		local minionclass = ent.MinionClass or (ent:GetClass() == "prop_thrownbaby" and "Gore Child" or "Shadow Child")
+		self:SetZombieClassName(minionclass)
 		self.DeathClass = nil
 		self.DidntSpawnOnSpawnPoint = true
 		self:UnSpectateAndSpawn()

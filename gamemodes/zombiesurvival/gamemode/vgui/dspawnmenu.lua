@@ -72,10 +72,19 @@ function PANEL:RefreshContents()
 		end
 	end
 
-	-- 遍历所有幼体（熊孩子BOSS扔出的婴儿），为每个创建观察按钮
+	-- 遍历所有幼体（BOSS扔出的婴儿/骷髅巢穴），按随从职业显示按钮
 	for k, baby in ipairs(GAMEMODE.CachedBabies) do
 		if baby:IsValid() then
-			local item = EasyButton(self, "Gore Child", 8, 4)
+			local label = "Gore Child"
+			local minionclass = baby.MinionClass
+			if minionclass then
+				local classtab = GAMEMODE.ZombieClasses[minionclass]
+				if classtab then
+					label = translate.Get(classtab.TranslationName) or label
+				end
+			end
+
+			local item = EasyButton(self, label, 8, 4)
 			item:SetFont("ZSHUDFontSmall")
 			item:SizeToContents()
 			item.DoClick = function()

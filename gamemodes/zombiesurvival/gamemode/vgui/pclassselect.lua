@@ -12,16 +12,7 @@
 --                      默认关闭（zs_pclass_3d 0），显示 2D 击杀图标（原版形式）
 -- ConVar：zs_bossclass（BOSS 选择）、zs_pclassdebug（诊断输出）、zs_pclass_3d（3D 预览开关）
 -- 全局函数：GM:OpenClassSelect（服务器经 SendLua 调用）
--- 分类字段：CLASS.Boss / CLASS.MiniBoss / CLASS.SuperBoss / CLASS.MegaBoss / CLASS.Hidden
--- 视觉优化（v1.0，纯 UI 无逻辑改动）：
---   1) 全屏黑色遮罩 + 主窗口深色背景，降低游戏画面干扰
---   2) 当前职业卡片高亮边框 + 轻微发光 + 名称增强
---   3) 属性条按类型分色（生命绿/速度蓝/攻击红/点数金/距离橙/判定紫）
---   4) 详情文字层级：名称最大（ZSHUDFont）> 属性（Smallest）> 描述（BodyText）
---   5) 顶部分类标签选中态增加底部高亮线
---   6) 锁定卡片：模型灰化 + 降透明度 + 挂锁图标 + 锁定文字突出
---   7) 滚动条统一为窄半透明样式（隐藏默认按钮与背景）
---   8) 模型预览：悬停平滑放大（FOV 插值）+ 面板内暗色底
+-- 分类字段：CLASS.Boss / CLASS.MiniBoss / CLASS.SuperBoss / CLASS.Hidden
 -- ============================================================================
 -- 区域地图（VGUI 四字段）
 -- [区域] 主窗口
@@ -1219,19 +1210,33 @@ vgui.Register("ClassDetailPanel", PANEL, "Panel")
 PANEL = {}
 
 -- ============================================================================
--- 分类标签定义（顺序即显示顺序，与截图样式一致）
+-- 分类标签定义（简化版本：只保留4个主要分类）
 -- Key 为翻译键，Filter 为职业过滤函数
 -- ApplyClassicFilter = true 时应用原版"普通职业"过滤（隐藏/目标图/CanUse 检查）
 -- ============================================================================
 local CLASS_TABS = {
-	{Key = "zombieselect_Classes", ApplyClassicFilter = true, Filter = function(ct) return not ct.Boss and not ct.MiniBoss and not ct.SuperBoss and not ct.MegaBoss and not ct.Hidden end},
-	-- 隐藏职业沿用原版规则：仅在 CanUse(MySelf) 通过时显示（如 flesh creeper），其余不显示
-	{Key = "zombieselect_Other", Filter = function(ct) return ct.Hidden and ct.CanUse and ct:CanUse(MySelf) and not ct.MiniBoss and not ct.SuperBoss and not ct.MegaBoss and not ct.Boss end},
-	{Key = "zombieselect_Mutations", Filter = function(ct) return ct.Mutation == true end},
-	{Key = "zombieselect_MiniBosses", Filter = function(ct) return ct.MiniBoss == true end},
-	{Key = "zombieselect_Bosses", Filter = function(ct) return ct.Boss == true and not ct.SuperBoss and not ct.MegaBoss end},
-	{Key = "zombieselect_SuperBosses", Filter = function(ct) return ct.SuperBoss == true end},
-	{Key = "zombieselect_MegaBosses", Filter = function(ct) return ct.MegaBoss == true end},
+	-- 普通僵尸：非BOSS、非迷你BOSS、非超级BOSS、非巨型BOSS
+	{Key = "zombieselect_Classes", ApplyClassicFilter = true, Filter = function(ct) 
+		return not ct.Boss 
+			and not ct.MiniBoss 
+			and not ct.SuperBoss 
+	end},
+	
+	-- 迷你BOSS：标记为迷你BOSS的职业
+	{Key = "zombieselect_MiniBosses", Filter = function(ct) 
+		return ct.MiniBoss 
+	end},
+	
+	-- BOSS：标记为BOSS但非超级BOSS的职业
+	{Key = "zombieselect_Bosses", Filter = function(ct) 
+		return ct.Boss 
+			and not ct.SuperBoss 
+	end},
+	
+	-- 超级BOSS：标记为超级BOSS的职业
+	{Key = "zombieselect_SuperBosses", Filter = function(ct) 
+		return ct.SuperBoss 
+	end},
 }
 
 -- ============================================================================

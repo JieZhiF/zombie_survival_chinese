@@ -29,9 +29,7 @@ function ENT:Initialize()
 	end
 
 	if CLIENT then
-		-- 客户端注册模型染色与屏幕全屏特效钩子
-		hook.Add("PrePlayerDraw", self, self.PrePlayerDraw)
-		hook.Add("PostPlayerDraw", self, self.PostPlayerDraw)
+		-- 客户端注册屏幕全屏特效钩子（模型染色由 GM:_PrePlayerDraw 统一处理）
 		hook.Add("RenderScreenspaceEffects", self, self.RenderScreenspaceEffects)
 	end
 end

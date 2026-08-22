@@ -205,27 +205,55 @@ SKIN.Colours.Category.LineAlt.Button_Selected	= GWEN.TextureColor( 4 + 8 * 25, 5
 
 SKIN.Colours.TooltipText	= GWEN.TextureColor( 4 + 8 * 26, 500 );
 
+local texZoom = Material("vgui/zoom")
+
+-- 移植自钉锤武器(xdebarricade)的按钮界面：
+-- 悬停/选中平滑提亮、点击扫光动画、zoom 纹理、选中时绿色内框
 function SKIN:PaintButton(panel, w, h)
 	if not panel.m_bBackground then return end
 
-	local col
-
 	if panel:GetDisabled() then
-		col = Color(5, 5, 5, 90)
-	elseif panel.Depressed or panel:IsSelected() or panel:GetToggle() then
-		col = Color(60, 70, 100, 160)
-	elseif panel.Hovered then
-		col = Color(45, 45, 80, 160)
-	else
-		col = Color(32, 32, 35, 160)
+		surface.SetDrawColor(Color(5, 5, 5, 90))
+		surface.DrawRect(0, 0, w, h)
+		return
 	end
 
-	local edgesize = math.min(math.ceil(w * 0.2), 24)
-	surface.SetDrawColor(col)
-	surface.DrawRect(edgesize, 0, w - edgesize * 2, h)
-	surface.SetTexture(texRightEdge)
-	surface.DrawTexturedRect(w - edgesize, 0, edgesize, h)
-	surface.DrawTexturedRectRotated(math.ceil(edgesize * 0.5), math.ceil(h * 0.5), edgesize, h, 180)
+	panel.N_Lerp = panel.N_Lerp or 0
+	panel.N_Clicked = panel.N_Clicked or 0
+
+	local sel = panel:GetToggle() or panel:IsSelected() or panel.Depressed
+	panel.N_Lerp = Lerp(math.min(1, FrameTime() * 20), panel.N_Lerp, (panel.Hovered or sel) and 1 or 0)
+	local ler = panel.N_Lerp
+
+	-- 按下瞬间记录点击时间，用于扫光动画
+	if panel.Depressed and not panel.N_Depressed then
+		panel.N_Clicked = SysTime() + 0.2
+	end
+	panel.N_Depressed = panel.Depressed
+
+	-- 背景：暗绿底，悬停/选中提亮
+	surface.SetDrawColor(Color(55 + (sel and 0 or ler * 100), 55 + ler * 155, 55, 55))
+	surface.DrawRect(0, 0, w, h)
+
+	-- 点击扫光：从中心向两侧展开
+	if panel.N_Clicked > SysTime() then
+		local cli = math.Clamp((panel.N_Clicked - SysTime()) / 0.2, 0, 1)
+		surface.SetDrawColor(Color(255 - (sel and ler * 255 or 0), 255, 255 - ler * 255, cli * 255))
+		surface.DrawRect(w / 2, 0, w / 2 * (1 - cli) + 1, h)
+		surface.DrawRect(w / 2 - w / 2 * (1 - cli) + 1, 0, w / 2 * (1 - cli), h)
+	end
+	
+	-- zoom 纹理叠加（旋转 0/180）
+	surface.SetDrawColor(255, 255, 255, 55 + ler * 55)
+	surface.SetMaterial(texZoom)
+	surface.DrawTexturedRectRotated(w / 2, h / 2, w, h, 0)
+	surface.DrawTexturedRectRotated(w / 2, h / 2, w, h, 180)
+	
+	-- 边框：内框（仅选中时显示绿色，随 ler 淡入）
+	if sel then
+		surface.SetDrawColor(0, 255, 0, ler * 255)
+		surface.DrawOutlinedRect(0, 0, w, h, 2)
+	end
 end
 
 function SKIN:PaintComboDownArrowClassSel(panel, w, h)
@@ -244,6 +272,73 @@ function SKIN:PaintComboDownArrowClassSel(panel, w, h)
 	end
 
 	self.tex.Input.Slider.H.Normal(0, y, w, h)
+end
+
+-- ============================================================================
+-- ComboBox样式 - 白背景+黑字
+-- ============================================================================
+function SKIN:PaintComboBox(panel, w, h)
+    -- 绘制深灰色背景
+    draw.RoundedBox(4, 0, 0, w, h, Color(65, 65, 65, 255))
+    local textColor = Color(220, 220, 220,255) -- 默认状态的文本颜色
+	if (panel:GetDisabled()) then
+		-- 禁用状态：更暗的颜色
+		bgColor = Color(50, 50, 50, 150)
+		textColor = Color(220, 220, 220) -- 禁用状态的文本颜色
+
+	elseif (panel.Hovered or panel:IsMenuOpen()) then
+		-- 鼠标悬停或菜单已打开：亮色背景和白字
+		bgColor = SKIN.bg_color_bright or Color(65, 65, 65, 255)
+		textColor = Color(255, 255, 255, 255) -- 悬停状态的文本颜色
+	end
+
+    -- 绘制边框
+    --surface.SetDrawColor(100, 100, 100, 255)
+    --surface.DrawOutlinedRect(0, 0, w, h)
+	panel:SetTextColor(textColor)
+
+end
+
+
+function SKIN:PaintComboBoxDownArrow(panel, w, h)
+	-- 定义三角形的大小和颜色
+	local size = 4 -- 三角形边长的一半
+	local color = Color(200, 200, 200, 255)
+
+	-- 鼠标悬停或下拉菜单打开时,箭头更亮
+	if (panel.ComboBox.Hovered or panel.ComboBox:IsMenuOpen()) then
+		color = Color(255, 255, 255, 255)
+	end
+
+	-- 计算三角形的三个顶点坐标,使其居中
+	local x, y = w / 2, h / 2
+	local vertices = {
+		{ x = x - size, y = y - size / 2 },
+		{ x = x + size, y = y - size / 2 },
+		{ x = x,        y = y + size / 2 }
+	}
+
+	-- 绘制向下的三角形箭头
+	surface.SetDrawColor(color)
+	surface.DrawPoly(vertices)
+end
+
+function SKIN:PaintComboBoxMenu(panel, w, h)
+    -- 绘制透明黑色背景
+    draw.RoundedBox(4, 0, 0, w, h, Color(30, 30, 35, 220))
+    
+    -- 绘制边框
+    surface.SetDrawColor(100, 100, 100, 255)
+    surface.DrawOutlinedRect(0, 0, w, h)
+end
+
+function SKIN:PaintMenu(panel, w, h)
+    -- 绘制透明黑色背景
+    draw.RoundedBox(4, 0, 0, w, h, Color(30, 30, 35, 220))
+    
+    -- 绘制边框
+    surface.SetDrawColor(100, 100, 100, 255)
+    surface.DrawOutlinedRect(0, 0, w, h)
 end
 
 derma.DefineSkin("zombiesurvival", "The default Derma skin for Zombie Survival", SKIN, "Default")

@@ -74,19 +74,19 @@ function ENT:Initialize()
 
 			local children = object:GetChildren()
 			for _, child in pairs(children) do
-				if child:IsValid() then
-					child.PreHoldCollisionGroup = child.PreHoldCollisionGroup or child:GetCollisionGroup()
-					if child:IsPhysicsModel() then -- Stops child sprites from getting fucked up rendering
-						child.PreHoldAlpha = child.PreHoldAlpha or child:GetAlpha()
-						child.PreHoldRenderMode = child.PreHoldRenderMode or child:GetRenderMode()
+				if not child:IsValid() then continue end
 
-						child:SetAlpha(180)
-						child:SetRenderMode(RENDERMODE_TRANSALPHA)
-					end
+				child.PreHoldCollisionGroup = child.PreHoldCollisionGroup or child:GetCollisionGroup()
+				if child:IsPhysicsModel() then -- Stops child sprites from getting fucked up rendering
+					child.PreHoldAlpha = child.PreHoldAlpha or child:GetAlpha()
+					child.PreHoldRenderMode = child.PreHoldRenderMode or child:GetRenderMode()
 
-					child:SetCollisionGroup(COLLISION_GROUP_WEAPON)
-					child:CollisionRulesChanged()
+					child:SetAlpha(180)
+					child:SetRenderMode(RENDERMODE_TRANSALPHA)
 				end
+
+				child:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+				child:CollisionRulesChanged()
 			end
 
 			object:CollisionRulesChanged()
@@ -154,15 +154,15 @@ function ENT:OnRemove()
 
 				local children = object:GetChildren()
 				for _, child in pairs(children) do
-					if child:IsValid() then
-						child:SetCollisionGroup(child.PreHoldCollisionGroup or COLLISION_GROUP_NONE)
-						if child:IsPhysicsModel() then
-							child:SetAlpha(child.PreHoldAlpha or 255)
-							child:SetRenderMode(child.PreHoldRenderMode or RENDERMODE_NORMAL)
-						end
+					if not child:IsValid() then continue end
 
-						child:CollisionRulesChanged()
+					child:SetCollisionGroup(child.PreHoldCollisionGroup or COLLISION_GROUP_NONE)
+					if child:IsPhysicsModel() then
+						child:SetAlpha(child.PreHoldAlpha or 255)
+						child:SetRenderMode(child.PreHoldRenderMode or RENDERMODE_NORMAL)
 					end
+
+					child:CollisionRulesChanged()
 				end
 			end
 
@@ -245,7 +245,7 @@ function ENT:Think()
 	else
 		if not self.ObjectPosition or not owner:KeyDown(IN_SPEED) then
 			local obbcenter = object:OBBCenter()
-			local objectpos = shootpos + owner:GetAimVector() * 48
+			local objectpos = shootpos + owner:GetAimVector() * (48 + (self.xd_holddistex or 0))
 			objectpos = objectpos - obbcenter.z * object:GetUp()
 			objectpos = objectpos + obbcenter.y * object:GetRight()
 			objectpos = objectpos - obbcenter.x * object:GetForward()
@@ -279,11 +279,13 @@ function ENT:Think()
 	end
 
 	object:SetPhysicsAttacker(owner)
-	-- object.LastHeld 已随 LastHeld 系统一并移除（平衡性调整，允许打掉手持中的道具）
+	object.LastHeld = CurTime()
 
 	self:NextThink(ct)
 	return true
 end
+
+
 
 -- 在 StartCommand 中检测滚轮滚动（双端通用，但逻辑在服务器执行）
 ---@param ply Player
